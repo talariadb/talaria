@@ -1,0 +1,29 @@
+{
+  "port": 8042,
+  "mode": "development",
+  "hostname": "(hostname)",
+  "dataDir": "./data",
+  "awsRegion":"(region)",
+  "sqs": {
+    "endpoint":"(sqs endpoint)",
+    "retry": 5,
+    "waitTimeout": 1,
+    "visibilityTimeout": 30
+  },
+  "route":{
+    "domain":"(domain)",
+    "zoneID":"(zoneID)"
+  },
+  "presto":{
+    "schema":"talaria",
+    "table":"eventlog"
+  },
+  "storage": {
+    "ttlInSec": 604800
+  },
+  "statsd": {
+    "host": "127.0.0.1",
+    "port": 8126,
+    "appName": "x-talaria"
+  }
+}

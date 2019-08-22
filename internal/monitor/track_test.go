@@ -1,0 +1,28 @@
+// Copyright 2019 Grabtaxi Holdings PTE LTE (GRAB), All rights reserved.
+// Use of this source code is governed by an MIT-style license that can be found in the LICENSE file
+
+package monitor
+
+import (
+	"os"
+	"testing"
+
+	"github.com/ricochet2200/go-disk-usage/du"
+	"github.com/stretchr/testify/assert"
+	"gitlab.myteksi.net/grab-x/talaria/internal/monitor/logging"
+	"gitlab.myteksi.net/grab-x/talaria/internal/monitor/statsd"
+)
+
+func TestTrackDiskSpace(t *testing.T) {
+	wd, err := os.Getwd()
+	if err != nil {
+		panic(err)
+	}
+
+	client := New(logging.NewStdOut(), statsd.NewNoop(), "test")
+	m := client.(*clientImpl)
+	m.du = du.NewDiskUsage(wd)
+	m.tags = []string{"host:1.1.1.1", "env:test", "pid:30"}
+	task := m.TrackDiskSpace()
+	assert.NotNil(t, task)
+}
