@@ -11,8 +11,8 @@ import (
 	"time"
 
 	"github.com/dgraph-io/badger"
-	"gitlab.myteksi.net/grab-x/talaria/internal/async"
-	"gitlab.myteksi.net/grab-x/talaria/internal/monitor"
+	"github.com/grab/talaria/internal/async"
+	"github.com/grab/talaria/internal/monitor"
 )
 
 const (

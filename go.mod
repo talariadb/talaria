@@ -1,4 +1,4 @@
-module gitlab.myteksi.net/grab-x/talaria
+module github.com/grab/talaria
 
 go 1.12
 

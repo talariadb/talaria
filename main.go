@@ -9,16 +9,16 @@ import (
 	"os/signal"
 	"syscall"
 
-	"gitlab.myteksi.net/grab-x/talaria/internal/cluster"
-	"gitlab.myteksi.net/grab-x/talaria/internal/config"
-	"gitlab.myteksi.net/grab-x/talaria/internal/monitor"
-	"gitlab.myteksi.net/grab-x/talaria/internal/monitor/logging"
-	"gitlab.myteksi.net/grab-x/talaria/internal/monitor/statsd"
-	"gitlab.myteksi.net/grab-x/talaria/internal/server"
-	"gitlab.myteksi.net/grab-x/talaria/internal/storage/disk"
-	"gitlab.myteksi.net/grab-x/talaria/internal/storage/ingest"
-	"gitlab.myteksi.net/grab-x/talaria/internal/storage/s3"
-	"gitlab.myteksi.net/grab-x/talaria/internal/storage/sqs"
+	"github.com/grab/talaria/internal/cluster"
+	"github.com/grab/talaria/internal/config"
+	"github.com/grab/talaria/internal/monitor"
+	"github.com/grab/talaria/internal/monitor/logging"
+	"github.com/grab/talaria/internal/monitor/statsd"
+	"github.com/grab/talaria/internal/server"
+	"github.com/grab/talaria/internal/storage/disk"
+	"github.com/grab/talaria/internal/storage/ingest"
+	"github.com/grab/talaria/internal/storage/s3"
+	"github.com/grab/talaria/internal/storage/sqs"
 )
 
 const (

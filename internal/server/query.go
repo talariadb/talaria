@@ -13,8 +13,8 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/grab/talaria/internal/presto"
 	"github.com/spaolacci/murmur3"
-	"gitlab.myteksi.net/grab-x/talaria/internal/presto"
 )
 
 var (

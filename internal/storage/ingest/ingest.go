@@ -14,7 +14,7 @@ import (
 	"time"
 
 	awssqs "github.com/aws/aws-sdk-go/service/sqs"
-	"gitlab.myteksi.net/grab-x/talaria/internal/monitor"
+	"github.com/grab/talaria/internal/monitor"
 	"golang.org/x/sync/semaphore"
 )
 

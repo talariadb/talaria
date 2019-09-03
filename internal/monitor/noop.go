@@ -7,7 +7,7 @@ import (
 	"context"
 	"time"
 
-	"gitlab.myteksi.net/grab-x/talaria/internal/async"
+	"github.com/grab/talaria/internal/async"
 )
 
 type noopClient struct{}

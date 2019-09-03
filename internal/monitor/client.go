@@ -6,9 +6,9 @@ package monitor
 import (
 	"os"
 
+	"github.com/grab/talaria/internal/monitor/logging"
+	"github.com/grab/talaria/internal/monitor/statsd"
 	"github.com/ricochet2200/go-disk-usage/du"
-	"gitlab.myteksi.net/grab-x/talaria/internal/monitor/logging"
-	"gitlab.myteksi.net/grab-x/talaria/internal/monitor/statsd"
 )
 
 // Client ...

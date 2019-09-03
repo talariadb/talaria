@@ -6,8 +6,8 @@ package cluster
 import (
 	"testing"
 
+	"github.com/grab/talaria/internal/monitor"
 	"github.com/stretchr/testify/assert"
-	"gitlab.myteksi.net/grab-x/talaria/internal/monitor"
 )
 
 func TestRoute53Upsert(t *testing.T) {

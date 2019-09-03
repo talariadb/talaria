@@ -10,8 +10,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grab/talaria/internal/monitor"
 	"github.com/stretchr/testify/assert"
-	"gitlab.myteksi.net/grab-x/talaria/internal/monitor"
 )
 
 // Opens a new disk storage and runs a a test on it.

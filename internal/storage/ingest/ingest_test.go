@@ -9,10 +9,10 @@ import (
 	"testing"
 
 	awssqs "github.com/aws/aws-sdk-go/service/sqs"
+	"github.com/grab/talaria/internal/monitor"
+	"github.com/grab/talaria/internal/storage/s3"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-	"gitlab.myteksi.net/grab-x/talaria/internal/monitor"
-	"gitlab.myteksi.net/grab-x/talaria/internal/storage/s3"
 )
 
 func TestQueueReader(t *testing.T) {

@@ -7,7 +7,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/route53"
-	"gitlab.myteksi.net/grab-x/talaria/internal/monitor"
+	"github.com/grab/talaria/internal/monitor"
 )
 
 const (

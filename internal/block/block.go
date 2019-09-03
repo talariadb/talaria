@@ -7,10 +7,10 @@ import (
 	"errors"
 	"sort"
 
+	"github.com/grab/talaria/internal/orc"
+	"github.com/grab/talaria/internal/presto"
 	"github.com/kelindar/binary"
 	"github.com/kelindar/binary/nocopy"
-	"gitlab.myteksi.net/grab-x/talaria/internal/orc"
-	"gitlab.myteksi.net/grab-x/talaria/internal/presto"
 )
 
 var (

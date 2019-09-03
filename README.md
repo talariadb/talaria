@@ -10,7 +10,7 @@ To overcome the challenge of retrieving information from large amounts of data, 
 TalariaDB. It addresses our need to query at least 2-3 terabytes of data per hour with predictable low query latency and low cost. Most importantly, it plays very nicely with the different tools’ ecosystems and lets us query data using SQL.
 
 ## Architecture
-![alt text](https://gitlab.myteksi.net/grab-x/talaria/raw/master/architecture.png)
+![alt text](https://github.com/grab/talaria/raw/master/architecture.png)
 
 The diagram above shows how TalariaDB ingests and serves data.
 * The upstream ETL pipeline prepares the ORC files and store them in the S3 bucket as input.

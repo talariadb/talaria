@@ -6,8 +6,8 @@ package server
 import (
 	"testing"
 
+	"github.com/grab/talaria/internal/presto"
 	"github.com/stretchr/testify/assert"
-	"gitlab.myteksi.net/grab-x/talaria/internal/presto"
 )
 
 func TestSplitCodec(t *testing.T) {

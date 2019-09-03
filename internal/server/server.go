@@ -10,11 +10,11 @@ import (
 	"sync/atomic"
 	"time"
 
-	"gitlab.myteksi.net/grab-x/talaria/internal/block"
-	"gitlab.myteksi.net/grab-x/talaria/internal/config"
-	"gitlab.myteksi.net/grab-x/talaria/internal/monitor"
-	"gitlab.myteksi.net/grab-x/talaria/internal/orc"
-	"gitlab.myteksi.net/grab-x/talaria/internal/presto"
+	"github.com/grab/talaria/internal/block"
+	"github.com/grab/talaria/internal/config"
+	"github.com/grab/talaria/internal/monitor"
+	"github.com/grab/talaria/internal/orc"
+	"github.com/grab/talaria/internal/presto"
 )
 
 const (
