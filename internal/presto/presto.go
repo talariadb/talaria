@@ -113,8 +113,18 @@ func (b *PrestoThriftInteger) Append(v interface{}) int {
 		return size
 	}
 
-	b.Nulls = append(b.Nulls, false)
-	b.Ints = append(b.Ints, int32(v.(int64)))
+	switch v := v.(type) {
+	case int64:
+		b.Nulls = append(b.Nulls, false)
+		b.Ints = append(b.Ints, int32(v))
+	case int32:
+		b.Nulls = append(b.Nulls, false)
+		b.Ints = append(b.Ints, v)
+	default:
+		b.Nulls = append(b.Nulls, true)
+		b.Ints = append(b.Ints, 0)
+	}
+
 	return size
 }
 
