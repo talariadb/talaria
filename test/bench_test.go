@@ -32,6 +32,7 @@ func (m noopMembership) Members() []string {
 
 // BenchmarkQuery runs a benchmark for a main GetRows function for querying
 // To run it, go in the directory and do 'go test -benchmem -bench=. -benchtime=1s'
+// BenchmarkQuery/query-8         	  245552	      4769 ns/op	    1936 B/op	      45 allocs/op
 func BenchmarkQuery(b *testing.B) {
 	dir, err := ioutil.TempDir(".", "")
 	noerror(err)
@@ -41,8 +42,7 @@ func BenchmarkQuery(b *testing.B) {
 		Port:    9876,
 		DataDir: dir,
 		Storage: &config.StorageConfig{
-			TTLInSec: 3600,
-			// Copyright 2019 Grabtaxi Holdings PTE LTE (GRAB), All rights reserved.
+			TTLInSec:   3600,
 			KeyColumn:  "_col5",
 			TimeColumn: "_col0",
 		},
@@ -55,9 +55,9 @@ func BenchmarkQuery(b *testing.B) {
 	noerror(store.Open(cfg.DataDir))
 	defer server.Close()
 
-	// Append chronos.bookingETA files
+	// Append some files
 	f2, _ := ioutil.ReadFile(testFile2)
-	for i := 0; i < 5; i++ {
+	for i := 0; i < 2; i++ {
 		noerror(server.Append(f2))
 	}
 

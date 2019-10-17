@@ -1,5 +1,5 @@
 image:
-  name: golang:1.12.1
+  name: golang:1.13
   entrypoint:
     - '/usr/bin/env'
     - 'PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin'
@@ -15,7 +15,7 @@ stages:
 # This builds and tests the binary prior to building an image.
 build_binary:
   stage: build_binary
-  image: golang:1.12.1
+  image: golang:1.13
   before_script:
     - cd $GOPATH/src
     - mkdir -p github.com/grab
