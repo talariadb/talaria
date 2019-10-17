@@ -36,7 +36,33 @@ func TestBlock(t *testing.T) {
 	result, err = back.Select(column)
 	assert.NoError(t, err)
 	assert.Equal(t, 1920800, len(result[column].VarcharData.Sizes))
+}
 
+func TestBlock_Types(t *testing.T) {
+	o, err := ioutil.ReadFile("../../test/test2.orc")
+	assert.NotEmpty(t, o)
+	assert.NoError(t, err)
+
+	b, err := FromOrc(o)
+	assert.NoError(t, err)
+
+	{
+		result, err := b.Select("int1")
+		assert.NoError(t, err)
+		assert.Equal(t, 2, result["int1"].IntegerData.Count())
+	}
+
+	{
+		result, err := b.Select("string1")
+		assert.NoError(t, err)
+		assert.Equal(t, 2, result["string1"].VarcharData.Count())
+	}
+
+	{
+		result, err := b.Select("long1")
+		assert.NoError(t, err)
+		assert.Equal(t, 2, result["long1"].BigintData.Count())
+	}
 }
 
 // BenchmarkBlockRead/read-8         	 2000000	       744 ns/op	    1344 B/op	       5 allocs/op
