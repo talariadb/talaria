@@ -14,24 +14,21 @@ stages:
 
 # This builds and tests the binary prior to building an image.
 build_binary:
-    stage: build_binary
-    image: golang:1.12.1
-    before_script:
-      - cd $GOPATH/src
-      - mkdir -p github.com/grab
-      - cd github.com/grab
-      - ln -s $CI_PROJECT_DIR
-      - cd $CI_PROJECT_NAME
-    script:
-      - go test ./...
-      - go build .
-    artifacts:
-      untracked: true
-      paths:
-        - talaria
-    only:
-      refs:
-        - merge_requests
+  stage: build_binary
+  image: golang:1.12.1
+  before_script:
+    - cd $GOPATH/src
+    - mkdir -p github.com/grab
+    - cd github.com/grab
+    - ln -s $CI_PROJECT_DIR
+    - cd $CI_PROJECT_NAME
+  script:
+    - go test ./...
+    - go build .
+  artifacts:
+    untracked: true
+    paths:
+      - talaria
 
 # This builds a docker for the merge request. The docker image can be fetched under 'talariadb/db:testing' tag.
 build_docker_mr:
