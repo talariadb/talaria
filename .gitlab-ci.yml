@@ -29,6 +29,10 @@ build_binary:
     untracked: true
     paths:
       - talaria
+  only:
+    refs:
+      - merge_requests
+      - master
 
 # This builds a docker for the merge request. The docker image can be fetched under 'talariadb/db:testing' tag.
 build_docker_mr:
