@@ -1,0 +1,59 @@
+image:
+  name: golang:1.12.1
+  entrypoint:
+    - '/usr/bin/env'
+    - 'PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin'
+
+stages:
+  - go_binary
+  - docker_image
+
+build_go_binary:
+    stage: go_binary
+    image: golang:1.12.1
+    before_script:
+      # Create a symbolic link under $GOPATH, this is needed for local build
+      # i.e. /go/src/gitlab.com/ykyuen/gitlab-ci-go-build
+      - cd $GOPATH/src
+      - mkdir -p github.com/grab
+      - cd github.com/grab
+      - ln -s $CI_PROJECT_DIR
+      - cd $CI_PROJECT_NAME
+    script:
+      - env GOOS=linux GOARCH=amd64 go build -v main.go
+    artifacts:
+      paths:
+        - main
+    only:
+      refs:
+        - merge_requests
+
+build_docker_image:
+  stage: docker_image
+  image: docker:stable
+  services:
+    - docker:dind
+  before_script:
+    - apk add openssh-client
+    - apk add gnupg
+    - apk add jq
+    - apk add python3
+    - apk add py-pip
+    - apk add git
+    - pip install awscli
+    - git config --global url."https://gitlab-ci-token:${CI_JOB_TOKEN}@gitlab.myteksi.net".insteadOf 'ssh://git@gitlab.myteksi.net'
+    - ssh-agent > /tmp/ssh-agent.rc
+    - source /tmp/ssh-agent.rc
+    - gpg2 --version
+    - export AWS_ACCESS_KEY_ID="$AWS_ACCESS_KEY_ID"
+    - export AWS_SECRET_ACCESS_KEY="$AWS_SECRET_ACCESS_KEY"
+    - export AWS_DEFAULT_REGION="ap-southeast-1"
+  tags:
+    - docker
+  script:
+    - docker build . --build-arg GO_BINARY=main  -t="grabtalaria/talaria:$CI_MERGE_REQUEST_IID-$CI_COMMIT_SHA" -t="grabtalaria/talaria:latest"
+    - docker login --username="$DOCKER_USERNAME" --password="$DOCKER_PASSWORD"
+    - docker push grabtalaria/talaria:$CI_MERGE_REQUEST_IID-$CI_COMMIT_SHA
+  only:
+    refs:
+      - merge_requests

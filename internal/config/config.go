@@ -9,7 +9,19 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
+	"net/http"
+	"net/url"
 	"os"
+	"strings"
+
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/s3"
+	"github.com/aws/aws-sdk-go/service/s3/s3manager"
+)
+
+const (
+	logTag = "config"
 )
 
 // Config global
@@ -46,7 +58,8 @@ type PrestoConfig struct {
 
 // StorageConfig represents the storage configuration
 type StorageConfig struct {
-	TTLInSec int64 `json:"ttlInSec"`
+	TTLInSec  int64  `json:"ttlInSec"`
+	KeyColumn string `json:"keyColumn"`
 }
 
 // Load ...
@@ -78,6 +91,9 @@ func LoadJSONEnvPath(envVar string, config interface{}) error {
 	return LoadJSONFile(filename, config)
 }
 
+// Loader represents a configuration loader delegate
+type loader func(string) ([]byte, error)
+
 // LoadJSONFile gets your config from the json file,
 // and fills your struct with the option
 func LoadJSONFile(filename string, config interface{}) error {
@@ -85,8 +101,22 @@ func LoadJSONFile(filename string, config interface{}) error {
 		return errors.New("Config object is empty.")
 	}
 
+	// Default to loading from file, for safety
+	loadConfig := loader(loadFromFile)
+
+	// If the filename provided is actually an HTTP or HTTPS uri, let's load from there
+	// In future, we can add ucm://
+	if strings.HasPrefix(filename, "http://") || strings.HasPrefix(filename, "https://") {
+		loadConfig = loader(loadFromHTTP)
+	}
+
+	// If the URL points to S3, use S3 SDK to load the configuration from
+	if strings.HasPrefix(filename, "s3://") {
+		loadConfig = loader(loadFromS3)
+	}
+
 	// Load the configuration
-	bytes, err := loadFromFile(filename)
+	bytes, err := loadConfig(filename)
 	if err != nil {
 		return err
 	}
@@ -94,8 +124,53 @@ func LoadJSONFile(filename string, config interface{}) error {
 	return nil
 }
 
+// loads a file from HTTP
+func loadFromHTTP(uri string) ([]byte, error) {
+	resp, err := http.Get(uri)
+	if err != nil {
+		return nil, err
+	}
+	defer func() { _ = resp.Body.Close() }()
+
+	// Write the body to file
+	log.Printf("%s : loading config from HTTP %s", logTag, uri)
+	return ioutil.ReadAll(resp.Body)
+}
+
 // loads a file from OS File
 func loadFromFile(uri string) ([]byte, error) {
-	log.Printf("%s : loading config from OS File %s", "config", uri)
+	log.Printf("%s : loading config from OS File %s", logTag, uri)
 	return ioutil.ReadFile(uri)
+}
+
+// loads a file from S3
+func loadFromS3(uri string) ([]byte, error) {
+	log.Printf("%s : loading config from S3 %s", logTag, uri)
+
+	// Parse the URL
+	u, err := url.Parse(uri)
+	if err != nil {
+		return nil, err
+	}
+
+	// Create the session
+	conf := aws.NewConfig()
+	sess, err := session.NewSession(conf)
+	if err != nil {
+		return nil, err
+	}
+
+	// Download the file
+	w := &aws.WriteAtBuffer{}
+	c := s3manager.NewDownloader(sess)
+	_, err = c.Download(w, &s3.GetObjectInput{
+		Bucket: aws.String(u.Host),
+		Key:    aws.String(u.Path),
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	// Successfully downloaded the configuration
+	return w.Bytes(), nil
 }

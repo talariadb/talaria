@@ -93,7 +93,7 @@ func (s *Server) PrestoGetSplits(schemaTableName *presto.PrestoThriftSchemaTable
 
 	s.monitor.Info(tag, "[schemaTable:%s][desiredColumns:%v][outputConstraint:%+v][maxSplit:%d][nextToken:%+v]", schemaTableName, desiredColumns, outputConstraint, maxSplitCount, nextToken)
 	// Create a new query and validate it
-	queries, err := parseThriftDomain(outputConstraint)
+	queries, err := parseThriftDomain(outputConstraint, s.storageCfg.KeyColumn)
 	if err != nil {
 		s.monitor.Count1(ctxTag, errTag, "tag:parse_domain")
 		return nil, err
@@ -162,11 +162,11 @@ func (s *Server) PrestoListTables(schemaNameOrNull *presto.PrestoThriftNullableS
 func (s *Server) Append(payload []byte) error {
 	const tag = "Append"
 	const chunks = 25000
-	const column = "event"
 	defer s.monitor.Duration(ctxTag, funcTag, time.Now(), "func:"+tag)
+	keyColumn := s.storageCfg.KeyColumn
 
 	// Split the incoming payload in chunks of 10K rows
-	schema, err := orc.SplitByColumn(payload, column, func(event string, columnChunk []byte) bool {
+	schema, err := orc.SplitByColumn(payload, keyColumn, func(keyColumnValue string, columnChunk []byte) bool {
 		_, splitErr := orc.SplitBySize(columnChunk, chunks, func(chunk []byte) bool {
 
 			// Get the first event and tsi from the sub-file
@@ -195,7 +195,7 @@ func (s *Server) Append(payload []byte) error {
 
 			// Append this block to the store
 			_ = s.store.Append(
-				newKey(event, time.Unix(0, tsi)),
+				newKey(keyColumnValue, time.Unix(0, tsi)),
 				buffer,
 				time.Second*time.Duration(s.storageCfg.TTLInSec),
 			)

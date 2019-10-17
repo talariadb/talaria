@@ -6,8 +6,10 @@ package orc
 import (
 	"bytes"
 	"errors"
+	"fmt"
 	"io"
 	"reflect"
+	"strconv"
 
 	"github.com/scritchley/orc"
 )
@@ -162,7 +164,7 @@ func (i *iterator) SplitByColumn(column string, f func(string, []byte) bool) (er
 	// We range over each row in the file and re-write it to smaller chunks
 	prevValue := ""
 	i.Range(func(_ int, v []interface{}) bool {
-		thisValue, ok := v[colIdx].(string)
+		thisValue, ok := convertToString(v[colIdx])
 		if !ok {
 			return true
 		}
@@ -190,6 +192,19 @@ func (i *iterator) SplitByColumn(column string, f func(string, []byte) bool) (er
 	return
 }
 
+// convertToString converst value to string because currently all the keys in Badger are stored in the form of string before hashing to the byte array
+func convertToString(value interface{}) (string, bool) {
+	v, ok := value.(string)
+	if ok {
+		return v, true
+	}
+	valueInt, ok := value.(int64)
+	if ok {
+		return strconv.FormatInt(valueInt, 10), true
+	}
+	return "", false
+}
+
 // Helper function for flushing
 func flushToByColumn(writer *orc.Writer, chunk *bytes.Buffer, f func(string, []byte) bool, columnValue string) bool {
 	if err := writer.Close(); err != nil {
@@ -213,6 +228,8 @@ func newWriter(schema *orc.TypeDescription) (*orc.Writer, *bytes.Buffer) {
 	chunk := new(bytes.Buffer)
 	w, err := orc.NewWriter(chunk, orc.SetSchema(schema))
 	if err != nil {
+		// TODO: change to injectetd monitor
+		fmt.Println("cannot create new writer", err)
 		return nil, nil
 	}
 
