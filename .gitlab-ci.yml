@@ -3,60 +3,69 @@ image:
   entrypoint:
     - '/usr/bin/env'
     - 'PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin'
+variables:
+  GO111MODULE: 'on'
+  GOOS: 'linux'
+  GOARCH: 'amd64'
 
 stages:
-  - go_binary
-  - docker_image
+  - build_binary
+  - build_docker
 
-build_go_binary:
-    stage: go_binary
+# This builds and tests the binary prior to building an image.
+build_binary:
+    stage: build_binary
     image: golang:1.12.1
     before_script:
-      # Create a symbolic link under $GOPATH, this is needed for local build 
-      # i.e. /go/src/gitlab.com/ykyuen/gitlab-ci-go-build
       - cd $GOPATH/src
       - mkdir -p github.com/grab
       - cd github.com/grab
       - ln -s $CI_PROJECT_DIR
       - cd $CI_PROJECT_NAME
     script:
-      - go mod tidy
       - go test ./...
-      - env GOOS=linux GOARCH=amd64 go build -v main.go
+      - go build .
     artifacts:
+      untracked: true
       paths:
-        - main
+        - talaria
     only:
       refs:
         - merge_requests
 
-build_docker_image:
-  stage: docker_image
+# This builds a docker for the merge request. The docker image can be fetched under 'talariadb/db:testing' tag.
+build_docker_mr:
+  stage: build_docker
   image: docker:stable
+  dependencies: 
+    - build_binary
   services:
     - docker:dind
-  before_script:
-    - apk add openssh-client
-    - apk add gnupg
-    - apk add jq
-    - apk add python3
-    - apk add py-pip
-    - apk add git
-    - pip install awscli
-    - git config --global url."https://gitlab-ci-token:${CI_JOB_TOKEN}@gitlab.myteksi.net".insteadOf 'ssh://git@gitlab.myteksi.net'
-    - ssh-agent > /tmp/ssh-agent.rc
-    - source /tmp/ssh-agent.rc
-    - gpg2 --version
-    - export AWS_ACCESS_KEY_ID="$AWS_ACCESS_KEY_ID"
-    - export AWS_SECRET_ACCESS_KEY="$AWS_SECRET_ACCESS_KEY"
-    - export AWS_DEFAULT_REGION="ap-southeast-1"
   tags:
     - docker
   script:
-    - docker build . --build-arg GO_BINARY=main  -t="talariadb/db:$CI_MERGE_REQUEST_IID" -t="talariadb/db:latest"
+    - docker build . --build-arg GO_BINARY=talaria -t="talariadb/db:testing"
     - docker login --username="$DOCKER_USERNAME" --password="$DOCKER_PASSWORD"
-    - docker push talariadb/db:$CI_MERGE_REQUEST_IID
-    - docker push talariadb/db:latest
+    - docker push talariadb/db:testing
   only:
     refs:
       - merge_requests
+
+# This builds the final docker image that can be deployed. It creates 'talariadb/db:latest' and 'talariadb/db:$COMMIT' tags.
+build_docker:
+  stage: build_docker
+  image: docker:stable
+  dependencies: 
+    - build_binary
+  services:
+    - docker:dind
+  tags:
+    - docker
+  script:
+    - docker build . --build-arg GO_BINARY=talaria  -t="talariadb/db:$CI_COMMIT_SHORT_SHA" -t="talariadb/db:latest"
+    - docker login --username="$DOCKER_USERNAME" --password="$DOCKER_PASSWORD"
+    - docker push talariadb/db:$CI_COMMIT_SHORT_SHA
+    - docker push talariadb/db:latest
+  only:
+    refs:
+      - master

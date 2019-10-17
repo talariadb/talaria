@@ -15,22 +15,23 @@ import (
 )
 
 // Opens a new disk storage and runs a a test on it.
-func runTest(test func(store *Storage)) {
+func runTest(t *testing.T, test func(store *Storage)) {
+	assert.NotPanics(t, func() {
+		// Prepare a store
+		dir, _ := ioutil.TempDir("", "test")
+		store := New(monitor.NewNoop())
+		_ = store.Open(dir)
 
-	// Prepare a store
-	dir, _ := ioutil.TempDir("", "test")
-	store := New(monitor.NewNoop())
-	_ = store.Open(dir)
+		// Close once we're done and delete data
+		defer func() { _ = os.RemoveAll(dir) }()
+		defer func() { _ = store.Close() }()
 
-	// Close once we're done and delete data
-	defer func() { _ = os.RemoveAll(dir) }()
-	defer func() { _ = store.Close() }()
-
-	test(store)
+		test(store)
+	})
 }
 
 func TestGC(t *testing.T) {
-	runTest(func(store *Storage) {
+	runTest(t, func(store *Storage) {
 		assert.NotPanics(t, func() {
 			store.GC(context.Background())
 		})
@@ -38,7 +39,7 @@ func TestGC(t *testing.T) {
 }
 
 func TestRange(t *testing.T) {
-	runTest(func(store *Storage) {
+	runTest(t, func(store *Storage) {
 
 		// Insert out of order
 		_ = store.Append(b("1"), b("A"), 60*time.Second)
@@ -64,7 +65,7 @@ func TestRange(t *testing.T) {
 }
 
 func TestRangeWithPrefetch(t *testing.T) {
-	runTest(func(store *Storage) {
+	runTest(t, func(store *Storage) {
 
 		// Insert out of order
 		_ = store.Append(b("1"), b("A"), 60*time.Second)

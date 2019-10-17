@@ -1,11 +1,13 @@
-FROM ubuntu:18.04
+FROM alpine:latest AS builder
+LABEL maintainer="roman.atachiants@grab.com"
 
-# GO_BINARY is passed to this dockerfile by Joel's CIv2 sauce
+RUN apk --no-cache add ca-certificates
+WORKDIR /grab/bin/talaria
+
+# copy the binary
 ARG GO_BINARY
+COPY "$GO_BINARY" .
 
-RUN mkdir -p /grab/bin \
-    && apt-get update \
-    && DEBIAN_FRONTEND=noninteractive apt-get install --no-install-recommends -y --force-yes ca-certificates
-COPY "$GO_BINARY" /grab/bin/talaria
-ENTRYPOINT /grab/bin/talaria
+# Expose the port and start the service
 EXPOSE 8027
+CMD ["./talaria"]

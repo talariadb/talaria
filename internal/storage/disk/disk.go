@@ -7,7 +7,9 @@ import (
 	"bytes"
 	"context"
 	"io"
+	"log"
 	"os"
+	"runtime/debug"
 	"time"
 
 	"github.com/dgraph-io/badger"
@@ -133,7 +135,10 @@ func (s *Storage) fetch(key []byte, item *badger.Item) ([]byte, bool) {
 
 // Prefetch attempts to prefetch a set of values
 func (s *Storage) prefetch(seek, until []byte) {
-	const breakout = cacheSize / 2 // The number of elements to prefetch at most
+	defer handlePanic()
+
+	// The number of elements to prefetch at most
+	const breakout = cacheSize / 2
 	_ = s.db.View(func(tx *badger.Txn) error {
 		it := tx.NewIterator(badger.IteratorOptions{
 			PrefetchValues: false,
@@ -215,4 +220,11 @@ func (s *Storage) Close() error {
 		s.gc.Cancel()
 	}
 	return s.db.Close()
+}
+
+// handlePanic handles the panic and logs it out.
+func handlePanic() {
+	if r := recover(); r != nil {
+		log.Printf("panic recovered: %ss \n %s", r, debug.Stack())
+	}
 }
