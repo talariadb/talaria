@@ -12,7 +12,7 @@ build_go_binary:
     stage: go_binary
     image: golang:1.12.1
     before_script:
-      # Create a symbolic link under $GOPATH, this is needed for local build
+      # Create a symbolic link under $GOPATH, this is needed for local build 
       # i.e. /go/src/gitlab.com/ykyuen/gitlab-ci-go-build
       - cd $GOPATH/src
       - mkdir -p github.com/grab
@@ -20,6 +20,8 @@ build_go_binary:
       - ln -s $CI_PROJECT_DIR
       - cd $CI_PROJECT_NAME
     script:
+      - go mod tidy
+      - go test ./...
       - env GOOS=linux GOARCH=amd64 go build -v main.go
     artifacts:
       paths:
@@ -51,9 +53,10 @@ build_docker_image:
   tags:
     - docker
   script:
-    - docker build . --build-arg GO_BINARY=main  -t="grabtalaria/talaria:$CI_MERGE_REQUEST_IID-$CI_COMMIT_SHA" -t="grabtalaria/talaria:latest"
+    - docker build . --build-arg GO_BINARY=main  -t="talariadb/db:$CI_MERGE_REQUEST_IID" -t="talariadb/db:latest"
     - docker login --username="$DOCKER_USERNAME" --password="$DOCKER_PASSWORD"
-    - docker push grabtalaria/talaria:$CI_MERGE_REQUEST_IID-$CI_COMMIT_SHA
+    - docker push talariadb/db:$CI_MERGE_REQUEST_IID
+    - docker push talariadb/db:latest
   only:
     refs:
       - merge_requests
