@@ -1,6 +1,7 @@
 FROM alpine:latest AS builder
 LABEL maintainer="roman.atachiants@grab.com"
 
+# add modules
 RUN apk --no-cache add ca-certificates gcompat libc6-compat
 WORKDIR /root/  
 

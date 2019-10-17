@@ -80,7 +80,7 @@ func decodeQuery(id *presto.PrestoThriftId, token *presto.PrestoThriftNullableTo
 }
 
 // parseThriftDomain creates a set of queries from the presto constraint
-func parseThriftDomain(req *presto.PrestoThriftTupleDomain, keyColumn string) ([]query, error) {
+func parseThriftDomain(req *presto.PrestoThriftTupleDomain, keyColumn, timeColumn string) ([]query, error) {
 	if req.Domains == nil {
 		return nil, fmt.Errorf("your query must contain '%s' constraint", keyColumn)
 	}
@@ -94,7 +94,7 @@ func parseThriftDomain(req *presto.PrestoThriftTupleDomain, keyColumn string) ([
 	// Get time bounds
 	from := time.Unix(0, 0)
 	until := time.Unix(math.MaxInt64, 0)
-	if tsi, hasTsi := req.Domains["tsi"]; hasTsi && tsi.ValueSet != nil && tsi.ValueSet.RangeValueSet != nil {
+	if tsi, hasTsi := req.Domains[timeColumn]; hasTsi && tsi.ValueSet != nil && tsi.ValueSet.RangeValueSet != nil {
 		if len(keyColumnDomain.ValueSet.RangeValueSet.Ranges) == 1 {
 			if t0, t1, ok := tsi.ValueSet.RangeValueSet.Ranges[0].AsTimeRange(); ok {
 				println("time bound", t0.String(), " until ", t1.String())

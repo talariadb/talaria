@@ -36,7 +36,6 @@ export X_TALARIA_CONF=(path-to-this-repo)/config-ci.json
 go run (path-to-this-repo)/main.go
 ```
 
-
 ## About Us
 TalariaDB is maintained by:
 * [Roman Atachiants](https://www.linkedin.com/in/atachiants/)
