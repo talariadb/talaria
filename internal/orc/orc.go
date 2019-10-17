@@ -293,6 +293,7 @@ func (i *iterator) Close() error {
 // List of supported types
 var supported = map[string]orc.Category{
 	"LONG":    orc.CategoryLong,
+	"INT":     orc.CategoryLong,
 	"STRING":  orc.CategoryVarchar,
 	"VARCHAR": orc.CategoryVarchar,
 	"DOUBLE":  orc.CategoryDouble,
@@ -300,6 +301,8 @@ var supported = map[string]orc.Category{
 
 func convert(kind string) (reflect.Type, bool) {
 	switch kind {
+	case "INT":
+		return reflect.TypeOf(int64(0)), true
 	case "LONG":
 		return reflect.TypeOf(int64(0)), true
 	case "DOUBLE":

@@ -92,8 +92,9 @@ func (s *Server) PrestoGetSplits(schemaTableName *presto.PrestoThriftSchemaTable
 	defer s.monitor.Duration(ctxTag, funcTag, time.Now(), "func:"+tag)
 
 	s.monitor.Info(tag, "[schemaTable:%s][desiredColumns:%v][outputConstraint:%+v][maxSplit:%d][nextToken:%+v]", schemaTableName, desiredColumns, outputConstraint, maxSplitCount, nextToken)
+
 	// Create a new query and validate it
-	queries, err := parseThriftDomain(outputConstraint, s.storageCfg.KeyColumn)
+	queries, err := parseThriftDomain(outputConstraint, s.storageCfg.KeyColumn, s.storageCfg.TimeColumn)
 	if err != nil {
 		s.monitor.Count1(ctxTag, errTag, "tag:parse_domain")
 		return nil, err
@@ -162,15 +163,15 @@ func (s *Server) PrestoListTables(schemaNameOrNull *presto.PrestoThriftNullableS
 func (s *Server) Append(payload []byte) error {
 	const tag = "Append"
 	const chunks = 25000
-	defer s.monitor.Duration(ctxTag, funcTag, time.Now(), "func:"+tag)
-	keyColumn := s.storageCfg.KeyColumn
+	keyColumn, timeColumn := s.storageCfg.KeyColumn, s.storageCfg.TimeColumn
 
 	// Split the incoming payload in chunks of 10K rows
+	defer s.monitor.Duration(ctxTag, funcTag, time.Now(), "func:"+tag)
 	schema, err := orc.SplitByColumn(payload, keyColumn, func(keyColumnValue string, columnChunk []byte) bool {
 		_, splitErr := orc.SplitBySize(columnChunk, chunks, func(chunk []byte) bool {
 
 			// Get the first event and tsi from the sub-file
-			v, err := orc.First(chunk, "tsi")
+			v, err := orc.First(chunk, timeColumn)
 			if err != nil {
 				return true
 			}

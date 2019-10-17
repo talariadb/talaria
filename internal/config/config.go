@@ -58,29 +58,36 @@ type PrestoConfig struct {
 
 // StorageConfig represents the storage configuration
 type StorageConfig struct {
-	TTLInSec  int64  `json:"ttlInSec"`
-	KeyColumn string `json:"keyColumn"`
+	TTLInSec   int64  `json:"ttlInSec"`   // The ttl for the storage, defaults to 1 hour.
+	KeyColumn  string `json:"keyColumn"`  // The column to use as key (metric), defaults to 'event'.
+	TimeColumn string `json:"timeColumn"` // The column to use as time, defaults to 'tsi'.
 }
 
-// Load ...
+// Load loads the configuration
 func Load(envVar string) *Config {
-	cfg := &Config{}
-	LoadJSONEnvPathOrPanic(envVar, cfg)
-	return cfg
-}
 
-// LoadJSONEnvPathOrPanic calls LoadJSONEnvPath but panics on error
-func LoadJSONEnvPathOrPanic(envVar string, config interface{}) {
-	if err := LoadJSONEnvPath(envVar, config); err != nil {
+	// Default configuration
+	cfg := &Config{
+		Storage: &StorageConfig{
+			TTLInSec:   3600,
+			KeyColumn:  "event",
+			TimeColumn: "tsi",
+		},
+	}
+
+	// Load the configuration
+	if err := loadJSONEnvPath(envVar, cfg); err != nil {
 		panic(fmt.Errorf("failed to load config file with error %s", err))
 	}
+
+	return cfg
 }
 
 // LoadJSONEnvPath gets your config from the json file provided by env var,
 // and fills your struct with the option
-func LoadJSONEnvPath(envVar string, config interface{}) error {
+func loadJSONEnvPath(envVar string, config interface{}) error {
 	if config == nil {
-		return errors.New("Config object is empty")
+		return errors.New("configuration is empty")
 	}
 
 	filename := os.Getenv(envVar)
@@ -88,7 +95,7 @@ func LoadJSONEnvPath(envVar string, config interface{}) error {
 		return fmt.Errorf("Env var is empty: %s", envVar)
 	}
 	log.Printf("loading config from envVar %s, file = %s", envVar, filename)
-	return LoadJSONFile(filename, config)
+	return loadJSONFile(filename, config)
 }
 
 // Loader represents a configuration loader delegate
@@ -96,9 +103,9 @@ type loader func(string) ([]byte, error)
 
 // LoadJSONFile gets your config from the json file,
 // and fills your struct with the option
-func LoadJSONFile(filename string, config interface{}) error {
+func loadJSONFile(filename string, config interface{}) error {
 	if config == nil {
-		return errors.New("Config object is empty.")
+		return errors.New("configuration is empty")
 	}
 
 	// Default to loading from file, for safety

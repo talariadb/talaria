@@ -20,7 +20,7 @@ func TestBlock(t *testing.T) {
 	b, err := FromOrc(o)
 	assert.NoError(t, err)
 
-	const column = "_col1"
+	const column = "_col5"
 	result, err := b.Select(column)
 	assert.NoError(t, err)
 	assert.Equal(t, 1920800, len(result[column].VarcharData.Sizes))
