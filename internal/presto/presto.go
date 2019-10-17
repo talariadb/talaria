@@ -74,6 +74,8 @@ func NewColumn(t reflect.Type) (Column, bool) {
 	switch t.Name() {
 	case "string":
 		return new(PrestoThriftVarchar), true
+	case "int32":
+		return new(PrestoThriftInteger), true
 	case "int64":
 		return new(PrestoThriftBigint), true
 	case "float64":
@@ -98,6 +100,69 @@ func (b *PrestoThriftBlock) Size() int {
 	}
 
 	return 0
+}
+
+// ------------------------------------------------------------------------------------------------------------
+
+// Append adds a value to the block.
+func (b *PrestoThriftInteger) Append(v interface{}) int {
+	const size = 2 + 4
+	if v == nil {
+		b.Nulls = append(b.Nulls, true)
+		b.Ints = append(b.Ints, 0)
+		return size
+	}
+
+	switch v := v.(type) {
+	case int64:
+		b.Nulls = append(b.Nulls, false)
+		b.Ints = append(b.Ints, int32(v))
+	case int32:
+		b.Nulls = append(b.Nulls, false)
+		b.Ints = append(b.Ints, v)
+	default:
+		b.Nulls = append(b.Nulls, true)
+		b.Ints = append(b.Ints, 0)
+	}
+
+	return size
+}
+
+// AppendBlock appends an entire block
+func (b *PrestoThriftInteger) AppendBlock(blocks ...PrestoThriftBlock) {
+	count := b.Count()
+	for _, a := range blocks {
+		count += a.IntegerData.Count()
+	}
+
+	nulls := make([]bool, 0, count)
+	ints := make([]int32, 0, count)
+
+	b.Nulls = append(nulls, b.Nulls...)
+	b.Ints = append(ints, b.Ints...)
+
+	for _, a := range blocks {
+		b.Nulls = append(b.Nulls, a.IntegerData.Nulls...)
+		b.Ints = append(b.Ints, a.IntegerData.Ints...)
+	}
+}
+
+// AsBlock returns a block for the response.
+func (b *PrestoThriftInteger) AsBlock() *PrestoThriftBlock {
+	return &PrestoThriftBlock{
+		IntegerData: b,
+	}
+}
+
+// Size returns the size of the column, in bytes.
+func (b *PrestoThriftInteger) Size() int {
+	const size = 2 + 4
+	return size * b.Count()
+}
+
+// Count returns the number of elements in the block
+func (b *PrestoThriftInteger) Count() int {
+	return len(b.Nulls)
 }
 
 // ------------------------------------------------------------------------------------------------------------

@@ -21,9 +21,18 @@ func TestOrcRead(t *testing.T) {
 	assert.NoError(t, err)
 
 	schema := i.Schema()
-	kind, ok := schema[column]
-	assert.True(t, ok)
-	assert.Equal(t, "string", kind.Name())
+
+	{
+		kind, ok := schema[column]
+		assert.True(t, ok)
+		assert.Equal(t, "string", kind.Name())
+	}
+
+	{
+		kind, ok := schema["int1"]
+		assert.True(t, ok)
+		assert.Equal(t, "int32", kind.Name())
+	}
 
 	count := 0
 	i.Range(func(int, []interface{}) bool {

@@ -17,7 +17,7 @@ var (
 	errSchemaMismatch = errors.New("mismatch between internal schema and requested columns")
 )
 
-// Block represents a serializ
+// Block represents a serialized block
 type Block struct {
 	Size int64
 	Data map[string][]byte
@@ -211,7 +211,6 @@ func newValue(b *presto.PrestoThriftBlock) (v value) {
 		v.IntegerData.Ints = b.IntegerData.Ints
 		v.IntegerData.Nulls = b.IntegerData.Nulls
 	}
-
 	if b.BigintData != nil {
 		v.BigintData.Longs = b.BigintData.Longs
 		v.BigintData.Nulls = b.BigintData.Nulls

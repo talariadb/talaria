@@ -260,6 +260,78 @@ func TestAppend_Double(t *testing.T) {
 	}
 }
 
+func TestAppend_Int32(t *testing.T) {
+	tests := []struct {
+		desc      string
+		input     interface{}
+		output    *PrestoThriftInteger
+		outputRes int
+		size      int
+		count     int
+	}{
+		{
+			desc:  "int32 appended",
+			input: int32(321),
+			output: &PrestoThriftInteger{
+				Nulls: []bool{false, false},
+				Ints:  []int32{123, 321},
+			},
+			outputRes: 6,
+			size:      12,
+			count:     2,
+		},
+		{
+			desc:  "null value appended",
+			input: nil,
+			output: &PrestoThriftInteger{
+				Nulls: []bool{false, true},
+				Ints:  []int32{123, 0},
+			},
+			outputRes: 6,
+			size:      12,
+			count:     2,
+		},
+		{
+			desc: "block appended",
+			input: PrestoThriftInteger{
+				Nulls: []bool{false},
+				Ints:  []int32{456},
+			},
+			output: &PrestoThriftInteger{
+				Nulls: []bool{false, false},
+				Ints:  []int32{123, 456},
+			},
+			size:  12,
+			count: 2,
+		},
+	}
+
+	for _, td := range tests {
+		output := &PrestoThriftInteger{
+			Nulls: []bool{false},
+			Ints:  []int32{123},
+		}
+
+		if array, ok := td.input.(PrestoThriftInteger); ok {
+			t.Run(td.desc, func(*testing.T) {
+				output.AppendBlock(*array.AsBlock())
+				assert.Equal(t, td.count, output.Count(), td.desc)
+			})
+			continue
+		}
+
+		// Append a single value
+		t.Run(td.desc, func(*testing.T) {
+			res := output.Append(td.input)
+			assert.Equal(t, td.outputRes, res, td.desc)
+			assert.Equal(t, td.output, output, td.desc)
+			assert.Equal(t, td.size, output.Size(), td.desc)
+			assert.Equal(t, td.count, output.Count(), td.desc)
+			assert.NotNil(t, output.AsBlock().IntegerData)
+		})
+	}
+}
+
 func Test_toTime(t *testing.T) {
 	tests := []struct {
 		input  int64
