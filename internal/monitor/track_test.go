@@ -19,10 +19,10 @@ func TestTrackDiskSpace(t *testing.T) {
 		panic(err)
 	}
 
-	client := New(logging.NewStdOut(), statsd.NewNoop(), "test")
+	client := New(logging.NewStdOut(), statsd.NewNoop(), "test", "stg")
 	m := client.(*clientImpl)
 	m.du = du.NewDiskUsage(wd)
-	m.tags = []string{"host:1.1.1.2", "env:test", "pid:30"}
+	m.tags = []string{"host:1.1.1.2", "pid:30"}
 	task := m.TrackDiskSpace()
 	assert.NotNil(t, task)
 }

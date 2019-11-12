@@ -7,13 +7,14 @@ import (
 	"context"
 	"os"
 	"os/signal"
+	"strconv"
 	"syscall"
 
+	"github.com/DataDog/datadog-go/statsd"
 	"github.com/grab/talaria/internal/cluster"
 	"github.com/grab/talaria/internal/config"
 	"github.com/grab/talaria/internal/monitor"
 	"github.com/grab/talaria/internal/monitor/logging"
-	"github.com/grab/talaria/internal/monitor/statsd"
 	"github.com/grab/talaria/internal/server"
 	"github.com/grab/talaria/internal/storage/disk"
 	"github.com/grab/talaria/internal/storage/ingest"
@@ -26,16 +27,19 @@ const (
 )
 
 func main() {
-	cfg := config.Load("X_TALARIA_CONF")
+	cfg := config.Load("TALARIA_CONF")
 
 	// Setup gossip
 	gossip := cluster.New(7946)
 	logger := logging.NewStdOut()
 
 	// StatsD
-	s := statsd.NewNoop()
+	s, err := statsd.New(cfg.Statsd.Host + ":" + strconv.FormatInt(cfg.Statsd.Port, 10))
+	if err != nil {
+		panic(err)
+	}
 
-	monitor := monitor.New(logger, s, "x.talaria")
+	monitor := monitor.New(logger, s, "talaria", cfg.Env)
 
 	monitor.Count1("system", "event", "type:start")
 	defer monitor.Count1("system", "event", "type:stop")
@@ -46,7 +50,7 @@ func main() {
 	// Start the server and open the database
 	store := disk.New(monitor)
 	server := server.New(cfg.Port, gossip, store, cfg.Presto, cfg.Storage, monitor)
-	err := store.Open(cfg.DataDir)
+	err = store.Open(cfg.DataDir)
 	if err != nil {
 		panic(err)
 	}

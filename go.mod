@@ -4,6 +4,7 @@ go 1.13
 
 require (
 	github.com/AndreasBriese/bbloom v0.0.0-20190825152654-46b345b51c96 // indirect
+	github.com/DataDog/datadog-go v2.2.0+incompatible
 	github.com/armon/go-metrics v0.0.0-20190430140413-ec5e00d3c878 // indirect
 	github.com/aws/aws-sdk-go v1.25.14
 	github.com/dgraph-io/badger v1.6.0

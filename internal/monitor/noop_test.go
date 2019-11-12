@@ -24,7 +24,6 @@ func TestNoop(t *testing.T) {
 		c.Gauge(testTag, testKey, 1)
 		c.Count1(testTag, testKey)
 		c.Count(testTag, testKey, 1)
-		c.MakeSafe("")
 		c.Debug(testTag, testMsg)
 		c.Info(testTag, testMsg)
 		c.WarnWithStats(testTag, errType, testMsg)

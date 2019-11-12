@@ -43,11 +43,6 @@ func (c *noopClient) Count1(contextTag, key string, tags ...string) {}
 // Count increases or Decrease the value of something over time
 func (c *noopClient) Count(contextTag, key string, amount int64, tags ...string) {}
 
-// MakeSafe makes a value safe for sending to StatsD
-func (c *noopClient) MakeSafe(in string) string {
-	return ""
-}
-
 // Debug ...
 func (c *noopClient) Debug(tag, message string, args ...interface{}) {}
 

@@ -30,10 +30,12 @@ type Config struct {
 	Hostname  string         `json:"hostname"`
 	DataDir   string         `json:"dataDir"`
 	AwsRegion string         `json:"awsRegion"`
+	Env       string         `json:"env"`
 	Sqs       *SQSConfig     `json:"sqs"`
 	Route     *RouteConfig   `json:"route"`
 	Presto    *PrestoConfig  `json:"presto"`
 	Storage   *StorageConfig `json:"storage"`
+	Statsd    *StatsD        `json:"statsd"`
 }
 
 // SQSConfig represents the aws SQS configuration
@@ -61,6 +63,11 @@ type StorageConfig struct {
 	TTLInSec   int64  `json:"ttlInSec"`   // The ttl for the storage, defaults to 1 hour.
 	KeyColumn  string `json:"keyColumn"`  // The column to use as key (metric), defaults to 'event'.
 	TimeColumn string `json:"timeColumn"` // The column to use as time, defaults to 'tsi'.
+}
+
+type StatsD struct {
+	Host string `json:"host"`
+	Port int64  `json:"port"`
 }
 
 // Load loads the configuration

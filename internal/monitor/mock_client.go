@@ -137,20 +137,6 @@ func (_m *MockClient) Info(tag string, message string, args ...interface{}) {
 	_m.Called(_ca...)
 }
 
-// MakeSafe provides a mock function with given fields: in
-func (_m *MockClient) MakeSafe(in string) string {
-	ret := _m.Called(in)
-
-	var r0 string
-	if rf, ok := ret.Get(0).(func(string) string); ok {
-		r0 = rf(in)
-	} else {
-		r0 = ret.Get(0).(string)
-	}
-
-	return r0
-}
-
 // Security provides a mock function with given fields: tag, message, args
 func (_m *MockClient) Security(tag string, message string, args ...interface{}) {
 	var _ca []interface{}

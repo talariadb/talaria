@@ -7,7 +7,6 @@ import (
 	"os"
 
 	"github.com/grab/talaria/internal/monitor/logging"
-	"github.com/grab/talaria/internal/monitor/statsd"
 	"github.com/ricochet2200/go-disk-usage/du"
 )
 
@@ -27,13 +26,13 @@ type Client interface {
 // clientImpl monitors the system and hardware
 type clientImpl struct {
 	log   logging.Logger // The log client
-	stats statsd.Client
+	stats StatsdClient
 	tags  []string
 	du    *du.DiskUsage
 }
 
 // New ...
-func New(log logging.Logger, stats statsd.Client, appname string) Client {
+func New(log logging.Logger, stats StatsdClient, appname string, env string) Client {
 	wd, err := os.Getwd()
 	if err != nil {
 		panic(err)
@@ -44,7 +43,8 @@ func New(log logging.Logger, stats statsd.Client, appname string) Client {
 		stats: stats,
 		du:    du.NewDiskUsage(wd),
 		tags: []string{
-			"app:" + appname,
+			"app_name:" + appname,
+			"env:" + env,
 		},
 	}
 }
