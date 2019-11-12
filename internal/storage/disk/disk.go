@@ -69,6 +69,7 @@ func (s *Storage) Open(dir string) error {
 	opts.LevelOneSize = 1 << 16
 	opts.LevelSizeMultiplier = 3
 	opts.MaxLevels = 25
+	opts.Truncate = true
 
 	// Attempt to open the database
 	db, err := badger.Open(opts)
