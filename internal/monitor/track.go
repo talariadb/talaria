@@ -7,7 +7,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/grab/talaria/internal/async"
+	"github.com/grab/async"
 )
 
 const (
