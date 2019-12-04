@@ -34,7 +34,7 @@ func (m noopMembership) Members() []string {
 
 // BenchmarkQuery runs a benchmark for a main GetRows function for querying
 // To run it, go in the directory and do 'go test -benchmem -bench=. -benchtime=1s'
-// BenchmarkQuery/query-8         	  231387	      5009 ns/op	    1993 B/op	      45 allocs/op
+// BenchmarkQuery/query-8         	      44	  26204484 ns/op	180541305 B/op	   47378 allocs/op
 func BenchmarkQuery(b *testing.B) {
 	dir, err := ioutil.TempDir(".", "")
 	noerror(err)
@@ -85,7 +85,7 @@ func BenchmarkQuery(b *testing.B) {
 		TableName:  "eventlog",
 	}, &presto.PrestoThriftNullableColumnSet{
 		Columns: nil,
-	}, newSplitQuery("_col5"), 10000, nil)
+	}, newSplitQuery("Good"), 10000, nil)
 	noerror(err)
 
 	// Run the actual benchmark
