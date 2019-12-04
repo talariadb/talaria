@@ -1,7 +1,7 @@
 // Copyright 2019 Grabtaxi Holdings PTE LTE (GRAB), All rights reserved.
 // Use of this source code is governed by an MIT-style license that can be found in the LICENSE file
 
-package server
+package timeseries
 
 import (
 	"testing"
@@ -16,9 +16,9 @@ func TestSplitCodec(t *testing.T) {
 		q.Begin = []byte("ABC")
 
 		id := q.Encode()
-		assert.Equal(t, "{\"b\":\"QUJD\",\"u\":null}", string(id.Id))
+		assert.Equal(t, "{\"b\":\"QUJD\",\"u\":null}", string(id))
 
-		out, err := decodeQuery(id, new(presto.PrestoThriftNullableToken))
+		out, err := decodeQuery(id)
 		assert.NoError(t, err)
 		assert.Equal(t, []byte("ABC"), out.Begin)
 	})

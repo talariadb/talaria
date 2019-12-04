@@ -1,7 +1,7 @@
 // Copyright 2019 Grabtaxi Holdings PTE LTE (GRAB), All rights reserved.
 // Use of this source code is governed by an MIT-style license that can be found in the LICENSE file
 
-package server
+package timeseries
 
 import (
 	"encoding/binary"
@@ -9,7 +9,6 @@ import (
 	"errors"
 	"fmt"
 	"math"
-	"reflect"
 	"strconv"
 	"sync/atomic"
 	"time"
@@ -47,15 +46,13 @@ type query struct {
 }
 
 // Encode creates a split ID by encoding a query.
-func (q *query) Encode() *presto.PrestoThriftId {
+func (q *query) Encode() []byte {
 	b, err := json.Marshal(q)
 	if err != nil {
 		panic(err)
 	}
 
-	return &presto.PrestoThriftId{
-		Id: b,
-	}
+	return b
 }
 
 // NewQuery creates a new query
@@ -69,13 +66,9 @@ func newQuery(keyColumn string, from, until time.Time) query {
 }
 
 // decodeQuery unmarshals split ID back to a query.
-func decodeQuery(id *presto.PrestoThriftId, token *presto.PrestoThriftNullableToken) (out *query, err error) {
-	if token.Token != nil {
-		id = token.Token
-	}
-
+func decodeQuery(splitKey []byte) (out *query, err error) {
 	out = new(query)
-	err = json.Unmarshal(id.Id, out)
+	err = json.Unmarshal(splitKey, out)
 	return
 }
 
@@ -118,22 +111,4 @@ func parseThriftDomain(req *presto.PrestoThriftTupleDomain, keyColumn, timeColum
 	}
 
 	return queries, nil
-}
-
-// ------------------------------------------------------------------------------------------------------------
-
-// Converts reflect type to SQL type
-func toSQLType(t reflect.Type) string {
-	switch t.Name() {
-	case "string":
-		return "varchar"
-	case "int32":
-		return "int"
-	case "int64":
-		return "bigint"
-	case "float64":
-		return "double"
-	}
-
-	panic(fmt.Errorf("sql type for %v is not found, did you forget to add it", t.Name()))
 }

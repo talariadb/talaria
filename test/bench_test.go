@@ -8,12 +8,14 @@ import (
 	"io/ioutil"
 	"os"
 	"testing"
+	"time"
 
 	"github.com/grab/talaria/internal/config"
 	"github.com/grab/talaria/internal/monitor"
 	"github.com/grab/talaria/internal/presto"
 	"github.com/grab/talaria/internal/server"
 	"github.com/grab/talaria/internal/storage/disk"
+	"github.com/grab/talaria/internal/table/timeseries"
 )
 
 const testFile2 = "./test1-zlib.orc"
@@ -51,7 +53,14 @@ func BenchmarkQuery(b *testing.B) {
 	// Start the server and open the database
 	monitor := monitor.NewNoop()
 	store := disk.New(monitor)
-	server := server.New(cfg.Port, new(noopMembership), store, cfg.Presto, cfg.Storage, monitor)
+	eventlog := timeseries.New("eventlog",
+		cfg.Storage.KeyColumn,
+		cfg.Storage.TimeColumn,
+		time.Duration(cfg.Storage.TTLInSec)*time.Second,
+		store, new(noopMembership), monitor,
+	)
+
+	server := server.New(cfg.Port, cfg.Presto, monitor, eventlog)
 	noerror(store.Open(cfg.DataDir))
 	defer server.Close()
 

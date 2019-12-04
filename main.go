@@ -9,6 +9,7 @@ import (
 	"os/signal"
 	"strconv"
 	"syscall"
+	"time"
 
 	"github.com/DataDog/datadog-go/statsd"
 	"github.com/grab/talaria/internal/cluster"
@@ -20,6 +21,7 @@ import (
 	"github.com/grab/talaria/internal/storage/ingest"
 	"github.com/grab/talaria/internal/storage/s3"
 	"github.com/grab/talaria/internal/storage/sqs"
+	"github.com/grab/talaria/internal/table/timeseries"
 )
 
 const (
@@ -49,7 +51,14 @@ func main() {
 
 	// Start the server and open the database
 	store := disk.New(monitor)
-	server := server.New(cfg.Port, gossip, store, cfg.Presto, cfg.Storage, monitor)
+	eventlog := timeseries.New(cfg.Presto.Table,
+		cfg.Storage.KeyColumn,
+		cfg.Storage.TimeColumn,
+		time.Duration(cfg.Storage.TTLInSec)*time.Second,
+		store, gossip, monitor,
+	)
+
+	server := server.New(cfg.Port, cfg.Presto, monitor, eventlog)
 	err = store.Open(cfg.DataDir)
 	if err != nil {
 		panic(err)
