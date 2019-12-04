@@ -103,19 +103,21 @@ func (t *Table) GetSplits(desiredColumns []string, outputConstraint *presto.Pres
 
 // GetRows retrieves the data
 func (t *Table) GetRows(splitID []byte, columns []string, maxBytes int64) (result *table.PageResult, err error) {
+	result = &table.PageResult{
+		Columns: make([]presto.Column, 0, len(columns)),
+	}
 
 	// Create a set of appenders to use
-	var blocks []presto.Column
 	for _, c := range columns {
 		schema := t.getSchema()
 		if kind, hasType := schema[c]; hasType {
-			appender, ok := presto.NewColumn(kind)
+			column, ok := presto.NewColumn(kind)
 			if !ok {
 				t.monitor.ErrorWithStats(ctxTag, "schema_mismatch", "no such column")
 				return nil, errSchemaMismatch
 			}
 
-			blocks = append(blocks, appender)
+			result.Columns = append(result.Columns, column)
 		}
 	}
 
@@ -126,12 +128,9 @@ func (t *Table) GetRows(splitID []byte, columns []string, maxBytes int64) (resul
 		return nil, err
 	}
 
-	// Prepare the result response
-	result = new(table.PageResult)
-	frames := map[string]presto.Columns{}
-
 	// Range through the keys in our data store
 	bytesLeft := int(maxBytes)
+	frames := map[string]presto.Columns{}
 	if err = t.store.Range(query.Begin, query.Until, func(key, value []byte) bool {
 
 		// Read the data frame from the specified offset
@@ -158,10 +157,9 @@ func (t *Table) GetRows(splitID []byte, columns []string, maxBytes int64) (resul
 
 	// Merge columns together at once, reducing allocations
 	for i, columnName := range columns {
-		blocks[i].AppendBlock(frames[columnName]...)
+		result.Columns[i].AppendBlock(frames[columnName]...)
 	}
 
-	result.Columns = blocks
 	return
 }
 

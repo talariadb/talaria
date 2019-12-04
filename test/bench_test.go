@@ -34,7 +34,7 @@ func (m noopMembership) Members() []string {
 
 // BenchmarkQuery runs a benchmark for a main GetRows function for querying
 // To run it, go in the directory and do 'go test -benchmem -bench=. -benchtime=1s'
-// BenchmarkQuery/query-8         	  245552	      4769 ns/op	    1936 B/op	      45 allocs/op
+// BenchmarkQuery/query-8         	  231387	      5009 ns/op	    1993 B/op	      45 allocs/op
 func BenchmarkQuery(b *testing.B) {
 	dir, err := ioutil.TempDir(".", "")
 	noerror(err)
