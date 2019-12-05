@@ -112,9 +112,10 @@ func asBytes(s string) []byte {
 	return []byte(s)
 }
 
-// BenchmarkBlockRead/read-8         	   10071	    116459 ns/op	   12136 B/op	    1026 allocs/op
+// BenchmarkRange/range-8         	    9968	    117765 ns/op	   12142 B/op	    1026 allocs/op
+// BenchmarkRange/prefetch-8      	    8688	    136157 ns/op	   11805 B/op	     941 allocs/op
 func BenchmarkRange(b *testing.B) {
-	b.Run("read", func(b *testing.B) {
+	b.Run("range", func(b *testing.B) {
 		run(func(store *Storage) {
 			for i := 0; i < 1000; i++ {
 				key := asBytes(fmt.Sprintf("%d", i))
@@ -125,6 +126,31 @@ func BenchmarkRange(b *testing.B) {
 			b.ReportAllocs()
 			for n := 0; n < b.N; n++ {
 				store.Range(asBytes("300"), asBytes("600"), func(k, v []byte) bool {
+					return false
+				})
+			}
+		})
+	})
+
+	b.Run("prefetch", func(b *testing.B) {
+		run(func(store *Storage) {
+			for i := 0; i < 1000; i++ {
+				key := asBytes(fmt.Sprintf("%d", i))
+				store.Append(key, key, 60*time.Second)
+			}
+
+			b.ResetTimer()
+			b.ReportAllocs()
+			for n := 0; n < b.N; n++ {
+				store.Range(asBytes("300"), asBytes("600"), func(k, v []byte) bool {
+					return string(k) == "450"
+				})
+
+				b.StopTimer()
+				store.prefetch(asBytes("300"), asBytes("600"))
+				b.StartTimer()
+
+				store.Range(asBytes("450"), asBytes("600"), func(k, v []byte) bool {
 					return false
 				})
 			}
