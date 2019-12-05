@@ -35,6 +35,11 @@ func run(f func(store *Storage)) {
 	f(store)
 }
 
+func TestPrefixOf(t *testing.T) {
+	assert.Equal(t, []byte{0x33}, prefixOf(asBytes("3000"), asBytes("3999")))
+	assert.Equal(t, nil, prefixOf(asBytes("300"), asBytes("600")))
+}
+
 func TestGC(t *testing.T) {
 	runTest(t, func(store *Storage) {
 		assert.NotPanics(t, func() {
@@ -69,42 +74,37 @@ func TestRange(t *testing.T) {
 	})
 }
 
-func TestRangeWithPrefetch(t *testing.T) {
+func TestRange_Prefix(t *testing.T) {
 	runTest(t, func(store *Storage) {
+		populate(store)
 
-		// Insert out of order
-		_ = store.Append(asBytes("1"), asBytes("A"), 60*time.Second)
-		_ = store.Append(asBytes("3"), asBytes("C"), 60*time.Second)
-		_ = store.Append(asBytes("5"), asBytes("E"), 60*time.Second)
-		_ = store.Append(asBytes("4"), asBytes("D"), 60*time.Second)
-		_ = store.Append(asBytes("2"), asBytes("B"), 60*time.Second)
-		_ = store.Append(asBytes("6"), asBytes("F"), 60*time.Second)
+		// Iterate in order
+		count := 0
+		err := store.Range(asBytes("3000"), asBytes("3999"), func(k, v []byte) bool {
+			count++
+			return false
+		})
 
-		// Iterate and stop at some point
-		{
-			var values []string
-			err := store.Range(asBytes("1"), asBytes("5"), func(k, v []byte) bool {
-				values = append(values, string(v))
-				return string(k) == "3"
-			})
-			assert.NoError(t, err)
-			assert.EqualValues(t, []string{"A", "B", "C"}, values)
-		}
+		// Must be in order
+		assert.NoError(t, err)
+		assert.Equal(t, 1000, count)
+	})
+}
 
-		// Force prefetch so we wait
-		store.prefetch(asBytes("1"), asBytes("5"))
+func TestRange_NoPrefix(t *testing.T) {
+	runTest(t, func(store *Storage) {
+		populate(store)
 
-		// Second iteration should hit the prefetched values
-		{
-			var values []string
-			err := store.Range(asBytes("3"), asBytes("5"), func(k, v []byte) bool {
-				values = append(values, string(v))
-				return false
-			})
-			assert.NoError(t, err)
-			assert.EqualValues(t, []string{"C", "D", "E"}, values)
-		}
+		// Iterate in order
+		count := 0
+		err := store.Range(asBytes("3000"), asBytes("5999"), func(k, v []byte) bool {
+			count++
+			return false
+		})
 
+		// Must be in order
+		assert.NoError(t, err)
+		assert.Equal(t, 3000, count)
 	})
 }
 
@@ -112,48 +112,45 @@ func asBytes(s string) []byte {
 	return []byte(s)
 }
 
-// BenchmarkRange/range-8         	   12032	     96399 ns/op	    4089 B/op	     361 allocs/op
-// BenchmarkRange/prefetch-8      	   10071	    119081 ns/op	    5075 B/op	     538 allocs/op
+// BenchmarkRange/single-pass-8         	    4556	    259184 ns/op	   12726 B/op	    1079 allocs/op
+// BenchmarkRange/two-pass-8            	    4476	    262250 ns/op	   14395 B/op	    1119 allocs/op
 func BenchmarkRange(b *testing.B) {
-	b.Run("range", func(b *testing.B) {
+	b.Run("single-pass", func(b *testing.B) {
 		run(func(store *Storage) {
-			for i := 0; i < 1000; i++ {
-				key := asBytes(fmt.Sprintf("%d", i))
-				store.Append(key, key, 60*time.Second)
-			}
+			populate(store)
 
 			b.ResetTimer()
 			b.ReportAllocs()
 			for n := 0; n < b.N; n++ {
-				store.Range(asBytes("300"), asBytes("600"), func(k, v []byte) bool {
+				store.Range(asBytes("3000"), asBytes("3999"), func(k, v []byte) bool {
 					return false
 				})
 			}
 		})
 	})
 
-	b.Run("prefetch", func(b *testing.B) {
+	b.Run("two-pass", func(b *testing.B) {
 		run(func(store *Storage) {
-			for i := 0; i < 1000; i++ {
-				key := asBytes(fmt.Sprintf("%d", i))
-				store.Append(key, key, 60*time.Second)
-			}
+			populate(store)
 
 			b.ResetTimer()
 			b.ReportAllocs()
 			for n := 0; n < b.N; n++ {
-				store.Range(asBytes("300"), asBytes("600"), func(k, v []byte) bool {
-					return string(k) == "450"
+				store.Range(asBytes("3000"), asBytes("3999"), func(k, v []byte) bool {
+					return string(k) == "3500"
 				})
 
-				b.StopTimer()
-				store.prefetch(asBytes("300"), asBytes("600"))
-				b.StartTimer()
-
-				store.Range(asBytes("450"), asBytes("600"), func(k, v []byte) bool {
+				store.Range(asBytes("3500"), asBytes("3999"), func(k, v []byte) bool {
 					return false
 				})
 			}
 		})
 	})
+}
+
+func populate(store *Storage) {
+	for i := 1000; i < 10000; i++ {
+		key := asBytes(fmt.Sprintf("%d", i))
+		store.Append(key, key, 60*time.Second)
+	}
 }

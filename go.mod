@@ -5,10 +5,10 @@ go 1.13
 require (
 	github.com/AndreasBriese/bbloom v0.0.0-20190825152654-46b345b51c96 // indirect
 	github.com/DataDog/datadog-go v2.2.0+incompatible
-	github.com/allegro/bigcache/v2 v2.1.4
 	github.com/armon/go-metrics v0.0.0-20190430140413-ec5e00d3c878 // indirect
 	github.com/aws/aws-sdk-go v1.25.14
 	github.com/dgraph-io/badger v1.6.0
+	github.com/dgryski/go-farm v0.0.0-20191112170834-c2139c5d712b // indirect
 	github.com/emitter-io/address v1.0.0
 	github.com/golang/protobuf v1.3.2 // indirect
 	github.com/golang/snappy v0.0.1 // indirect
@@ -29,8 +29,8 @@ require (
 	github.com/stretchr/objx v0.2.0 // indirect
 	github.com/stretchr/testify v1.4.0
 	golang.org/x/crypto v0.0.0-20191011191535-87dc89f01550 // indirect
-	golang.org/x/net v0.0.0-20191014212845-da9a3fd4c582 // indirect
+	golang.org/x/net v0.0.0-20191204025024-5ee1b9f4859a // indirect
 	golang.org/x/sync v0.0.0-20190911185100-cd5d95a43a6e
-	golang.org/x/sys v0.0.0-20191010194322-b09406accb47 // indirect
+	golang.org/x/sys v0.0.0-20191204072324-ce4227a45e2e // indirect
 	gopkg.in/yaml.v2 v2.2.4 // indirect
 )

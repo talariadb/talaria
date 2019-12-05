@@ -37,7 +37,6 @@ var _ contract = new(Storage)
 type Storage struct {
 	gc      async.Task     // Closing channel
 	db      *badger.DB     // The underlying key-value store
-	lru     *cache         // The LRU cache to use
 	monitor monitor.Client // The stats client
 }
 
@@ -80,7 +79,6 @@ func (s *Storage) Open(dir string) error {
 
 	// Setup the database and start GC
 	s.db = db
-	s.lru = newCache()
 	s.gc = async.Repeat(context.Background(), 1*time.Minute, s.GC)
 	return nil
 }
@@ -103,6 +101,7 @@ func (s *Storage) Range(seek, until []byte, f func(key, value []byte) bool) erro
 	return s.db.View(func(tx *badger.Txn) error {
 		it := tx.NewIterator(badger.IteratorOptions{
 			PrefetchValues: false,
+			Prefix:         prefixOf(seek, until),
 		})
 		defer it.Close()
 
@@ -114,9 +113,8 @@ func (s *Storage) Range(seek, until []byte, f func(key, value []byte) bool) erro
 				return nil // Stop if we're reached the end
 			}
 
-			// Fetch the value from cache or badger
+			// Fetch the value
 			if value, ok := s.fetch(key, item); ok && f(key, value) {
-				go s.prefetch(key, until) // Prefetch the rest
 				return nil
 			}
 		}
@@ -126,49 +124,9 @@ func (s *Storage) Range(seek, until []byte, f func(key, value []byte) bool) erro
 
 // load attempts to load an item from either cache or badger.
 func (s *Storage) fetch(key []byte, item *badger.Item) ([]byte, bool) {
-	if value, ok := s.lru.Get(key); ok {
-		return value, true
-	}
 
-	// Load from badger itself
 	value, err := item.ValueCopy(nil)
 	return value, err == nil
-}
-
-// Prefetch attempts to prefetch a set of values
-func (s *Storage) prefetch(seek, until []byte) {
-	defer handlePanic()
-
-	// The number of elements to prefetch at most
-	const breakout = maxCacheItems / 2
-	_ = s.db.View(func(tx *badger.Txn) error {
-		it := tx.NewIterator(badger.IteratorOptions{
-			PrefetchValues: false,
-		})
-		defer it.Close()
-
-		// Seek the prefix and check the key so we can quickly exit the iteration.
-		count := 0
-		for it.Seek(seek); it.Valid(); it.Next() {
-			item := it.Item()
-			key := item.Key()
-			if bytes.Compare(key, until) > 0 || count >= breakout {
-				return nil
-			}
-
-			// Skip keys we already have
-			count++
-			if s.lru.Contains(key) {
-				continue
-			}
-
-			// Prefetch
-			if value, ok := s.fetch(key, item); ok {
-				s.lru.Set(key, value)
-			}
-		}
-		return nil
-	})
 }
 
 // Purge clears out the data prior to GC, to avoid some old data being
@@ -229,4 +187,25 @@ func handlePanic() {
 	if r := recover(); r != nil {
 		log.Printf("panic recovered: %ss \n %s", r, debug.Stack())
 	}
+}
+
+// Computes a common prefix between two keys (common leading bytes) which is
+// then used as a prefix for Badger to narrow down SSTables to traverse.
+func prefixOf(seek, until []byte) []byte {
+	var prefix []byte
+
+	// Calculate the minimum length
+	length := len(seek)
+	if len(until) < length {
+		length = len(until)
+	}
+
+	// Iterate through the bytes and append common ones
+	for i := 0; i < length; i++ {
+		if seek[i] != until[i] {
+			break
+		}
+		prefix = append(prefix, seek[i])
+	}
+	return prefix
 }
