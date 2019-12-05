@@ -140,7 +140,7 @@ func (s *Storage) prefetch(seek, until []byte) {
 	defer handlePanic()
 
 	// The number of elements to prefetch at most
-	const breakout = cacheSize / 2
+	const breakout = maxCacheItems / 2
 	_ = s.db.View(func(tx *badger.Txn) error {
 		it := tx.NewIterator(badger.IteratorOptions{
 			PrefetchValues: false,

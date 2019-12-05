@@ -4,28 +4,40 @@
 package disk
 
 import (
-	"github.com/coocood/freecache"
+	"time"
+	"unsafe"
+
+	"github.com/allegro/bigcache/v2"
 )
 
 const (
-	cacheSize  = 1 << 31 // 2 GB of memory to be used max
-	defaultTTL = 180     // 5 minutes of TTL
+	maxCacheSize  = 1 << 31 // 2 GB of memory to be used max
+	maxEntrySize  = 1 << 24 // 16 MB per key max
+	maxCacheItems = maxCacheSize / maxEntrySize
 )
 
 type cache struct {
-	lru *freecache.Cache
+	lru *bigcache.BigCache
 }
 
 // NewCache creates a new cache
 func newCache() *cache {
+	config := bigcache.DefaultConfig(5 * time.Second)
+	config.Verbose = false
+	config.HardMaxCacheSize = 2024 // MB
+	c, err := bigcache.NewBigCache(config)
+	if err != nil {
+		panic(err)
+	}
+
 	return &cache{
-		lru: freecache.NewCache(cacheSize),
+		lru: c,
 	}
 }
 
 // Get gets a value from the cache
 func (c *cache) Get(key []byte) ([]byte, bool) {
-	v, err := c.lru.Get(key)
+	v, err := c.lru.Get(binaryToString(&key))
 	if err != nil || v == nil {
 		return nil, false
 	}
@@ -34,11 +46,15 @@ func (c *cache) Get(key []byte) ([]byte, bool) {
 
 // Set adds a key/value pair to the cache
 func (c *cache) Set(key, value []byte) {
-	c.lru.Set(key, value, defaultTTL)
+	c.lru.Set(string(key), value)
 }
 
 // Contains checks if a key is present in the cache
 func (c *cache) Contains(key []byte) bool {
 	_, contains := c.Get(key)
 	return contains
+}
+
+func binaryToString(b *[]byte) string {
+	return *(*string)(unsafe.Pointer(b))
 }

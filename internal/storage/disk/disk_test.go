@@ -112,8 +112,8 @@ func asBytes(s string) []byte {
 	return []byte(s)
 }
 
-// BenchmarkRange/range-8         	   12631	     93722 ns/op	    4072 B/op	     361 allocs/op
-// BenchmarkRange/prefetch-8      	   10994	    108943 ns/op	    3550 B/op	     385 allocs/op
+// BenchmarkRange/range-8         	   12032	     96399 ns/op	    4089 B/op	     361 allocs/op
+// BenchmarkRange/prefetch-8      	   10071	    119081 ns/op	    5075 B/op	     538 allocs/op
 func BenchmarkRange(b *testing.B) {
 	b.Run("range", func(b *testing.B) {
 		run(func(store *Storage) {

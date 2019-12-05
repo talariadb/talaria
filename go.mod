@@ -5,10 +5,9 @@ go 1.13
 require (
 	github.com/AndreasBriese/bbloom v0.0.0-20190825152654-46b345b51c96 // indirect
 	github.com/DataDog/datadog-go v2.2.0+incompatible
+	github.com/allegro/bigcache/v2 v2.1.4
 	github.com/armon/go-metrics v0.0.0-20190430140413-ec5e00d3c878 // indirect
 	github.com/aws/aws-sdk-go v1.25.14
-	github.com/cespare/xxhash v1.1.0 // indirect
-	github.com/coocood/freecache v1.1.0
 	github.com/dgraph-io/badger v1.6.0
 	github.com/emitter-io/address v1.0.0
 	github.com/golang/protobuf v1.3.2 // indirect
