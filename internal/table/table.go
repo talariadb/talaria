@@ -4,10 +4,16 @@
 package table
 
 import (
+	"errors"
 	"io"
 	"reflect"
 
 	"github.com/grab/talaria/internal/presto"
+)
+
+// Errors commonly occuring in tables
+var (
+	ErrSchemaMismatch = errors.New("mismatch between internal schema and requested columns")
 )
 
 // Table represents a table storage contract.

@@ -17,7 +17,7 @@ import (
 )
 
 const (
-	ctxTag  = "server"
+	ctxTag  = "timeseries"
 	errTag  = "error"
 	funcTag = "func"
 )
@@ -114,7 +114,7 @@ func (t *Table) GetRows(splitID []byte, columns []string, maxBytes int64) (resul
 			column, ok := presto.NewColumn(kind)
 			if !ok {
 				t.monitor.ErrorWithStats(ctxTag, "schema_mismatch", "no such column")
-				return nil, errSchemaMismatch
+				return nil, table.ErrSchemaMismatch
 			}
 
 			result.Columns = append(result.Columns, column)

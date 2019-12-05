@@ -17,8 +17,7 @@ import (
 )
 
 var (
-	errSchemaMismatch = errors.New("mismatch between internal schema and requested columns")
-	errInvalidDomain  = errors.New("your query must contain 'event' constraint")
+	errInvalidDomain = errors.New("your query must contain 'event' constraint")
 )
 
 // ------------------------------------------------------------------------------------------------------------

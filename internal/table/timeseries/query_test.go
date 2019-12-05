@@ -24,14 +24,17 @@ func TestSplitCodec(t *testing.T) {
 	})
 }
 
-func TestNewQuery(t *testing.T) {
-
+func TestParse(t *testing.T) {
+	domain := newSplitQuery("test")
+	queries, err := parseThriftDomain(domain, "_col5", "NA")
+	assert.NoError(t, err)
+	assert.Len(t, queries, 1)
 }
 
 func newSplitQuery(eventName string) *presto.PrestoThriftTupleDomain {
 	return &presto.PrestoThriftTupleDomain{
 		Domains: map[string]*presto.PrestoThriftDomain{
-			"event": {
+			"_col5": {
 				ValueSet: &presto.PrestoThriftValueSet{
 					RangeValueSet: &presto.PrestoThriftRangeValueSet{
 						Ranges: []*presto.PrestoThriftRange{{

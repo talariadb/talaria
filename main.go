@@ -21,6 +21,7 @@ import (
 	"github.com/grab/talaria/internal/storage/ingest"
 	"github.com/grab/talaria/internal/storage/s3"
 	"github.com/grab/talaria/internal/storage/sqs"
+	"github.com/grab/talaria/internal/table/nodes"
 	"github.com/grab/talaria/internal/table/timeseries"
 )
 
@@ -49,7 +50,7 @@ func main() {
 
 	startMonitor(monitor)
 
-	// Start the server and open the database
+	// Create the main eventlog table
 	store := disk.New(monitor)
 	eventlog := timeseries.New(cfg.Presto.Table,
 		cfg.Storage.KeyColumn,
@@ -58,7 +59,11 @@ func main() {
 		store, gossip, monitor,
 	)
 
-	server := server.New(cfg.Port, cfg.Presto, monitor, eventlog)
+	// Start the server and open the database
+	server := server.New(cfg.Port, cfg.Presto, monitor,
+		eventlog,          // The primary timeseries table
+		nodes.New(gossip), // Cluster membership info table
+	)
 	err = store.Open(cfg.DataDir)
 	if err != nil {
 		panic(err)
