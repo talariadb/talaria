@@ -7,6 +7,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"runtime/debug"
 	"time"
 
 	"github.com/grab/talaria/internal/config"
@@ -71,6 +72,7 @@ func (s *Server) PrestoGetIndexSplits(schemaTableName *presto.PrestoThriftSchema
 
 // PrestoGetSplits returns a batch of splits.
 func (s *Server) PrestoGetSplits(schemaTableName *presto.PrestoThriftSchemaTableName, desiredColumns *presto.PrestoThriftNullableColumnSet, outputConstraint *presto.PrestoThriftTupleDomain, maxSplitCount int32, nextToken *presto.PrestoThriftNullableToken) (*presto.PrestoThriftSplitBatch, error) {
+	defer s.handlePanic()
 	const tag = "PrestoGetSplits"
 	defer s.monitor.Duration(ctxTag, funcTag, time.Now(), "func:"+tag)
 
@@ -112,6 +114,7 @@ func (s *Server) PrestoGetSplits(schemaTableName *presto.PrestoThriftSchemaTable
 
 // PrestoGetTableMetadata returns metadata for a given table.
 func (s *Server) PrestoGetTableMetadata(schemaTableName *presto.PrestoThriftSchemaTableName) (*presto.PrestoThriftNullableTableMetadata, error) {
+	defer s.handlePanic()
 	const tag = "PrestoGetTableMetadata"
 	defer s.monitor.Duration(ctxTag, funcTag, time.Now(), "func:"+tag)
 
@@ -147,6 +150,7 @@ func (s *Server) PrestoGetTableMetadata(schemaTableName *presto.PrestoThriftSche
 
 // PrestoListSchemaNames returns available schema names.
 func (s *Server) PrestoListSchemaNames() ([]string, error) {
+	defer s.handlePanic()
 	const tag = "PrestoListSchemaNames"
 	defer s.monitor.Duration(ctxTag, funcTag, time.Now(), "func:"+tag)
 
@@ -155,6 +159,7 @@ func (s *Server) PrestoListSchemaNames() ([]string, error) {
 
 // PrestoListTables returns tables for the given schema name.
 func (s *Server) PrestoListTables(schemaNameOrNull *presto.PrestoThriftNullableSchemaName) ([]*presto.PrestoThriftSchemaTableName, error) {
+	defer s.handlePanic()
 	const tag = "PrestoListTables"
 	defer s.monitor.Duration(ctxTag, funcTag, time.Now(), "func:"+tag)
 
@@ -172,6 +177,7 @@ func (s *Server) PrestoListTables(schemaNameOrNull *presto.PrestoThriftNullableS
 // Append appends a set of events to the storage. It needs ingestion time and an event name to create
 // a key which will then be used for retrieval.
 func (s *Server) Append(payload []byte) error {
+	defer s.handlePanic()
 	for _, t := range s.tables {
 		if appender, ok := t.(table.Appender); ok {
 			if err := appender.Append(payload); err != nil {
@@ -236,4 +242,11 @@ func (s *Server) getTable(name string) (table.Table, error) {
 		return nil, fmt.Errorf("table %s not found", name)
 	}
 	return table, nil
+}
+
+// handlePanic handles the panic and logs it out.
+func (s *Server) handlePanic() {
+	if r := recover(); r != nil {
+		s.monitor.Errorf("panic recovered: %ss \n %s", r, debug.Stack())
+	}
 }
