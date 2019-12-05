@@ -24,6 +24,7 @@ var splitKey = []byte{0x00}
 // Membership represents a contract required for recovering cluster information.
 type Membership interface {
 	Members() []string
+	Addr() string
 }
 
 // Table represents a nodes table.
@@ -53,6 +54,7 @@ func (t *Table) Name() string {
 // Schema retrieves the metadata for the table
 func (t *Table) Schema() (map[string]reflect.Type, error) {
 	return map[string]reflect.Type{
+		"address": reflect.TypeOf(""),
 		"public":  reflect.TypeOf(""),
 		"private": reflect.TypeOf(""),
 		"started": reflect.TypeOf(int64(0)),
@@ -104,6 +106,8 @@ func (t *Table) getColumn(columnName string, columnType reflect.Type) (presto.Co
 	}
 
 	switch columnName {
+	case "address":
+		column.Append(t.cluster.Addr())
 	case "public":
 		column.Append(formatAddrs(address.GetPublic()))
 	case "private":

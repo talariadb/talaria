@@ -7,6 +7,7 @@ import (
 	"context"
 	"math/rand"
 	"net"
+	"strconv"
 	"strings"
 	"time"
 
@@ -21,11 +22,13 @@ const (
 // Membership represents a contract which returns a list of IP addresses.
 type Membership interface {
 	Members() []string
+	Addr() string
 }
 
 // Cluster represents a cluster management/discovery mechanism using gossip.
 type Cluster struct {
 	list *memberlist.Memberlist
+	addr string
 }
 
 // New creates a new gossip cluster.
@@ -41,6 +44,7 @@ func New(port int) *Cluster {
 
 	return &Cluster{
 		list: list,
+		addr: net.JoinHostPort(cfg.AdvertiseAddr, strconv.FormatInt(int64(cfg.AdvertisePort), 10)),
 	}
 }
 
@@ -50,6 +54,11 @@ func (c *Cluster) Members() (nodes []string) {
 		nodes = append(nodes, m.Addr.String())
 	}
 	return
+}
+
+// Addr returns the advertised address
+func (c *Cluster) Addr() string {
+	return c.addr
 }
 
 // Join attempts to join a cluster.

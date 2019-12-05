@@ -19,6 +19,7 @@ func TestClusterNew(t *testing.T) {
 
 		members := cluster.Members()
 		assert.NotEmpty(t, members)
+		assert.NotEmpty(t, cluster.Addr())
 
 	})
 }
