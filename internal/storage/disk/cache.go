@@ -4,46 +4,41 @@
 package disk
 
 import (
-	lru "github.com/hashicorp/golang-lru"
+	"github.com/coocood/freecache"
 )
 
 const (
-	maxMem    = 1 << 31 // 2 GB of memory to be used max
-	maxKey    = 1 << 24 // 16 MB per key max
-	cacheSize = maxMem / maxKey
+	cacheSize  = 1 << 31 // 2 GB of memory to be used max
+	defaultTTL = 180     // 5 minutes of TTL
 )
 
 type cache struct {
-	lru *lru.ARCCache
+	lru *freecache.Cache
 }
 
 // NewCache creates a new cache
 func newCache() *cache {
-	c, err := lru.NewARC(cacheSize)
-	if err != nil {
-		panic(err)
-	}
-
 	return &cache{
-		lru: c,
+		lru: freecache.NewCache(cacheSize),
 	}
 }
 
 // Get gets a value from the cache
 func (c *cache) Get(key []byte) ([]byte, bool) {
-	if v, ok := c.lru.Get(string(key)); ok {
-		return v.([]byte), true
+	v, err := c.lru.Get(key)
+	if err != nil || v == nil {
+		return nil, false
 	}
-	return nil, false
+	return v, true
 }
 
 // Set adds a key/value pair to the cache
 func (c *cache) Set(key, value []byte) {
-	c.lru.Add(string(key), value)
+	c.lru.Set(key, value, defaultTTL)
 }
 
 // Contains checks if a key is present in the cache
 func (c *cache) Contains(key []byte) bool {
-	isHit := c.lru.Contains(string(key))
-	return isHit
+	_, contains := c.Get(key)
+	return contains
 }

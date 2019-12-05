@@ -7,6 +7,8 @@ require (
 	github.com/DataDog/datadog-go v2.2.0+incompatible
 	github.com/armon/go-metrics v0.0.0-20190430140413-ec5e00d3c878 // indirect
 	github.com/aws/aws-sdk-go v1.25.14
+	github.com/cespare/xxhash v1.1.0 // indirect
+	github.com/coocood/freecache v1.1.0
 	github.com/dgraph-io/badger v1.6.0
 	github.com/emitter-io/address v1.0.0
 	github.com/golang/protobuf v1.3.2 // indirect
@@ -17,7 +19,7 @@ require (
 	github.com/hashicorp/go-immutable-radix v1.1.0 // indirect
 	github.com/hashicorp/go-msgpack v0.5.5 // indirect
 	github.com/hashicorp/go-sockaddr v1.0.2 // indirect
-	github.com/hashicorp/golang-lru v0.5.3
+	github.com/hashicorp/golang-lru v0.5.3 // indirect
 	github.com/hashicorp/memberlist v0.1.5
 	github.com/kelindar/binary v1.0.7
 	github.com/miekg/dns v1.1.22 // indirect
