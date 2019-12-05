@@ -124,7 +124,6 @@ func (s *Storage) Range(seek, until []byte, f func(key, value []byte) bool) erro
 
 // load attempts to load an item from either cache or badger.
 func (s *Storage) fetch(key []byte, item *badger.Item) ([]byte, bool) {
-
 	value, err := item.ValueCopy(nil)
 	return value, err == nil
 }

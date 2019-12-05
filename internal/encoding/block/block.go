@@ -4,9 +4,11 @@
 package block
 
 import (
+	"bytes"
 	"errors"
 	"sort"
 
+	"github.com/golang/snappy"
 	"github.com/grab/talaria/internal/encoding/orc"
 	"github.com/grab/talaria/internal/presto"
 	"github.com/kelindar/binary"
@@ -19,8 +21,9 @@ var (
 
 // Block represents a serialized block
 type Block struct {
-	Size int64
-	Data nocopy.ByteMap
+	Size    int64
+	Columns nocopy.ByteMap
+	Data    nocopy.Bytes
 }
 
 // FromBuffer unmarshals a block from a in-memory buffer.
@@ -61,7 +64,7 @@ func FromOrc(b []byte) (block *Block, err error) {
 
 	// Create a block
 	block = new(Block)
-	block.Data = make(map[string][]byte)
+	block.Columns = make(nocopy.ByteMap, len(blocks))
 	i.Range(func(i int, row []interface{}) bool {
 		for i, v := range row {
 			block.Size += int64(blocks[i].Append(v))
@@ -69,18 +72,43 @@ func FromOrc(b []byte) (block *Block, err error) {
 		return false
 	}, columns...)
 
-	for i, name := range columns {
+	// Prepare a buffer and an encoder for the data
+	var offset uint32
+	var buffer bytes.Buffer
+	buffer.Grow(int(block.Size / 10))
 
-		// Encode a column
-		buffer, err := binary.Marshal(newValue(blocks[i].AsBlock()))
+	for i, name := range columns {
+		b, err := binary.Marshal(newValue(blocks[i].AsBlock()))
 		if err != nil {
 			return nil, err
 		}
 
-		// Assign encoded column to the block
-		block.Data[name] = buffer
+		// Encoode and write
+		buffer.Write(snappy.Encode(nil, b))
+		size := uint32(buffer.Len() - int(offset))
+
+		// Write the metadata
+		meta := make([]byte, 8)
+		binary.BigEndian.PutUint32(meta[0:4], offset)
+		binary.BigEndian.PutUint32(meta[4:8], size)
+		block.Columns[name] = meta
+
+		// Increment the offset
+		offset += size
 	}
+
+	block.Data = nocopy.Bytes(buffer.Bytes())
 	return
+}
+
+// Read decodes the block and selects the columns
+func Read(buffer []byte, columns []string) (map[string]presto.PrestoThriftBlock, error) {
+	block, err := FromBuffer(buffer)
+	if err != nil {
+		return nil, err
+	}
+
+	return block.Select(columns)
 }
 
 // Encode encodes the block as bytes
@@ -89,15 +117,24 @@ func (b Block) Encode() ([]byte, error) {
 }
 
 // Select selects a set of thrift columns
-func (b *Block) Select(columns ...string) (map[string]presto.PrestoThriftBlock, error) {
-	response := make(map[string]presto.PrestoThriftBlock)
+func (b *Block) Select(columns []string) (map[string]presto.PrestoThriftBlock, error) {
+	response := make(map[string]presto.PrestoThriftBlock, len(columns))
+
 	for _, column := range columns {
-		if buffer, ok := b.Data[column]; ok {
+		if meta, ok := b.Columns[column]; ok {
+			offset := binary.BigEndian.Uint32(meta[0:4])
+			size := binary.BigEndian.Uint32(meta[4:8])
+
+			buffer, err := snappy.Decode(nil, b.Data[offset:offset+size])
+			if err != nil {
+				return nil, err
+			}
+
+			// Read the buffer at the offset
 			var value value
 			if err := binary.Unmarshal(buffer, &value); err != nil {
 				return nil, err
 			}
-
 			response[column] = value.asBlock()
 		}
 	}

@@ -9,10 +9,10 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/grab/talaria/internal/encoding/block"
 	"github.com/grab/talaria/internal/config"
-	"github.com/grab/talaria/internal/monitor"
+	"github.com/grab/talaria/internal/encoding/block"
 	"github.com/grab/talaria/internal/encoding/orc"
+	"github.com/grab/talaria/internal/monitor"
 	"github.com/grab/talaria/internal/presto"
 	"github.com/grab/talaria/internal/table"
 )
@@ -166,12 +166,7 @@ func (t *Table) GetRows(splitID []byte, columns []string, maxBytes int64) (resul
 
 // ReadDataFrame reads a column data frame and returns the set of columns requested.
 func (t *Table) readDataFrame(columns []string, buffer []byte, maxBytes int) (presto.Columns, error) {
-	blk, err := block.FromBuffer(buffer)
-	if err != nil {
-		return nil, err
-	}
-
-	res, err := blk.Select(columns...)
+	res, err := block.Read(buffer, columns)
 	if err != nil {
 		return nil, err
 	}

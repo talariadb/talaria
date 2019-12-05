@@ -11,7 +11,7 @@ require (
 	github.com/dgryski/go-farm v0.0.0-20191112170834-c2139c5d712b // indirect
 	github.com/emitter-io/address v1.0.0
 	github.com/golang/protobuf v1.3.2 // indirect
-	github.com/golang/snappy v0.0.1 // indirect
+	github.com/golang/snappy v0.0.1
 	github.com/google/btree v1.0.0 // indirect
 	github.com/grab/async v0.0.0-20191204032406-6dabcb163e38
 	github.com/hako/durafmt v0.0.0-20191009132224-3f39dc1ed9f4
