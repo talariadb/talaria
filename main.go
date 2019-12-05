@@ -11,11 +11,11 @@ import (
 	"syscall"
 
 	"github.com/DataDog/datadog-go/statsd"
-	"github.com/grab/talaria/internal/server/cluster"
 	"github.com/grab/talaria/internal/config"
 	"github.com/grab/talaria/internal/monitor"
 	"github.com/grab/talaria/internal/monitor/logging"
 	"github.com/grab/talaria/internal/server"
+	"github.com/grab/talaria/internal/server/cluster"
 	"github.com/grab/talaria/internal/storage/disk"
 	"github.com/grab/talaria/internal/storage/ingest"
 	"github.com/grab/talaria/internal/storage/s3"

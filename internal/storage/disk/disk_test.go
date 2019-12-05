@@ -5,6 +5,7 @@ package disk
 
 import (
 	"context"
+	"fmt"
 	"io/ioutil"
 	"os"
 	"testing"
@@ -17,17 +18,21 @@ import (
 // Opens a new disk storage and runs a a test on it.
 func runTest(t *testing.T, test func(store *Storage)) {
 	assert.NotPanics(t, func() {
-		// Prepare a store
-		dir, _ := ioutil.TempDir("", "test")
-		store := New(monitor.NewNoop())
-		_ = store.Open(dir)
-
-		// Close once we're done and delete data
-		defer func() { _ = os.RemoveAll(dir) }()
-		defer func() { _ = store.Close() }()
-
-		test(store)
+		run(test)
 	})
+}
+
+// Run runs a function on a temp store
+func run(f func(store *Storage)) {
+	dir, _ := ioutil.TempDir("", "test")
+	store := New(monitor.NewNoop())
+	_ = store.Open(dir)
+
+	// Close once we're done and delete data
+	defer func() { _ = os.RemoveAll(dir) }()
+	defer func() { _ = store.Close() }()
+
+	f(store)
 }
 
 func TestGC(t *testing.T) {
@@ -42,13 +47,13 @@ func TestRange(t *testing.T) {
 	runTest(t, func(store *Storage) {
 
 		// Insert out of order
-		_ = store.Append(b("1"), b("A"), 60*time.Second)
-		_ = store.Append(b("3"), b("C"), 60*time.Second)
-		_ = store.Append(b("2"), b("B"), 60*time.Second)
+		_ = store.Append(asBytes("1"), asBytes("A"), 60*time.Second)
+		_ = store.Append(asBytes("3"), asBytes("C"), 60*time.Second)
+		_ = store.Append(asBytes("2"), asBytes("B"), 60*time.Second)
 
 		// Iterate in order
 		var values []string
-		err := store.Range(b("1"), b("5"), func(k, v []byte) bool {
+		err := store.Range(asBytes("1"), asBytes("5"), func(k, v []byte) bool {
 			values = append(values, string(v))
 			return false
 		})
@@ -68,17 +73,17 @@ func TestRangeWithPrefetch(t *testing.T) {
 	runTest(t, func(store *Storage) {
 
 		// Insert out of order
-		_ = store.Append(b("1"), b("A"), 60*time.Second)
-		_ = store.Append(b("3"), b("C"), 60*time.Second)
-		_ = store.Append(b("5"), b("E"), 60*time.Second)
-		_ = store.Append(b("4"), b("D"), 60*time.Second)
-		_ = store.Append(b("2"), b("B"), 60*time.Second)
-		_ = store.Append(b("6"), b("F"), 60*time.Second)
+		_ = store.Append(asBytes("1"), asBytes("A"), 60*time.Second)
+		_ = store.Append(asBytes("3"), asBytes("C"), 60*time.Second)
+		_ = store.Append(asBytes("5"), asBytes("E"), 60*time.Second)
+		_ = store.Append(asBytes("4"), asBytes("D"), 60*time.Second)
+		_ = store.Append(asBytes("2"), asBytes("B"), 60*time.Second)
+		_ = store.Append(asBytes("6"), asBytes("F"), 60*time.Second)
 
 		// Iterate and stop at some point
 		{
 			var values []string
-			err := store.Range(b("1"), b("5"), func(k, v []byte) bool {
+			err := store.Range(asBytes("1"), asBytes("5"), func(k, v []byte) bool {
 				values = append(values, string(v))
 				return string(k) == "3"
 			})
@@ -87,12 +92,12 @@ func TestRangeWithPrefetch(t *testing.T) {
 		}
 
 		// Force prefetch so we wait
-		store.prefetch(b("1"), b("5"))
+		store.prefetch(asBytes("1"), asBytes("5"))
 
 		// Second iteration should hit the prefetched values
 		{
 			var values []string
-			err := store.Range(b("3"), b("5"), func(k, v []byte) bool {
+			err := store.Range(asBytes("3"), asBytes("5"), func(k, v []byte) bool {
 				values = append(values, string(v))
 				return false
 			})
@@ -103,6 +108,26 @@ func TestRangeWithPrefetch(t *testing.T) {
 	})
 }
 
-func b(s string) []byte {
+func asBytes(s string) []byte {
 	return []byte(s)
+}
+
+// BenchmarkBlockRead/read-8         	   10071	    116459 ns/op	   12136 B/op	    1026 allocs/op
+func BenchmarkRange(b *testing.B) {
+	b.Run("read", func(b *testing.B) {
+		run(func(store *Storage) {
+			for i := 0; i < 1000; i++ {
+				key := asBytes(fmt.Sprintf("%d", i))
+				store.Append(key, key, 60*time.Second)
+			}
+
+			b.ResetTimer()
+			b.ReportAllocs()
+			for n := 0; n < b.N; n++ {
+				store.Range(asBytes("300"), asBytes("600"), func(k, v []byte) bool {
+					return false
+				})
+			}
+		})
+	})
 }
