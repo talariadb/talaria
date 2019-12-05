@@ -20,7 +20,7 @@ var (
 // Block represents a serialized block
 type Block struct {
 	Size int64
-	Data map[string][]byte
+	Data nocopy.ByteMap
 }
 
 // FromBuffer unmarshals a block from a in-memory buffer.

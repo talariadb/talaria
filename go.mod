@@ -20,7 +20,7 @@ require (
 	github.com/hashicorp/go-sockaddr v1.0.2 // indirect
 	github.com/hashicorp/golang-lru v0.5.3 // indirect
 	github.com/hashicorp/memberlist v0.1.5
-	github.com/kelindar/binary v1.0.7
+	github.com/kelindar/binary v1.0.8
 	github.com/miekg/dns v1.1.22 // indirect
 	github.com/ricochet2200/go-disk-usage v0.0.0-20150921141558-f0d1b743428f
 	github.com/samuel/go-thrift v0.0.0-20190219015601-e8b6b52668fe
