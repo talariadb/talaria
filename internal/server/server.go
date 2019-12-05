@@ -139,7 +139,7 @@ func (s *Server) PrestoGetTableMetadata(schemaTableName *presto.PrestoThriftSche
 	// Prepare metadata result
 	return &presto.PrestoThriftNullableTableMetadata{
 		TableMetadata: &presto.PrestoThriftTableMetadata{
-			SchemaTableName: &presto.PrestoThriftSchemaTableName{SchemaName: s.prestoCfg.Schema, TableName: s.prestoCfg.Table},
+			SchemaTableName: &presto.PrestoThriftSchemaTableName{SchemaName: s.prestoCfg.Schema, TableName: table.Name()},
 			Columns:         columns,
 		},
 	}, nil
