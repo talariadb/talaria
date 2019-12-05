@@ -4,8 +4,6 @@
 package timeseries
 
 import (
-	"encoding/binary"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"math"
@@ -14,6 +12,7 @@ import (
 	"time"
 
 	"github.com/grab/talaria/internal/presto"
+	"github.com/kelindar/binary"
 	"github.com/spaolacci/murmur3"
 )
 
@@ -40,14 +39,14 @@ func newKey(eventName string, tsi time.Time) []byte {
 
 // Query represents a serialized query object.
 type query struct {
-	Begin  []byte `json:"b"`
-	Until  []byte `json:"u"`
-	Offset int64  `json:"o,omitempty"` // The last offset of the file we need to process
+	Begin  []byte // The first key of the range
+	Until  []byte // The last key of the range
+	Offset int64  // The last offset of the file we need to process
 }
 
 // Encode creates a split ID by encoding a query.
 func (q *query) Encode() []byte {
-	b, err := json.Marshal(q)
+	b, err := binary.Marshal(q)
 	if err != nil {
 		panic(err)
 	}
@@ -68,7 +67,7 @@ func newQuery(keyColumn string, from, until time.Time) query {
 // decodeQuery unmarshals split ID back to a query.
 func decodeQuery(splitKey []byte) (out *query, err error) {
 	out = new(query)
-	err = json.Unmarshal(splitKey, out)
+	err = binary.Unmarshal(splitKey, out)
 	return
 }
 

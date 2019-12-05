@@ -16,7 +16,7 @@ func TestSplitCodec(t *testing.T) {
 		q.Begin = []byte("ABC")
 
 		id := q.Encode()
-		assert.Equal(t, "{\"b\":\"QUJD\",\"u\":null}", string(id))
+		assert.Equal(t, []byte{0x3, 0x41, 0x42, 0x43, 0x0, 0x0}, id)
 
 		out, err := decodeQuery(id)
 		assert.NoError(t, err)
