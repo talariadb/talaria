@@ -65,8 +65,8 @@ func TestBlock_Types(t *testing.T) {
 	}
 }
 
-// BenchmarkBlockRead/from-buffer-8         	     276	   3989427 ns/op	120121419 B/op	      13 allocs/op
-// BenchmarkBlockRead/read-8                	 1400730	       743 ns/op	    1344 B/op	       5 allocs/op
+// BenchmarkBlockRead/from-buffer-8         	    2797	    415408 ns/op	    5592 B/op	       7 allocs/op
+// BenchmarkBlockRead/read-8                	 1528857	       769 ns/op	    1344 B/op	       5 allocs/op
 func BenchmarkBlockRead(b *testing.B) {
 	o, err := ioutil.ReadFile(testFile)
 	noerror(err)
