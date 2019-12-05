@@ -10,7 +10,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-const testFile = "../../test/test2.orc"
+const testFile = "../../../test/test2.orc"
 
 const column = "string1"
 

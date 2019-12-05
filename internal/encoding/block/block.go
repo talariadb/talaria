@@ -7,7 +7,7 @@ import (
 	"errors"
 	"sort"
 
-	"github.com/grab/talaria/internal/orc"
+	"github.com/grab/talaria/internal/encoding/orc"
 	"github.com/grab/talaria/internal/presto"
 	"github.com/kelindar/binary"
 	"github.com/kelindar/binary/nocopy"

@@ -9,10 +9,10 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/grab/talaria/internal/block"
+	"github.com/grab/talaria/internal/encoding/block"
 	"github.com/grab/talaria/internal/config"
 	"github.com/grab/talaria/internal/monitor"
-	"github.com/grab/talaria/internal/orc"
+	"github.com/grab/talaria/internal/encoding/orc"
 	"github.com/grab/talaria/internal/presto"
 	"github.com/grab/talaria/internal/table"
 )

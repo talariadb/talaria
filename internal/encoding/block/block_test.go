@@ -10,7 +10,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-const testFile = "../../test/test1-zlib.orc"
+const testFile = "../../../test/test1-zlib.orc"
 
 func TestBlock(t *testing.T) {
 	o, err := ioutil.ReadFile(testFile)
@@ -39,7 +39,7 @@ func TestBlock(t *testing.T) {
 }
 
 func TestBlock_Types(t *testing.T) {
-	o, err := ioutil.ReadFile("../../test/test2.orc")
+	o, err := ioutil.ReadFile("../../../test/test2.orc")
 	assert.NotEmpty(t, o)
 	assert.NoError(t, err)
 
