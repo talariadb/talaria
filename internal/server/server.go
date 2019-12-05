@@ -36,7 +36,7 @@ type Storage interface {
 // ------------------------------------------------------------------------------------------------------------
 
 // New creates a new talaria server.
-func New(port int32, prestoCfg *config.PrestoConfig, monitor monitor.Client, tables ...table.Table) *Server {
+func New(port int32, prestoCfg *config.Presto, monitor monitor.Client, tables ...table.Table) *Server {
 	server := &Server{
 		port:      port,
 		prestoCfg: prestoCfg,
@@ -54,7 +54,7 @@ func New(port int32, prestoCfg *config.PrestoConfig, monitor monitor.Client, tab
 // Server represents the talaria server which should implement presto thrift interface.
 type Server struct {
 	port      int32                  // The port number to use
-	prestoCfg *config.PrestoConfig   // The presto configuration
+	prestoCfg *config.Presto         // The presto configuration
 	monitor   monitor.Client         // The monitoring layer
 	tables    map[string]table.Table // The list of tables
 }

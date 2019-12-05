@@ -26,45 +26,46 @@ const (
 
 // Config global
 type Config struct {
-	Port      int32          `json:"port"`
-	Hostname  string         `json:"hostname"`
-	DataDir   string         `json:"dataDir"`
-	AwsRegion string         `json:"awsRegion"`
-	Env       string         `json:"env"`
-	Sqs       *SQSConfig     `json:"sqs"`
-	Route     *RouteConfig   `json:"route"`
-	Presto    *PrestoConfig  `json:"presto"`
-	Storage   *StorageConfig `json:"storage"`
-	Statsd    *StatsD        `json:"statsd"`
+	Port      int32    `json:"port"`
+	Hostname  string   `json:"hostname"`
+	DataDir   string   `json:"dataDir"`
+	AwsRegion string   `json:"awsRegion"`
+	Env       string   `json:"env"`
+	Sqs       *SQS     `json:"sqs"`
+	Route     *Route53 `json:"route"`
+	Presto    *Presto  `json:"presto"`
+	Storage   *Storage `json:"storage"`
+	Statsd    *StatsD  `json:"statsd"`
 }
 
-// SQSConfig represents the aws SQS configuration
-type SQSConfig struct {
+// SQS represents the aws SQS configuration
+type SQS struct {
 	Endpoint          string `json:"endpoint"`
 	Retry             int    `json:"retry"`
 	WaitTimeout       int64  `json:"waitTimeout"`
 	VisibilityTimeout *int64 `json:"visibilityTimeout"` // in seconds
 }
 
-// RouteConfig represents the Route53 configuration
-type RouteConfig struct {
+// Route53 represents the Route53 configuration
+type Route53 struct {
 	Domain string `json:"domain"`
 	ZoneID string `json:"zoneID"`
 }
 
-// PrestoConfig represents the Presto configuration
-type PrestoConfig struct {
+// Presto represents the Presto configuration
+type Presto struct {
 	Schema string `json:"schema"`
 	Table  string `json:"table"`
 }
 
-// StorageConfig represents the storage configuration
-type StorageConfig struct {
+// Storage represents the storage configuration
+type Storage struct {
 	TTLInSec   int64  `json:"ttlInSec"`   // The ttl for the storage, defaults to 1 hour.
 	KeyColumn  string `json:"keyColumn"`  // The column to use as key (metric), defaults to 'event'.
 	TimeColumn string `json:"timeColumn"` // The column to use as time, defaults to 'tsi'.
 }
 
+// StatsD represents the configuration for statsD client
 type StatsD struct {
 	Host string `json:"host"`
 	Port int64  `json:"port"`
@@ -75,7 +76,7 @@ func Load(envVar string) *Config {
 
 	// Default configuration
 	cfg := &Config{
-		Storage: &StorageConfig{
+		Storage: &Storage{
 			TTLInSec:   3600,
 			KeyColumn:  "event",
 			TimeColumn: "tsi",

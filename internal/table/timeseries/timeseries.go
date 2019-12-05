@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/grab/talaria/internal/block"
+	"github.com/grab/talaria/internal/config"
 	"github.com/grab/talaria/internal/monitor"
 	"github.com/grab/talaria/internal/orc"
 	"github.com/grab/talaria/internal/presto"
@@ -50,13 +51,13 @@ type Table struct {
 }
 
 // New creates a new table implementation.
-func New(name, keyColumn, timeColumn string, ttl time.Duration, store Storage, cluster Membership, monitor monitor.Client) *Table {
+func New(name string, cfg *config.Storage, store Storage, cluster Membership, monitor monitor.Client) *Table {
 	return &Table{
 		name:       name,
 		store:      store,
-		keyColumn:  keyColumn,
-		timeColumn: timeColumn,
-		ttl:        ttl,
+		keyColumn:  cfg.KeyColumn,
+		timeColumn: cfg.TimeColumn,
+		ttl:        time.Duration(cfg.TTLInSec) * time.Second,
 		cluster:    cluster,
 		monitor:    monitor,
 	}

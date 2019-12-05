@@ -8,7 +8,6 @@ import (
 	"io/ioutil"
 	"os"
 	"testing"
-	"time"
 
 	"github.com/grab/talaria/internal/config"
 	"github.com/grab/talaria/internal/monitor"
@@ -43,25 +42,22 @@ func BenchmarkQuery(b *testing.B) {
 	cfg := config.Config{
 		Port:    9876,
 		DataDir: dir,
-		Storage: &config.StorageConfig{
+		Storage: &config.Storage{
 			TTLInSec:   3600,
 			KeyColumn:  "_col5",
 			TimeColumn: "_col0",
 		},
 	}
 
-	// Start the server and open the database
+	// Open the file
 	monitor := monitor.NewNoop()
 	store := disk.New(monitor)
-	eventlog := timeseries.New("eventlog",
-		cfg.Storage.KeyColumn,
-		cfg.Storage.TimeColumn,
-		time.Duration(cfg.Storage.TTLInSec)*time.Second,
-		store, new(noopMembership), monitor,
-	)
-
-	server := server.New(cfg.Port, cfg.Presto, monitor, eventlog)
 	noerror(store.Open(cfg.DataDir))
+
+	// Start the server and open the database
+	server := server.New(cfg.Port, cfg.Presto, monitor,
+		timeseries.New("eventlog", cfg.Storage, store, new(noopMembership), monitor),
+	)
 	defer server.Close()
 
 	// Append some files

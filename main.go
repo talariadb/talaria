@@ -9,7 +9,6 @@ import (
 	"os/signal"
 	"strconv"
 	"syscall"
-	"time"
 
 	"github.com/DataDog/datadog-go/statsd"
 	"github.com/grab/talaria/internal/cluster"
@@ -50,29 +49,22 @@ func main() {
 
 	startMonitor(monitor)
 
-	// Create the main eventlog table
+	// Open the storage for the main data
 	store := disk.New(monitor)
-	eventlog := timeseries.New(cfg.Presto.Table,
-		cfg.Storage.KeyColumn,
-		cfg.Storage.TimeColumn,
-		time.Duration(cfg.Storage.TTLInSec)*time.Second,
-		store, gossip, monitor,
-	)
-
-	// Start the server and open the database
-	server := server.New(cfg.Port, cfg.Presto, monitor,
-		eventlog,          // The primary timeseries table
-		nodes.New(gossip), // Cluster membership info table
-	)
 	err = store.Open(cfg.DataDir)
 	if err != nil {
 		panic(err)
 	}
 
-	monitor.Infof("starting ingestion ...")
+	// Start the server and open the database
+	server := server.New(cfg.Port, cfg.Presto, monitor,
+		timeseries.New(cfg.Presto.Table, cfg.Storage, store, gossip, monitor), // The primary timeseries table
+		nodes.New(gossip), // Cluster membership info table
+	)
+
 	// Start ingesting
-	region := cfg.AwsRegion
-	ingestor := ingest.New(newQueueReader(cfg.Sqs, region), s3.New(region, 5, logger), monitor)
+	monitor.Infof("starting ingestion ...")
+	ingestor := ingest.New(newQueueReader(cfg.Sqs, cfg.AwsRegion), s3.New(cfg.AwsRegion, 5, logger), monitor)
 	ingestor.Range(func(v []byte) bool {
 		if err := server.Append(v); err != nil {
 			monitor.WarnWithStats(logTag, "ingestor_append", "[main][error:%s][v:%s] server failed to append data from queue", err, v)
@@ -111,7 +103,7 @@ func startMonitor(m monitor.Client) {
 }
 
 // newQueueReader creates a new SQS reader
-func newQueueReader(sqsCfg *config.SQSConfig, region string) *sqs.Reader {
+func newQueueReader(sqsCfg *config.SQS, region string) *sqs.Reader {
 	reader, err := sqs.NewReader(&sqs.ReaderConfig{
 		QueueURL:          sqsCfg.Endpoint,
 		Region:            region,

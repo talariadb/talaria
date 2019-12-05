@@ -7,7 +7,6 @@ import (
 	"io/ioutil"
 	"os"
 	"testing"
-	"time"
 
 	"github.com/grab/talaria/internal/config"
 	"github.com/grab/talaria/internal/monitor"
@@ -33,7 +32,7 @@ func TestTimeseries(t *testing.T) {
 	cfg := config.Config{
 		Port:    9876,
 		DataDir: dir,
-		Storage: &config.StorageConfig{
+		Storage: &config.Storage{
 			TTLInSec:   3600,
 			KeyColumn:  "_col5",
 			TimeColumn: "_col0",
@@ -45,12 +44,7 @@ func TestTimeseries(t *testing.T) {
 	store := disk.New(monitor)
 	assert.NoError(t, store.Open(cfg.DataDir))
 
-	eventlog := timeseries.New("eventlog",
-		cfg.Storage.KeyColumn,
-		cfg.Storage.TimeColumn,
-		time.Duration(cfg.Storage.TTLInSec)*time.Second,
-		store, new(noopMembership), monitor,
-	)
+	eventlog := timeseries.New("eventlog", cfg.Storage, store, new(noopMembership), monitor)
 	assert.NotNil(t, eventlog)
 	assert.Equal(t, "eventlog", eventlog.Name())
 	defer eventlog.Close()
