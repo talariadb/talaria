@@ -25,7 +25,7 @@ type Client interface {
 
 // clientImpl monitors the system and hardware
 type clientImpl struct {
-	log   logging.Logger // The log client
+	logging.Logger
 	stats StatsdClient
 	tags  []string
 	du    *du.DiskUsage
@@ -39,9 +39,9 @@ func New(log logging.Logger, stats StatsdClient, appname string, env string) Cli
 	}
 
 	return &clientImpl{
-		log:   log,
-		stats: stats,
-		du:    du.NewDiskUsage(wd),
+		Logger: log,
+		stats:  stats,
+		du:     du.NewDiskUsage(wd),
 		tags: []string{
 			"app_name:" + appname,
 			"env:" + env,

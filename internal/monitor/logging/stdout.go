@@ -4,54 +4,46 @@
 package logging
 
 import (
-	"fmt"
+	"log"
 	"os"
 )
 
-// Logger defines required logging interface
+const prefix = "talaria "
+
+// Logger is implemented by any logging system that is used for standard logs.
 type Logger interface {
-	Debug(tag string, message string, args ...interface{})
-	Info(tag string, message string, args ...interface{})
-	Warn(tag string, message string, args ...interface{})
-	Error(tag string, message string, args ...interface{})
-	Fatal(tag string, message string, args ...interface{})
-	Security(tag string, message string, args ...interface{})
+	Errorf(string, ...interface{})
+	Warningf(string, ...interface{})
+	Infof(string, ...interface{})
+	Debugf(string, ...interface{})
 }
 
-// NewStdOut returns a new logger that will only output log messages to stdout
-func NewStdOut() Logger {
-	return &stdOutLogger{}
+// NewStandard returns a new logger that will only output log messages to stdout or stderr
+func NewStandard() Logger {
+	return &stdLogger{
+		stdout: log.New(os.Stdout, prefix, log.LstdFlags),
+		stderr: log.New(os.Stderr, prefix, log.LstdFlags),
+	}
 }
 
 // Implement the Logger interface
-type stdOutLogger struct{}
-
-// Debug implements Logger interface
-func (lr *stdOutLogger) Debug(tag string, message string, args ...interface{}) {
-	fmt.Fprintf(os.Stdout, "[Debug]["+tag+"] "+message+"\n", args...)
+type stdLogger struct {
+	stdout *log.Logger
+	stderr *log.Logger
 }
 
-// Info implements Logger interface
-func (lr *stdOutLogger) Info(tag string, message string, args ...interface{}) {
-	fmt.Fprintf(os.Stdout, "[Info]["+tag+"] "+message+"\n", args...)
+func (l *stdLogger) Errorf(f string, v ...interface{}) {
+	l.stderr.Printf("[error] "+f, v...)
 }
 
-// Warn implements Logger interface
-func (lr *stdOutLogger) Warn(tag string, message string, args ...interface{}) {
-	fmt.Fprintf(os.Stdout, "[Warn]["+tag+"] "+message+"\n", args...)
+func (l *stdLogger) Warningf(f string, v ...interface{}) {
+	l.stderr.Printf("[warning]: "+f, v...)
 }
 
-// Error implements Logger interface
-func (lr *stdOutLogger) Error(tag string, message string, args ...interface{}) {
-	fmt.Fprintf(os.Stderr, "[Error]["+tag+"] "+message+"\n", args...)
+func (l *stdLogger) Infof(f string, v ...interface{}) {
+	l.stdout.Printf(f, v...)
 }
 
-// Fatal implements Logger interface
-func (lr *stdOutLogger) Fatal(tag string, message string, args ...interface{}) {
-	fmt.Fprintf(os.Stderr, "[Fatal]["+tag+"] "+message+"\n", args...)
-}
-
-// Security implements Logger interface
-func (lr *stdOutLogger) Security(tag string, message string, args ...interface{}) {
-	fmt.Fprintf(os.Stderr, "[Security]["+tag+"] "+message+"\n", args...)
+func (l *stdLogger) Debugf(f string, v ...interface{}) {
+	l.stdout.Printf(f, v...)
 }

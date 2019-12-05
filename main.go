@@ -34,7 +34,7 @@ func main() {
 
 	// Setup gossip
 	gossip := cluster.New(7946)
-	logger := logging.NewStdOut()
+	logger := logging.NewStandard()
 
 	// StatsD
 	s, err := statsd.New(cfg.Statsd.Host + ":" + strconv.FormatInt(cfg.Statsd.Port, 10))
@@ -46,7 +46,7 @@ func main() {
 
 	monitor.Count1("system", "event", "type:start")
 	defer monitor.Count1("system", "event", "type:stop")
-	monitor.Info(logTag, "[main] starting the server and database ...")
+	monitor.Infof("starting the server and database ...")
 
 	startMonitor(monitor)
 
@@ -69,7 +69,7 @@ func main() {
 		panic(err)
 	}
 
-	monitor.Info(logTag, "[main] starting ingestion ...")
+	monitor.Infof("starting ingestion ...")
 	// Start ingesting
 	region := cfg.AwsRegion
 	ingestor := ingest.New(newQueueReader(cfg.Sqs, region), s3.New(region, 5, logger), monitor)
@@ -93,14 +93,14 @@ func main() {
 	defer cancel()
 
 	// Join the cluster
-	monitor.Info(logTag, "[main] starting DNS and route53 ...")
+	monitor.Infof("starting DNS and route53 ...")
 	r53 := cluster.NewRoute53(cfg.AwsRegion, monitor)
 
 	// Keep maintaining our DNS
 	go gossip.JoinAndSync(ctx, r53, cfg.Route.Domain, cfg.Route.ZoneID)
 
 	// Start listen
-	monitor.Info(logTag, "[main] starting server listener ...")
+	monitor.Infof("starting server listener ...")
 	if err := server.Listen(ctx); err != nil {
 		panic(err)
 	}

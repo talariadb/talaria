@@ -70,6 +70,7 @@ func (s *Storage) Open(dir string) error {
 	opts.LevelSizeMultiplier = 3
 	opts.MaxLevels = 25
 	opts.Truncate = true
+	opts.Logger = s.monitor
 
 	// Attempt to open the database
 	db, err := badger.Open(opts)
@@ -200,7 +201,7 @@ func (s *Storage) GC(ctx context.Context) (interface{}, error) {
 	const discardRatio = 0.3
 
 	deleted, total := s.purge()
-	s.monitor.Info(tag, "deleted %v / %v items, available %v", deleted, total, total-deleted)
+	s.monitor.Debugf("deleted %v / %v items, available %v", deleted, total, total-deleted)
 	s.monitor.Gauge(ctxTag, "GC.purge", float64(deleted), "type:deleted")
 	s.monitor.Gauge(ctxTag, "GC.purge", float64(total), "type:total")
 
@@ -210,7 +211,7 @@ func (s *Storage) GC(ctx context.Context) (interface{}, error) {
 			return nil, nil
 		}
 		s.monitor.Count1(ctxTag, "vlog.GC", "type:completed")
-		s.monitor.Info(tag, "cycle completed")
+		s.monitor.Debugf("cycle completed")
 	}
 	return nil, nil
 }

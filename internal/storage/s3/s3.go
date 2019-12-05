@@ -81,7 +81,7 @@ func NewFromSession(sess *session.Session, logger logging.Logger) Client {
 func (s *client) Upload(ctx context.Context, bucket, key string, body io.Reader, grantReadCanonicalID string) (err error) {
 	defer func() {
 		if r := recover(); r != nil {
-			s.logger.Error("s3", "panic recovered. err: %v", r)
+			s.logger.Errorf("s3: panic recovered. err: %v", r)
 		}
 	}()
 
@@ -118,7 +118,7 @@ func (s *client) getLatestKey(ctx context.Context, bucket, prefix string) (*s3.L
 	}
 	list, err := s.awsClient.ListObjectsV2WithContext(ctx, input)
 	if err != nil {
-		s.logger.Error("[getLatestKey] error while listing files/dir under bucket, key", bucket, prefix, err)
+		s.logger.Errorf("s3: error while listing files/dir under bucket, key", bucket, prefix, err)
 		return nil, "", convertError(err)
 	}
 
@@ -133,7 +133,7 @@ func (s *client) getLatestKey(ctx context.Context, bucket, prefix string) (*s3.L
 		}
 	}
 
-	s.logger.Info("[getLatestKey] latest key found: ", key, latest)
+	s.logger.Debugf("s3: latest key (%s) found", key)
 	if key == "" {
 		return nil, "", ErrNoSuchKey
 	}
@@ -142,14 +142,13 @@ func (s *client) getLatestKey(ctx context.Context, bucket, prefix string) (*s3.L
 
 // Download a specific key from the bucket
 func (s *client) Download(ctx context.Context, bucket, key string) ([]byte, error) {
-	w := &aws.WriteAtBuffer{}
-	s.logger.Info("[Download] final bucket and key are:", bucket, key)
+	w := new(aws.WriteAtBuffer)
 	n, err := s.downloader.DownloadWithContext(ctx, w, &s3.GetObjectInput{
 		Bucket: aws.String(bucket),
 		Key:    aws.String(key),
 	})
 	if err != nil {
-		s.logger.Error("[Download] err while downloading from s3 ", bucket, key, err)
+		s.logger.Errorf("s3: error while downloading from s3 ", bucket, key, err)
 		return nil, convertError(err)
 	}
 	return w.Bytes()[:n], nil
@@ -164,7 +163,7 @@ func (s *client) DownloadLatestFolder(ctx context.Context, bucket, prefix string
 	parent := getParentFolder(latestKey)
 	// if no parent found, just download latest key
 	if parent == "" {
-		s.logger.Info("[DownloadLatestFolder] no parent found. Downloading single file...", latestKey)
+		s.logger.Debugf("s3: no parent found. Downloading single file...", latestKey)
 		return s.Download(ctx, bucket, latestKey)
 	}
 
@@ -173,7 +172,7 @@ func (s *client) DownloadLatestFolder(ctx context.Context, bucket, prefix string
 	objects := list.Contents
 	for _, o := range objects {
 		if found := strings.Contains(*o.Key, parent); found {
-			s.logger.Info("[DownloadLatestFolder] found another file in parent...", parent, *o.Key)
+			s.logger.Debugf("s3: found another file in parent...", parent, *o.Key)
 			if err := s.downloadWithWriter(ctx, w, bucket, *o.Key); err != nil {
 				return nil, err
 			}
@@ -191,7 +190,7 @@ func (s *client) downloadWithWriter(ctx context.Context, w *aws.WriteAtBuffer, b
 		return err
 	}
 	if _, err := w.WriteAt(b, lengths3); err != nil {
-		s.logger.Error("[downloadWithWriter] error while writing to main aws buffer at length", err.Error())
+		s.logger.Errorf("s3: error while writing to main aws buffer at length", err.Error())
 		return err
 	}
 

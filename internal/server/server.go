@@ -150,7 +150,6 @@ func (s *Server) PrestoListSchemaNames() ([]string, error) {
 	const tag = "PrestoListSchemaNames"
 	defer s.monitor.Duration(ctxTag, funcTag, time.Now(), "func:"+tag)
 
-	s.monitor.Info(tag, "[schema:%s]", s.prestoCfg.Schema)
 	return []string{s.prestoCfg.Schema}, nil
 }
 
@@ -225,7 +224,7 @@ func (s *Server) PrestoGetRows(splitID *presto.PrestoThriftId, columns []string,
 func (s *Server) Close() {
 	for _, t := range s.tables {
 		if err := t.Close(); err != nil {
-			s.monitor.Error(ctxTag, err.Error())
+			s.monitor.Errorf(err.Error())
 		}
 	}
 }

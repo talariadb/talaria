@@ -64,7 +64,7 @@ func (r *Route53) Upsert(domainName, zoneID string, targets []string, ttl int64)
 
 	_, err := r.client.ChangeResourceRecordSets(params)
 	if err != nil {
-		r.monitor.Error(logTag, "[Upsert][err:%s][params:%s] change resource record failed", err, params)
+		r.monitor.Errorf("route53: change resource record failed due to %s, with params %s ", err, params)
 	}
 	return err
 }

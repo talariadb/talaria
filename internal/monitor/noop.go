@@ -43,32 +43,16 @@ func (c *noopClient) Count1(contextTag, key string, tags ...string) {}
 // Count increases or Decrease the value of something over time
 func (c *noopClient) Count(contextTag, key string, amount int64, tags ...string) {}
 
-// Debug ...
-func (c *noopClient) Debug(tag, message string, args ...interface{}) {}
+func (c *noopClient) Errorf(f string, v ...interface{}) {}
 
-// Info ...
-func (c *noopClient) Info(tag, message string, args ...interface{}) {}
+func (c *noopClient) Warningf(f string, v ...interface{}) {}
 
-// Warn ...
-func (c *noopClient) Warn(tag, message string, args ...interface{}) {}
+func (c *noopClient) Infof(f string, v ...interface{}) {}
 
-// Error ...
-func (c *noopClient) Error(tag, message string, args ...interface{}) {}
-
-// Fatal ...
-func (c *noopClient) Fatal(tag, message string, args ...interface{}) {}
-
-// Security ...
-func (c *noopClient) Security(tag, message string, args ...interface{}) {}
+func (c *noopClient) Debugf(f string, v ...interface{}) {}
 
 // WarnWithStats ...
 func (c *noopClient) WarnWithStats(tag, errType, message string, args ...interface{}) {}
 
 // ErrorWithStats ...
 func (c *noopClient) ErrorWithStats(tag, errType, message string, args ...interface{}) {}
-
-// FatalWithStats ...
-func (c *noopClient) FatalWithStats(tag, errType, message string, args ...interface{}) {}
-
-// SecurityWithStats ...
-func (c *noopClient) SecurityWithStats(tag, errType, message string, args ...interface{}) {}

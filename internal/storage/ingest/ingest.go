@@ -139,7 +139,7 @@ func (s *Storage) ingest(bucket, key string, handler func(v []byte) bool) {
 		return
 	}
 
-	s.monitor.Info(ctxTag, "[ingest] downloading %v", key)
+	s.monitor.Infof("ingest: downloading %v", key)
 
 	// Call the handler
 	_ = handler(data)
