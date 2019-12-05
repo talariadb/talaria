@@ -25,7 +25,7 @@ func TestNodes(t *testing.T) {
 	// Get the schema
 	schema, err := table.Schema()
 	assert.NoError(t, err)
-	assert.Len(t, schema, 4)
+	assert.Len(t, schema, 5)
 
 	// Get the splits
 	splits, err := table.GetSplits([]string{}, nil, 10000)
@@ -34,13 +34,14 @@ func TestNodes(t *testing.T) {
 	assert.Equal(t, "127.0.0.1", splits[0].Addrs[0])
 
 	// Get the rows
-	page, err := table.GetRows(splits[0].Key, []string{"private", "uptime", "started", "public"}, 1*1024*1024)
+	page, err := table.GetRows(splits[0].Key, []string{"private", "uptime", "started", "public", "peers"}, 1*1024*1024)
 	assert.NotNil(t, page)
 	assert.NoError(t, err)
-	assert.Len(t, page.Columns, 4)
+	assert.Len(t, page.Columns, 5)
 	assert.NotEmpty(t, page.Columns[0].AsBlock().VarcharData.Bytes)
 	assert.Contains(t, string(page.Columns[1].AsBlock().VarcharData.Bytes), "seconds")
 	assert.Equal(t, 1, page.Columns[2].AsBlock().BigintData.Count())
+	assert.Equal(t, `["127.0.0.1"]`, string(page.Columns[4].AsBlock().VarcharData.Bytes))
 }
 
 func TestNodes_NoColumn(t *testing.T) {

@@ -57,6 +57,7 @@ func (t *Table) Schema() (map[string]reflect.Type, error) {
 		"private": reflect.TypeOf(""),
 		"started": reflect.TypeOf(int64(0)),
 		"uptime":  reflect.TypeOf(""),
+		"peers":   reflect.TypeOf(""),
 	}, nil
 }
 
@@ -111,11 +112,13 @@ func (t *Table) getColumn(columnName string, columnType reflect.Type) (presto.Co
 		column.Append(t.startedAt.Unix())
 	case "uptime":
 		column.Append(durafmt.Parse(time.Now().Sub(t.startedAt)).String())
-
+	case "peers":
+		column.Append(encode(t.cluster.Members()))
 	}
 	return column, nil
 }
 
+// Formats the set of addresses
 func formatAddrs(addrs []net.IPAddr, err error) string {
 	if err != nil {
 		return err.Error()
@@ -128,7 +131,12 @@ func formatAddrs(addrs []net.IPAddr, err error) string {
 	}
 
 	// Marshal as JSON
-	b, err := json.Marshal(arr)
+	return encode(arr)
+}
+
+// Encode encodes as JSON
+func encode(v interface{}) string {
+	b, err := json.Marshal(v)
 	if err != nil {
 		return err.Error()
 	}
