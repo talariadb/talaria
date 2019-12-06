@@ -40,10 +40,10 @@ type Config struct {
 
 // SQS represents the aws SQS configuration
 type SQS struct {
-	Endpoint          string `json:"endpoint"`
-	Retry             int    `json:"retry"`
-	WaitTimeout       int64  `json:"waitTimeout"`
+	QueueURL          string `json:"endpoint"`
+	WaitTimeout       int64  `json:"waitTimeout"`       // in seconds
 	VisibilityTimeout *int64 `json:"visibilityTimeout"` // in seconds
+	MaxRetries        int    `json:"maxRetries"`
 }
 
 // Route53 represents the Route53 configuration

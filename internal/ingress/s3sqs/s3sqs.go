@@ -1,34 +1,33 @@
 // Copyright 2019 Grabtaxi Holdings PTE LTE (GRAB), All rights reserved.
 // Use of this source code is governed by an MIT-style license that can be found in the LICENSE file
 
-package ingest
-
-//appraise:disable metric/struct_length
+package s3sqs
 
 import (
 	"context"
 	"encoding/json"
 	"io"
 	"net/url"
-	"sync/atomic"
 	"time"
 
 	awssqs "github.com/aws/aws-sdk-go/service/sqs"
+	"github.com/grab/talaria/internal/config"
+	"github.com/grab/talaria/internal/ingress/s3sqs/s3"
+	"github.com/grab/talaria/internal/ingress/s3sqs/sqs"
 	"github.com/grab/talaria/internal/monitor"
 	"golang.org/x/sync/semaphore"
 )
 
 const (
 	concurrency = 10
-	ctxTag      = "ingest"
+	ctxTag      = "s3sqs"
 )
 
-// Storage represents disk storage.
-type Storage struct {
-	run     int32      // The state flag.
-	sqs     Reader     // The SQS reader to use.
-	s3      Downloader // The S3 downloader to use.
-	monitor monitor.Client
+// Ingress represents an ingress layer.
+type Ingress struct {
+	sqs     Reader              // The SQS reader to use.
+	s3      Downloader          // The S3 downloader to use.
+	monitor monitor.Client      // The monitor to use.
 	cancel  context.CancelFunc  // The cancellation function to apply at the end.
 	limit   *semaphore.Weighted // The limit of workers
 }
@@ -46,8 +45,19 @@ type Reader interface {
 }
 
 // New creates a new ingestion with SQS/S3 files.
-func New(reader Reader, downloader Downloader, monitor monitor.Client) *Storage {
-	return &Storage{
+func New(conf *config.SQS, region string, monitor monitor.Client) (*Ingress, error) {
+	downloader := s3.New(region, 5, monitor)
+	reader, err := sqs.NewReader(conf, region)
+	if err != nil {
+		return nil, err
+	}
+
+	return NewWith(reader, downloader, monitor), nil
+}
+
+// NewWith creates a new ingestion with SQS/S3 files.
+func NewWith(reader Reader, downloader Downloader, monitor monitor.Client) *Ingress {
+	return &Ingress{
 		sqs:     reader,
 		s3:      downloader,
 		monitor: monitor,
@@ -55,15 +65,9 @@ func New(reader Reader, downloader Downloader, monitor monitor.Client) *Storage 
 	}
 }
 
-// IsConsuming returns whether the storage is consuming or not.
-func (s *Storage) IsConsuming() bool {
-	return atomic.LoadInt32(&s.run) == 1
-}
-
 // Range iterates through the queue, stops only if Close() is called or the f callback
 // returns true.
-func (s *Storage) Range(f func(v []byte) bool) {
-	atomic.StoreInt32(&s.run, 1)
+func (s *Ingress) Range(f func(v []byte) bool) {
 
 	// Create a cancellation context
 	ctx, cancel := context.WithCancel(context.Background())
@@ -75,11 +79,12 @@ func (s *Storage) Range(f func(v []byte) bool) {
 }
 
 // drains files from SQS
-func (s *Storage) drain(ctx context.Context, queue <-chan *awssqs.Message, handler func(v []byte) bool) {
+func (s *Ingress) drain(ctx context.Context, queue <-chan *awssqs.Message, handler func(v []byte) bool) {
 	const tag = "drain"
-
-	for s.IsConsuming() {
+	for {
 		select {
+		case <-ctx.Done():
+			return
 		case msg := <-queue:
 			if msg == nil || msg.Body == nil {
 				continue
@@ -119,7 +124,7 @@ func (s *Storage) drain(ctx context.Context, queue <-chan *awssqs.Message, handl
 }
 
 // Acknowledge deletes the message from SQS
-func (s *Storage) acknowledge(msg *awssqs.Message) error {
+func (s *Ingress) acknowledge(msg *awssqs.Message) error {
 	if msg.ReceiptHandle == nil {
 		return nil
 	}
@@ -129,25 +134,24 @@ func (s *Storage) acknowledge(msg *awssqs.Message) error {
 
 // Ingest downloads an object from S3 and applies a handler to the downloaded
 // payload. Few of these can be executed in parallel.
-func (s *Storage) ingest(bucket, key string, handler func(v []byte) bool) {
-	defer s.monitor.Duration(ctxTag, "ingest", time.Now())
+func (s *Ingress) ingest(bucket, key string, handler func(v []byte) bool) {
+	defer s.monitor.Duration(ctxTag, "s3sqs", time.Now())
 
 	data, err := s.s3.Download(context.Background(), bucket, key)
 	defer s.limit.Release(1)
 	if err != nil {
-		s.monitor.ErrorWithStats(ctxTag, "[ingest] release", err.Error())
+		s.monitor.ErrorWithStats(ctxTag, "semaphore release", err.Error())
 		return
 	}
 
-	s.monitor.Infof("ingest: downloading %v", key)
+	s.monitor.Infof("s3sqs: downloading %v", key)
 
 	// Call the handler
 	_ = handler(data)
 }
 
 // Close stops consuming
-func (s *Storage) Close() {
-	atomic.StoreInt32(&s.run, 0)
+func (s *Ingress) Close() {
 	s.cancel()
 	s.sqs.Close()
 

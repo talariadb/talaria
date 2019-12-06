@@ -12,14 +12,12 @@ import (
 
 	"github.com/DataDog/datadog-go/statsd"
 	"github.com/grab/talaria/internal/config"
+	"github.com/grab/talaria/internal/ingress/s3sqs"
 	"github.com/grab/talaria/internal/monitor"
 	"github.com/grab/talaria/internal/monitor/logging"
 	"github.com/grab/talaria/internal/server"
 	"github.com/grab/talaria/internal/server/cluster"
 	"github.com/grab/talaria/internal/storage/disk"
-	"github.com/grab/talaria/internal/storage/ingest"
-	"github.com/grab/talaria/internal/storage/s3"
-	"github.com/grab/talaria/internal/storage/sqs"
 	"github.com/grab/talaria/internal/table/nodes"
 	"github.com/grab/talaria/internal/table/timeseries"
 )
@@ -62,9 +60,14 @@ func main() {
 		nodes.New(gossip), // Cluster membership info table
 	)
 
+	// Create an S3 + SQS ingestion
+	ingestor, err := s3sqs.New(cfg.Sqs, cfg.AwsRegion, monitor)
+	if err != nil {
+		panic(err)
+	}
+
 	// Start ingesting
 	monitor.Infof("starting ingestion ...")
-	ingestor := ingest.New(newQueueReader(cfg.Sqs, cfg.AwsRegion), s3.New(cfg.AwsRegion, 5, logger), monitor)
 	ingestor.Range(func(v []byte) bool {
 		if err := server.Append(v); err != nil {
 			monitor.WarnWithStats(logTag, "ingestor_append", "[main][error:%s][v:%s] server failed to append data from queue", err, v)
@@ -100,20 +103,6 @@ func main() {
 
 func startMonitor(m monitor.Client) {
 	m.TrackDiskSpace()
-}
-
-// newQueueReader creates a new SQS reader
-func newQueueReader(sqsCfg *config.SQS, region string) *sqs.Reader {
-	reader, err := sqs.NewReader(&sqs.ReaderConfig{
-		QueueURL:          sqsCfg.Endpoint,
-		Region:            region,
-		WaitTimeout:       sqsCfg.WaitTimeout,
-		VisibilityTimeout: sqsCfg.VisibilityTimeout,
-	})
-	if err != nil {
-		panic(err)
-	}
-	return reader
 }
 
 // onSignal hooks a callback for a signal.

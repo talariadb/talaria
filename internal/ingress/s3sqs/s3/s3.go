@@ -31,16 +31,9 @@ var (
 
 // Client interface to interact with S3
 type Client interface {
-	// Upload attempts to upload a file at a particular key.
 	Upload(ctx context.Context, bucket, key string, body io.Reader, grantReadCanonicalID string) error
-
-	// Download a specific key from the bucket
 	Download(ctx context.Context, bucket, key string) ([]byte, error)
-
-	// DownloadLatest attempts to download the latest file within a path
 	DownloadLatest(ctx context.Context, bucket, prefix string) ([]byte, error)
-
-	// DownloadLatestFolder attempts to download all files in the latest folder within a path
 	DownloadLatestFolder(ctx context.Context, bucket, prefix string) ([]byte, error)
 }
 

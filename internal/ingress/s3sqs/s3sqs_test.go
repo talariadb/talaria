@@ -1,7 +1,7 @@
 // Copyright 2019 Grabtaxi Holdings PTE LTE (GRAB), All rights reserved.
 // Use of this source code is governed by an MIT-style license that can be found in the LICENSE file
 
-package ingest
+package s3sqs
 
 import (
 	"io/ioutil"
@@ -9,8 +9,8 @@ import (
 	"testing"
 
 	awssqs "github.com/aws/aws-sdk-go/service/sqs"
+	"github.com/grab/talaria/internal/ingress/s3sqs/s3"
 	"github.com/grab/talaria/internal/monitor"
-	"github.com/grab/talaria/internal/storage/s3"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
@@ -31,7 +31,7 @@ func TestQueueReader(t *testing.T) {
 	s3.On("Download", mock.Anything, mock.Anything, mock.Anything).Return(orc, nil)
 
 	// Create new storage
-	storage := New(sqs, s3, monitor.NewNoop())
+	storage := NewWith(sqs, s3, monitor.NewNoop())
 	assert.NotNil(t, storage)
 	defer storage.Close()
 

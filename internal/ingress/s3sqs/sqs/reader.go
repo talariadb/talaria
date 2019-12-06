@@ -9,6 +9,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/sqs"
+	"github.com/grab/talaria/internal/config"
 )
 
 const (
@@ -19,21 +20,12 @@ const (
 	maxVisibilityTimeoutInSec = 12 * 60 * 60 // 12 hour
 )
 
-// ReaderConfig holds configuration of reader
-type ReaderConfig struct {
-	QueueURL          string `json:"endpoint"`
-	Region            string `json:"region"`
-	WaitTimeout       int64  `json:"waitTimeout"`       // in seconds
-	VisibilityTimeout *int64 `json:"visibilityTimeout"` // in seconds
-	MaxRetries        int    `json:"maxRetries"`
-}
-
 // NewReader returns a reader
-func NewReader(c *ReaderConfig) (*Reader, error) {
+func NewReader(c *config.SQS, region string) (*Reader, error) {
 	const defaultVisibilityTimeout = time.Second * 30
 
 	conf := aws.NewConfig().
-		WithRegion(c.Region).
+		WithRegion(region).
 		WithMaxRetries(c.MaxRetries)
 
 	// Create the session
