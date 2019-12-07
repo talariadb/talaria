@@ -57,3 +57,28 @@ func FromOrc(b []byte) (block *Block, err error) {
 	}
 	return
 }
+
+// FromOrcBy decodes a set of blocks from an orc file and repartitions
+// it by the specified partition key.
+func FromOrcBy(payload []byte, partitionBy string) (map[string]Block, error) {
+	const chunks = 25000
+
+	result := make(map[string]Block, 16)
+	_, err := orc.SplitByColumn(payload, partitionBy, func(hashValue string, columnChunk []byte) bool {
+		_, splitErr := orc.SplitBySize(columnChunk, chunks, func(chunk []byte) bool {
+			blk, err := FromOrc(chunk)
+			if err != nil {
+				return true
+			}
+
+			result[hashValue] = *blk
+			return false
+		})
+		return splitErr != nil
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return result, nil
+}

@@ -28,7 +28,10 @@ message Value {
 
 // IngestRequest represents an ingestion request.
 message IngestRequest {
-  Batch batch = 1;
+  oneof data {
+    Batch batch = 1; // Batch of events
+    bytes orc   = 2; // An orc file
+  }
 }
 
 // IngestResponse represents an ingestion response.

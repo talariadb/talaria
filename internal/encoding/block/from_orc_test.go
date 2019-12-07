@@ -13,7 +13,22 @@ import (
 const testFile = "../../../test/test1-zlib.orc"
 const smallFile = "../../../test/test2.orc"
 
-func TestBlock(t *testing.T) {
+func TestFromOrcBy(t *testing.T) {
+	o, err := ioutil.ReadFile(testFile)
+	assert.NotEmpty(t, o)
+	assert.NoError(t, err)
+
+	b, err := FromOrcBy(o, "_col5")
+	assert.NoError(t, err)
+	assert.Equal(t, 4, len(b))
+
+	keys := []string{"Good", "Low Risk", "High Risk", "Unknown"}
+	for k := range b {
+		assert.Contains(t, keys, k)
+	}
+}
+
+func TestFromOrc(t *testing.T) {
 	o, err := ioutil.ReadFile(testFile)
 	assert.NotEmpty(t, o)
 	assert.NoError(t, err)

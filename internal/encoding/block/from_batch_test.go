@@ -42,8 +42,7 @@ func TestBlock_FromBatch(t *testing.T) {
 		},
 	}
 
-	blocks, err := FromBatch(batch, "d")
+	blocks, err := FromBatchBy(batch, "d")
 	assert.NoError(t, err)
 	assert.Len(t, blocks, 2) // Number of partitions
-	//assert.Equal(t, int64(56), block.Size)
 }

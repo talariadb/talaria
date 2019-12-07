@@ -11,9 +11,9 @@ import (
 	talaria "github.com/grab/talaria/proto"
 )
 
-// FromBatch creates a block from a talaria protobuf-encoded batch. It
+// FromBatchBy creates a block from a talaria protobuf-encoded batch. It
 // repartitions the batch by a given partition key at the same time.
-func FromBatch(batch *talaria.Batch, partitionBy string) (map[string]Block, error) {
+func FromBatchBy(batch *talaria.Batch, partitionBy string) (map[string]Block, error) {
 	if batch == nil || batch.Strings == nil || batch.Events == nil {
 		return nil, errEmptyBatch
 	}

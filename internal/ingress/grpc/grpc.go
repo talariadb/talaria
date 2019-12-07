@@ -59,8 +59,8 @@ func (s *Ingress) Ingest(ctx context.Context, request *talaria.IngestRequest) (*
 	// Add the time
 	now := time.Now()
 
-	// Read blocks from the batch, and repartition by the specified key
-	blocks, err := block.FromBatch(request.Batch, s.keyColumn)
+	// Read blocks and repartition by the specified key
+	blocks, err := block.FromRequestBy(request, s.keyColumn)
 	if err != nil {
 		return nil, err
 	}
