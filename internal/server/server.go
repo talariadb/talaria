@@ -42,8 +42,9 @@ type Storage interface {
 
 // New creates a new talaria server.
 func New(prestoCfg *config.Presto, monitor monitor.Client, tables ...table.Table) *Server {
+	const maxMessageSize = 32 * 1024 * 1024 // 32 MB
 	server := &Server{
-		server:    grpc.NewServer(),
+		server:    grpc.NewServer(grpc.MaxRecvMsgSize(maxMessageSize)),
 		prestoCfg: prestoCfg,
 		monitor:   monitor,
 		tables:    make(map[string]table.Table),
