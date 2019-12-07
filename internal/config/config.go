@@ -26,8 +26,8 @@ const (
 
 // Config global
 type Config struct {
-	Port      int32    `json:"port"`
 	Hostname  string   `json:"hostname"`
+	GRPC      *GRPC    `json:"grpc"`
 	DataDir   string   `json:"dataDir"`
 	AwsRegion string   `json:"awsRegion"`
 	Env       string   `json:"env"`
@@ -36,6 +36,11 @@ type Config struct {
 	Presto    *Presto  `json:"presto"`
 	Storage   *Storage `json:"storage"`
 	Statsd    *StatsD  `json:"statsd"`
+}
+
+// GRPC represents the configuration for gRPC server
+type GRPC struct {
+	Port int32 `json:"port"` // The port for the gRPC listener (default: 8080)
 }
 
 // SQS represents the aws SQS configuration
@@ -54,6 +59,7 @@ type Route53 struct {
 
 // Presto represents the Presto configuration
 type Presto struct {
+	Port   int32  `json:"port"`
 	Schema string `json:"schema"`
 	Table  string `json:"table"`
 }
@@ -73,13 +79,17 @@ type StatsD struct {
 
 // Load loads the configuration
 func Load(envVar string) *Config {
-
-	// Default configuration
 	cfg := &Config{
+		Presto: &Presto{
+			Port: 8042,
+		},
 		Storage: &Storage{
 			TTLInSec:   3600,
 			KeyColumn:  "event",
 			TimeColumn: "tsi",
+		},
+		GRPC: &GRPC{
+			Port: 8080,
 		},
 	}
 

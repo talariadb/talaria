@@ -60,16 +60,26 @@ func BenchmarkBlockRead(b *testing.B) {
 	})
 }
 
-// BenchmarkFromOrc/orc-8         	    8020	    124737 ns/op	  445735 B/op	    1098 allocs/op
-func BenchmarkFromOrc(b *testing.B) {
-	o, err := ioutil.ReadFile(smallFile)
+// BenchmarkFrom/orc-8         	    7502	    135596 ns/op	  445875 B/op	    1098 allocs/op
+// BenchmarkFrom/batch-8       	  115660	     10536 ns/op	    9051 B/op	      97 allocs/op
+func BenchmarkFrom(b *testing.B) {
+	orc, err := ioutil.ReadFile(smallFile)
 	noerror(err)
 
 	b.Run("orc", func(b *testing.B) {
 		b.ResetTimer()
 		b.ReportAllocs()
 		for n := 0; n < b.N; n++ {
-			FromOrc("test", o)
+			_, err = FromOrc("test", orc)
+			noerror(err)
+		}
+	})
+
+	b.Run("batch", func(b *testing.B) {
+		b.ResetTimer()
+		b.ReportAllocs()
+		for n := 0; n < b.N; n++ {
+			_, err = FromBatchBy(testBatch, "d")
 			noerror(err)
 		}
 	})

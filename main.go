@@ -55,7 +55,7 @@ func main() {
 	}
 
 	// Start the server and open the database
-	server := server.New(cfg.Port, cfg.Presto, monitor,
+	server := server.New(cfg.Presto, monitor,
 		timeseries.New(cfg.Presto.Table, cfg.Storage, store, gossip, monitor), // The primary timeseries table
 		nodes.New(gossip), // Cluster membership info table
 	)
@@ -96,7 +96,7 @@ func main() {
 
 	// Start listen
 	monitor.Infof("starting server listener ...")
-	if err := server.Listen(ctx); err != nil {
+	if err := server.Listen(ctx, cfg.Presto.Port, cfg.GRPC.Port); err != nil {
 		panic(err)
 	}
 }
