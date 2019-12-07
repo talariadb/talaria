@@ -6,17 +6,18 @@ package block
 import (
 	"bytes"
 	"errors"
-	"sort"
 
 	"github.com/golang/snappy"
-	"github.com/grab/talaria/internal/encoding/orc"
 	"github.com/grab/talaria/internal/presto"
 	"github.com/kelindar/binary"
 	"github.com/kelindar/binary/nocopy"
 )
 
 var (
-	errSchemaMismatch = errors.New("mismatch between internal schema and requested columns")
+	errSchemaMismatch    = errors.New("mismatch between internal schema and requested columns")
+	errEmptyBatch        = errors.New("batch is empty")
+	errPartitionNotFound = errors.New("one or more events in the batch does not contain the partition key")
+	errPartitionInvalid  = errors.New("partition is not a string")
 )
 
 // Block represents a serialized block
@@ -29,75 +30,6 @@ type Block struct {
 // FromBuffer unmarshals a block from a in-memory buffer.
 func FromBuffer(b []byte) (block Block, err error) {
 	err = binary.Unmarshal(b, &block)
-	return
-}
-
-// FromOrc ...
-func FromOrc(b []byte) (block *Block, err error) {
-	i, err := orc.FromBuffer(b)
-	if err != nil {
-		return nil, err
-	}
-
-	// Get the list of columns in the ORC file
-	var columns []string
-	schema := i.Schema()
-	for k := range schema {
-		columns = append(columns, k)
-	}
-
-	// Sort the columns for consistency
-	sort.Strings(columns)
-
-	// Create presto columns
-	var blocks []presto.Column
-	for _, c := range columns {
-		if kind, hasType := schema[c]; hasType {
-			appender, ok := presto.NewColumn(kind)
-			if !ok {
-				return nil, errSchemaMismatch
-			}
-
-			blocks = append(blocks, appender)
-		}
-	}
-
-	// Create a block
-	block = new(Block)
-	block.Columns = make(nocopy.ByteMap, len(blocks))
-	i.Range(func(i int, row []interface{}) bool {
-		for i, v := range row {
-			block.Size += int64(blocks[i].Append(v))
-		}
-		return false
-	}, columns...)
-
-	// Prepare a buffer and an encoder for the data
-	var offset uint32
-	var buffer bytes.Buffer
-	buffer.Grow(int(block.Size / 10))
-
-	for i, name := range columns {
-		b, err := binary.Marshal(newValue(blocks[i].AsBlock()))
-		if err != nil {
-			return nil, err
-		}
-
-		// Encoode and write
-		buffer.Write(snappy.Encode(nil, b))
-		size := uint32(buffer.Len() - int(offset))
-
-		// Write the metadata
-		meta := make([]byte, 8)
-		binary.BigEndian.PutUint32(meta[0:4], offset)
-		binary.BigEndian.PutUint32(meta[4:8], size)
-		block.Columns[name] = meta
-
-		// Increment the offset
-		offset += size
-	}
-
-	block.Data = nocopy.Bytes(buffer.Bytes())
 	return
 }
 
@@ -140,6 +72,40 @@ func (b *Block) Select(columns []string) (map[string]presto.PrestoThriftBlock, e
 	}
 
 	return response, nil
+}
+
+// Writes a set of columns into the block
+func (b *Block) writeColumns(columns presto.NamedColumns) error {
+	var offset uint32
+	var buffer bytes.Buffer
+
+	b.Columns = make(nocopy.ByteMap, len(columns))
+	for name, column := range columns {
+		p, err := binary.Marshal(newValue(column.AsBlock()))
+		if err != nil {
+			return err
+		}
+
+		// Encoode and write
+		buffer.Write(snappy.Encode(nil, p))
+		size := uint32(buffer.Len() - int(offset))
+
+		// Write the metadata, increment the offset and total size
+		b.writeMeta(name, offset, size)
+		offset += size
+		b.Size += int64(column.Size())
+	}
+
+	b.Data = nocopy.Bytes(buffer.Bytes())
+	return nil
+}
+
+// Writes a metadata into the column
+func (b *Block) writeMeta(column string, offset, size uint32) {
+	meta := make([]byte, 8)
+	binary.BigEndian.PutUint32(meta[0:4], offset)
+	binary.BigEndian.PutUint32(meta[4:8], size)
+	b.Columns[column] = meta
 }
 
 // value ...

@@ -69,6 +69,53 @@ func (b Columns) Size() (size int) {
 
 // ------------------------------------------------------------------------------------------------------------
 
+// NamedColumns represents a set of named columns
+type NamedColumns map[string]Column
+
+// Append adds a value at a particular index to the block.
+func (c NamedColumns) Append(name string, value interface{}) bool {
+	if col, exists := c[name]; exists {
+		return col.Append(value) > 0
+	}
+
+	// If column does not exist, create it and fill it with nulls up until the max - 1
+	newColumn, supported := NewColumn(reflect.TypeOf(value))
+	if !supported {
+		return false
+	}
+
+	until := c.Max() - 1
+	for i := 0; i < until; i++ {
+		newColumn.Append(nil)
+	}
+
+	c[name] = newColumn
+	return newColumn.Append(value) > 0
+}
+
+// Max finds the maximum count of a column in the set
+func (c NamedColumns) Max() (max int) {
+	for _, column := range c {
+		if count := column.Count(); count > max {
+			max = count
+		}
+	}
+	return
+}
+
+// FillNulls adds nulls onto all uneven columns left.
+func (c NamedColumns) FillNulls() {
+	max := c.Max()
+	for _, column := range c {
+		delta := max - column.Count()
+		for i := 0; i < delta; i++ {
+			column.Append(nil)
+		}
+	}
+}
+
+// ------------------------------------------------------------------------------------------------------------
+
 // NewColumn creates a new appendable column
 func NewColumn(t reflect.Type) (Column, bool) {
 	switch t.Name() {

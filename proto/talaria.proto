@@ -1,0 +1,40 @@
+syntax = "proto3";
+package talaria;
+
+// Batch represents an event batch. It contains a map of strings in order
+// to minimize the size.
+message Batch {
+  map<uint32, bytes> strings = 1;
+  repeated Event     events  = 2;
+}
+
+// Event represents a single event. Name as well as value columns are 
+// interned strings which are present in a batch.
+message Event {
+  map<uint32, Value> value = 1;
+}
+
+// Value represents a value
+message Value {
+  oneof value {
+    uint32 binary = 1;
+    uint32 string = 2;
+    int64  int    = 3;
+    uint64 uint   = 4;
+    double double = 5;
+    bool   bool   = 6;
+  }
+}
+
+// IngestRequest represents an ingestion request.
+message IngestRequest {
+  Batch batch = 1;
+}
+
+// IngestResponse represents an ingestion response.
+message IngestResponse { }
+
+// Ingress represents a Talaria ingress frontend.
+service Ingress {
+  rpc Ingest(IngestRequest) returns (IngestResponse) {}
+}

@@ -8,31 +8,16 @@ import (
 	"fmt"
 	"math"
 	"strconv"
-	"sync/atomic"
 	"time"
 
+	"github.com/grab/talaria/internal/encoding/key"
 	"github.com/grab/talaria/internal/presto"
 	"github.com/kelindar/binary"
-	"github.com/spaolacci/murmur3"
 )
 
 var (
 	errInvalidDomain = errors.New("your query must contain 'event' constraint")
 )
-
-// ------------------------------------------------------------------------------------------------------------
-
-// Next is used as a sequence number, it's okay to overflow.
-var next uint32
-
-// NewKey generates a new key for the storage.
-func newKey(eventName string, tsi time.Time) []byte {
-	out := make([]byte, 16)
-	binary.BigEndian.PutUint32(out[0:4], murmur3.Sum32([]byte(eventName)))
-	binary.BigEndian.PutUint64(out[4:12], uint64(tsi.Unix()))
-	binary.BigEndian.PutUint32(out[12:16], atomic.AddUint32(&next, 1))
-	return out
-}
 
 // ------------------------------------------------------------------------------------------------------------
 
@@ -55,8 +40,8 @@ func (q *query) Encode() []byte {
 
 // NewQuery creates a new query
 func newQuery(keyColumn string, from, until time.Time) query {
-	t0 := newKey(keyColumn, from)
-	t1 := newKey(keyColumn, until)
+	t0 := key.New(keyColumn, from)
+	t1 := key.New(keyColumn, until)
 	return query{
 		Begin: t0[0:12],
 		Until: t1[0:12],

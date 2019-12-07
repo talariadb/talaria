@@ -11,6 +11,7 @@ import (
 
 	"github.com/grab/talaria/internal/config"
 	"github.com/grab/talaria/internal/encoding/block"
+	"github.com/grab/talaria/internal/encoding/key"
 	"github.com/grab/talaria/internal/encoding/orc"
 	"github.com/grab/talaria/internal/monitor"
 	"github.com/grab/talaria/internal/presto"
@@ -223,7 +224,7 @@ func (t *Table) Append(payload []byte) error {
 			}
 
 			// Append this block to the store
-			_ = t.store.Append(newKey(keyColumnValue, time.Unix(0, tsi)), buffer, t.ttl)
+			_ = t.store.Append(key.New(keyColumnValue, time.Unix(0, tsi)), buffer, t.ttl)
 			return false
 		})
 		return splitErr != nil

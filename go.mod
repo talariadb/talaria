@@ -10,7 +10,7 @@ require (
 	github.com/dgraph-io/badger v1.6.0
 	github.com/dgryski/go-farm v0.0.0-20191112170834-c2139c5d712b // indirect
 	github.com/emitter-io/address v1.0.0
-	github.com/golang/protobuf v1.3.2 // indirect
+	github.com/gogo/protobuf v1.3.1
 	github.com/golang/snappy v0.0.1
 	github.com/google/btree v1.0.0 // indirect
 	github.com/grab/async v0.0.0-20191204032406-6dabcb163e38
@@ -29,8 +29,10 @@ require (
 	github.com/stretchr/objx v0.2.0 // indirect
 	github.com/stretchr/testify v1.4.0
 	golang.org/x/crypto v0.0.0-20191011191535-87dc89f01550 // indirect
-	golang.org/x/net v0.0.0-20191204025024-5ee1b9f4859a // indirect
+	golang.org/x/net v0.0.0-20191206103017-1ddd1de85cb0 // indirect
 	golang.org/x/sync v0.0.0-20190911185100-cd5d95a43a6e
 	golang.org/x/sys v0.0.0-20191204072324-ce4227a45e2e // indirect
+	google.golang.org/genproto v0.0.0-20191205163323-51378566eb59 // indirect
+	google.golang.org/grpc v1.25.1
 	gopkg.in/yaml.v2 v2.2.4 // indirect
 )

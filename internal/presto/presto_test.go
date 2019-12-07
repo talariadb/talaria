@@ -40,6 +40,41 @@ func TestServeCancellation(t *testing.T) {
 	})
 }
 
+func TestNamedColumns(t *testing.T) {
+	nc := make(NamedColumns, 2)
+
+	// Fill level 1
+	assert.True(t, nc.Append("a", int32(1)))
+	assert.True(t, nc.Append("b", int32(2)))
+	assert.False(t, nc.Append("x", complex128(1)))
+	assert.Equal(t, 1, nc.Max())
+	nc.FillNulls()
+
+	// Fill level 2
+	assert.True(t, nc.Append("a", int32(1)))
+	assert.True(t, nc.Append("c", "hi"))
+	assert.Equal(t, 2, nc.Max())
+	nc.FillNulls()
+
+	// Fill level 3
+	assert.True(t, nc.Append("b", int32(1)))
+	assert.True(t, nc.Append("c", "hi"))
+	assert.True(t, nc.Append("d", float64(1.5)))
+	assert.Equal(t, 3, nc.Max())
+	nc.FillNulls()
+
+	// Must have 3 levels with nulls in the middle
+	assert.Equal(t, []int32{1, 1, 0}, nc["a"].AsBlock().IntegerData.Ints)
+	assert.Equal(t, []bool{false, false, true}, nc["a"].AsBlock().IntegerData.Nulls)
+	assert.Equal(t, []int32{2, 0, 1}, nc["b"].AsBlock().IntegerData.Ints)
+	assert.Equal(t, []bool{false, true, false}, nc["b"].AsBlock().IntegerData.Nulls)
+	assert.Equal(t, []byte{0x68, 0x69, 0x68, 0x69}, nc["c"].AsBlock().VarcharData.Bytes)
+	assert.Equal(t, []int32{0, 2, 2}, nc["c"].AsBlock().VarcharData.Sizes)
+	assert.Equal(t, []bool{true, false, false}, nc["c"].AsBlock().VarcharData.Nulls)
+	assert.Equal(t, []float64{0, 0, 1.5}, nc["d"].AsBlock().DoubleData.Doubles)
+	assert.Equal(t, []bool{true, true, false}, nc["d"].AsBlock().DoubleData.Nulls)
+}
+
 func TestAppend_Bigint(t *testing.T) {
 	tests := []struct {
 		desc      string
