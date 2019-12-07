@@ -20,12 +20,7 @@ func TestFromOrcBy(t *testing.T) {
 
 	b, err := FromOrcBy(o, "_col5")
 	assert.NoError(t, err)
-	assert.Equal(t, 4, len(b))
-
-	keys := []string{"Good", "Low Risk", "High Risk", "Unknown"}
-	for k := range b {
-		assert.Contains(t, keys, k)
-	}
+	assert.Equal(t, 1372, len(b))
 }
 
 func TestFromOrc(t *testing.T) {
@@ -33,7 +28,7 @@ func TestFromOrc(t *testing.T) {
 	assert.NotEmpty(t, o)
 	assert.NoError(t, err)
 
-	b, err := FromOrc(o)
+	b, err := FromOrc("test", o)
 	assert.NoError(t, err)
 
 	assert.Equal(t, int64(139395200), b.Size)

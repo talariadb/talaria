@@ -65,13 +65,13 @@ func (s *Ingress) Ingest(ctx context.Context, request *talaria.IngestRequest) (*
 		return nil, err
 	}
 
-	for partition, block := range blocks {
+	for _, block := range blocks {
 		b, err := block.Encode()
 		if err != nil {
 			return nil, err
 		}
 
-		if err := s.store.Append(key.New(partition, now), b, ttl); err != nil {
+		if err := s.store.Append(key.New(string(block.Key), now), b, ttl); err != nil {
 			return nil, err
 		}
 	}

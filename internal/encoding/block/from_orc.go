@@ -8,10 +8,11 @@ import (
 
 	"github.com/grab/talaria/internal/encoding/orc"
 	"github.com/grab/talaria/internal/presto"
+	"github.com/kelindar/binary/nocopy"
 )
 
 // FromOrc ...
-func FromOrc(b []byte) (block *Block, err error) {
+func FromOrc(key string, b []byte) (block *Block, err error) {
 	i, err := orc.FromBuffer(b)
 	if err != nil {
 		return nil, err
@@ -44,6 +45,7 @@ func FromOrc(b []byte) (block *Block, err error) {
 
 	// Create a block
 	block = new(Block)
+	block.Key = nocopy.String(key)
 	i.Range(func(i int, row []interface{}) bool {
 		for i, v := range row {
 			blocks[index[i]].Append(v)
@@ -60,18 +62,18 @@ func FromOrc(b []byte) (block *Block, err error) {
 
 // FromOrcBy decodes a set of blocks from an orc file and repartitions
 // it by the specified partition key.
-func FromOrcBy(payload []byte, partitionBy string) (map[string]Block, error) {
+func FromOrcBy(payload []byte, partitionBy string) ([]Block, error) {
 	const chunks = 25000
 
-	result := make(map[string]Block, 16)
-	_, err := orc.SplitByColumn(payload, partitionBy, func(hashValue string, columnChunk []byte) bool {
+	result := make([]Block, 0, 16)
+	_, err := orc.SplitByColumn(payload, partitionBy, func(key string, columnChunk []byte) bool {
 		_, splitErr := orc.SplitBySize(columnChunk, chunks, func(chunk []byte) bool {
-			blk, err := FromOrc(chunk)
+			blk, err := FromOrc(key, chunk)
 			if err != nil {
 				return true
 			}
 
-			result[hashValue] = *blk
+			result = append(result, *blk)
 			return false
 		})
 		return splitErr != nil

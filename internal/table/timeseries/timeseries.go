@@ -212,7 +212,7 @@ func (t *Table) Append(payload []byte) error {
 			}
 
 			// Create a new block to store from orc buffer
-			blk, err := block.FromOrc(chunk)
+			blk, err := block.FromOrc(keyColumn, chunk)
 			if err != nil {
 				return true
 			}

@@ -23,6 +23,7 @@ var (
 // Block represents a serialized block
 type Block struct {
 	Size    int64
+	Key     nocopy.String
 	Columns nocopy.ByteMap
 	Data    nocopy.Bytes
 }

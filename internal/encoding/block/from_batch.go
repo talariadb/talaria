@@ -9,11 +9,12 @@ import (
 
 	"github.com/grab/talaria/internal/presto"
 	talaria "github.com/grab/talaria/proto"
+	"github.com/kelindar/binary/nocopy"
 )
 
 // FromBatchBy creates a block from a talaria protobuf-encoded batch. It
 // repartitions the batch by a given partition key at the same time.
-func FromBatchBy(batch *talaria.Batch, partitionBy string) (map[string]Block, error) {
+func FromBatchBy(batch *talaria.Batch, partitionBy string) ([]Block, error) {
 	if batch == nil || batch.Strings == nil || batch.Events == nil {
 		return nil, errEmptyBatch
 	}
@@ -56,13 +57,14 @@ func FromBatchBy(batch *talaria.Batch, partitionBy string) (map[string]Block, er
 	}
 
 	// Write the columns into the block
-	blocks := make(map[string]Block, len(result))
+	blocks := make([]Block, 0, len(result))
 	for k, columns := range result {
 		var block Block
+		block.Key = nocopy.String(k)
 		if err := block.writeColumns(columns); err != nil {
 			return nil, err
 		}
-		blocks[k] = block
+		blocks = append(blocks, block)
 	}
 
 	return blocks, nil
