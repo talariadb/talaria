@@ -5,7 +5,6 @@ package timeseries
 
 import (
 	"io"
-	"reflect"
 	"sync/atomic"
 	"time"
 
@@ -13,6 +12,7 @@ import (
 	"github.com/grab/talaria/internal/encoding/block"
 	"github.com/grab/talaria/internal/encoding/key"
 	"github.com/grab/talaria/internal/encoding/orc"
+	"github.com/grab/talaria/internal/encoding/typeof"
 	"github.com/grab/talaria/internal/monitor"
 	"github.com/grab/talaria/internal/presto"
 	"github.com/grab/talaria/internal/table"
@@ -75,7 +75,7 @@ func (t *Table) Name() string {
 }
 
 // Schema retrieves the metadata for the table
-func (t *Table) Schema() (map[string]reflect.Type, error) {
+func (t *Table) Schema() (typeof.Schema, error) {
 	return t.getSchema(), nil
 }
 
@@ -112,14 +112,8 @@ func (t *Table) GetRows(splitID []byte, columns []string, maxBytes int64) (resul
 	// Create a set of appenders to use
 	for _, c := range columns {
 		schema := t.getSchema()
-		if kind, hasType := schema[c]; hasType {
-			column, ok := presto.NewColumn(kind)
-			if !ok {
-				t.monitor.ErrorWithStats(ctxTag, "schema_mismatch", "no such column")
-				return nil, table.ErrSchemaMismatch
-			}
-
-			result.Columns = append(result.Columns, column)
+		if typ, hasType := schema[c]; hasType {
+			result.Columns = append(result.Columns, presto.NewColumn(typ))
 		}
 	}
 
@@ -240,12 +234,12 @@ func (t *Table) Append(payload []byte) error {
 }
 
 // getSchema gets the latest ingested schema.
-func (t *Table) getSchema() map[string]reflect.Type {
+func (t *Table) getSchema() typeof.Schema {
 	v := t.schema.Load()
 	if v != nil {
-		if schema, ok := v.(map[string]reflect.Type); ok {
+		if schema, ok := v.(typeof.Schema); ok {
 			return schema
 		}
 	}
-	return map[string]reflect.Type{}
+	return typeof.Schema{}
 }

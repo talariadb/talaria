@@ -6,10 +6,10 @@ package nodes
 import (
 	"encoding/json"
 	"net"
-	"reflect"
 	"time"
 
 	"github.com/emitter-io/address"
+	"github.com/grab/talaria/internal/encoding/typeof"
 	"github.com/grab/talaria/internal/presto"
 	"github.com/grab/talaria/internal/table"
 	"github.com/hako/durafmt"
@@ -52,14 +52,14 @@ func (t *Table) Name() string {
 }
 
 // Schema retrieves the metadata for the table
-func (t *Table) Schema() (map[string]reflect.Type, error) {
-	return map[string]reflect.Type{
-		"address": reflect.TypeOf(""),
-		"public":  reflect.TypeOf(""),
-		"private": reflect.TypeOf(""),
-		"started": reflect.TypeOf(int64(0)),
-		"uptime":  reflect.TypeOf(""),
-		"peers":   reflect.TypeOf(""),
+func (t *Table) Schema() (typeof.Schema, error) {
+	return typeof.Schema{
+		"address": typeof.String,
+		"public":  typeof.String,
+		"private": typeof.String,
+		"started": typeof.Int64,
+		"uptime":  typeof.String,
+		"peers":   typeof.String,
 	}, nil
 }
 
@@ -99,12 +99,8 @@ func (t *Table) GetRows(splitID []byte, columns []string, maxBytes int64) (*tabl
 }
 
 // getColumn returns a coolumn info requested
-func (t *Table) getColumn(columnName string, columnType reflect.Type) (presto.Column, error) {
-	column, ok := presto.NewColumn(columnType)
-	if !ok {
-		return nil, table.ErrSchemaMismatch
-	}
-
+func (t *Table) getColumn(columnName string, columnType typeof.Type) (presto.Column, error) {
+	column := presto.NewColumn(columnType)
 	switch columnName {
 	case "address":
 		column.Append(t.cluster.Addr())

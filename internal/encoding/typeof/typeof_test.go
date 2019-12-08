@@ -4,11 +4,56 @@
 package typeof
 
 import (
+	"reflect"
 	"testing"
 
 	"github.com/scritchley/orc"
 	"github.com/stretchr/testify/assert"
 )
+
+func TestFromType(t *testing.T) {
+	{
+		typ, ok := FromType(reflectOfInt32)
+		assert.Equal(t, Int32, typ)
+		assert.True(t, ok)
+	}
+	{
+		typ, ok := FromType(reflectOfInt64)
+		assert.Equal(t, Int64, typ)
+		assert.True(t, ok)
+	}
+	{
+		typ, ok := FromType(reflectOfFloat64)
+		assert.Equal(t, Float64, typ)
+		assert.True(t, ok)
+	}
+	{
+		typ, ok := FromType(reflectOfString)
+		assert.Equal(t, String, typ)
+		assert.True(t, ok)
+	}
+	{
+		typ, ok := FromType(reflectOfBool)
+		assert.Equal(t, Bool, typ)
+		assert.True(t, ok)
+	}
+	{
+		typ, ok := FromType(reflectOfTimestamp)
+		assert.Equal(t, Timestamp, typ)
+		assert.True(t, ok)
+	}
+	{
+		typ, ok := FromType(reflectOfJSON)
+		assert.Equal(t, JSON, typ)
+		assert.True(t, ok)
+	}
+	{
+		typ, ok := FromType(reflect.TypeOf(complex128(1)))
+		assert.Equal(t, Unsupported, typ)
+		assert.False(t, ok)
+	}
+
+}
 
 func TestReflect(t *testing.T) {
 	assert.Equal(t, reflectOfInt32, Int32.Reflect())
@@ -34,6 +79,19 @@ func TestCategory(t *testing.T) {
 	})
 }
 
+func TestSQL(t *testing.T) {
+	assert.Equal(t, "INTEGER", Int32.SQL())
+	assert.Equal(t, "BIGINT", Int64.SQL())
+	assert.Equal(t, "DOUBLE", Float64.SQL())
+	assert.Equal(t, "VARCHAR", String.SQL())
+	assert.Equal(t, "BOOLEAN", Bool.SQL())
+	assert.Equal(t, "TIMESTAMP", Timestamp.SQL())
+	assert.Equal(t, "JSON", JSON.SQL())
+	assert.Panics(t, func() {
+		assert.Nil(t, Type(123).SQL())
+	})
+}
+
 func TestFromOrc(t *testing.T) {
 	td, err := orc.NewTypeDescription(
 		orc.SetCategory(orc.CategoryBoolean),
@@ -43,4 +101,8 @@ func TestFromOrc(t *testing.T) {
 	typ, ok := FromOrc(td)
 	assert.True(t, ok)
 	assert.Equal(t, Bool, typ)
+}
+
+func TestName(t *testing.T) {
+	assert.Equal(t, "int32", Int32.Name())
 }

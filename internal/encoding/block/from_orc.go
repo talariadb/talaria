@@ -32,13 +32,8 @@ func FromOrc(key string, b []byte) (block *Block, err error) {
 	blocks := make(map[string]presto.Column, len(columns))
 	index := make([]string, 0, len(columns))
 	for _, c := range columns {
-		if kind, hasType := schema[c]; hasType {
-			v, ok := presto.NewColumn(kind)
-			if !ok {
-				return nil, errSchemaMismatch
-			}
-
-			blocks[c] = v
+		if typ, hasType := schema[c]; hasType {
+			blocks[c] = presto.NewColumn(typ)
 			index = append(index, c)
 		}
 	}

@@ -11,6 +11,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grab/talaria/internal/encoding/typeof"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -90,7 +91,6 @@ func TestNewColumn(t *testing.T) {
 	tests := []struct {
 		input  interface{}
 		output interface{}
-		failed bool
 	}{
 		{
 			input:  "hi",
@@ -116,16 +116,13 @@ func TestNewColumn(t *testing.T) {
 			input:  json.RawMessage(nil),
 			output: new(PrestoThriftJson),
 		},
-		{
-			input:  complex64(1),
-			output: nil,
-			failed: true,
-		},
 	}
 
 	for _, tc := range tests {
-		c, ok := NewColumn(reflect.TypeOf(tc.input))
-		assert.Equal(t, tc.failed, !ok)
+		rt, ok := typeof.FromType(reflect.TypeOf(tc.input))
+		assert.True(t, ok)
+
+		c := NewColumn(rt)
 		assert.Equal(t, tc.output, c)
 
 		if c != nil {

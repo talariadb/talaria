@@ -77,6 +77,28 @@ func FromOrc(desc *orc.TypeDescription) (Type, bool) {
 	return t, ok
 }
 
+// FromType gets the type from a reflect.Type
+func FromType(rt reflect.Type) (Type, bool) {
+	switch rt.Name() {
+	case "int32":
+		return Int32, true
+	case "int64":
+		return Int64, true
+	case "float64":
+		return Float64, true
+	case "string":
+		return String, true
+	case "bool":
+		return Bool, true
+	case "Time":
+		return Timestamp, true
+	case "RawMessage":
+		return JSON, true
+	}
+
+	return Unsupported, false
+}
+
 // Reflect returns the corresponding reflect.Type
 func (t Type) Reflect() reflect.Type {
 	switch t {
@@ -116,5 +138,33 @@ func (t Type) Category() orc.Category {
 	case JSON:
 		return orc.CategoryString
 	}
-	panic(fmt.Errorf("typeof: unsupported type %v", t))
+
+	panic(fmt.Errorf("typeof: orc type for %v is not found", t))
+}
+
+// SQL converts reflect type to SQL type
+func (t Type) SQL() string {
+	switch t {
+	case Int32:
+		return "INTEGER"
+	case Int64:
+		return "BIGINT"
+	case Float64:
+		return "DOUBLE"
+	case String:
+		return "VARCHAR"
+	case Bool:
+		return "BOOLEAN"
+	case Timestamp:
+		return "TIMESTAMP"
+	case JSON:
+		return "JSON"
+	}
+
+	panic(fmt.Errorf("typeof: sql type for %v is not found", t))
+}
+
+// Name returns the name of the type
+func (t Type) Name() string {
+	return t.Reflect().Name()
 }

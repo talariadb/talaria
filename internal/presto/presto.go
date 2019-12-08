@@ -80,12 +80,15 @@ func (c NamedColumns) Append(name string, value interface{}) bool {
 		return col.Append(value) > 0
 	}
 
-	// If column does not exist, create it and fill it with nulls up until the max - 1
-	newColumn, supported := NewColumn(reflect.TypeOf(value))
+	// Get the type of the value
+	rt := reflect.TypeOf(value)
+	typ, supported := typeof.FromType(rt)
 	if !supported {
 		return false
 	}
 
+	// If column does not exist, create it and fill it with nulls up until the max - 1
+	newColumn := NewColumn(typ)
 	until := c.Max() - 1
 	for i := 0; i < until; i++ {
 		newColumn.Append(nil)
@@ -119,25 +122,25 @@ func (c NamedColumns) FillNulls() {
 // ------------------------------------------------------------------------------------------------------------
 
 // NewColumn creates a new appendable column
-func NewColumn(t reflect.Type) (Column, bool) {
-	switch t.Name() {
-	case "string":
-		return new(PrestoThriftVarchar), true
-	case "int32":
-		return new(PrestoThriftInteger), true
-	case "int64":
-		return new(PrestoThriftBigint), true
-	case "float64":
-		return new(PrestoThriftDouble), true
-	case "bool":
-		return new(PrestoThriftBoolean), true
-	case "Time":
-		return new(PrestoThriftTimestamp), true
-	case "RawMessage":
-		return new(PrestoThriftJson), true
+func NewColumn(t typeof.Type) Column {
+	switch t {
+	case typeof.String:
+		return new(PrestoThriftVarchar)
+	case typeof.Int32:
+		return new(PrestoThriftInteger)
+	case typeof.Int64:
+		return new(PrestoThriftBigint)
+	case typeof.Float64:
+		return new(PrestoThriftDouble)
+	case typeof.Bool:
+		return new(PrestoThriftBoolean)
+	case typeof.Timestamp:
+		return new(PrestoThriftTimestamp)
+	case typeof.JSON:
+		return new(PrestoThriftJson)
 	}
 
-	return nil, false
+	panic(fmt.Errorf("presto: unknown type %v", t))
 }
 
 // Size returns the size of the block.

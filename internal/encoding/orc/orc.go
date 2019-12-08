@@ -8,7 +8,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"reflect"
 	"strconv"
 
 	"github.com/grab/talaria/internal/encoding/typeof"
@@ -21,7 +20,7 @@ var errNoWriter = errors.New("unable to create an orc writer")
 type Iterator interface {
 	io.Closer
 	Range(f func(int, []interface{}) bool, columns ...string) (int, bool)
-	Schema() map[string]reflect.Type
+	Schema() typeof.Schema
 	SplitBySize(max int, f func([]byte) bool) (err error)
 	SplitByColumn(column string, f func(string, []byte) bool) (err error)
 }
@@ -48,7 +47,7 @@ func FromBuffer(b []byte) (Iterator, error) {
 
 // SplitBySize is a helper function that splits the incoming buffer in a set of smaller
 // and uncompressed orc files.
-func SplitBySize(payload []byte, max int, f func([]byte) bool) (map[string]reflect.Type, error) {
+func SplitBySize(payload []byte, max int, f func([]byte) bool) (typeof.Schema, error) {
 	i, err := FromBuffer(payload)
 	if err != nil {
 		return nil, err
@@ -59,7 +58,7 @@ func SplitBySize(payload []byte, max int, f func([]byte) bool) (map[string]refle
 
 // SplitByColumn is a helper function that splits the incoming buffer in a set of smaller
 // and uncompressed orc files by column value.
-func SplitByColumn(payload []byte, column string, f func(string, []byte) bool) (map[string]reflect.Type, error) {
+func SplitByColumn(payload []byte, column string, f func(string, []byte) bool) (typeof.Schema, error) {
 	i, err := FromBuffer(payload)
 	if err != nil {
 		return nil, err
@@ -252,17 +251,17 @@ func (i *iterator) Range(f func(int, []interface{}) bool, columns ...string) (in
 }
 
 // Schema gets the SQL schema for the iterator.
-func (i *iterator) Schema() (result map[string]reflect.Type) {
+func (i *iterator) Schema() typeof.Schema {
 	schema := i.reader.Schema()
-	result = map[string]reflect.Type{}
+	result := make(typeof.Schema, len(schema.Columns()))
 	for _, c := range schema.Columns() {
 		if t, err := schema.GetField(c); err == nil {
 			if t, supported := typeof.FromOrc(t); supported {
-				result[c] = t.Reflect()
+				result[c] = t
 			}
 		}
 	}
-	return
+	return result
 }
 
 // fields gets the set of supported columns

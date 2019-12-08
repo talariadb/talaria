@@ -18,6 +18,14 @@ func TestBlock_Types(t *testing.T) {
 	b, err := FromOrc("test", o)
 	assert.NoError(t, err)
 
+	schema := b.Schema()
+	assert.Equal(t, 5, len(schema))
+	assert.Contains(t, schema, "boolean1")
+	assert.Contains(t, schema, "double1")
+	assert.Contains(t, schema, "int1")
+	assert.Contains(t, schema, "long1")
+	assert.Contains(t, schema, "string1")
+
 	{
 		result, err := b.Select([]string{"int1"})
 		assert.NoError(t, err)

@@ -4,9 +4,6 @@
 package server
 
 import (
-	"fmt"
-	"reflect"
-
 	"github.com/grab/talaria/internal/presto"
 	"github.com/kelindar/binary"
 )
@@ -41,22 +38,4 @@ func decodeID(id *presto.PrestoThriftId, token *presto.PrestoThriftNullableToken
 	out = new(thriftID)
 	err = binary.Unmarshal(id.Id, out)
 	return
-}
-
-// ------------------------------------------------------------------------------------------------------------
-
-// Converts reflect type to SQL type
-func toSQLType(t reflect.Type) string {
-	switch t.Name() {
-	case "string":
-		return "varchar"
-	case "int32":
-		return "int"
-	case "int64":
-		return "bigint"
-	case "float64":
-		return "double"
-	}
-
-	panic(fmt.Errorf("sql type for %v is not found, did you forget to add it", t.Name()))
 }

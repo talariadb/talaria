@@ -81,7 +81,7 @@ func (s *Server) PrestoGetTableMetadata(schemaTableName *presto.PrestoThriftSche
 	for k, v := range schema {
 		columns = append(columns, &presto.PrestoThriftColumnMetadata{
 			Name: k,
-			Type: toSQLType(v),
+			Type: v.SQL(),
 		})
 	}
 

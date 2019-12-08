@@ -24,15 +24,18 @@ var (
 
 // Block represents a serialized block
 type Block struct {
-	Size    int64
-	Key     nocopy.String
-	Columns nocopy.ByteMap
-	Data    nocopy.Bytes
+	Size    int64                  // The unencoded size of the block
+	Key     nocopy.String          // The key of the block
+	Columns nocopy.ByteMap         // The encoded column metadata
+	Data    nocopy.Bytes           // The set of columnar data
+	schema  map[string]typeof.Type `binary:"-"` // The cached schema of the block
 }
 
 // FromBuffer unmarshals a block from a in-memory buffer.
 func FromBuffer(b []byte) (block Block, err error) {
-	err = binary.Unmarshal(b, &block)
+	if err = binary.Unmarshal(b, &block); err != nil {
+		return
+	}
 	return
 }
 
@@ -46,8 +49,20 @@ func Read(buffer []byte, columns []string) (map[string]presto.PrestoThriftBlock,
 	return block.Select(columns)
 }
 
+// Schema returns a schema of the block.
+func (b *Block) Schema() typeof.Schema {
+	if b.schema == nil {
+		b.schema = make(typeof.Schema, len(b.Columns))
+		for column, meta := range b.Columns {
+			b.schema[column] = typeof.Type(meta[8])
+		}
+	}
+
+	return b.schema
+}
+
 // Encode encodes the block as bytes
-func (b Block) Encode() ([]byte, error) {
+func (b *Block) Encode() ([]byte, error) {
 	return binary.Marshal(b)
 }
 

@@ -6,8 +6,8 @@ package table
 import (
 	"errors"
 	"io"
-	"reflect"
 
+	"github.com/grab/talaria/internal/encoding/typeof"
 	"github.com/grab/talaria/internal/presto"
 )
 
@@ -20,7 +20,7 @@ var (
 type Table interface {
 	io.Closer
 	Name() string
-	Schema() (map[string]reflect.Type, error)
+	Schema() (typeof.Schema, error)
 	GetSplits(desiredColumns []string, outputConstraint *presto.PrestoThriftTupleDomain, maxSplitCount int) ([]Split, error)
 	GetRows(splitID []byte, columns []string, maxBytes int64) (*PageResult, error)
 }
