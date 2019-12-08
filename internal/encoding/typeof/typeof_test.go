@@ -29,9 +29,18 @@ func TestCategory(t *testing.T) {
 	assert.Equal(t, orc.CategoryBoolean, Bool.Category())
 	assert.Equal(t, orc.CategoryTimestamp, Timestamp.Category())
 	assert.Equal(t, orc.CategoryString, JSON.Category())
-
 	assert.Panics(t, func() {
 		assert.Nil(t, Type(123).Category())
 	})
+}
 
+func TestFromOrc(t *testing.T) {
+	td, err := orc.NewTypeDescription(
+		orc.SetCategory(orc.CategoryBoolean),
+	)
+	assert.NoError(t, err)
+
+	typ, ok := FromOrc(td)
+	assert.True(t, ok)
+	assert.Equal(t, Bool, typ)
 }

@@ -39,6 +39,44 @@ var (
 // Type represents the type enum
 type Type byte
 
+// List of supported types, from the list below:
+/*
+	0:  "BOOLEAN",
+	1:  "BYTE",
+	2:  "SHORT",
+	3:  "INT",
+	4:  "LONG",
+	5:  "FLOAT",
+	6:  "DOUBLE",
+	7:  "STRING",
+	8:  "BINARY",
+	9:  "TIMESTAMP",
+	10: "LIST",
+	11: "MAP",
+	12: "STRUCT",
+	13: "UNION",
+	14: "DECIMAL",
+	15: "DATE",
+	16: "VARCHAR",
+	17: "CHAR",
+*/
+var supported = map[string]Type{
+	"BOOLEAN":   Bool,
+	"INT":       Int32,
+	"LONG":      Int64,
+	"DOUBLE":    Float64,
+	"STRING":    String,
+	"TIMESTAMP": Timestamp,
+	"VARCHAR":   String,
+}
+
+// FromOrc maps the orc type description to our type.
+func FromOrc(desc *orc.TypeDescription) (Type, bool) {
+	kind := desc.Type().GetKind().String()
+	t, ok := supported[kind]
+	return t, ok
+}
+
 // Reflect returns the corresponding reflect.Type
 func (t Type) Reflect() reflect.Type {
 	switch t {

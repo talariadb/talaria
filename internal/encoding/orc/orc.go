@@ -257,8 +257,7 @@ func (i *iterator) Schema() (result map[string]reflect.Type) {
 	result = map[string]reflect.Type{}
 	for _, c := range schema.Columns() {
 		if t, err := schema.GetField(c); err == nil {
-			kind := t.Type().GetKind().String()
-			if t, supported := supported[kind]; supported {
+			if t, supported := typeof.FromOrc(t); supported {
 				result[c] = t.Reflect()
 			}
 		}
@@ -271,8 +270,7 @@ func (i *iterator) fields() (out []field) {
 	schema := i.reader.Schema()
 	for _, columnName := range schema.Columns() {
 		if f, err := schema.GetField(columnName); err == nil {
-			kind := f.Type().GetKind().String()
-			if t, ok := supported[kind]; ok {
+			if t, ok := typeof.FromOrc(f); ok {
 				out = append(out, field{
 					name: columnName,
 					kind: t,
@@ -291,35 +289,4 @@ type field struct {
 // Close closes the iterator.
 func (i *iterator) Close() error {
 	return i.reader.Close()
-}
-
-// List of supported types, from the list below:
-/*
-	0:  "BOOLEAN",
-	1:  "BYTE",
-	2:  "SHORT",
-	3:  "INT",
-	4:  "LONG",
-	5:  "FLOAT",
-	6:  "DOUBLE",
-	7:  "STRING",
-	8:  "BINARY",
-	9:  "TIMESTAMP",
-	10: "LIST",
-	11: "MAP",
-	12: "STRUCT",
-	13: "UNION",
-	14: "DECIMAL",
-	15: "DATE",
-	16: "VARCHAR",
-	17: "CHAR",
-*/
-var supported = map[string]typeof.Type{
-	"BOOLEAN":   typeof.Bool,
-	"INT":       typeof.Int32,
-	"LONG":      typeof.Int64,
-	"DOUBLE":    typeof.Float64,
-	"STRING":    typeof.String,
-	"TIMESTAMP": typeof.Timestamp,
-	"VARCHAR":   typeof.String,
 }
