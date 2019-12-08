@@ -30,7 +30,6 @@ func TestTimeseries(t *testing.T) {
 	defer func() { _ = os.RemoveAll(dir) }()
 
 	cfg := config.Config{
-		Port:    9876,
 		DataDir: dir,
 		Storage: &config.Storage{
 			TTLInSec:   3600,
