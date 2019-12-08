@@ -127,16 +127,17 @@ type blockOfBool struct {
 	Booleans nocopy.Bools
 }
 
-// AsColumn converts this block to a presto thrift column.
-func (v *blockOfBool) asColumn() *presto.PrestoThriftBoolean {
-	if len(v.Nulls) == 0 {
-		return nil
+// readBlockOfBool reads a thrift block
+func readBlockOfBool(buffer []byte) (presto.PrestoThriftBlock, error) {
+	var v blockOfBool
+	if err := binary.Unmarshal(buffer, &v); err != nil {
+		return emptyBlock, err
 	}
 
-	return &presto.PrestoThriftBoolean{
+	return presto.PrestoThriftBlock{BooleanData: &presto.PrestoThriftBoolean{
 		Nulls:    v.Nulls,
 		Booleans: v.Booleans,
-	}
+	}}, nil
 }
 
 // ------------------------------------------------------------------------------------------
@@ -147,16 +148,17 @@ type blockOfInt32 struct {
 	Ints  nocopy.Int32s
 }
 
-// AsColumn converts this block to a presto thrift column.
-func (v *blockOfInt32) asColumn() *presto.PrestoThriftInteger {
-	if len(v.Nulls) == 0 {
-		return nil
+// readBlockOfInt32 reads a thrift block
+func readBlockOfInt32(buffer []byte) (presto.PrestoThriftBlock, error) {
+	var v blockOfInt32
+	if err := binary.Unmarshal(buffer, &v); err != nil {
+		return emptyBlock, err
 	}
 
-	return &presto.PrestoThriftInteger{
+	return presto.PrestoThriftBlock{IntegerData: &presto.PrestoThriftInteger{
 		Nulls: v.Nulls,
 		Ints:  v.Ints,
-	}
+	}}, nil
 }
 
 // ------------------------------------------------------------------------------------------
@@ -167,16 +169,17 @@ type blockOfInt64 struct {
 	Longs nocopy.Int64s
 }
 
-// AsColumn converts this block to a presto thrift column.
-func (v *blockOfInt64) asColumn() *presto.PrestoThriftBigint {
-	if len(v.Nulls) == 0 {
-		return nil
+// readBlockOfInt64 reads a thrift block
+func readBlockOfInt64(buffer []byte) (presto.PrestoThriftBlock, error) {
+	var v blockOfInt64
+	if err := binary.Unmarshal(buffer, &v); err != nil {
+		return emptyBlock, err
 	}
 
-	return &presto.PrestoThriftBigint{
+	return presto.PrestoThriftBlock{BigintData: &presto.PrestoThriftBigint{
 		Nulls: v.Nulls,
 		Longs: v.Longs,
-	}
+	}}, nil
 }
 
 // ------------------------------------------------------------------------------------------
@@ -187,16 +190,17 @@ type blockOfFloat64 struct {
 	Doubles nocopy.Float64s
 }
 
-// AsColumn converts this block to a presto thrift column.
-func (v *blockOfFloat64) asColumn() *presto.PrestoThriftDouble {
-	if len(v.Nulls) == 0 {
-		return nil
+// readBlockOfFloat64 reads a thrift block
+func readBlockOfFloat64(buffer []byte) (presto.PrestoThriftBlock, error) {
+	var v blockOfFloat64
+	if err := binary.Unmarshal(buffer, &v); err != nil {
+		return emptyBlock, err
 	}
 
-	return &presto.PrestoThriftDouble{
+	return presto.PrestoThriftBlock{DoubleData: &presto.PrestoThriftDouble{
 		Nulls:   v.Nulls,
 		Doubles: v.Doubles,
-	}
+	}}, nil
 }
 
 // ------------------------------------------------------------------------------------------
@@ -208,17 +212,62 @@ type blockOfStrings struct {
 	Bytes nocopy.Bytes
 }
 
-// AsColumn converts this block to a presto thrift column.
-func (v *blockOfStrings) asColumn() *presto.PrestoThriftVarchar {
-	if len(v.Nulls) == 0 {
-		return nil
+// readBlockOfFloat64 reads a thrift block
+func readBlockOfStrings(buffer []byte) (presto.PrestoThriftBlock, error) {
+	var v blockOfStrings
+	if err := binary.Unmarshal(buffer, &v); err != nil {
+		return emptyBlock, err
 	}
 
-	return &presto.PrestoThriftVarchar{
+	return presto.PrestoThriftBlock{VarcharData: &presto.PrestoThriftVarchar{
 		Nulls: v.Nulls,
 		Sizes: v.Sizes,
 		Bytes: v.Bytes,
+	}}, nil
+}
+
+// ------------------------------------------------------------------------------------------
+
+// blockOfTimestamp ...
+type blockOfTimestamp struct {
+	Nulls      nocopy.Bools
+	Timestamps nocopy.Int64s
+}
+
+// readBlockOfTimestamp reads a thrift block
+func readBlockOfTimestamp(buffer []byte) (presto.PrestoThriftBlock, error) {
+	var v blockOfTimestamp
+	if err := binary.Unmarshal(buffer, &v); err != nil {
+		return emptyBlock, err
 	}
+
+	return presto.PrestoThriftBlock{TimestampData: &presto.PrestoThriftTimestamp{
+		Nulls:      v.Nulls,
+		Timestamps: v.Timestamps,
+	}}, nil
+}
+
+// ------------------------------------------------------------------------------------------
+
+// blockOfJSON ...
+type blockOfJSON struct {
+	Nulls nocopy.Bools
+	Sizes nocopy.Int32s
+	Bytes nocopy.Bytes
+}
+
+// readBlockOfJSON reads a thrift block
+func readBlockOfJSON(buffer []byte) (presto.PrestoThriftBlock, error) {
+	var v blockOfJSON
+	if err := binary.Unmarshal(buffer, &v); err != nil {
+		return emptyBlock, err
+	}
+
+	return presto.PrestoThriftBlock{JsonData: &presto.PrestoThriftJson{
+		Nulls: v.Nulls,
+		Sizes: v.Sizes,
+		Bytes: v.Bytes,
+	}}, nil
 }
 
 // ------------------------------------------------------------------------------------------
@@ -236,6 +285,10 @@ func writeValue(b *presto.PrestoThriftBlock, buffer *bytes.Buffer) (int, error) 
 		v = &blockOfStrings{Nulls: b.VarcharData.Nulls, Sizes: b.VarcharData.Sizes, Bytes: b.VarcharData.Bytes}
 	case b.BooleanData != nil:
 		v = &blockOfBool{Nulls: b.BooleanData.Nulls, Booleans: b.BooleanData.Booleans}
+	case b.TimestampData != nil:
+		v = &blockOfTimestamp{Nulls: b.TimestampData.Nulls, Timestamps: b.TimestampData.Timestamps}
+	case b.JsonData != nil:
+		v = &blockOfJSON{Nulls: b.JsonData.Nulls, Sizes: b.JsonData.Sizes, Bytes: b.JsonData.Bytes}
 	}
 
 	// Marshal the block
@@ -257,43 +310,22 @@ func decodeValue(kind typeof.Type, b []byte) (presto.PrestoThriftBlock, error) {
 
 	switch kind {
 	case typeof.Int32:
-		var v blockOfInt32
-		if err := binary.Unmarshal(buffer, &v); err != nil {
-			return emptyBlock, err
-		}
-		return presto.PrestoThriftBlock{IntegerData: v.asColumn()}, nil
-
+		return readBlockOfInt32(buffer)
 	case typeof.Int64:
-		var v blockOfInt64
-		if err := binary.Unmarshal(buffer, &v); err != nil {
-			return emptyBlock, err
-		}
-		return presto.PrestoThriftBlock{BigintData: v.asColumn()}, nil
-
+		return readBlockOfInt64(buffer)
 	case typeof.Float64:
-		var v blockOfFloat64
-		if err := binary.Unmarshal(buffer, &v); err != nil {
-			return emptyBlock, err
-		}
-		return presto.PrestoThriftBlock{DoubleData: v.asColumn()}, nil
-
+		return readBlockOfFloat64(buffer)
 	case typeof.Bool:
-		var v blockOfBool
-		if err := binary.Unmarshal(buffer, &v); err != nil {
-			return emptyBlock, err
-		}
-		return presto.PrestoThriftBlock{BooleanData: v.asColumn()}, nil
-
+		return readBlockOfBool(buffer)
 	case typeof.String:
-		var v blockOfStrings
-		if err := binary.Unmarshal(buffer, &v); err != nil {
-			return emptyBlock, err
-		}
-		return presto.PrestoThriftBlock{VarcharData: v.asColumn()}, nil
+		return readBlockOfStrings(buffer)
+	case typeof.Timestamp:
+		return readBlockOfTimestamp(buffer)
+	case typeof.JSON:
+		return readBlockOfJSON(buffer)
 	}
 
 	return emptyBlock, fmt.Errorf("column type %v is not supported", kind)
-
 }
 
 var emptyBlock = presto.PrestoThriftBlock{}

@@ -45,7 +45,7 @@ func TestBlock_Types(t *testing.T) {
 	}
 }
 
-// BenchmarkBlockRead/read-8         	     193	   6154669 ns/op	23054913 B/op	      11 allocs/op
+// BenchmarkBlockRead/read-8         	     190	   6141327 ns/op	23054922 B/op	      11 allocs/op
 func BenchmarkBlockRead(b *testing.B) {
 	o, err := ioutil.ReadFile(testFile)
 	noerror(err)
@@ -68,8 +68,8 @@ func BenchmarkBlockRead(b *testing.B) {
 	})
 }
 
-// BenchmarkFrom/orc-8         	    8998	    133909 ns/op	  444909 B/op	    1102 allocs/op
-// BenchmarkFrom/batch-8       	  135198	      8793 ns/op	    7635 B/op	     100 allocs/op
+// BenchmarkFrom/orc-8         	    7519	    140205 ns/op	  454838 B/op	    1143 allocs/op
+// BenchmarkFrom/batch-8       	  138270	      8714 ns/op	    7651 B/op	     100 allocs/op
 func BenchmarkFrom(b *testing.B) {
 	orc, err := ioutil.ReadFile(smallFile)
 	noerror(err)
