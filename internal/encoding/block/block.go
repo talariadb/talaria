@@ -6,6 +6,7 @@ package block
 import (
 	"bytes"
 	"errors"
+	"fmt"
 
 	"github.com/golang/snappy"
 	"github.com/grab/talaria/internal/presto"
@@ -58,17 +59,12 @@ func (b *Block) Select(columns []string) (map[string]presto.PrestoThriftBlock, e
 			offset := binary.BigEndian.Uint32(meta[0:4])
 			size := binary.BigEndian.Uint32(meta[4:8])
 
-			buffer, err := snappy.Decode(nil, b.Data[offset:offset+size])
+			v, err := decodeValue(meta[8], b.Data[offset:offset+size])
 			if err != nil {
 				return nil, err
 			}
 
-			// Read the buffer at the offset
-			var value value
-			if err := binary.Unmarshal(buffer, &value); err != nil {
-				return nil, err
-			}
-			response[column] = value.asBlock()
+			response[column] = v
 		}
 	}
 
@@ -82,41 +78,32 @@ func (b *Block) writeColumns(columns presto.NamedColumns) error {
 
 	b.Columns = make(nocopy.ByteMap, len(columns))
 	for name, column := range columns {
-		p, err := binary.Marshal(newValue(column.AsBlock()))
+		size, err := writeValue(column.AsBlock(), &buffer)
 		if err != nil {
 			return err
 		}
 
-		// Encoode and write
-		buffer.Write(snappy.Encode(nil, p))
-		size := uint32(buffer.Len() - int(offset))
-
 		// Write the metadata, increment the offset and total size
-		b.writeMeta(name, offset, size)
-		offset += size
+		b.writeMeta(name, column.Kind(), offset, uint32(size))
+		offset += uint32(size)
 		b.Size += int64(column.Size())
 	}
 
 	b.Data = nocopy.Bytes(buffer.Bytes())
+
 	return nil
 }
 
 // Writes a metadata into the column
-func (b *Block) writeMeta(column string, offset, size uint32) {
-	meta := make([]byte, 8)
+func (b *Block) writeMeta(column string, kind byte, offset, size uint32) {
+	meta := make([]byte, 9)
 	binary.BigEndian.PutUint32(meta[0:4], offset)
 	binary.BigEndian.PutUint32(meta[4:8], size)
+	meta[8] = kind
 	b.Columns[column] = meta
 }
 
-// value ...
-type value struct {
-	VarcharData blockOfStrings
-	IntegerData blockOfInt32
-	BigintData  blockOfInt64
-	DoubleData  blockOfFloat64
-	BooleanData blockOfBool
-}
+// ------------------------------------------------------------------------------------------
 
 // blockOfBool ...
 type blockOfBool struct {
@@ -136,6 +123,8 @@ func (v *blockOfBool) asColumn() *presto.PrestoThriftBoolean {
 	}
 }
 
+// ------------------------------------------------------------------------------------------
+
 // blockOfInt32 ...
 type blockOfInt32 struct {
 	Nulls nocopy.Bools
@@ -153,6 +142,8 @@ func (v *blockOfInt32) asColumn() *presto.PrestoThriftInteger {
 		Ints:  v.Ints,
 	}
 }
+
+// ------------------------------------------------------------------------------------------
 
 // blockOfInt64 ...
 type blockOfInt64 struct {
@@ -172,6 +163,8 @@ func (v *blockOfInt64) asColumn() *presto.PrestoThriftBigint {
 	}
 }
 
+// ------------------------------------------------------------------------------------------
+
 // blockOfFloat64 ...
 type blockOfFloat64 struct {
 	Nulls   nocopy.Bools
@@ -189,6 +182,8 @@ func (v *blockOfFloat64) asColumn() *presto.PrestoThriftDouble {
 		Doubles: v.Doubles,
 	}
 }
+
+// ------------------------------------------------------------------------------------------
 
 // blockOfStrings ...
 type blockOfStrings struct {
@@ -210,37 +205,79 @@ func (v *blockOfStrings) asColumn() *presto.PrestoThriftVarchar {
 	}
 }
 
-func newValue(b *presto.PrestoThriftBlock) (v value) {
-	if b.IntegerData != nil {
-		v.IntegerData.Ints = b.IntegerData.Ints
-		v.IntegerData.Nulls = b.IntegerData.Nulls
+// ------------------------------------------------------------------------------------------
+
+func writeValue(b *presto.PrestoThriftBlock, buffer *bytes.Buffer) (int, error) {
+	var v interface{}
+	switch {
+	case b.IntegerData != nil:
+		v = &blockOfInt32{Nulls: b.IntegerData.Nulls, Ints: b.IntegerData.Ints}
+	case b.BigintData != nil:
+		v = &blockOfInt64{Nulls: b.BigintData.Nulls, Longs: b.BigintData.Longs}
+	case b.DoubleData != nil:
+		v = &blockOfFloat64{Nulls: b.DoubleData.Nulls, Doubles: b.DoubleData.Doubles}
+	case b.VarcharData != nil:
+		v = &blockOfStrings{Nulls: b.VarcharData.Nulls, Sizes: b.VarcharData.Sizes, Bytes: b.VarcharData.Bytes}
+	case b.BooleanData != nil:
+		v = &blockOfBool{Nulls: b.BooleanData.Nulls, Booleans: b.BooleanData.Booleans}
 	}
-	if b.BigintData != nil {
-		v.BigintData.Longs = b.BigintData.Longs
-		v.BigintData.Nulls = b.BigintData.Nulls
+
+	// Marshal the block
+	p, err := binary.Marshal(v)
+	if err != nil {
+		return 0, err
 	}
-	if b.DoubleData != nil {
-		v.DoubleData.Doubles = b.DoubleData.Doubles
-		v.DoubleData.Nulls = b.DoubleData.Nulls
-	}
-	if b.VarcharData != nil {
-		v.VarcharData.Nulls = b.VarcharData.Nulls
-		v.VarcharData.Sizes = b.VarcharData.Sizes
-		v.VarcharData.Bytes = b.VarcharData.Bytes
-	}
-	if b.BooleanData != nil {
-		v.BooleanData.Booleans = b.BooleanData.Booleans
-		v.BooleanData.Nulls = b.BooleanData.Nulls
-	}
-	return
+
+	// Encoode and write
+	return buffer.Write(snappy.Encode(nil, p))
 }
 
-func (v *value) asBlock() presto.PrestoThriftBlock {
-	return presto.PrestoThriftBlock{
-		IntegerData: v.IntegerData.asColumn(),
-		BigintData:  v.BigintData.asColumn(),
-		DoubleData:  v.DoubleData.asColumn(),
-		VarcharData: v.VarcharData.asColumn(),
-		BooleanData: v.BooleanData.asColumn(),
+// decodeValue decodes a value from the underlying buffer
+func decodeValue(kind byte, b []byte) (presto.PrestoThriftBlock, error) {
+	buffer, err := snappy.Decode(nil, b)
+	if err != nil {
+		return emptyBlock, err
 	}
+
+	switch kind {
+	case presto.TypeInt32:
+		var v blockOfInt32
+		if err := binary.Unmarshal(buffer, &v); err != nil {
+			return emptyBlock, err
+		}
+		return presto.PrestoThriftBlock{IntegerData: v.asColumn()}, nil
+
+	case presto.TypeInt64:
+		var v blockOfInt64
+		if err := binary.Unmarshal(buffer, &v); err != nil {
+			return emptyBlock, err
+		}
+		return presto.PrestoThriftBlock{BigintData: v.asColumn()}, nil
+
+	case presto.TypeFloat64:
+		var v blockOfFloat64
+		if err := binary.Unmarshal(buffer, &v); err != nil {
+			return emptyBlock, err
+		}
+		return presto.PrestoThriftBlock{DoubleData: v.asColumn()}, nil
+
+	case presto.TypeBool:
+		var v blockOfBool
+		if err := binary.Unmarshal(buffer, &v); err != nil {
+			return emptyBlock, err
+		}
+		return presto.PrestoThriftBlock{BooleanData: v.asColumn()}, nil
+
+	case presto.TypeString:
+		var v blockOfStrings
+		if err := binary.Unmarshal(buffer, &v); err != nil {
+			return emptyBlock, err
+		}
+		return presto.PrestoThriftBlock{VarcharData: v.asColumn()}, nil
+	}
+
+	return emptyBlock, fmt.Errorf("column type %v is not supported", kind)
+
 }
+
+var emptyBlock = presto.PrestoThriftBlock{}

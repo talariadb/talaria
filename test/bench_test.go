@@ -40,7 +40,9 @@ func BenchmarkQuery(b *testing.B) {
 	defer func() { _ = os.RemoveAll(dir) }()
 
 	cfg := config.Config{
-		Port:    9876,
+		Presto: &config.Presto{
+			Port: 9876,
+		},
 		DataDir: dir,
 		Storage: &config.Storage{
 			TTLInSec:   3600,
@@ -55,7 +57,7 @@ func BenchmarkQuery(b *testing.B) {
 	noerror(store.Open(cfg.DataDir))
 
 	// Start the server and open the database
-	server := server.New(cfg.Port, cfg.Presto, monitor,
+	server := server.New(cfg.Presto, monitor,
 		timeseries.New("eventlog", cfg.Storage, store, new(noopMembership), monitor),
 	)
 	defer server.Close()
@@ -72,7 +74,7 @@ func BenchmarkQuery(b *testing.B) {
 
 	// Start listen
 	go func() {
-		noerror(server.Listen(ctx))
+		noerror(server.Listen(ctx, 9876, 9877))
 	}()
 
 	// Get a split ID for our query

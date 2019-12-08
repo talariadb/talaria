@@ -132,12 +132,13 @@ func (m *Event) GetValue() map[uint32]*Value {
 // Value represents a value
 type Value struct {
 	// Types that are valid to be assigned to Value:
-	//	*Value_Binary
+	//	*Value_Int32
+	//	*Value_Int64
+	//	*Value_Float64
 	//	*Value_String_
-	//	*Value_Int
-	//	*Value_Uint
-	//	*Value_Double
 	//	*Value_Bool
+	//	*Value_Time
+	//	*Value_Json
 	Value isValue_Value `protobuf_oneof:"value"`
 }
 
@@ -180,31 +181,35 @@ type isValue_Value interface {
 	Size() int
 }
 
-type Value_Binary struct {
-	Binary uint32 `protobuf:"varint,1,opt,name=binary,proto3,oneof" json:"binary,omitempty"`
+type Value_Int32 struct {
+	Int32 int32 `protobuf:"varint,1,opt,name=int32,proto3,oneof" json:"int32,omitempty"`
+}
+type Value_Int64 struct {
+	Int64 int64 `protobuf:"varint,2,opt,name=int64,proto3,oneof" json:"int64,omitempty"`
+}
+type Value_Float64 struct {
+	Float64 float64 `protobuf:"fixed64,3,opt,name=float64,proto3,oneof" json:"float64,omitempty"`
 }
 type Value_String_ struct {
-	String_ uint32 `protobuf:"varint,2,opt,name=string,proto3,oneof" json:"string,omitempty"`
-}
-type Value_Int struct {
-	Int int64 `protobuf:"varint,3,opt,name=int,proto3,oneof" json:"int,omitempty"`
-}
-type Value_Uint struct {
-	Uint uint64 `protobuf:"varint,4,opt,name=uint,proto3,oneof" json:"uint,omitempty"`
-}
-type Value_Double struct {
-	Double float64 `protobuf:"fixed64,5,opt,name=double,proto3,oneof" json:"double,omitempty"`
+	String_ uint32 `protobuf:"varint,4,opt,name=string,proto3,oneof" json:"string,omitempty"`
 }
 type Value_Bool struct {
-	Bool bool `protobuf:"varint,6,opt,name=bool,proto3,oneof" json:"bool,omitempty"`
+	Bool bool `protobuf:"varint,5,opt,name=bool,proto3,oneof" json:"bool,omitempty"`
+}
+type Value_Time struct {
+	Time int64 `protobuf:"varint,6,opt,name=time,proto3,oneof" json:"time,omitempty"`
+}
+type Value_Json struct {
+	Json uint32 `protobuf:"varint,7,opt,name=json,proto3,oneof" json:"json,omitempty"`
 }
 
-func (*Value_Binary) isValue_Value()  {}
+func (*Value_Int32) isValue_Value()   {}
+func (*Value_Int64) isValue_Value()   {}
+func (*Value_Float64) isValue_Value() {}
 func (*Value_String_) isValue_Value() {}
-func (*Value_Int) isValue_Value()     {}
-func (*Value_Uint) isValue_Value()    {}
-func (*Value_Double) isValue_Value()  {}
 func (*Value_Bool) isValue_Value()    {}
+func (*Value_Time) isValue_Value()    {}
+func (*Value_Json) isValue_Value()    {}
 
 func (m *Value) GetValue() isValue_Value {
 	if m != nil {
@@ -213,9 +218,23 @@ func (m *Value) GetValue() isValue_Value {
 	return nil
 }
 
-func (m *Value) GetBinary() uint32 {
-	if x, ok := m.GetValue().(*Value_Binary); ok {
-		return x.Binary
+func (m *Value) GetInt32() int32 {
+	if x, ok := m.GetValue().(*Value_Int32); ok {
+		return x.Int32
+	}
+	return 0
+}
+
+func (m *Value) GetInt64() int64 {
+	if x, ok := m.GetValue().(*Value_Int64); ok {
+		return x.Int64
+	}
+	return 0
+}
+
+func (m *Value) GetFloat64() float64 {
+	if x, ok := m.GetValue().(*Value_Float64); ok {
+		return x.Float64
 	}
 	return 0
 }
@@ -227,27 +246,6 @@ func (m *Value) GetString_() uint32 {
 	return 0
 }
 
-func (m *Value) GetInt() int64 {
-	if x, ok := m.GetValue().(*Value_Int); ok {
-		return x.Int
-	}
-	return 0
-}
-
-func (m *Value) GetUint() uint64 {
-	if x, ok := m.GetValue().(*Value_Uint); ok {
-		return x.Uint
-	}
-	return 0
-}
-
-func (m *Value) GetDouble() float64 {
-	if x, ok := m.GetValue().(*Value_Double); ok {
-		return x.Double
-	}
-	return 0
-}
-
 func (m *Value) GetBool() bool {
 	if x, ok := m.GetValue().(*Value_Bool); ok {
 		return x.Bool
@@ -255,15 +253,30 @@ func (m *Value) GetBool() bool {
 	return false
 }
 
+func (m *Value) GetTime() int64 {
+	if x, ok := m.GetValue().(*Value_Time); ok {
+		return x.Time
+	}
+	return 0
+}
+
+func (m *Value) GetJson() uint32 {
+	if x, ok := m.GetValue().(*Value_Json); ok {
+		return x.Json
+	}
+	return 0
+}
+
 // XXX_OneofWrappers is for the internal use of the proto package.
 func (*Value) XXX_OneofWrappers() []interface{} {
 	return []interface{}{
-		(*Value_Binary)(nil),
+		(*Value_Int32)(nil),
+		(*Value_Int64)(nil),
+		(*Value_Float64)(nil),
 		(*Value_String_)(nil),
-		(*Value_Int)(nil),
-		(*Value_Uint)(nil),
-		(*Value_Double)(nil),
 		(*Value_Bool)(nil),
+		(*Value_Time)(nil),
+		(*Value_Json)(nil),
 	}
 }
 
@@ -402,35 +415,36 @@ func init() {
 func init() { proto.RegisterFile("talaria.proto", fileDescriptor_8f344df92059c5ff) }
 
 var fileDescriptor_8f344df92059c5ff = []byte{
-	// 439 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x6c, 0x52, 0xcf, 0x6e, 0xd3, 0x30,
-	0x18, 0xf7, 0xd7, 0x34, 0x29, 0xfa, 0x58, 0xa7, 0xc9, 0x9a, 0x20, 0x14, 0xc9, 0x8a, 0x22, 0x34,
-	0xe5, 0x54, 0xa4, 0x01, 0x12, 0x1a, 0xb7, 0x4a, 0x43, 0xd9, 0xd5, 0x93, 0xb8, 0x27, 0x9d, 0x55,
-	0x2a, 0x2a, 0x7b, 0xd8, 0xee, 0xa4, 0xdd, 0x10, 0x4f, 0xc0, 0x13, 0x70, 0xe0, 0xc4, 0xa3, 0x70,
-	0xec, 0x71, 0x47, 0x9a, 0x5e, 0x38, 0xee, 0x11, 0x90, 0xed, 0x64, 0x64, 0x62, 0xb7, 0xfc, 0xfe,
-	0x7c, 0xbf, 0xef, 0x67, 0x3b, 0x38, 0xb6, 0xd5, 0xaa, 0xd2, 0xcb, 0x6a, 0x7a, 0xa9, 0x95, 0x55,
-	0x74, 0xd4, 0xc2, 0xfc, 0x07, 0x60, 0x3c, 0xab, 0xec, 0xfc, 0x23, 0x7d, 0x83, 0x23, 0x63, 0xf5,
-	0x52, 0x2e, 0x4c, 0x0a, 0x59, 0x54, 0x3c, 0x3e, 0x7e, 0x3e, 0xed, 0x66, 0xbc, 0x61, 0x7a, 0x1e,
-	0xd4, 0x53, 0x69, 0xf5, 0x35, 0xef, 0xbc, 0xf4, 0x08, 0x13, 0x71, 0x25, 0xa4, 0x35, 0xe9, 0xc0,
-	0x4f, 0xed, 0xdf, 0x4d, 0x9d, 0x3a, 0x9a, 0xb7, 0xea, 0xe4, 0x04, 0xf7, 0xfa, 0x01, 0xf4, 0x00,
-	0xa3, 0x4f, 0xe2, 0x3a, 0x85, 0x0c, 0x8a, 0x31, 0x77, 0x9f, 0xf4, 0x10, 0xe3, 0xab, 0x6a, 0xb5,
-	0x16, 0xe9, 0x20, 0x83, 0x62, 0x8f, 0x07, 0x70, 0x32, 0x78, 0x0b, 0xf9, 0x57, 0xc0, 0xd8, 0xa7,
-	0xd1, 0x97, 0x9d, 0x27, 0x54, 0x7c, 0x76, 0x7f, 0xd9, 0xf4, 0x83, 0xd3, 0x42, 0xc1, 0xe0, 0x9b,
-	0x94, 0x88, 0xff, 0xc8, 0x07, 0x96, 0xbe, 0xe8, 0x2f, 0xed, 0xb7, 0xf7, 0x53, 0xfd, 0x12, 0xdf,
-	0x01, 0x63, 0x4f, 0xd2, 0x14, 0x93, 0x7a, 0x29, 0x2b, 0xdd, 0x06, 0x95, 0x84, 0xb7, 0xd8, 0x29,
-	0xe1, 0x5e, 0x7c, 0x9c, 0x57, 0x02, 0xa6, 0x14, 0xa3, 0xa5, 0xb4, 0x69, 0x94, 0x41, 0x11, 0x95,
-	0x84, 0x3b, 0x40, 0x0f, 0x71, 0xb8, 0x76, 0xe4, 0x30, 0x83, 0x62, 0x58, 0x12, 0xee, 0x91, 0xcb,
-	0xb8, 0x50, 0xeb, 0x7a, 0x25, 0xd2, 0x38, 0x83, 0x02, 0x5c, 0x46, 0xc0, 0xce, 0x5f, 0x2b, 0xb5,
-	0x4a, 0x93, 0x0c, 0x8a, 0x47, 0xce, 0xef, 0xd0, 0x6c, 0xd4, 0x9e, 0x20, 0x3f, 0xc7, 0xf1, 0x99,
-	0x5c, 0x08, 0x63, 0xb9, 0xf8, 0xbc, 0x16, 0xc6, 0xd2, 0x23, 0x8c, 0x6b, 0xf7, 0x72, 0xbe, 0x66,
-	0xff, 0x6c, 0xfe, 0x3d, 0x4b, 0xc2, 0x83, 0xec, 0xba, 0x29, 0x3d, 0x0f, 0xd7, 0xee, 0xba, 0x29,
-	0x3d, 0x9f, 0x25, 0x38, 0xbc, 0xa8, 0x6c, 0x95, 0x1f, 0xe0, 0x7e, 0x17, 0x6a, 0x2e, 0x95, 0x34,
-	0xe2, 0xf8, 0x3d, 0x8e, 0xce, 0xe4, 0x42, 0x0b, 0x63, 0xe8, 0x3b, 0x4c, 0x82, 0x48, 0x9f, 0xdc,
-	0x65, 0xdf, 0xab, 0x30, 0x79, 0xfa, 0x1f, 0x1f, 0x52, 0x72, 0x32, 0x7b, 0xbd, 0xd9, 0x32, 0x72,
-	0xb3, 0x65, 0xe4, 0x76, 0xcb, 0xe0, 0x4b, 0xc3, 0xe0, 0x67, 0xc3, 0xe0, 0x57, 0xc3, 0x60, 0xd3,
-	0x30, 0xf8, 0xdd, 0x30, 0xf8, 0xd3, 0x30, 0x72, 0xdb, 0x30, 0xf8, 0xb6, 0x63, 0x64, 0xb3, 0x63,
-	0xe4, 0x66, 0xc7, 0x48, 0x9d, 0xf8, 0xff, 0xf7, 0xd5, 0xdf, 0x00, 0x00, 0x00, 0xff, 0xff, 0x77,
-	0xf6, 0xb3, 0xf2, 0xd0, 0x02, 0x00, 0x00,
+	// 451 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x6c, 0x52, 0xcd, 0x6e, 0xd3, 0x40,
+	0x10, 0xde, 0x89, 0x63, 0x1b, 0x0d, 0x4d, 0x55, 0xad, 0xaa, 0xb2, 0x04, 0x69, 0x65, 0x59, 0xa8,
+	0xf2, 0x29, 0x48, 0x69, 0xa8, 0x50, 0xb9, 0x45, 0x2a, 0x72, 0xaf, 0x5b, 0x89, 0xbb, 0x53, 0x96,
+	0x10, 0x08, 0x76, 0xf1, 0x6e, 0x2b, 0xf5, 0x86, 0x78, 0x02, 0x9e, 0x81, 0x13, 0x8f, 0xc0, 0x23,
+	0x70, 0xcc, 0xb1, 0x47, 0xe2, 0x5c, 0x38, 0xf6, 0x11, 0xd0, 0xfe, 0xb8, 0x38, 0x82, 0x9b, 0xbf,
+	0xef, 0x9b, 0xf9, 0xe6, 0x1b, 0xcf, 0xe2, 0x40, 0x17, 0xcb, 0xa2, 0x5e, 0x14, 0xa3, 0xcb, 0xba,
+	0xd2, 0x15, 0x8d, 0x3d, 0x4c, 0xbf, 0x01, 0x86, 0xd3, 0x42, 0x5f, 0xbc, 0xa3, 0xcf, 0x31, 0x56,
+	0xba, 0x5e, 0x94, 0x73, 0xc5, 0x20, 0x09, 0xb2, 0x87, 0xe3, 0x27, 0xa3, 0xb6, 0xc7, 0x16, 0x8c,
+	0xce, 0x9d, 0x7a, 0x5a, 0xea, 0xfa, 0x46, 0xb4, 0xb5, 0xf4, 0x10, 0x23, 0x79, 0x2d, 0x4b, 0xad,
+	0x58, 0xcf, 0x76, 0xed, 0xde, 0x77, 0x9d, 0x1a, 0x5a, 0x78, 0x75, 0x78, 0x82, 0x3b, 0x5d, 0x03,
+	0xba, 0x87, 0xc1, 0x07, 0x79, 0xc3, 0x20, 0x81, 0x6c, 0x20, 0xcc, 0x27, 0xdd, 0xc7, 0xf0, 0xba,
+	0x58, 0x5e, 0x49, 0xd6, 0x4b, 0x20, 0xdb, 0x11, 0x0e, 0x9c, 0xf4, 0x5e, 0x40, 0xfa, 0x05, 0x30,
+	0xb4, 0x6e, 0xf4, 0x59, 0x5b, 0xe3, 0x22, 0x3e, 0xde, 0x1e, 0x36, 0x7a, 0x6d, 0x34, 0x17, 0xd0,
+	0xd5, 0x0d, 0x73, 0xc4, 0xbf, 0xe4, 0x7f, 0x86, 0x3e, 0xed, 0x0e, 0xed, 0xa6, 0xb7, 0x5d, 0xdd,
+	0x10, 0x3f, 0x00, 0x43, 0x4b, 0xd2, 0x03, 0x0c, 0x17, 0xa5, 0x3e, 0x1a, 0x5b, 0x9f, 0x30, 0x27,
+	0xc2, 0x41, 0xcf, 0x1f, 0x4f, 0xac, 0x57, 0xe0, 0xf9, 0xe3, 0x09, 0x1d, 0x62, 0xfc, 0x76, 0x59,
+	0x15, 0x46, 0x09, 0x12, 0xc8, 0x20, 0x27, 0xa2, 0x25, 0x28, 0xc3, 0xc8, 0xfd, 0x49, 0xd6, 0x37,
+	0xa1, 0x72, 0x22, 0x3c, 0xa6, 0xfb, 0xd8, 0x9f, 0x55, 0xd5, 0x92, 0x85, 0x09, 0x64, 0x0f, 0x72,
+	0x22, 0x2c, 0x32, 0xac, 0x5e, 0x7c, 0x94, 0x2c, 0xf2, 0x23, 0x2c, 0x32, 0xec, 0x7b, 0x55, 0x95,
+	0x2c, 0xf6, 0x1e, 0x16, 0x4d, 0x63, 0xbf, 0x5b, 0x7a, 0x8e, 0x83, 0xb3, 0x72, 0x2e, 0x95, 0x16,
+	0xf2, 0xd3, 0x95, 0x54, 0x9a, 0x1e, 0x62, 0x38, 0x33, 0x37, 0xb5, 0x1b, 0x74, 0xb7, 0xb6, 0x97,
+	0x36, 0xc9, 0xad, 0x4c, 0x29, 0x06, 0x55, 0x7d, 0xe1, 0x0e, 0x92, 0x13, 0x61, 0xc0, 0x34, 0xc2,
+	0xfe, 0x9b, 0x42, 0x17, 0xe9, 0x1e, 0xee, 0xb6, 0xa6, 0xea, 0xb2, 0x2a, 0x95, 0x1c, 0xbf, 0xc2,
+	0xf8, 0xac, 0x9c, 0xd7, 0x52, 0x29, 0xfa, 0x12, 0x23, 0x27, 0xd2, 0x83, 0x7b, 0xef, 0xad, 0x08,
+	0xc3, 0x47, 0xff, 0xf0, 0xce, 0x25, 0x25, 0xd3, 0xc9, 0x6a, 0xcd, 0xc9, 0xed, 0x9a, 0x93, 0xbb,
+	0x35, 0x87, 0xcf, 0x0d, 0x87, 0xef, 0x0d, 0x87, 0x9f, 0x0d, 0x87, 0x55, 0xc3, 0xe1, 0x57, 0xc3,
+	0xe1, 0x77, 0xc3, 0xc9, 0x5d, 0xc3, 0xe1, 0xeb, 0x86, 0x93, 0xd5, 0x86, 0x93, 0xdb, 0x0d, 0x27,
+	0xb3, 0xc8, 0xbe, 0xec, 0xa3, 0x3f, 0x01, 0x00, 0x00, 0xff, 0xff, 0xf4, 0x5a, 0x1b, 0xc7, 0xea,
+	0x02, 0x00, 0x00,
 }
 
 func (this *Batch) Equal(that interface{}) bool {
@@ -529,14 +543,14 @@ func (this *Value) Equal(that interface{}) bool {
 	}
 	return true
 }
-func (this *Value_Binary) Equal(that interface{}) bool {
+func (this *Value_Int32) Equal(that interface{}) bool {
 	if that == nil {
 		return this == nil
 	}
 
-	that1, ok := that.(*Value_Binary)
+	that1, ok := that.(*Value_Int32)
 	if !ok {
-		that2, ok := that.(Value_Binary)
+		that2, ok := that.(Value_Int32)
 		if ok {
 			that1 = &that2
 		} else {
@@ -548,7 +562,55 @@ func (this *Value_Binary) Equal(that interface{}) bool {
 	} else if this == nil {
 		return false
 	}
-	if this.Binary != that1.Binary {
+	if this.Int32 != that1.Int32 {
+		return false
+	}
+	return true
+}
+func (this *Value_Int64) Equal(that interface{}) bool {
+	if that == nil {
+		return this == nil
+	}
+
+	that1, ok := that.(*Value_Int64)
+	if !ok {
+		that2, ok := that.(Value_Int64)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
+	}
+	if that1 == nil {
+		return this == nil
+	} else if this == nil {
+		return false
+	}
+	if this.Int64 != that1.Int64 {
+		return false
+	}
+	return true
+}
+func (this *Value_Float64) Equal(that interface{}) bool {
+	if that == nil {
+		return this == nil
+	}
+
+	that1, ok := that.(*Value_Float64)
+	if !ok {
+		that2, ok := that.(Value_Float64)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
+	}
+	if that1 == nil {
+		return this == nil
+	} else if this == nil {
+		return false
+	}
+	if this.Float64 != that1.Float64 {
 		return false
 	}
 	return true
@@ -577,78 +639,6 @@ func (this *Value_String_) Equal(that interface{}) bool {
 	}
 	return true
 }
-func (this *Value_Int) Equal(that interface{}) bool {
-	if that == nil {
-		return this == nil
-	}
-
-	that1, ok := that.(*Value_Int)
-	if !ok {
-		that2, ok := that.(Value_Int)
-		if ok {
-			that1 = &that2
-		} else {
-			return false
-		}
-	}
-	if that1 == nil {
-		return this == nil
-	} else if this == nil {
-		return false
-	}
-	if this.Int != that1.Int {
-		return false
-	}
-	return true
-}
-func (this *Value_Uint) Equal(that interface{}) bool {
-	if that == nil {
-		return this == nil
-	}
-
-	that1, ok := that.(*Value_Uint)
-	if !ok {
-		that2, ok := that.(Value_Uint)
-		if ok {
-			that1 = &that2
-		} else {
-			return false
-		}
-	}
-	if that1 == nil {
-		return this == nil
-	} else if this == nil {
-		return false
-	}
-	if this.Uint != that1.Uint {
-		return false
-	}
-	return true
-}
-func (this *Value_Double) Equal(that interface{}) bool {
-	if that == nil {
-		return this == nil
-	}
-
-	that1, ok := that.(*Value_Double)
-	if !ok {
-		that2, ok := that.(Value_Double)
-		if ok {
-			that1 = &that2
-		} else {
-			return false
-		}
-	}
-	if that1 == nil {
-		return this == nil
-	} else if this == nil {
-		return false
-	}
-	if this.Double != that1.Double {
-		return false
-	}
-	return true
-}
 func (this *Value_Bool) Equal(that interface{}) bool {
 	if that == nil {
 		return this == nil
@@ -669,6 +659,54 @@ func (this *Value_Bool) Equal(that interface{}) bool {
 		return false
 	}
 	if this.Bool != that1.Bool {
+		return false
+	}
+	return true
+}
+func (this *Value_Time) Equal(that interface{}) bool {
+	if that == nil {
+		return this == nil
+	}
+
+	that1, ok := that.(*Value_Time)
+	if !ok {
+		that2, ok := that.(Value_Time)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
+	}
+	if that1 == nil {
+		return this == nil
+	} else if this == nil {
+		return false
+	}
+	if this.Time != that1.Time {
+		return false
+	}
+	return true
+}
+func (this *Value_Json) Equal(that interface{}) bool {
+	if that == nil {
+		return this == nil
+	}
+
+	that1, ok := that.(*Value_Json)
+	if !ok {
+		that2, ok := that.(Value_Json)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
+	}
+	if that1 == nil {
+		return this == nil
+	} else if this == nil {
+		return false
+	}
+	if this.Json != that1.Json {
 		return false
 	}
 	return true
@@ -823,7 +861,7 @@ func (this *Value) GoString() string {
 	if this == nil {
 		return "nil"
 	}
-	s := make([]string, 0, 10)
+	s := make([]string, 0, 11)
 	s = append(s, "&talaria.Value{")
 	if this.Value != nil {
 		s = append(s, "Value: "+fmt.Sprintf("%#v", this.Value)+",\n")
@@ -831,12 +869,28 @@ func (this *Value) GoString() string {
 	s = append(s, "}")
 	return strings.Join(s, "")
 }
-func (this *Value_Binary) GoString() string {
+func (this *Value_Int32) GoString() string {
 	if this == nil {
 		return "nil"
 	}
-	s := strings.Join([]string{`&talaria.Value_Binary{` +
-		`Binary:` + fmt.Sprintf("%#v", this.Binary) + `}`}, ", ")
+	s := strings.Join([]string{`&talaria.Value_Int32{` +
+		`Int32:` + fmt.Sprintf("%#v", this.Int32) + `}`}, ", ")
+	return s
+}
+func (this *Value_Int64) GoString() string {
+	if this == nil {
+		return "nil"
+	}
+	s := strings.Join([]string{`&talaria.Value_Int64{` +
+		`Int64:` + fmt.Sprintf("%#v", this.Int64) + `}`}, ", ")
+	return s
+}
+func (this *Value_Float64) GoString() string {
+	if this == nil {
+		return "nil"
+	}
+	s := strings.Join([]string{`&talaria.Value_Float64{` +
+		`Float64:` + fmt.Sprintf("%#v", this.Float64) + `}`}, ", ")
 	return s
 }
 func (this *Value_String_) GoString() string {
@@ -847,36 +901,28 @@ func (this *Value_String_) GoString() string {
 		`String_:` + fmt.Sprintf("%#v", this.String_) + `}`}, ", ")
 	return s
 }
-func (this *Value_Int) GoString() string {
-	if this == nil {
-		return "nil"
-	}
-	s := strings.Join([]string{`&talaria.Value_Int{` +
-		`Int:` + fmt.Sprintf("%#v", this.Int) + `}`}, ", ")
-	return s
-}
-func (this *Value_Uint) GoString() string {
-	if this == nil {
-		return "nil"
-	}
-	s := strings.Join([]string{`&talaria.Value_Uint{` +
-		`Uint:` + fmt.Sprintf("%#v", this.Uint) + `}`}, ", ")
-	return s
-}
-func (this *Value_Double) GoString() string {
-	if this == nil {
-		return "nil"
-	}
-	s := strings.Join([]string{`&talaria.Value_Double{` +
-		`Double:` + fmt.Sprintf("%#v", this.Double) + `}`}, ", ")
-	return s
-}
 func (this *Value_Bool) GoString() string {
 	if this == nil {
 		return "nil"
 	}
 	s := strings.Join([]string{`&talaria.Value_Bool{` +
 		`Bool:` + fmt.Sprintf("%#v", this.Bool) + `}`}, ", ")
+	return s
+}
+func (this *Value_Time) GoString() string {
+	if this == nil {
+		return "nil"
+	}
+	s := strings.Join([]string{`&talaria.Value_Time{` +
+		`Time:` + fmt.Sprintf("%#v", this.Time) + `}`}, ", ")
+	return s
+}
+func (this *Value_Json) GoString() string {
+	if this == nil {
+		return "nil"
+	}
+	s := strings.Join([]string{`&talaria.Value_Json{` +
+		`Json:` + fmt.Sprintf("%#v", this.Json) + `}`}, ", ")
 	return s
 }
 func (this *IngestRequest) GoString() string {
@@ -1140,16 +1186,41 @@ func (m *Value) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	return len(dAtA) - i, nil
 }
 
-func (m *Value_Binary) MarshalTo(dAtA []byte) (int, error) {
+func (m *Value_Int32) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *Value_Binary) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *Value_Int32) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
-	i = encodeVarintTalaria(dAtA, i, uint64(m.Binary))
+	i = encodeVarintTalaria(dAtA, i, uint64(m.Int32))
 	i--
 	dAtA[i] = 0x8
+	return len(dAtA) - i, nil
+}
+func (m *Value_Int64) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *Value_Int64) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	i = encodeVarintTalaria(dAtA, i, uint64(m.Int64))
+	i--
+	dAtA[i] = 0x10
+	return len(dAtA) - i, nil
+}
+func (m *Value_Float64) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *Value_Float64) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	i -= 8
+	encoding_binary.LittleEndian.PutUint64(dAtA[i:], uint64(math.Float64bits(float64(m.Float64))))
+	i--
+	dAtA[i] = 0x19
 	return len(dAtA) - i, nil
 }
 func (m *Value_String_) MarshalTo(dAtA []byte) (int, error) {
@@ -1161,44 +1232,7 @@ func (m *Value_String_) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	i = encodeVarintTalaria(dAtA, i, uint64(m.String_))
 	i--
-	dAtA[i] = 0x10
-	return len(dAtA) - i, nil
-}
-func (m *Value_Int) MarshalTo(dAtA []byte) (int, error) {
-	size := m.Size()
-	return m.MarshalToSizedBuffer(dAtA[:size])
-}
-
-func (m *Value_Int) MarshalToSizedBuffer(dAtA []byte) (int, error) {
-	i := len(dAtA)
-	i = encodeVarintTalaria(dAtA, i, uint64(m.Int))
-	i--
-	dAtA[i] = 0x18
-	return len(dAtA) - i, nil
-}
-func (m *Value_Uint) MarshalTo(dAtA []byte) (int, error) {
-	size := m.Size()
-	return m.MarshalToSizedBuffer(dAtA[:size])
-}
-
-func (m *Value_Uint) MarshalToSizedBuffer(dAtA []byte) (int, error) {
-	i := len(dAtA)
-	i = encodeVarintTalaria(dAtA, i, uint64(m.Uint))
-	i--
 	dAtA[i] = 0x20
-	return len(dAtA) - i, nil
-}
-func (m *Value_Double) MarshalTo(dAtA []byte) (int, error) {
-	size := m.Size()
-	return m.MarshalToSizedBuffer(dAtA[:size])
-}
-
-func (m *Value_Double) MarshalToSizedBuffer(dAtA []byte) (int, error) {
-	i := len(dAtA)
-	i -= 8
-	encoding_binary.LittleEndian.PutUint64(dAtA[i:], uint64(math.Float64bits(float64(m.Double))))
-	i--
-	dAtA[i] = 0x29
 	return len(dAtA) - i, nil
 }
 func (m *Value_Bool) MarshalTo(dAtA []byte) (int, error) {
@@ -1215,7 +1249,31 @@ func (m *Value_Bool) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 		dAtA[i] = 0
 	}
 	i--
+	dAtA[i] = 0x28
+	return len(dAtA) - i, nil
+}
+func (m *Value_Time) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *Value_Time) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	i = encodeVarintTalaria(dAtA, i, uint64(m.Time))
+	i--
 	dAtA[i] = 0x30
+	return len(dAtA) - i, nil
+}
+func (m *Value_Json) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *Value_Json) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	i = encodeVarintTalaria(dAtA, i, uint64(m.Json))
+	i--
+	dAtA[i] = 0x38
 	return len(dAtA) - i, nil
 }
 func (m *IngestRequest) Marshal() (dAtA []byte, err error) {
@@ -1382,13 +1440,31 @@ func (m *Value) Size() (n int) {
 	return n
 }
 
-func (m *Value_Binary) Size() (n int) {
+func (m *Value_Int32) Size() (n int) {
 	if m == nil {
 		return 0
 	}
 	var l int
 	_ = l
-	n += 1 + sovTalaria(uint64(m.Binary))
+	n += 1 + sovTalaria(uint64(m.Int32))
+	return n
+}
+func (m *Value_Int64) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	n += 1 + sovTalaria(uint64(m.Int64))
+	return n
+}
+func (m *Value_Float64) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	n += 9
 	return n
 }
 func (m *Value_String_) Size() (n int) {
@@ -1400,33 +1476,6 @@ func (m *Value_String_) Size() (n int) {
 	n += 1 + sovTalaria(uint64(m.String_))
 	return n
 }
-func (m *Value_Int) Size() (n int) {
-	if m == nil {
-		return 0
-	}
-	var l int
-	_ = l
-	n += 1 + sovTalaria(uint64(m.Int))
-	return n
-}
-func (m *Value_Uint) Size() (n int) {
-	if m == nil {
-		return 0
-	}
-	var l int
-	_ = l
-	n += 1 + sovTalaria(uint64(m.Uint))
-	return n
-}
-func (m *Value_Double) Size() (n int) {
-	if m == nil {
-		return 0
-	}
-	var l int
-	_ = l
-	n += 9
-	return n
-}
 func (m *Value_Bool) Size() (n int) {
 	if m == nil {
 		return 0
@@ -1434,6 +1483,24 @@ func (m *Value_Bool) Size() (n int) {
 	var l int
 	_ = l
 	n += 2
+	return n
+}
+func (m *Value_Time) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	n += 1 + sovTalaria(uint64(m.Time))
+	return n
+}
+func (m *Value_Json) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	n += 1 + sovTalaria(uint64(m.Json))
 	return n
 }
 func (m *IngestRequest) Size() (n int) {
@@ -1543,12 +1610,32 @@ func (this *Value) String() string {
 	}, "")
 	return s
 }
-func (this *Value_Binary) String() string {
+func (this *Value_Int32) String() string {
 	if this == nil {
 		return "nil"
 	}
-	s := strings.Join([]string{`&Value_Binary{`,
-		`Binary:` + fmt.Sprintf("%v", this.Binary) + `,`,
+	s := strings.Join([]string{`&Value_Int32{`,
+		`Int32:` + fmt.Sprintf("%v", this.Int32) + `,`,
+		`}`,
+	}, "")
+	return s
+}
+func (this *Value_Int64) String() string {
+	if this == nil {
+		return "nil"
+	}
+	s := strings.Join([]string{`&Value_Int64{`,
+		`Int64:` + fmt.Sprintf("%v", this.Int64) + `,`,
+		`}`,
+	}, "")
+	return s
+}
+func (this *Value_Float64) String() string {
+	if this == nil {
+		return "nil"
+	}
+	s := strings.Join([]string{`&Value_Float64{`,
+		`Float64:` + fmt.Sprintf("%v", this.Float64) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -1563,42 +1650,32 @@ func (this *Value_String_) String() string {
 	}, "")
 	return s
 }
-func (this *Value_Int) String() string {
-	if this == nil {
-		return "nil"
-	}
-	s := strings.Join([]string{`&Value_Int{`,
-		`Int:` + fmt.Sprintf("%v", this.Int) + `,`,
-		`}`,
-	}, "")
-	return s
-}
-func (this *Value_Uint) String() string {
-	if this == nil {
-		return "nil"
-	}
-	s := strings.Join([]string{`&Value_Uint{`,
-		`Uint:` + fmt.Sprintf("%v", this.Uint) + `,`,
-		`}`,
-	}, "")
-	return s
-}
-func (this *Value_Double) String() string {
-	if this == nil {
-		return "nil"
-	}
-	s := strings.Join([]string{`&Value_Double{`,
-		`Double:` + fmt.Sprintf("%v", this.Double) + `,`,
-		`}`,
-	}, "")
-	return s
-}
 func (this *Value_Bool) String() string {
 	if this == nil {
 		return "nil"
 	}
 	s := strings.Join([]string{`&Value_Bool{`,
 		`Bool:` + fmt.Sprintf("%v", this.Bool) + `,`,
+		`}`,
+	}, "")
+	return s
+}
+func (this *Value_Time) String() string {
+	if this == nil {
+		return "nil"
+	}
+	s := strings.Join([]string{`&Value_Time{`,
+		`Time:` + fmt.Sprintf("%v", this.Time) + `,`,
+		`}`,
+	}, "")
+	return s
+}
+func (this *Value_Json) String() string {
+	if this == nil {
+		return "nil"
+	}
+	s := strings.Join([]string{`&Value_Json{`,
+		`Json:` + fmt.Sprintf("%v", this.Json) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -2050,9 +2127,9 @@ func (m *Value) Unmarshal(dAtA []byte) error {
 		switch fieldNum {
 		case 1:
 			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Binary", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field Int32", wireType)
 			}
-			var v uint32
+			var v int32
 			for shift := uint(0); ; shift += 7 {
 				if shift >= 64 {
 					return ErrIntOverflowTalaria
@@ -2062,13 +2139,44 @@ func (m *Value) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				v |= uint32(b&0x7F) << shift
+				v |= int32(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}
 			}
-			m.Value = &Value_Binary{v}
+			m.Value = &Value_Int32{v}
 		case 2:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Int64", wireType)
+			}
+			var v int64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTalaria
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				v |= int64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			m.Value = &Value_Int64{v}
+		case 3:
+			if wireType != 1 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Float64", wireType)
+			}
+			var v uint64
+			if (iNdEx + 8) > l {
+				return io.ErrUnexpectedEOF
+			}
+			v = uint64(encoding_binary.LittleEndian.Uint64(dAtA[iNdEx:]))
+			iNdEx += 8
+			m.Value = &Value_Float64{float64(math.Float64frombits(v))}
+		case 4:
 			if wireType != 0 {
 				return fmt.Errorf("proto: wrong wireType = %d for field String_", wireType)
 			}
@@ -2088,58 +2196,7 @@ func (m *Value) Unmarshal(dAtA []byte) error {
 				}
 			}
 			m.Value = &Value_String_{v}
-		case 3:
-			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Int", wireType)
-			}
-			var v int64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowTalaria
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				v |= int64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			m.Value = &Value_Int{v}
-		case 4:
-			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Uint", wireType)
-			}
-			var v uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowTalaria
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				v |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			m.Value = &Value_Uint{v}
 		case 5:
-			if wireType != 1 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Double", wireType)
-			}
-			var v uint64
-			if (iNdEx + 8) > l {
-				return io.ErrUnexpectedEOF
-			}
-			v = uint64(encoding_binary.LittleEndian.Uint64(dAtA[iNdEx:]))
-			iNdEx += 8
-			m.Value = &Value_Double{float64(math.Float64frombits(v))}
-		case 6:
 			if wireType != 0 {
 				return fmt.Errorf("proto: wrong wireType = %d for field Bool", wireType)
 			}
@@ -2160,6 +2217,46 @@ func (m *Value) Unmarshal(dAtA []byte) error {
 			}
 			b := bool(v != 0)
 			m.Value = &Value_Bool{b}
+		case 6:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Time", wireType)
+			}
+			var v int64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTalaria
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				v |= int64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			m.Value = &Value_Time{v}
+		case 7:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Json", wireType)
+			}
+			var v uint32
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTalaria
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				v |= uint32(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			m.Value = &Value_Json{v}
 		default:
 			iNdEx = preIndex
 			skippy, err := skipTalaria(dAtA[iNdEx:])

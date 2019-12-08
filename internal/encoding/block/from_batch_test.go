@@ -22,12 +22,12 @@ var testBatch = &talaria.Batch{
 	},
 	Events: []*talaria.Event{
 		{Value: map[uint32]*talaria.Value{
-			1: &talaria.Value{Value: &talaria.Value_Int{Int: 10}},
-			2: &talaria.Value{Value: &talaria.Value_Int{Int: 20}},
+			1: &talaria.Value{Value: &talaria.Value_Int64{Int64: 10}},
+			2: &talaria.Value{Value: &talaria.Value_Int64{Int64: 20}},
 			4: &talaria.Value{Value: &talaria.Value_String_{String_: 5}},
 		}},
 		{Value: map[uint32]*talaria.Value{
-			2: &talaria.Value{Value: &talaria.Value_Int{Int: 20}},
+			2: &talaria.Value{Value: &talaria.Value_Int64{Int64: 20}},
 			4: &talaria.Value{Value: &talaria.Value_String_{String_: 5}},
 		}},
 		{Value: map[uint32]*talaria.Value{

@@ -4,7 +4,9 @@
 package block
 
 import (
+	"encoding/json"
 	"fmt"
+	"time"
 	"unsafe"
 
 	"github.com/grab/talaria/internal/presto"
@@ -45,7 +47,7 @@ func FromBatchBy(batch *talaria.Batch, partitionBy string) ([]Block, error) {
 		}
 
 		// Write the events into the block
-		for k, v := range event.GetValue() {
+		for k, v := range event.Value {
 			columnValue, err := readValue(batch.Strings, v)
 			if err != nil {
 				return nil, err
@@ -59,8 +61,7 @@ func FromBatchBy(batch *talaria.Batch, partitionBy string) ([]Block, error) {
 	// Write the columns into the block
 	blocks := make([]Block, 0, len(result))
 	for k, columns := range result {
-		var block Block
-		block.Key = nocopy.String(k)
+		block := Block{Key: nocopy.String(k)}
 		if err := block.writeColumns(columns); err != nil {
 			return nil, err
 		}
@@ -93,18 +94,20 @@ func readPartition(event *talaria.Event, dict map[uint32][]byte, partitionKey ui
 // Reads a value
 func readValue(dict map[uint32][]byte, v *talaria.Value) (interface{}, error) {
 	switch row := v.GetValue().(type) {
-	case *talaria.Value_Binary:
-		return binaryAt(dict, row.Binary), nil
+	case *talaria.Value_Int32:
+		return row.Int32, nil
+	case *talaria.Value_Int64:
+		return row.Int64, nil
+	case *talaria.Value_Float64:
+		return row.Float64, nil
 	case *talaria.Value_String_:
 		return stringAt(dict, row.String_), nil
-	case *talaria.Value_Int:
-		return row.Int, nil
-	case *talaria.Value_Uint:
-		return row.Uint, nil
-	case *talaria.Value_Double:
-		return row.Double, nil
 	case *talaria.Value_Bool:
 		return row.Bool, nil
+	case *talaria.Value_Time:
+		return time.Unix(row.Time, 0), nil
+	case *talaria.Value_Json:
+		return json.RawMessage(binaryAt(dict, row.Json)), nil
 	case nil: // The field is not set.
 		return nil, nil
 	default:

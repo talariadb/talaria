@@ -17,12 +17,13 @@ message Event {
 // Value represents a value
 message Value {
   oneof value {
-    uint32 binary = 1;
-    uint32 string = 2;
-    int64  int    = 3;
-    uint64 uint   = 4;
-    double double = 5;
-    bool   bool   = 6;
+    int32  int32   = 1;
+    int64  int64   = 2;
+    double float64 = 3;
+    uint32 string  = 4;
+    bool   bool    = 5;
+    int64  time    = 6;
+    uint32 json    = 7;
   }
 }
 
