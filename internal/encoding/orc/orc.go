@@ -11,6 +11,7 @@ import (
 	"reflect"
 	"strconv"
 
+	"github.com/grab/talaria/internal/encoding/typeof"
 	"github.com/scritchley/orc"
 )
 
@@ -104,7 +105,7 @@ func (i *iterator) SplitBySize(max int, f func([]byte) bool) (err error) {
 
 	var cols []string
 	for _, field := range i.fields() {
-		types = append(types, orc.AddField(field.name, orc.SetCategory(field.category)))
+		types = append(types, orc.AddField(field.name, orc.SetCategory(field.kind.Category())))
 		cols = append(cols, field.name)
 	}
 
@@ -149,7 +150,7 @@ func (i *iterator) SplitByColumn(column string, f func(string, []byte) bool) (er
 	var cols []string
 	var colIdx int
 	for idx, field := range i.fields() {
-		types = append(types, orc.AddField(field.name, orc.SetCategory(field.category)))
+		types = append(types, orc.AddField(field.name, orc.SetCategory(field.kind.Category())))
 		cols = append(cols, field.name)
 		if field.name == column {
 			colIdx = idx
@@ -256,8 +257,9 @@ func (i *iterator) Schema() (result map[string]reflect.Type) {
 	result = map[string]reflect.Type{}
 	for _, c := range schema.Columns() {
 		if t, err := schema.GetField(c); err == nil {
-			if t, supported := convert(t.Type().GetKind().String()); supported {
-				result[c] = t
+			kind := t.Type().GetKind().String()
+			if t, supported := supported[kind]; supported {
+				result[c] = t.Reflect()
 			}
 		}
 	}
@@ -269,10 +271,11 @@ func (i *iterator) fields() (out []field) {
 	schema := i.reader.Schema()
 	for _, columnName := range schema.Columns() {
 		if f, err := schema.GetField(columnName); err == nil {
-			if category, ok := supported[f.Type().GetKind().String()]; ok {
+			kind := f.Type().GetKind().String()
+			if t, ok := supported[kind]; ok {
 				out = append(out, field{
-					name:     columnName,
-					category: category,
+					name: columnName,
+					kind: t,
 				})
 			}
 		}
@@ -281,8 +284,8 @@ func (i *iterator) fields() (out []field) {
 }
 
 type field struct {
-	name     string
-	category orc.Category
+	name string
+	kind typeof.Type
 }
 
 // Close closes the iterator.
@@ -290,27 +293,33 @@ func (i *iterator) Close() error {
 	return i.reader.Close()
 }
 
-// List of supported types
-var supported = map[string]orc.Category{
-	"INT":     orc.CategoryInt,
-	"LONG":    orc.CategoryLong,
-	"STRING":  orc.CategoryVarchar,
-	"VARCHAR": orc.CategoryVarchar,
-	"DOUBLE":  orc.CategoryDouble,
-}
-
-func convert(kind string) (reflect.Type, bool) {
-	switch kind {
-	case "INT":
-		return reflect.TypeOf(int32(0)), true
-	case "LONG":
-		return reflect.TypeOf(int64(0)), true
-	case "DOUBLE":
-		return reflect.TypeOf(float64(0)), true
-	case "VARCHAR":
-		return reflect.TypeOf(""), true
-	case "STRING":
-		return reflect.TypeOf(""), true
-	}
-	return nil, false
+// List of supported types, from the list below:
+/*
+	0:  "BOOLEAN",
+	1:  "BYTE",
+	2:  "SHORT",
+	3:  "INT",
+	4:  "LONG",
+	5:  "FLOAT",
+	6:  "DOUBLE",
+	7:  "STRING",
+	8:  "BINARY",
+	9:  "TIMESTAMP",
+	10: "LIST",
+	11: "MAP",
+	12: "STRUCT",
+	13: "UNION",
+	14: "DECIMAL",
+	15: "DATE",
+	16: "VARCHAR",
+	17: "CHAR",
+*/
+var supported = map[string]typeof.Type{
+	"BOOLEAN":   typeof.Bool,
+	"INT":       typeof.Int32,
+	"LONG":      typeof.Int64,
+	"DOUBLE":    typeof.Float64,
+	"STRING":    typeof.String,
+	"TIMESTAMP": typeof.Timestamp,
+	"VARCHAR":   typeof.String,
 }

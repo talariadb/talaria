@@ -12,6 +12,7 @@ import (
 	"reflect"
 	"time"
 
+	"github.com/grab/talaria/internal/encoding/typeof"
 	"github.com/samuel/go-thrift/thrift"
 )
 
@@ -24,7 +25,7 @@ type Column interface {
 	AsBlock() *PrestoThriftBlock
 	Count() int
 	Size() int
-	Kind() byte
+	Kind() typeof.Type
 }
 
 // Serve creates and serves thrift RPC for presto. Context is used for cancellation purposes.

@@ -9,6 +9,7 @@ import (
 	"fmt"
 
 	"github.com/golang/snappy"
+	"github.com/grab/talaria/internal/encoding/typeof"
 	"github.com/grab/talaria/internal/presto"
 	"github.com/kelindar/binary"
 	"github.com/kelindar/binary/nocopy"
@@ -59,7 +60,7 @@ func (b *Block) Select(columns []string) (map[string]presto.PrestoThriftBlock, e
 			offset := binary.BigEndian.Uint32(meta[0:4])
 			size := binary.BigEndian.Uint32(meta[4:8])
 
-			v, err := decodeValue(meta[8], b.Data[offset:offset+size])
+			v, err := decodeValue(typeof.Type(meta[8]), b.Data[offset:offset+size])
 			if err != nil {
 				return nil, err
 			}
@@ -95,11 +96,11 @@ func (b *Block) writeColumns(columns presto.NamedColumns) error {
 }
 
 // Writes a metadata into the column
-func (b *Block) writeMeta(column string, kind byte, offset, size uint32) {
+func (b *Block) writeMeta(column string, kind typeof.Type, offset, size uint32) {
 	meta := make([]byte, 9)
 	binary.BigEndian.PutUint32(meta[0:4], offset)
 	binary.BigEndian.PutUint32(meta[4:8], size)
-	meta[8] = kind
+	meta[8] = byte(kind)
 	b.Columns[column] = meta
 }
 
@@ -233,42 +234,42 @@ func writeValue(b *presto.PrestoThriftBlock, buffer *bytes.Buffer) (int, error) 
 }
 
 // decodeValue decodes a value from the underlying buffer
-func decodeValue(kind byte, b []byte) (presto.PrestoThriftBlock, error) {
+func decodeValue(kind typeof.Type, b []byte) (presto.PrestoThriftBlock, error) {
 	buffer, err := snappy.Decode(nil, b)
 	if err != nil {
 		return emptyBlock, err
 	}
 
 	switch kind {
-	case presto.TypeInt32:
+	case typeof.Int32:
 		var v blockOfInt32
 		if err := binary.Unmarshal(buffer, &v); err != nil {
 			return emptyBlock, err
 		}
 		return presto.PrestoThriftBlock{IntegerData: v.asColumn()}, nil
 
-	case presto.TypeInt64:
+	case typeof.Int64:
 		var v blockOfInt64
 		if err := binary.Unmarshal(buffer, &v); err != nil {
 			return emptyBlock, err
 		}
 		return presto.PrestoThriftBlock{BigintData: v.asColumn()}, nil
 
-	case presto.TypeFloat64:
+	case typeof.Float64:
 		var v blockOfFloat64
 		if err := binary.Unmarshal(buffer, &v); err != nil {
 			return emptyBlock, err
 		}
 		return presto.PrestoThriftBlock{DoubleData: v.asColumn()}, nil
 
-	case presto.TypeBool:
+	case typeof.Bool:
 		var v blockOfBool
 		if err := binary.Unmarshal(buffer, &v); err != nil {
 			return emptyBlock, err
 		}
 		return presto.PrestoThriftBlock{BooleanData: v.asColumn()}, nil
 
-	case presto.TypeString:
+	case typeof.String:
 		var v blockOfStrings
 		if err := binary.Unmarshal(buffer, &v); err != nil {
 			return emptyBlock, err

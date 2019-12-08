@@ -8,21 +8,9 @@ import (
 	"fmt"
 	"reflect"
 	"time"
-)
 
-// The types of the columns supported
-const (
-	TypeUnknown = byte(iota)
-	TypeInt32
-	TypeInt64
-	TypeFloat64
-	TypeString
-	TypeBool
-	TypeTimestamp
-	TypeJSON
+	"github.com/grab/talaria/internal/encoding/typeof"
 )
-
-// ------------------------------------------------------------------------------------------------------------
 
 // Append adds a value to the block.
 func (b *PrestoThriftInteger) Append(v interface{}) int {
@@ -86,8 +74,8 @@ func (b *PrestoThriftInteger) Count() int {
 }
 
 // Kind returns a type of the block
-func (b *PrestoThriftInteger) Kind() byte {
-	return TypeInt32
+func (b *PrestoThriftInteger) Kind() typeof.Type {
+	return typeof.Int32
 }
 
 // ------------------------------------------------------------------------------------------------------------
@@ -153,8 +141,8 @@ func (b *PrestoThriftBigint) First() int64 {
 }
 
 // Kind returns a type of the block
-func (b *PrestoThriftBigint) Kind() byte {
-	return TypeInt64
+func (b *PrestoThriftBigint) Kind() typeof.Type {
+	return typeof.Int64
 }
 
 // ------------------------------------------------------------------------------------------------------------
@@ -211,8 +199,8 @@ func (b *PrestoThriftDouble) Count() int {
 }
 
 // Kind returns a type of the block
-func (b *PrestoThriftDouble) Kind() byte {
-	return TypeFloat64
+func (b *PrestoThriftDouble) Kind() typeof.Type {
+	return typeof.Float64
 }
 
 // ------------------------------------------------------------------------------------------------------------
@@ -274,8 +262,8 @@ func (b *PrestoThriftVarchar) Count() int {
 }
 
 // Kind returns a type of the block
-func (b *PrestoThriftVarchar) Kind() byte {
-	return TypeString
+func (b *PrestoThriftVarchar) Kind() typeof.Type {
+	return typeof.String
 }
 
 // ------------------------------------------------------------------------------------------------------------
@@ -332,8 +320,8 @@ func (b *PrestoThriftBoolean) Count() int {
 }
 
 // Kind returns a type of the block
-func (b *PrestoThriftBoolean) Kind() byte {
-	return TypeBool
+func (b *PrestoThriftBoolean) Kind() typeof.Type {
+	return typeof.Bool
 }
 
 // ------------------------------------------------------------------------------------------------------------
@@ -400,8 +388,8 @@ func (b *PrestoThriftTimestamp) Count() int {
 }
 
 // Kind returns a type of the block
-func (b *PrestoThriftTimestamp) Kind() byte {
-	return TypeTimestamp
+func (b *PrestoThriftTimestamp) Kind() typeof.Type {
+	return typeof.Timestamp
 }
 
 // ------------------------------------------------------------------------------------------------------------
@@ -475,6 +463,6 @@ func (b *PrestoThriftJson) Count() int {
 }
 
 // Kind returns a type of the block
-func (b *PrestoThriftJson) Kind() byte {
-	return TypeString
+func (b *PrestoThriftJson) Kind() typeof.Type {
+	return typeof.JSON
 }
