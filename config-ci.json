@@ -1,9 +1,12 @@
 {
   "port": 8042,
   "mode": "development",
-  "hostname": "(hostname)",
+  "hostname": "127.0.0.1",
   "dataDir": "./data",
-  "awsRegion":"(region)",
+  "awsRegion":"ap-southeast-1",
+  "grpc": {
+    "port":8043
+  },
   "sqs": {
     "endpoint":"(sqs endpoint)",
     "retry": 5,

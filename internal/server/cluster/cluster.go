@@ -103,6 +103,11 @@ func (c *Cluster) JoinAndSync(ctx context.Context, r53 *Route53, domainName, zon
 	}
 }
 
+// Close closes the gossip
+func (c *Cluster) Close() error {
+	return c.list.Shutdown()
+}
+
 // GetAddress returns our own IP Address.
 func getAddress() string {
 	interfaces, err := address.GetPrivate()

@@ -157,6 +157,10 @@ func (s *Storage) GC(ctx context.Context) (interface{}, error) {
 	const tag = "GC"
 	const discardRatio = 0.3
 
+	if s.gc != nil && s.gc.State() == async.IsCancelled {
+		return nil, nil
+	}
+
 	deleted, total := s.purge()
 	s.monitor.Debugf("deleted %v / %v items, available %v", deleted, total, total-deleted)
 	s.monitor.Gauge(ctxTag, "GC.purge", float64(deleted), "type:deleted")

@@ -77,15 +77,14 @@ func main() {
 	})
 
 	// onSignal will be called when a OS-level signal is received.
-	onSignal(func(_ os.Signal) {
-		ingestor.Close() // First finish and stop ingesting ...
-		server.Close()   // Close the server and database ...
-		os.Exit(0)       // Exit the process.
-	})
-
-	// Cancellation
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
+	onSignal(func(_ os.Signal) {
+		cancel()         // Cancel the context
+		gossip.Close()   // Close the gossip layer
+		ingestor.Close() // First finish and stop ingesting ...
+		server.Close()   // Close the server and database ...
+	})
 
 	// Join the cluster
 	monitor.Infof("starting DNS and route53 ...")

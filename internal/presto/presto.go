@@ -42,6 +42,12 @@ func Serve(ctx context.Context, port int32, service PrestoThriftService) error {
 		return err
 	}
 
+	// Close the listener if context is cancelled
+	go func() {
+		<-ctx.Done()
+		ln.Close()
+	}()
+
 	// Connection loop, old school
 	for {
 		select {

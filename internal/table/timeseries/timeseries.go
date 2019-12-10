@@ -201,8 +201,8 @@ func (t *Table) Append(payload []byte) error {
 
 			// We must have event and tsi to proceed...
 			tsi, hasTsi := v[0].(int64)
-			if !hasTsi {
-				return true
+			if !hasTsi || tsi < 0 {
+				tsi = 0
 			}
 
 			// Create a new block to store from orc buffer
