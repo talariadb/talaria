@@ -87,11 +87,7 @@ func main() {
 	})
 
 	// Join the cluster
-	monitor.Infof("starting DNS and route53 ...")
-	r53 := cluster.NewRoute53(cfg.AwsRegion, monitor)
-
-	// Keep maintaining our DNS
-	go gossip.JoinAndSync(ctx, r53, cfg.Route.Domain, cfg.Route.ZoneID)
+	gossip.JoinHostname(cfg.Domain)
 
 	// Start listen
 	monitor.Infof("starting server listener ...")

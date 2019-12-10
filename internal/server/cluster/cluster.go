@@ -4,12 +4,9 @@
 package cluster
 
 import (
-	"context"
-	"math/rand"
 	"net"
 	"strconv"
 	"strings"
-	"time"
 
 	"github.com/emitter-io/address"
 	"github.com/hashicorp/memberlist"
@@ -77,30 +74,6 @@ func (c *Cluster) JoinHostname(name string) error {
 	}
 
 	return c.Join(addr...)
-}
-
-// JoinAndSync attempts to join all of the nodes behind a hostname
-func (c *Cluster) JoinAndSync(ctx context.Context, r53 *Route53, domainName, zoneID string) {
-	for {
-		select {
-		case <-ctx.Done():
-			return
-		default:
-
-			// Re-join by hostname
-			if err := c.JoinHostname(domainName); err != nil {
-				r53.monitor.ErrorWithStats(ctxTag, "join_hostname", "[join] "+err.Error())
-			}
-
-			// Get the target and update our A record
-			if err := r53.Upsert(domainName, zoneID, c.Members(), 3000); err != nil {
-				r53.monitor.ErrorWithStats(ctxTag, "upsert_members", "[r53] "+err.Error())
-			}
-
-			// Sleep for some random time
-			time.Sleep(time.Duration(300+rand.Intn(300)) * time.Second)
-		}
-	}
 }
 
 // Close closes the gossip

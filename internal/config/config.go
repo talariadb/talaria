@@ -31,8 +31,8 @@ type Config struct {
 	DataDir   string   `json:"dataDir"`
 	AwsRegion string   `json:"awsRegion"`
 	Env       string   `json:"env"`
+	Domain    string   `json:"domain"`
 	Sqs       *SQS     `json:"sqs"`
-	Route     *Route53 `json:"route"`
 	Presto    *Presto  `json:"presto"`
 	Storage   *Storage `json:"storage"`
 	Statsd    *StatsD  `json:"statsd"`
@@ -49,12 +49,6 @@ type SQS struct {
 	WaitTimeout       int64  `json:"waitTimeout"`       // in seconds
 	VisibilityTimeout *int64 `json:"visibilityTimeout"` // in seconds
 	MaxRetries        int    `json:"maxRetries"`
-}
-
-// Route53 represents the Route53 configuration
-type Route53 struct {
-	Domain string `json:"domain"`
-	ZoneID string `json:"zoneID"`
 }
 
 // Presto represents the Presto configuration
