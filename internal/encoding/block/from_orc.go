@@ -5,6 +5,7 @@ package block
 
 import (
 	"encoding/json"
+	"fmt"
 	"strconv"
 
 	"github.com/grab/talaria/internal/encoding/orc"
@@ -100,17 +101,22 @@ func findString(columns []string, partitionBy string) (int, bool) {
 }
 
 // convertToJSON converts an ORC map/list/struct to JSON
-func convertToJSON(v interface{}) (json.RawMessage, bool) {
-	switch v.(type) {
-	case orctype.Struct:
+func convertToJSON(value interface{}) (json.RawMessage, bool) {
+	switch vt := value.(type) {
 	case []orctype.MapEntry:
+		remap := make(map[string]interface{}, len(vt))
+		for k, v := range vt {
+			remap[fmt.Sprintf("%v", k)] = v
+		}
+		value = remap
+	case orctype.Struct:
 	case []interface{}:
 	case interface{}:
 	default:
 		return nil, false
 	}
 
-	b, err := json.Marshal(v)
+	b, err := json.Marshal(value)
 	if err != nil {
 		return nil, false
 	}
