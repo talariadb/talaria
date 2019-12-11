@@ -105,8 +105,8 @@ func convertToJSON(value interface{}) (json.RawMessage, bool) {
 	switch vt := value.(type) {
 	case []orctype.MapEntry:
 		remap := make(map[string]interface{}, len(vt))
-		for k, v := range vt {
-			remap[fmt.Sprintf("%v", k)] = v
+		for _, v := range vt {
+			remap[fmt.Sprintf("%v", v.Key)] = v.Value
 		}
 		value = remap
 	case orctype.Struct:
