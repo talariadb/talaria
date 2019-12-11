@@ -6,9 +6,11 @@ package block
 import (
 	"encoding/json"
 	"fmt"
+	"reflect"
 	"time"
 	"unsafe"
 
+	"github.com/grab/talaria/internal/encoding/typeof"
 	"github.com/grab/talaria/internal/presto"
 	talaria "github.com/grab/talaria/proto"
 	"github.com/kelindar/binary/nocopy"
@@ -52,23 +54,20 @@ func FromBatchBy(batch *talaria.Batch, partitionBy string) ([]Block, error) {
 			if err != nil {
 				return nil, err
 			}
-			columns.Append(stringAt(batch.Strings, k), columnValue)
+
+			typ, ok := typeof.FromType(reflect.TypeOf(columnValue))
+			if !ok {
+				continue // Skip
+			}
+
+			columns.Append(stringAt(batch.Strings, k), columnValue, typ)
 		}
 
 		columns.FillNulls()
 	}
 
 	// Write the columns into the block
-	blocks := make([]Block, 0, len(result))
-	for k, columns := range result {
-		block := Block{Key: nocopy.String(k)}
-		if err := block.writeColumns(columns); err != nil {
-			return nil, err
-		}
-		blocks = append(blocks, block)
-	}
-
-	return blocks, nil
+	return makeBlocks(result)
 }
 
 // ------------------------------------------------------------------------------------------
@@ -139,6 +138,20 @@ func findParitionKey(dict map[uint32][]byte, partitionBy string) (uint32, bool) 
 		}
 	}
 	return 0, false
+}
+
+// makeBlocks creates a set of blocks from a set of named columns
+func makeBlocks(v map[string]presto.NamedColumns) ([]Block, error) {
+	blocks := make([]Block, 0, len(v))
+	for k, columns := range v {
+		block := Block{Key: nocopy.String(k)}
+		if err := block.writeColumns(columns); err != nil {
+			return nil, err
+		}
+		blocks = append(blocks, block)
+	}
+
+	return blocks, nil
 }
 
 // Converts binary to string in a zero-alloc manner

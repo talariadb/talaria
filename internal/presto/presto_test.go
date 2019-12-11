@@ -27,22 +27,22 @@ func TestNamedColumns(t *testing.T) {
 	nc := make(NamedColumns, 2)
 
 	// Fill level 1
-	assert.True(t, nc.Append("a", int32(1)))
-	assert.True(t, nc.Append("b", int32(2)))
-	assert.False(t, nc.Append("x", complex128(1)))
+	assert.True(t, nc.Append("a", int32(1), typeof.Int32))
+	assert.True(t, nc.Append("b", int32(2), typeof.Int32))
+	assert.False(t, nc.Append("x", complex128(1), typeof.Unsupported))
 	assert.Equal(t, 1, nc.Max())
 	nc.FillNulls()
 
 	// Fill level 2
-	assert.True(t, nc.Append("a", int32(1)))
-	assert.True(t, nc.Append("c", "hi"))
+	assert.True(t, nc.Append("a", int32(1), typeof.Int32))
+	assert.True(t, nc.Append("c", "hi", typeof.String))
 	assert.Equal(t, 2, nc.Max())
 	nc.FillNulls()
 
 	// Fill level 3
-	assert.True(t, nc.Append("b", int32(1)))
-	assert.True(t, nc.Append("c", "hi"))
-	assert.True(t, nc.Append("d", float64(1.5)))
+	assert.True(t, nc.Append("b", int32(1), typeof.Int32))
+	assert.True(t, nc.Append("c", "hi", typeof.String))
+	assert.True(t, nc.Append("d", float64(1.5), typeof.Float64))
 	assert.Equal(t, 3, nc.Max())
 	nc.FillNulls()
 

@@ -9,7 +9,6 @@ import (
 	"math"
 	"net"
 	"net/rpc"
-	"reflect"
 	"time"
 
 	"github.com/grab/talaria/internal/encoding/typeof"
@@ -81,15 +80,13 @@ func (b Columns) Size() (size int) {
 type NamedColumns map[string]Column
 
 // Append adds a value at a particular index to the block.
-func (c NamedColumns) Append(name string, value interface{}) bool {
+func (c NamedColumns) Append(name string, value interface{}, typ typeof.Type) bool {
 	if col, exists := c[name]; exists {
 		return col.Append(value) > 0
 	}
 
-	// Get the type of the value
-	rt := reflect.TypeOf(value)
-	typ, supported := typeof.FromType(rt)
-	if !supported {
+	// Skip unsupported types
+	if typ == typeof.Unsupported {
 		return false
 	}
 

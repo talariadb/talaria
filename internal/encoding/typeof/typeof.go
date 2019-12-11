@@ -68,6 +68,9 @@ var supported = map[string]Type{
 	"STRING":    String,
 	"TIMESTAMP": Timestamp,
 	"VARCHAR":   String,
+	"LIST":      JSON,
+	"MAP":       JSON,
+	"STRUCT":    JSON,
 }
 
 // FromOrc maps the orc type description to our type.

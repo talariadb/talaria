@@ -4,78 +4,129 @@
 package block
 
 import (
-	"sort"
+	"encoding/json"
+	"strconv"
 
 	"github.com/grab/talaria/internal/encoding/orc"
+	"github.com/grab/talaria/internal/encoding/typeof"
 	"github.com/grab/talaria/internal/presto"
-	"github.com/kelindar/binary/nocopy"
+	orctype "github.com/scritchley/orc"
 )
-
-// FromOrc ...
-func FromOrc(key string, b []byte) (block *Block, err error) {
-	i, err := orc.FromBuffer(b)
-	if err != nil {
-		return nil, err
-	}
-
-	// Get the list of columns in the ORC file
-	var columns []string
-	schema := i.Schema()
-	for k := range schema {
-		columns = append(columns, k)
-	}
-
-	// Sort the columns for consistency
-	sort.Strings(columns)
-
-	// Create presto columns
-	blocks := make(map[string]presto.Column, len(columns))
-	index := make([]string, 0, len(columns))
-	for _, c := range columns {
-		if typ, hasType := schema[c]; hasType {
-			blocks[c] = presto.NewColumn(typ)
-			index = append(index, c)
-		}
-	}
-
-	// Create a block
-	block = new(Block)
-	block.Key = nocopy.String(key)
-	i.Range(func(i int, row []interface{}) bool {
-		for i, v := range row {
-			blocks[index[i]].Append(v)
-		}
-		return false
-	}, columns...)
-
-	// Write the columns into the block
-	if err := block.writeColumns(blocks); err != nil {
-		return nil, err
-	}
-	return
-}
 
 // FromOrcBy decodes a set of blocks from an orc file and repartitions
 // it by the specified partition key.
 func FromOrcBy(payload []byte, partitionBy string) ([]Block, error) {
-	const chunks = 25000
-
-	result := make([]Block, 0, 16)
-	_, err := orc.SplitByColumn(payload, partitionBy, func(key string, columnChunk []byte) bool {
-		_, splitErr := orc.SplitBySize(columnChunk, chunks, func(chunk []byte) bool {
-			blk, err := FromOrc(key, chunk)
-			if err != nil {
-				return true
-			}
-
-			result = append(result, *blk)
-			return false
-		})
-		return splitErr != nil
-	})
+	const max = 10000
+	iter, err := orc.FromBuffer(payload)
 	if err != nil {
 		return nil, err
 	}
 
-	return result, nil
+	// Find the partition index
+	schema := iter.Schema()
+	cols := schema.Columns()
+	partitionIdx, ok := findString(cols, partitionBy)
+	if !ok {
+		return nil, errPartitionNotFound
+	}
+
+	// The resulting set of blocks, repartitioned and chunked
+	blocks := make([]Block, 0, 128)
+
+	// Create presto columns and iterate
+	result, count := make(map[string]presto.NamedColumns, 16), 0
+	_, _ = iter.Range(func(rowIdx int, row []interface{}) bool {
+		if count%max == 0 {
+			pending, err := makeBlocks(result)
+			if err != nil {
+				return true
+			}
+
+			blocks = append(blocks, pending...)
+			result = make(map[string]presto.NamedColumns, 16)
+		}
+
+		// Get the partition value, must be a string
+		partition, ok := convertToString(row[partitionIdx])
+		if !ok {
+			return true
+		}
+
+		// Get the block for that partition
+		columns, exists := result[partition]
+		if !exists {
+			columns = make(presto.NamedColumns, 16)
+			result[partition] = columns
+		}
+
+		// Write the events into the block
+		for i, v := range row {
+			columnName := cols[i]
+			columnType := schema[columnName]
+
+			// Encode to JSON
+			if columnType == typeof.JSON {
+				if encoded, ok := convertToJSON(v); ok {
+					v = encoded
+				}
+			}
+
+			columns.Append(columnName, v, columnType)
+		}
+
+		count++
+		columns.FillNulls()
+		return false
+	}, cols...)
+
+	// Write the last chunk
+	last, err := makeBlocks(result)
+	if err != nil {
+		return nil, err
+	}
+
+	blocks = append(blocks, last...)
+	return blocks, nil
+}
+
+// Find the partition index
+func findString(columns []string, partitionBy string) (int, bool) {
+	for i, k := range columns {
+		if k == partitionBy {
+			return i, true
+		}
+	}
+	return 0, false
+}
+
+// convertToJSON converts an ORC map/list/struct to JSON
+func convertToJSON(v interface{}) (json.RawMessage, bool) {
+	switch v.(type) {
+	case orctype.Struct:
+	case []orctype.MapEntry:
+	case []interface{}:
+	case interface{}:
+	default:
+		return nil, false
+	}
+
+	b, err := json.Marshal(v)
+	if err != nil {
+		return nil, false
+	}
+
+	return json.RawMessage(b), true
+}
+
+// convertToString converst value to string because currently all the keys in Badger are stored in the form of string before hashing to the byte array
+func convertToString(value interface{}) (string, bool) {
+	v, ok := value.(string)
+	if ok {
+		return v, true
+	}
+	valueInt, ok := value.(int64)
+	if ok {
+		return strconv.FormatInt(valueInt, 10), true
+	}
+	return "", false
 }
