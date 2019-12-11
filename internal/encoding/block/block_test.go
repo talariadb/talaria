@@ -43,6 +43,18 @@ func TestBlock_Types(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, 2, result["long1"].BigintData.Count())
 	}
+
+	{
+		min, ok := b.Min("int1")
+		assert.True(t, ok)
+		assert.Equal(t, int64(65536), min)
+	}
+
+	{
+		min, ok := b.Min("long1")
+		assert.False(t, ok) // Actually might be wrong...
+		assert.Equal(t, int64(9223372036854775807), min)
+	}
 }
 
 // BenchmarkBlockRead/read-8         	     190	   6141327 ns/op	23054922 B/op	      11 allocs/op

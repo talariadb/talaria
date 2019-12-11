@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/grab/talaria/internal/config"
+	"github.com/grab/talaria/internal/encoding/block"
 	"github.com/grab/talaria/internal/monitor"
 	"github.com/grab/talaria/internal/presto"
 	"github.com/grab/talaria/internal/storage/disk"
@@ -25,7 +26,7 @@ func (m noopMembership) Members() []string {
 }
 
 func TestTimeseries(t *testing.T) {
-	dir, err := ioutil.TempDir(".", "")
+	dir, err := ioutil.TempDir(".", "testdata-")
 	assert.NoError(t, err)
 	defer func() { _ = os.RemoveAll(dir) }()
 
@@ -51,7 +52,11 @@ func TestTimeseries(t *testing.T) {
 	// Append some files
 	f2, err := ioutil.ReadFile(testFile2)
 	assert.NoError(t, err)
-	assert.NoError(t, eventlog.Append(f2))
+	blocks, err := block.FromOrcBy(f2, cfg.Storage.KeyColumn)
+	assert.NoError(t, err)
+	for _, block := range blocks {
+		assert.NoError(t, eventlog.Append(block))
+	}
 
 	// Get the schema
 	schema, err := eventlog.Schema()

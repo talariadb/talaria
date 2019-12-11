@@ -19,6 +19,7 @@ import (
 	"github.com/grab/talaria/internal/storage/disk"
 	"github.com/grab/talaria/internal/table/nodes"
 	"github.com/grab/talaria/internal/table/timeseries"
+	talaria "github.com/grab/talaria/proto"
 )
 
 func main() {
@@ -26,7 +27,7 @@ func main() {
 	noerror(err)
 	defer func() { _ = os.RemoveAll(dir) }()
 
-	cfg := config.Config{
+	cfg := &config.Config{
 		Presto: &config.Presto{
 			Port:   8042,
 			Schema: "talaria",
@@ -55,7 +56,7 @@ func main() {
 
 	// Start the server and open the database
 	eventlog := timeseries.New(cfg.Presto.Table, cfg.Storage, store, gossip, monitor)
-	server := server.New(cfg.Presto, monitor,
+	server := server.New(cfg, monitor,
 		eventlog,
 		nodes.New(gossip),
 	)
@@ -71,9 +72,9 @@ func main() {
 	})
 
 	// Append some files
-	// string1 can be (hi, bye)
-	f2, _ := ioutil.ReadFile("./test3.orc")
-	noerror(server.Append(f2))
+	orcfile, _ := ioutil.ReadFile("./test3.orc")
+	_, err = server.Ingest(context.Background(), &talaria.IngestRequest{Data: &talaria.IngestRequest_Orc{Orc: orcfile}})
+	noerror(err)
 
 	// Print out the schema
 	println("loaded data with the schema:")

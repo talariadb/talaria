@@ -69,22 +69,34 @@ func (b *Block) Encode() ([]byte, error) {
 // Select selects a set of thrift columns
 func (b *Block) Select(columns []string) (map[string]presto.PrestoThriftBlock, error) {
 	response := make(map[string]presto.PrestoThriftBlock, len(columns))
-
 	for _, column := range columns {
-		if meta, ok := b.Columns[column]; ok {
-			offset := binary.BigEndian.Uint32(meta[0:4])
-			size := binary.BigEndian.Uint32(meta[4:8])
-
-			v, err := decodeValue(typeof.Type(meta[8]), b.Data[offset:offset+size])
-			if err != nil {
-				return nil, err
-			}
-
-			response[column] = v
+		meta, ok := b.Columns[column]
+		if !ok {
+			return nil, fmt.Errorf("block: column %s was not found in the block", column)
 		}
+
+		offset := binary.BigEndian.Uint32(meta[0:4])
+		size := binary.BigEndian.Uint32(meta[4:8])
+		v, err := decodeValue(typeof.Type(meta[8]), b.Data[offset:offset+size])
+		if err != nil {
+			return nil, err
+		}
+
+		response[column] = v
 	}
 
 	return response, nil
+}
+
+// Min selects the smallest value for a column (must be an integer or a bigint)
+func (b *Block) Min(column string) (int64, bool) {
+	columns, err := b.Select([]string{column})
+	if err != nil {
+		return 0, false
+	}
+
+	col := columns[column]
+	return col.Min()
 }
 
 // Writes a set of columns into the block

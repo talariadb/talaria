@@ -41,13 +41,13 @@ type Storage interface {
 // ------------------------------------------------------------------------------------------------------------
 
 // New creates a new talaria server.
-func New(prestoCfg *config.Presto, monitor monitor.Client, tables ...table.Table) *Server {
+func New(conf *config.Config, monitor monitor.Client, tables ...table.Table) *Server {
 	const maxMessageSize = 32 * 1024 * 1024 // 32 MB
 	server := &Server{
-		server:    grpc.NewServer(grpc.MaxRecvMsgSize(maxMessageSize)),
-		prestoCfg: prestoCfg,
-		monitor:   monitor,
-		tables:    make(map[string]table.Table),
+		server:  grpc.NewServer(grpc.MaxRecvMsgSize(maxMessageSize)),
+		conf:    conf,
+		monitor: monitor,
+		tables:  make(map[string]table.Table),
 	}
 
 	// Register the gRPC server
@@ -62,11 +62,11 @@ func New(prestoCfg *config.Presto, monitor monitor.Client, tables ...table.Table
 
 // Server represents the talaria server which should implement presto thrift interface.
 type Server struct {
-	server    *grpc.Server           // The underlying gRPC server
-	prestoCfg *config.Presto         // The presto configuration
-	monitor   monitor.Client         // The monitoring layer
-	cancel    context.CancelFunc     // The cancellation function for the server
-	tables    map[string]table.Table // The list of tables
+	server  *grpc.Server           // The underlying gRPC server
+	conf    *config.Config         // The presto configuration
+	monitor monitor.Client         // The monitoring layer
+	cancel  context.CancelFunc     // The cancellation function for the server
+	tables  map[string]table.Table // The list of tables
 }
 
 // Listen starts listening on presto RPC & gRPC.

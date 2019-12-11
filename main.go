@@ -20,6 +20,7 @@ import (
 	"github.com/grab/talaria/internal/storage/disk"
 	"github.com/grab/talaria/internal/table/nodes"
 	"github.com/grab/talaria/internal/table/timeseries"
+	talaria "github.com/grab/talaria/proto"
 )
 
 const (
@@ -55,7 +56,7 @@ func main() {
 	}
 
 	// Start the server and open the database
-	server := server.New(cfg.Presto, monitor,
+	server := server.New(cfg, monitor,
 		timeseries.New(cfg.Presto.Table, cfg.Storage, store, gossip, monitor), // The primary timeseries table
 		nodes.New(gossip), // Cluster membership info table
 	)
@@ -69,10 +70,11 @@ func main() {
 	// Start ingesting
 	monitor.Infof("starting ingestion ...")
 	ingestor.Range(func(v []byte) bool {
-		if err := server.Append(v); err != nil {
-			monitor.WarnWithStats(logTag, "ingestor_append", "[main][error:%s][v:%s] server failed to append data from queue", err, v)
+		if _, err := server.Ingest(context.Background(), &talaria.IngestRequest{
+			Data: &talaria.IngestRequest_Orc{Orc: v},
+		}); err != nil {
+			monitor.WarnWithStats(logTag, "ingestor_append", "unable to append data from queue due to %s", err.Error())
 		}
-
 		return false
 	})
 

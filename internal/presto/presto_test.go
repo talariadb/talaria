@@ -82,7 +82,7 @@ func Test_toTime(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		o := toTime(tc.input)
+		o := toTime(tc.input, true)
 		assert.Equal(t, tc.output, o.UTC())
 	}
 }

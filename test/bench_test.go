@@ -15,6 +15,7 @@ import (
 	"github.com/grab/talaria/internal/server"
 	"github.com/grab/talaria/internal/storage/disk"
 	"github.com/grab/talaria/internal/table/timeseries"
+	talaria "github.com/grab/talaria/proto"
 )
 
 const testFile2 = "./test1-zlib.orc"
@@ -33,7 +34,7 @@ func BenchmarkQuery(b *testing.B) {
 	noerror(err)
 	defer func() { _ = os.RemoveAll(dir) }()
 
-	cfg := config.Config{
+	cfg := &config.Config{
 		Presto: &config.Presto{
 			Port: 9876,
 		},
@@ -51,15 +52,16 @@ func BenchmarkQuery(b *testing.B) {
 	noerror(store.Open(cfg.DataDir))
 
 	// Start the server and open the database
-	server := server.New(cfg.Presto, monitor,
+	server := server.New(cfg, monitor,
 		timeseries.New("eventlog", cfg.Storage, store, new(noopMembership), monitor),
 	)
 	defer server.Close()
 
 	// Append some files
-	f2, _ := ioutil.ReadFile(testFile2)
+	orcfile, _ := ioutil.ReadFile(testFile2)
 	for i := 0; i < 2; i++ {
-		noerror(server.Append(f2))
+		_, err := server.Ingest(context.Background(), &talaria.IngestRequest{Data: &talaria.IngestRequest_Orc{Orc: orcfile}})
+		noerror(err)
 	}
 
 	// Cancellation

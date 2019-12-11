@@ -26,7 +26,7 @@ func TestQueueReader(t *testing.T) {
 	sqs.On("Close").Return(nil)
 
 	// Create S3 client mock
-	orc, _ := ioutil.ReadFile("../../../test/test.snappy.orc")
+	orc, _ := ioutil.ReadFile("../../../test/test2.orc")
 	s3 := new(s3.MockClient)
 	s3.On("Download", mock.Anything, mock.Anything, mock.Anything).Return(orc, nil)
 

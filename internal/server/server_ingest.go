@@ -5,8 +5,8 @@ package server
 
 import (
 	"context"
-	"time"
 
+	"github.com/grab/talaria/internal/encoding/block"
 	"github.com/grab/talaria/internal/table"
 	talaria "github.com/grab/talaria/proto"
 )
@@ -14,41 +14,26 @@ import (
 // Ingest implements ingress.IngressServer
 func (s *Server) Ingest(ctx context.Context, request *talaria.IngestRequest) (*talaria.IngestResponse, error) {
 	defer s.handlePanic()
-	const ttl = 10 * time.Minute // TODO: longer
 
 	// Add the time
 	//now := time.Now()
 
 	// Read blocks and repartition by the specified key
-	/*blocks, err := block.FromRequestBy(request, s.keyColumn)
+	blocks, err := block.FromRequestBy(request, s.conf.Storage.KeyColumn)
 	if err != nil {
 		return nil, err
 	}
 
-	for _, block := range blocks {
-		b, err := block.Encode()
-		if err != nil {
-			return nil, err
-		}
-
-		if err := s.store.Append(key.New(string(block.Key), now), b, ttl); err != nil {
-			return nil, err
-		}
-	}
-	*/
-	return nil, nil
-}
-
-// Append appends a set of events to the storage. It needs ingestion time and an event name to create
-// a key which will then be used for retrieval.
-func (s *Server) Append(payload []byte) error {
-	defer s.handlePanic()
+	// Iterate through all of the appenders and append the blocks to them
 	for _, t := range s.tables {
 		if appender, ok := t.(table.Appender); ok {
-			if err := appender.Append(payload); err != nil {
-				return err
+			for _, block := range blocks {
+				if err := appender.Append(block); err != nil {
+					return nil, err
+				}
 			}
 		}
 	}
-	return nil
+
+	return nil, nil
 }

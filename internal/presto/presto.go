@@ -151,19 +151,34 @@ func NewColumn(t typeof.Type) Column {
 
 // Size returns the size of the block.
 func (b *PrestoThriftBlock) Size() int {
-	if b.BigintData != nil {
+	switch {
+	case b.IntegerData != nil:
+		return b.IntegerData.Size()
+	case b.BigintData != nil:
 		return b.BigintData.Size()
-	}
-
-	if b.VarcharData != nil {
+	case b.VarcharData != nil:
 		return b.VarcharData.Size()
-	}
-
-	if b.DoubleData != nil {
+	case b.DoubleData != nil:
 		return b.DoubleData.Size()
+	case b.BooleanData != nil:
+		return b.BooleanData.Size()
+	case b.TimestampData != nil:
+		return b.TimestampData.Size()
+	case b.JsonData != nil:
+		return b.JsonData.Size()
 	}
-
 	return 0
+}
+
+// Min returns the minimum value of the column (only works for numbers).
+func (b *PrestoThriftBlock) Min() (int64, bool) {
+	switch {
+	case b.IntegerData != nil:
+		return b.IntegerData.Min()
+	case b.BigintData != nil:
+		return b.BigintData.Min()
+	}
+	return 0, false
 }
 
 // ------------------------------------------------------------------------------------------------------------
@@ -182,15 +197,15 @@ func (r *PrestoThriftRange) AsTimeRange() (time.Time, time.Time, bool) {
 	// Concrete interval [t0, t1]
 	case r.Low.Bound == PrestoThriftBoundExactly &&
 		r.High != nil && r.High.Bound == PrestoThriftBoundExactly && r.High.Value.BigintData != nil:
-		return toTime(r.Low.Value.BigintData.First()), toTime(r.High.Value.BigintData.First()), true
+		return toTime(r.Low.Value.BigintData.Min()), toTime(r.High.Value.BigintData.Min()), true
 
 	// Lower bound [t0, max]
 	case r.Low.Bound == PrestoThriftBoundAbove:
-		return toTime(r.Low.Value.BigintData.First()), time.Unix(math.MaxInt64, 0), true
+		return toTime(r.Low.Value.BigintData.Min()), time.Unix(math.MaxInt64, 0), true
 
 	// Upper bound [min, t0]
 	case r.Low.Bound == PrestoThriftBoundBelow:
-		return time.Unix(0, 0), toTime(r.Low.Value.BigintData.First()), true
+		return time.Unix(0, 0), toTime(r.Low.Value.BigintData.Min()), true
 
 	}
 
@@ -198,9 +213,12 @@ func (r *PrestoThriftRange) AsTimeRange() (time.Time, time.Time, bool) {
 }
 
 // Converts time provided to a golang time
-func toTime(t int64) time.Time {
-	watermark := time.Date(2010, 1, 1, 0, 0, 0, 0, time.UTC)
+func toTime(t int64, ok bool) time.Time {
+	if !ok {
+		return time.Unix(t, 0)
+	}
 
+	watermark := time.Date(2010, 1, 1, 0, 0, 0, 0, time.UTC)
 	switch {
 	case t > watermark.UnixNano():
 		return time.Unix(0, t)

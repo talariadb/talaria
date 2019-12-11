@@ -6,6 +6,7 @@ package presto
 import (
 	"encoding/json"
 	"fmt"
+	"math"
 	"reflect"
 	"time"
 
@@ -78,6 +79,23 @@ func (b *PrestoThriftInteger) Kind() typeof.Type {
 	return typeof.Int32
 }
 
+// Min returns the minimum value of the column (only works for numbers).
+func (b *PrestoThriftInteger) Min() (int64, bool) {
+	if len(b.Ints) == 0 {
+		return 0, false
+	}
+
+	// Go through the array and find the min value
+	min := int32(math.MaxInt32)
+	for i, v := range b.Ints {
+		if v < min && !b.Nulls[i] {
+			min = b.Ints[i]
+		}
+	}
+
+	return int64(min), min != math.MaxInt32
+}
+
 // ------------------------------------------------------------------------------------------------------------
 
 // Append adds a value to the block.
@@ -131,13 +149,21 @@ func (b *PrestoThriftBigint) Count() int {
 	return len(b.Nulls)
 }
 
-// First returns the first element
-func (b *PrestoThriftBigint) First() int64 {
-	if b.Longs == nil || len(b.Longs) == 0 {
-		return 0
+// Min returns the minimum value of the column (only works for numbers).
+func (b *PrestoThriftBigint) Min() (int64, bool) {
+	if len(b.Longs) == 0 {
+		return 0, false
 	}
 
-	return b.Longs[0]
+	// Go through the array and find the min value
+	min := int64(math.MaxInt64)
+	for i, v := range b.Longs {
+		if v < min && !b.Nulls[i] {
+			min = b.Longs[i]
+		}
+	}
+
+	return min, min != math.MaxInt64
 }
 
 // Kind returns a type of the block

@@ -11,7 +11,6 @@ import (
 	"github.com/grab/talaria/internal/config"
 	"github.com/grab/talaria/internal/encoding/block"
 	"github.com/grab/talaria/internal/encoding/key"
-	"github.com/grab/talaria/internal/encoding/orc"
 	"github.com/grab/talaria/internal/encoding/typeof"
 	"github.com/grab/talaria/internal/monitor"
 	"github.com/grab/talaria/internal/presto"
@@ -181,56 +180,28 @@ func (t *Table) readDataFrame(columns []string, buffer []byte, maxBytes int) (pr
 	return result, io.EOF
 }
 
-// Append appends a set of events to the storage. It needs ingestion time and an event name to create
-// a key which will then be used for retrieval.
-func (t *Table) Append(payload []byte) error {
+// Append appends a block to the store.
+func (t *Table) Append(block block.Block) error {
 	const tag = "Append"
 	const chunks = 25000
-	keyColumn, timeColumn := t.keyColumn, t.timeColumn
 
-	// Split the incoming payload in chunks of 10K rows
-	defer t.monitor.Duration(ctxTag, funcTag, time.Now(), "func:"+tag)
-	schema, err := orc.SplitByColumn(payload, keyColumn, func(keyColumnValue string, columnChunk []byte) bool {
-		_, splitErr := orc.SplitBySize(columnChunk, chunks, func(chunk []byte) bool {
+	// Get the min timestamp of the block
+	ts, hasTs := block.Min(t.timeColumn)
+	if !hasTs || ts < 0 {
+		ts = 0
+	}
 
-			// Get the first event and tsi from the sub-file
-			v, err := orc.First(chunk, timeColumn)
-			if err != nil {
-				return true
-			}
-
-			// We must have event and tsi to proceed...
-			tsi, hasTsi := v[0].(int64)
-			if !hasTsi || tsi < 0 {
-				tsi = 0
-			}
-
-			// Create a new block to store from orc buffer
-			blk, err := block.FromOrc(keyColumn, chunk)
-			if err != nil {
-				return true
-			}
-
-			// Encode the block
-			buffer, err := blk.Encode()
-			if err != nil {
-				return true
-			}
-
-			// Append this block to the store
-			_ = t.store.Append(key.New(keyColumnValue, time.Unix(0, tsi)), buffer, t.ttl)
-			return false
-		})
-		return splitErr != nil
-	})
+	// Encode the block
+	buffer, err := block.Encode()
 	if err != nil {
-		t.monitor.ErrorWithStats(tag, "split_by_column", "[error:%s] split failed", err)
 		return err
 	}
 
 	// Store the latest schema
-	t.schema.Store(schema)
-	return nil
+	t.schema.Store(block.Schema())
+
+	// Append the block to the store
+	return t.store.Append(key.New(string(block.Key), time.Unix(0, ts)), buffer, t.ttl)
 }
 
 // getSchema gets the latest ingested schema.

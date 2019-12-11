@@ -51,7 +51,7 @@ func (s *Server) PrestoGetSplits(schemaTableName *presto.PrestoThriftSchemaTable
 		}
 
 		for _, addr := range split.Addrs {
-			tsplit.Hosts = append(tsplit.Hosts, &presto.PrestoThriftHostAddress{Host: addr, Port: s.prestoCfg.Port})
+			tsplit.Hosts = append(tsplit.Hosts, &presto.PrestoThriftHostAddress{Host: addr, Port: s.conf.Presto.Port})
 		}
 		batch.Splits = append(batch.Splits, tsplit)
 	}
@@ -88,7 +88,7 @@ func (s *Server) PrestoGetTableMetadata(schemaTableName *presto.PrestoThriftSche
 	// Prepare metadata result
 	return &presto.PrestoThriftNullableTableMetadata{
 		TableMetadata: &presto.PrestoThriftTableMetadata{
-			SchemaTableName: &presto.PrestoThriftSchemaTableName{SchemaName: s.prestoCfg.Schema, TableName: table.Name()},
+			SchemaTableName: &presto.PrestoThriftSchemaTableName{SchemaName: s.conf.Presto.Schema, TableName: table.Name()},
 			Columns:         columns,
 		},
 	}, nil
@@ -100,7 +100,7 @@ func (s *Server) PrestoListSchemaNames() ([]string, error) {
 	const tag = "PrestoListSchemaNames"
 	defer s.monitor.Duration(ctxTag, funcTag, time.Now(), "func:"+tag)
 
-	return []string{s.prestoCfg.Schema}, nil
+	return []string{s.conf.Presto.Schema}, nil
 }
 
 // PrestoListTables returns tables for the given schema name.
@@ -113,7 +113,7 @@ func (s *Server) PrestoListTables(schemaNameOrNull *presto.PrestoThriftNullableS
 	tables := make([]*presto.PrestoThriftSchemaTableName, 0, len(s.tables))
 	for _, table := range s.tables {
 		tables = append(tables, &presto.PrestoThriftSchemaTableName{
-			SchemaName: s.prestoCfg.Schema,
+			SchemaName: s.conf.Presto.Schema,
 			TableName:  table.Name(),
 		})
 	}

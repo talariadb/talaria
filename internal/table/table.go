@@ -7,6 +7,7 @@ import (
 	"errors"
 	"io"
 
+	"github.com/grab/talaria/internal/encoding/block"
 	"github.com/grab/talaria/internal/encoding/typeof"
 	"github.com/grab/talaria/internal/presto"
 )
@@ -27,7 +28,7 @@ type Table interface {
 
 // Appender represents an appender of data to the table.
 type Appender interface {
-	Append(payload []byte) error
+	Append(block.Block) error
 }
 
 // Split represents a split
