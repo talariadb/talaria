@@ -74,7 +74,7 @@ func TestTimeseries(t *testing.T) {
 	assert.NotNil(t, page)
 	assert.NoError(t, err)
 	assert.Len(t, page.Columns, 1)
-	assert.Equal(t, 103600, page.Columns[0].Count())
+	assert.Equal(t, 103400, page.Columns[0].Count())
 }
 
 func newSplitQuery(eventName string) *presto.PrestoThriftTupleDomain {
