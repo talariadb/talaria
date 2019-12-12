@@ -48,7 +48,6 @@ func (s Schema) Compare(desired Schema) (Schema, bool) {
 				diff = make(Schema, len(desired))
 			}
 			diff[name] = typ
-			continue
 		}
 	}
 
