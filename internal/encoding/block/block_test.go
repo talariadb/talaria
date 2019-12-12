@@ -32,19 +32,19 @@ func TestBlock_Types(t *testing.T) {
 	{
 		result, err := b[0].Select([]string{"int1"})
 		assert.NoError(t, err)
-		assert.Equal(t, 1, result["int1"].IntegerData.Count())
+		assert.Equal(t, 1, result["int1"].Count())
 	}
 
 	{
 		result, err := b[0].Select([]string{"string1"})
 		assert.NoError(t, err)
-		assert.Equal(t, 1, result["string1"].VarcharData.Count())
+		assert.Equal(t, 1, result["string1"].Count())
 	}
 
 	{
 		result, err := b[0].Select([]string{"long1"})
 		assert.NoError(t, err)
-		assert.Equal(t, 1, result["long1"].BigintData.Count())
+		assert.Equal(t, 1, result["long1"].Count())
 	}
 
 	{

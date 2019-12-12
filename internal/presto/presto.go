@@ -25,6 +25,7 @@ type Column interface {
 	Count() int
 	Size() int
 	Kind() typeof.Type
+	Min() (int64, bool)
 }
 
 // Serve creates and serves thrift RPC for presto. Context is used for cancellation purposes.
@@ -122,6 +123,14 @@ func (c NamedColumns) FillNulls() {
 	}
 }
 
+// Size returns the space (in bytes) required for the set of blocks.
+func (c NamedColumns) Size() (size int) {
+	for _, block := range c {
+		size += block.Size()
+	}
+	return
+}
+
 // ------------------------------------------------------------------------------------------------------------
 
 // NewColumn creates a new appendable column
@@ -186,17 +195,6 @@ func (b *PrestoThriftBlock) Count() int {
 		return b.JsonData.Count()
 	}
 	return 0
-}
-
-// Min returns the minimum value of the column (only works for numbers).
-func (b *PrestoThriftBlock) Min() (int64, bool) {
-	switch {
-	case b.IntegerData != nil:
-		return b.IntegerData.Min()
-	case b.BigintData != nil:
-		return b.BigintData.Min()
-	}
-	return 0, false
 }
 
 // ------------------------------------------------------------------------------------------------------------

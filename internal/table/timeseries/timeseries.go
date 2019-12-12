@@ -4,6 +4,7 @@
 package timeseries
 
 import (
+	"fmt"
 	"io"
 	"sync/atomic"
 	"time"
@@ -103,19 +104,21 @@ func (t *Table) GetSplits(desiredColumns []string, outputConstraint *presto.Pres
 }
 
 // GetRows retrieves the data
-func (t *Table) GetRows(splitID []byte, columns []string, maxBytes int64) (result *table.PageResult, err error) {
+func (t *Table) GetRows(splitID []byte, requestedColumns []string, maxBytes int64) (result *table.PageResult, err error) {
 	result = &table.PageResult{
-		Columns: make([]presto.Column, 0, len(columns)),
+		Columns: make([]presto.Column, 0, len(requestedColumns)),
 	}
 
 	// Create a set of appenders to use
 	tableSchema := t.getSchema()
-	localSchema := make(typeof.Schema, len(columns))
-	for _, c := range columns {
+	localSchema := make(typeof.Schema, len(requestedColumns))
+	for _, c := range requestedColumns {
 		if typ, hasType := tableSchema[c]; hasType {
-			result.Columns = append(result.Columns, presto.NewColumn(typ))
 			localSchema[c] = typ
+			continue
 		}
+
+		return nil, fmt.Errorf("timeseries: table %s does not contain column %s", t.Name(), c)
 	}
 
 	// Parse the incoming query
@@ -141,8 +144,9 @@ func (t *Table) GetRows(splitID []byte, columns []string, maxBytes int64) (resul
 		}
 
 		// Append each column to the map (we'll merge later)
-		for i, columnName := range columns {
-			frames[columnName] = append(frames[columnName], frame[i])
+		for _, columnName := range requestedColumns {
+			f := frame[columnName]
+			frames[columnName] = append(frames[columnName], *f.AsBlock())
 		}
 
 		bytesLeft -= frame.Size()
@@ -153,24 +157,21 @@ func (t *Table) GetRows(splitID []byte, columns []string, maxBytes int64) (resul
 	}
 
 	// Merge columns together at once, reducing allocations
-	for i, columnName := range columns {
-		result.Columns[i].AppendBlock(frames[columnName]...)
+	result.Columns = make([]presto.Column, 0, len(requestedColumns))
+	for _, columnName := range requestedColumns {
+		column := presto.NewColumn(localSchema[columnName])
+		column.AppendBlock(frames[columnName]...)
+		result.Columns = append(result.Columns, column)
 	}
 
 	return
 }
 
 // ReadDataFrame reads a column data frame and returns the set of columns requested.
-func (t *Table) readDataFrame(schema typeof.Schema, buffer []byte, maxBytes int) (presto.Columns, error) {
-	res, err := block.Read(buffer, schema)
+func (t *Table) readDataFrame(schema typeof.Schema, buffer []byte, maxBytes int) (presto.NamedColumns, error) {
+	result, err := block.Read(buffer, schema)
 	if err != nil {
 		return nil, err
-	}
-
-	// First check if we have enough space
-	var result presto.Columns
-	for columnName := range schema {
-		result = append(result, res[columnName])
 	}
 
 	// If we don't have enough space, skip this data frame and stop here

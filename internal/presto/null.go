@@ -25,6 +25,10 @@ func init() {
 
 // NullColumn creates a new null block
 func NullColumn(t typeof.Type, count int) Column {
+	if count > maxNullCount {
+		panic("presto: null column exceeds the max limit")
+	}
+
 	switch t {
 	case typeof.String:
 		return &PrestoThriftVarchar{

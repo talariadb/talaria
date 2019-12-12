@@ -229,6 +229,11 @@ func (b *PrestoThriftDouble) Kind() typeof.Type {
 	return typeof.Float64
 }
 
+// Min returns the minimum value of the column (only works for numbers).
+func (b *PrestoThriftDouble) Min() (int64, bool) {
+	return 0, false
+}
+
 // ------------------------------------------------------------------------------------------------------------
 
 // Append adds a value to the block.
@@ -292,6 +297,11 @@ func (b *PrestoThriftVarchar) Kind() typeof.Type {
 	return typeof.String
 }
 
+// Min returns the minimum value of the column (only works for numbers).
+func (b *PrestoThriftVarchar) Min() (int64, bool) {
+	return 0, false
+}
+
 // ------------------------------------------------------------------------------------------------------------
 
 // Append adds a value to the block.
@@ -348,6 +358,11 @@ func (b *PrestoThriftBoolean) Count() int {
 // Kind returns a type of the block
 func (b *PrestoThriftBoolean) Kind() typeof.Type {
 	return typeof.Bool
+}
+
+// Min returns the minimum value of the column (only works for numbers).
+func (b *PrestoThriftBoolean) Min() (int64, bool) {
+	return 0, false
 }
 
 // ------------------------------------------------------------------------------------------------------------
@@ -416,6 +431,11 @@ func (b *PrestoThriftTimestamp) Count() int {
 // Kind returns a type of the block
 func (b *PrestoThriftTimestamp) Kind() typeof.Type {
 	return typeof.Timestamp
+}
+
+// Min returns the minimum value of the column (only works for numbers).
+func (b *PrestoThriftTimestamp) Min() (int64, bool) {
+	return 0, false
 }
 
 // ------------------------------------------------------------------------------------------------------------
@@ -491,4 +511,9 @@ func (b *PrestoThriftJson) Count() int {
 // Kind returns a type of the block
 func (b *PrestoThriftJson) Kind() typeof.Type {
 	return typeof.JSON
+}
+
+// Min returns the minimum value of the column (only works for numbers).
+func (b *PrestoThriftJson) Min() (int64, bool) {
+	return 0, false
 }

@@ -24,7 +24,7 @@ func TestFromOrc_Nested(t *testing.T) {
 
 	remapped, err := b[0].Select([]string{"map"})
 	assert.NoError(t, err)
-	assert.True(t, len(remapped["map"].JsonData.Bytes) > 0)
+	assert.True(t, remapped["map"].Size() > 0)
 
 }
 

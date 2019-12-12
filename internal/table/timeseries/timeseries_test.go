@@ -70,7 +70,7 @@ func TestTimeseries(t *testing.T) {
 
 	// Get the splits
 	{
-		splits, err := eventlog.GetSplits([]string{}, newSplitQuery("110010100101010010101000100001"), 10000)
+		splits, err := eventlog.GetSplits([]string{}, newSplitQuery("110010100101010010101000100001", cfg.Storage.KeyColumn), 10000)
 		assert.NoError(t, err)
 		assert.Len(t, splits, 1)
 		assert.Equal(t, "127.0.0.1", splits[0].Addrs[0])
@@ -103,7 +103,7 @@ func TestTimeseries(t *testing.T) {
 
 	// Get the splits
 	{
-		splits, err := eventlog.GetSplits([]string{}, newSplitQuery("110010100101010010101000100001"), 10000)
+		splits, err := eventlog.GetSplits([]string{}, newSplitQuery("110010100101010010101000100001", cfg.Storage.KeyColumn), 10000)
 		assert.NoError(t, err)
 		assert.Len(t, splits, 1)
 		assert.Equal(t, "127.0.0.1", splits[0].Addrs[0])
@@ -118,10 +118,10 @@ func TestTimeseries(t *testing.T) {
 
 }
 
-func newSplitQuery(eventName string) *presto.PrestoThriftTupleDomain {
+func newSplitQuery(eventName, colName string) *presto.PrestoThriftTupleDomain {
 	return &presto.PrestoThriftTupleDomain{
 		Domains: map[string]*presto.PrestoThriftDomain{
-			"string1": {
+			colName: {
 				ValueSet: &presto.PrestoThriftValueSet{
 					RangeValueSet: &presto.PrestoThriftRangeValueSet{
 						Ranges: []*presto.PrestoThriftRange{{
