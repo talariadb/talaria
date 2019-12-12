@@ -24,11 +24,11 @@ var (
 
 // Block represents a serialized block
 type Block struct {
-	Size    int64                  // The unencoded size of the block
-	Key     nocopy.String          // The key of the block
-	Columns nocopy.ByteMap         // The encoded column metadata
-	Data    nocopy.Bytes           // The set of columnar data
-	schema  map[string]typeof.Type `binary:"-"` // The cached schema of the block
+	Size    int64          // The unencoded size of the block
+	Key     nocopy.String  // The key of the block
+	Columns nocopy.ByteMap // The encoded column metadata
+	Data    nocopy.Bytes   // The set of columnar data
+	schema  typeof.Schema  `binary:"-"` // The cached schema of the block
 }
 
 // FromBuffer unmarshals a block from a in-memory buffer.
@@ -50,11 +50,11 @@ func Read(buffer []byte, desiredSchema typeof.Schema) (presto.NamedColumns, erro
 	schema := block.Schema()
 	misses, ok := schema.Compare(desiredSchema)
 	if ok { // Happy path, simply select the columns
-		return block.Select(desiredSchema.Columns())
+		return block.Select(desiredSchema)
 	}
 
 	// Select the valid columns
-	common := schema.Except(misses).Columns()
+	common := schema.Except(misses)
 	if len(common) == 0 {
 		return presto.NamedColumns{}, nil
 	}
@@ -66,8 +66,7 @@ func Read(buffer []byte, desiredSchema typeof.Schema) (presto.NamedColumns, erro
 	}
 
 	// Get the number of rows in the block so we can backfill
-	first := result[common[0]]
-	count := first.Count()
+	count := result.Any().Count()
 
 	// For every miss, create an empty column
 	for col, typ := range misses {
@@ -95,9 +94,9 @@ func (b *Block) Encode() ([]byte, error) {
 }
 
 // Select selects a set of thrift columns
-func (b *Block) Select(columns []string) (presto.NamedColumns, error) {
+func (b *Block) Select(columns typeof.Schema) (presto.NamedColumns, error) {
 	response := make(presto.NamedColumns, len(columns))
-	for _, column := range columns {
+	for column := range columns {
 		meta, ok := b.Columns[column]
 		if !ok {
 			return nil, fmt.Errorf("block: column %s was not found in the block", column)
@@ -118,7 +117,9 @@ func (b *Block) Select(columns []string) (presto.NamedColumns, error) {
 
 // Min selects the smallest value for a column (must be an integer or a bigint)
 func (b *Block) Min(column string) (int64, bool) {
-	columns, err := b.Select([]string{column})
+	columns, err := b.Select(typeof.Schema{
+		column: typeof.Int64,
+	})
 	if err != nil {
 		return 0, false
 	}

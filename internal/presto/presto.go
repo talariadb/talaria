@@ -20,7 +20,7 @@ const frameSize = 1 << 24 // 16MB
 // Column contract represent a column that can be appended.
 type Column interface {
 	Append(v interface{}) int
-	AppendBlock(blocks ...PrestoThriftBlock)
+	AppendBlock([]Column)
 	AsBlock() *PrestoThriftBlock
 	Count() int
 	Size() int
@@ -60,19 +60,6 @@ func Serve(ctx context.Context, port int32, service PrestoThriftService) error {
 			}
 		}
 	}
-}
-
-// ------------------------------------------------------------------------------------------------------------
-
-// Columns ...
-type Columns []PrestoThriftBlock
-
-// Size returns the space (in bytes) required for the set of blocks.
-func (b Columns) Size() (size int) {
-	for _, block := range b {
-		size += block.Size()
-	}
-	return
 }
 
 // ------------------------------------------------------------------------------------------------------------
@@ -129,6 +116,14 @@ func (c NamedColumns) Size() (size int) {
 		size += block.Size()
 	}
 	return
+}
+
+// Any retrieves any column from the set.
+func (c NamedColumns) Any() Column {
+	for _, block := range c {
+		return block
+	}
+	return nil
 }
 
 // ------------------------------------------------------------------------------------------------------------

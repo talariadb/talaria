@@ -25,6 +25,7 @@ func TestServeCancellation(t *testing.T) {
 
 func TestNamedColumns(t *testing.T) {
 	nc := make(NamedColumns, 2)
+	assert.Nil(t, nc.Any())
 
 	// Fill level 1
 	assert.True(t, nc.Append("a", int32(1), typeof.Int32))
@@ -32,6 +33,7 @@ func TestNamedColumns(t *testing.T) {
 	assert.False(t, nc.Append("x", complex128(1), typeof.Unsupported))
 	assert.Equal(t, 1, nc.Max())
 	nc.FillNulls()
+	assert.NotNil(t, nc.Any())
 
 	// Fill level 2
 	assert.True(t, nc.Append("a", int32(1), typeof.Int32))

@@ -38,10 +38,10 @@ func (b *PrestoThriftInteger) Append(v interface{}) int {
 }
 
 // AppendBlock appends an entire block
-func (b *PrestoThriftInteger) AppendBlock(blocks ...PrestoThriftBlock) {
+func (b *PrestoThriftInteger) AppendBlock(blocks []Column) {
 	count := b.Count()
 	for _, a := range blocks {
-		count += a.IntegerData.Count()
+		count += a.(*PrestoThriftInteger).Count()
 	}
 
 	nulls := make([]bool, 0, count)
@@ -51,8 +51,9 @@ func (b *PrestoThriftInteger) AppendBlock(blocks ...PrestoThriftBlock) {
 	b.Ints = append(ints, b.Ints...)
 
 	for _, a := range blocks {
-		b.Nulls = append(b.Nulls, a.IntegerData.Nulls...)
-		b.Ints = append(b.Ints, a.IntegerData.Ints...)
+		block := a.(*PrestoThriftInteger)
+		b.Nulls = append(b.Nulls, block.Nulls...)
+		b.Ints = append(b.Ints, block.Ints...)
 	}
 }
 
@@ -113,10 +114,10 @@ func (b *PrestoThriftBigint) Append(v interface{}) int {
 }
 
 // AppendBlock appends an entire block
-func (b *PrestoThriftBigint) AppendBlock(blocks ...PrestoThriftBlock) {
+func (b *PrestoThriftBigint) AppendBlock(blocks []Column) {
 	count := b.Count()
 	for _, a := range blocks {
-		count += a.BigintData.Count()
+		count += a.(*PrestoThriftBigint).Count()
 	}
 
 	nulls := make([]bool, 0, count)
@@ -126,8 +127,9 @@ func (b *PrestoThriftBigint) AppendBlock(blocks ...PrestoThriftBlock) {
 	b.Longs = append(longs, b.Longs...)
 
 	for _, a := range blocks {
-		b.Nulls = append(b.Nulls, a.BigintData.Nulls...)
-		b.Longs = append(b.Longs, a.BigintData.Longs...)
+		block := a.(*PrestoThriftBigint)
+		b.Nulls = append(b.Nulls, block.Nulls...)
+		b.Longs = append(b.Longs, block.Longs...)
 	}
 }
 
@@ -188,10 +190,10 @@ func (b *PrestoThriftDouble) Append(v interface{}) int {
 }
 
 // AppendBlock appends an entire block
-func (b *PrestoThriftDouble) AppendBlock(blocks ...PrestoThriftBlock) {
+func (b *PrestoThriftDouble) AppendBlock(blocks []Column) {
 	count := b.Count()
 	for _, a := range blocks {
-		count += a.DoubleData.Count()
+		count += a.(*PrestoThriftDouble).Count()
 	}
 
 	nulls := make([]bool, 0, count)
@@ -201,8 +203,9 @@ func (b *PrestoThriftDouble) AppendBlock(blocks ...PrestoThriftBlock) {
 	b.Doubles = append(doubles, b.Doubles...)
 
 	for _, a := range blocks {
-		b.Nulls = append(b.Nulls, a.DoubleData.Nulls...)
-		b.Doubles = append(b.Doubles, a.DoubleData.Doubles...)
+		block := a.(*PrestoThriftDouble)
+		b.Nulls = append(b.Nulls, block.Nulls...)
+		b.Doubles = append(b.Doubles, block.Doubles...)
 	}
 }
 
@@ -253,10 +256,10 @@ func (b *PrestoThriftVarchar) Append(v interface{}) int {
 }
 
 // AppendBlock appends an entire block
-func (b *PrestoThriftVarchar) AppendBlock(blocks ...PrestoThriftBlock) {
+func (b *PrestoThriftVarchar) AppendBlock(blocks []Column) {
 	count := b.Count()
 	for _, a := range blocks {
-		count += a.VarcharData.Count()
+		count += a.(*PrestoThriftVarchar).Count()
 	}
 
 	nulls := make([]bool, 0, count)
@@ -268,9 +271,10 @@ func (b *PrestoThriftVarchar) AppendBlock(blocks ...PrestoThriftBlock) {
 	b.Bytes = append(bytes, b.Bytes...)
 
 	for _, a := range blocks {
-		b.Nulls = append(b.Nulls, a.VarcharData.Nulls...)
-		b.Sizes = append(b.Sizes, a.VarcharData.Sizes...)
-		b.Bytes = append(b.Bytes, a.VarcharData.Bytes...)
+		block := a.(*PrestoThriftVarchar)
+		b.Nulls = append(b.Nulls, block.Nulls...)
+		b.Sizes = append(b.Sizes, block.Sizes...)
+		b.Bytes = append(b.Bytes, block.Bytes...)
 	}
 }
 
@@ -319,10 +323,10 @@ func (b *PrestoThriftBoolean) Append(v interface{}) int {
 }
 
 // AppendBlock appends an entire block
-func (b *PrestoThriftBoolean) AppendBlock(blocks ...PrestoThriftBlock) {
+func (b *PrestoThriftBoolean) AppendBlock(blocks []Column) {
 	count := b.Count()
 	for _, a := range blocks {
-		count += a.BooleanData.Count()
+		count += a.(*PrestoThriftBoolean).Count()
 	}
 
 	nulls := make([]bool, 0, count)
@@ -332,8 +336,9 @@ func (b *PrestoThriftBoolean) AppendBlock(blocks ...PrestoThriftBlock) {
 	b.Booleans = append(bools, b.Booleans...)
 
 	for _, a := range blocks {
-		b.Nulls = append(b.Nulls, a.BooleanData.Nulls...)
-		b.Booleans = append(b.Booleans, a.BooleanData.Booleans...)
+		block := a.(*PrestoThriftBoolean)
+		b.Nulls = append(b.Nulls, block.Nulls...)
+		b.Booleans = append(b.Booleans, block.Booleans...)
 	}
 }
 
@@ -392,10 +397,10 @@ func (b *PrestoThriftTimestamp) Append(v interface{}) int {
 }
 
 // AppendBlock appends an entire block
-func (b *PrestoThriftTimestamp) AppendBlock(blocks ...PrestoThriftBlock) {
+func (b *PrestoThriftTimestamp) AppendBlock(blocks []Column) {
 	count := b.Count()
 	for _, a := range blocks {
-		count += a.TimestampData.Count()
+		count += a.(*PrestoThriftTimestamp).Count()
 	}
 
 	nulls := make([]bool, 0, count)
@@ -405,8 +410,9 @@ func (b *PrestoThriftTimestamp) AppendBlock(blocks ...PrestoThriftBlock) {
 	b.Timestamps = append(times, b.Timestamps...)
 
 	for _, a := range blocks {
-		b.Nulls = append(b.Nulls, a.TimestampData.Nulls...)
-		b.Timestamps = append(b.Timestamps, a.TimestampData.Timestamps...)
+		block := a.(*PrestoThriftTimestamp)
+		b.Nulls = append(b.Nulls, block.Nulls...)
+		b.Timestamps = append(b.Timestamps, block.Timestamps...)
 	}
 }
 
@@ -469,10 +475,10 @@ func (b *PrestoThriftJson) Append(v interface{}) int {
 }
 
 // AppendBlock appends an entire block
-func (b *PrestoThriftJson) AppendBlock(blocks ...PrestoThriftBlock) {
+func (b *PrestoThriftJson) AppendBlock(blocks []Column) {
 	count := b.Count()
 	for _, a := range blocks {
-		count += a.JsonData.Count()
+		count += a.(*PrestoThriftJson).Count()
 	}
 
 	nulls := make([]bool, 0, count)
@@ -484,9 +490,10 @@ func (b *PrestoThriftJson) AppendBlock(blocks ...PrestoThriftBlock) {
 	b.Bytes = append(bytes, b.Bytes...)
 
 	for _, a := range blocks {
-		b.Nulls = append(b.Nulls, a.JsonData.Nulls...)
-		b.Sizes = append(b.Sizes, a.JsonData.Sizes...)
-		b.Bytes = append(b.Bytes, a.JsonData.Bytes...)
+		block := a.(*PrestoThriftJson)
+		b.Nulls = append(b.Nulls, block.Nulls...)
+		b.Sizes = append(b.Sizes, block.Sizes...)
+		b.Bytes = append(b.Bytes, block.Bytes...)
 	}
 }
 

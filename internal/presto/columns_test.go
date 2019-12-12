@@ -11,22 +11,23 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+// BenchmarkAppendBlocks-8   	    4076	    289248 ns/op	 2261002 B/op	       2 allocs/op
 func BenchmarkAppendBlocks(b *testing.B) {
 	var block PrestoThriftBigint
 	for i := 0; i < 25000; i++ {
 		block.Append(int64(i))
 	}
 
-	var blocks []PrestoThriftBlock
+	var blocks []Column
 	for i := 0; i < 10; i++ {
-		blocks = append(blocks, PrestoThriftBlock{BigintData: &block})
+		blocks = append(blocks, &block)
 	}
 
 	b.ResetTimer()
 	b.ReportAllocs()
 	for n := 0; n < b.N; n++ {
 		var output PrestoThriftBigint
-		output.AppendBlock(blocks...)
+		output.AppendBlock(blocks)
 	}
 }
 
@@ -84,7 +85,7 @@ func TestAppend_Bigint(t *testing.T) {
 
 		if array, ok := td.input.(PrestoThriftBigint); ok {
 			t.Run(td.desc, func(*testing.T) {
-				output.AppendBlock(*array.AsBlock())
+				output.AppendBlock([]Column{&array})
 				assert.Equal(t, td.count, output.Count(), td.desc)
 			})
 			continue
@@ -160,7 +161,7 @@ func TestAppend_Varchar(t *testing.T) {
 
 		if array, ok := td.input.(PrestoThriftVarchar); ok {
 			t.Run(td.desc, func(*testing.T) {
-				output.AppendBlock(*array.AsBlock())
+				output.AppendBlock([]Column{&array})
 				assert.Equal(t, td.count, output.Count(), td.desc)
 			})
 			continue
@@ -232,7 +233,7 @@ func TestAppend_Double(t *testing.T) {
 
 		if array, ok := td.input.(PrestoThriftDouble); ok {
 			t.Run(td.desc, func(*testing.T) {
-				output.AppendBlock(*array.AsBlock())
+				output.AppendBlock([]Column{&array})
 				assert.Equal(t, td.count, output.Count(), td.desc)
 			})
 			continue
@@ -304,7 +305,7 @@ func TestAppend_Int32(t *testing.T) {
 
 		if array, ok := td.input.(PrestoThriftInteger); ok {
 			t.Run(td.desc, func(*testing.T) {
-				output.AppendBlock(*array.AsBlock())
+				output.AppendBlock([]Column{&array})
 				assert.Equal(t, td.count, output.Count(), td.desc)
 			})
 			continue
@@ -376,7 +377,7 @@ func TestAppend_Boolean(t *testing.T) {
 
 		if array, ok := td.input.(PrestoThriftBoolean); ok {
 			t.Run(td.desc, func(*testing.T) {
-				output.AppendBlock(*array.AsBlock())
+				output.AppendBlock([]Column{&array})
 				assert.Equal(t, td.count, output.Count(), td.desc)
 			})
 			continue
@@ -459,7 +460,7 @@ func TestAppend_Timestamp(t *testing.T) {
 
 		if array, ok := td.input.(PrestoThriftTimestamp); ok {
 			t.Run(td.desc, func(*testing.T) {
-				output.AppendBlock(*array.AsBlock())
+				output.AppendBlock([]Column{&array})
 				assert.Equal(t, td.count, output.Count(), td.desc)
 			})
 			continue
@@ -547,7 +548,7 @@ func TestAppend_Json(t *testing.T) {
 
 		if array, ok := td.input.(PrestoThriftJson); ok {
 			t.Run(td.desc, func(*testing.T) {
-				output.AppendBlock(*array.AsBlock())
+				output.AppendBlock([]Column{&array})
 				assert.Equal(t, td.count, output.Count(), td.desc)
 			})
 			continue

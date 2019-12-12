@@ -30,19 +30,19 @@ func TestBlock_Types(t *testing.T) {
 	assert.Contains(t, schema, "list")
 
 	{
-		result, err := b[0].Select([]string{"int1"})
+		result, err := b[0].Select(typeof.Schema{"int1": typeof.Int32})
 		assert.NoError(t, err)
 		assert.Equal(t, 1, result["int1"].Count())
 	}
 
 	{
-		result, err := b[0].Select([]string{"string1"})
+		result, err := b[0].Select(typeof.Schema{"string1": typeof.String})
 		assert.NoError(t, err)
 		assert.Equal(t, 1, result["string1"].Count())
 	}
 
 	{
-		result, err := b[0].Select([]string{"long1"})
+		result, err := b[0].Select(typeof.Schema{"long1": typeof.Int64})
 		assert.NoError(t, err)
 		assert.Equal(t, 1, result["long1"].Count())
 	}

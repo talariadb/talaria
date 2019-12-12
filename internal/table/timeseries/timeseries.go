@@ -130,7 +130,7 @@ func (t *Table) GetRows(splitID []byte, requestedColumns []string, maxBytes int6
 
 	// Range through the keys in our data store
 	bytesLeft := int(maxBytes)
-	frames := map[string]presto.Columns{}
+	frames := make(map[string][]presto.Column, len(requestedColumns))
 	if err = t.store.Range(query.Begin, query.Until, func(key, value []byte) bool {
 
 		// Read the data frame from the specified offset
@@ -146,7 +146,7 @@ func (t *Table) GetRows(splitID []byte, requestedColumns []string, maxBytes int6
 		// Append each column to the map (we'll merge later)
 		for _, columnName := range requestedColumns {
 			f := frame[columnName]
-			frames[columnName] = append(frames[columnName], *f.AsBlock())
+			frames[columnName] = append(frames[columnName], f)
 		}
 
 		bytesLeft -= frame.Size()
@@ -160,7 +160,7 @@ func (t *Table) GetRows(splitID []byte, requestedColumns []string, maxBytes int6
 	result.Columns = make([]presto.Column, 0, len(requestedColumns))
 	for _, columnName := range requestedColumns {
 		column := presto.NewColumn(localSchema[columnName])
-		column.AppendBlock(frames[columnName]...)
+		column.AppendBlock(frames[columnName])
 		result.Columns = append(result.Columns, column)
 	}
 
