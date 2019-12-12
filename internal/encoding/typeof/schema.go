@@ -39,6 +39,34 @@ func (s Schema) Columns() []string {
 	return columns
 }
 
+// Compare the schema against a desired schema and returns mismatching columns/types.
+func (s Schema) Compare(desired Schema) (Schema, bool) {
+	var diff Schema
+	for name, typ := range desired {
+		if _, matchName := s[name]; !matchName || s[name] != typ {
+			if diff == nil {
+				diff = make(Schema, len(desired))
+			}
+			diff[name] = typ
+			continue
+		}
+	}
+
+	return diff, diff == nil
+}
+
+// Except returns a subset of the schema which does not contain the specified schema
+func (s Schema) Except(other Schema) Schema {
+	result := make(Schema, len(s)-len(other))
+	for name, typ := range s {
+		if _, ok := other[name]; !ok {
+			result[name] = typ
+		}
+	}
+
+	return result
+}
+
 type columnType struct {
 	Column string `json:"column"`
 	Type   string `json:"type"`

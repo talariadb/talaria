@@ -112,8 +112,8 @@ func TestTimeseries(t *testing.T) {
 		page, err := eventlog.GetRows(splits[0].Key, []string{"string1", "long1"}, 1*1024*1024)
 		assert.NotNil(t, page)
 		assert.NoError(t, err)
-		assert.Len(t, page.Columns, 1)
-		assert.Equal(t, 1, page.Columns[0].Count())
+		assert.Len(t, page.Columns, 2)
+		assert.Equal(t, 5, page.Columns[0].Count())
 	}
 
 }

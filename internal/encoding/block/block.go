@@ -40,13 +40,42 @@ func FromBuffer(b []byte) (block Block, err error) {
 }
 
 // Read decodes the block and selects the columns
-func Read(buffer []byte, columns []string) (map[string]presto.PrestoThriftBlock, error) {
+func Read(buffer []byte, desiredSchema typeof.Schema) (map[string]presto.PrestoThriftBlock, error) {
 	block, err := FromBuffer(buffer)
 	if err != nil {
 		return nil, err
 	}
 
-	return block.Select(columns)
+	// Compare the block schema with the desired schema to see if there's missing or mismatched columns
+	schema := block.Schema()
+	misses, ok := schema.Compare(desiredSchema)
+	if ok { // Happy path, simply select the columns
+		return block.Select(desiredSchema.Columns())
+	}
+
+	// Select the valid columns
+	common := schema.Except(misses).Columns()
+	if len(common) == 0 {
+		return map[string]presto.PrestoThriftBlock{}, nil
+	}
+
+	// Select the common columns
+	result, err := block.Select(common)
+	if err != nil {
+		return nil, err
+	}
+
+	// Get the number of rows in the block so we can backfill
+	first := result[common[0]]
+	count := first.Count()
+
+	// For every miss, create an empty column
+	for col, typ := range misses {
+		nullColumn := presto.NullColumn(typ, count)
+		result[col] = *nullColumn.AsBlock()
+	}
+
+	return result, nil
 }
 
 // Schema returns a schema of the block.

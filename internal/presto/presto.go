@@ -167,6 +167,27 @@ func (b *PrestoThriftBlock) Size() int {
 	return 0
 }
 
+// Count returns the count of rows in the block.
+func (b *PrestoThriftBlock) Count() int {
+	switch {
+	case b.IntegerData != nil:
+		return b.IntegerData.Count()
+	case b.BigintData != nil:
+		return b.BigintData.Count()
+	case b.VarcharData != nil:
+		return b.VarcharData.Count()
+	case b.DoubleData != nil:
+		return b.DoubleData.Count()
+	case b.BooleanData != nil:
+		return b.BooleanData.Count()
+	case b.TimestampData != nil:
+		return b.TimestampData.Count()
+	case b.JsonData != nil:
+		return b.JsonData.Count()
+	}
+	return 0
+}
+
 // Min returns the minimum value of the column (only works for numbers).
 func (b *PrestoThriftBlock) Min() (int64, bool) {
 	switch {

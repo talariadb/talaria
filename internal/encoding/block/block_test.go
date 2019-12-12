@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"testing"
 
+	"github.com/grab/talaria/internal/encoding/typeof"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -59,7 +60,7 @@ func TestBlock_Types(t *testing.T) {
 	}
 }
 
-// BenchmarkBlockRead/read-8         	   50000	     28001 ns/op	   43285 B/op	      10 allocs/op
+// BenchmarkBlockRead/read-8         	   58683	     20259 ns/op	   43704 B/op	      14 allocs/op
 func BenchmarkBlockRead(b *testing.B) {
 	o, err := ioutil.ReadFile(testFile)
 	noerror(err)
@@ -72,7 +73,10 @@ func BenchmarkBlockRead(b *testing.B) {
 	buf, err := blk[0].Encode()
 	noerror(err)
 
-	columns := []string{"_col5"}
+	columns := typeof.Schema{
+		"_col5": typeof.String,
+	}
+
 	b.Run("read", func(b *testing.B) {
 		b.ResetTimer()
 		b.ReportAllocs()

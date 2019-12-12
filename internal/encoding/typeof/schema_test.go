@@ -19,3 +19,25 @@ func TestSchemaString(t *testing.T) {
 	assert.Equal(t, 3, len(s.Columns()))
 	assert.Equal(t, `[{"column":"a","type":"INTEGER"},{"column":"b","type":"VARCHAR"},{"column":"c","type":"JSON"}]`, s.String())
 }
+
+func TestSchemaCompare(t *testing.T) {
+	s1 := Schema{
+		"b": String,
+		"a": Int32,
+	}
+
+	s2 := Schema{
+		"b": String,
+		"a": Int64,
+		"c": JSON,
+	}
+
+	delta, ok := s1.Compare(s2)
+	assert.False(t, ok)
+	assert.NotNil(t, delta)
+	assert.Equal(t, `[{"column":"a","type":"BIGINT"},{"column":"c","type":"JSON"}]`, delta.String())
+
+	subset := s1.Except(delta)
+	assert.NotNil(t, subset)
+	assert.Equal(t, `[{"column":"b","type":"VARCHAR"}]`, subset.String())
+}

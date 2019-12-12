@@ -109,10 +109,12 @@ func (t *Table) GetRows(splitID []byte, columns []string, maxBytes int64) (resul
 	}
 
 	// Create a set of appenders to use
+	tableSchema := t.getSchema()
+	localSchema := make(typeof.Schema, len(columns))
 	for _, c := range columns {
-		schema := t.getSchema()
-		if typ, hasType := schema[c]; hasType {
+		if typ, hasType := tableSchema[c]; hasType {
 			result.Columns = append(result.Columns, presto.NewColumn(typ))
+			localSchema[c] = typ
 		}
 	}
 
@@ -129,7 +131,7 @@ func (t *Table) GetRows(splitID []byte, columns []string, maxBytes int64) (resul
 	if err = t.store.Range(query.Begin, query.Until, func(key, value []byte) bool {
 
 		// Read the data frame from the specified offset
-		frame, readError := t.readDataFrame(columns, value, bytesLeft)
+		frame, readError := t.readDataFrame(localSchema, value, bytesLeft)
 
 		// Set the next token if we don't have enough to process
 		if readError == io.ErrShortBuffer {
@@ -159,17 +161,16 @@ func (t *Table) GetRows(splitID []byte, columns []string, maxBytes int64) (resul
 }
 
 // ReadDataFrame reads a column data frame and returns the set of columns requested.
-func (t *Table) readDataFrame(columns []string, buffer []byte, maxBytes int) (presto.Columns, error) {
-	res, err := block.Read(buffer, columns)
+func (t *Table) readDataFrame(schema typeof.Schema, buffer []byte, maxBytes int) (presto.Columns, error) {
+	res, err := block.Read(buffer, schema)
 	if err != nil {
 		return nil, err
 	}
 
 	// First check if we have enough space
 	var result presto.Columns
-	for _, columnName := range columns {
+	for columnName := range schema {
 		result = append(result, res[columnName])
-
 	}
 
 	// If we don't have enough space, skip this data frame and stop here
@@ -182,8 +183,6 @@ func (t *Table) readDataFrame(columns []string, buffer []byte, maxBytes int) (pr
 
 // Append appends a block to the store.
 func (t *Table) Append(block block.Block) error {
-	const tag = "Append"
-	const chunks = 25000
 
 	// Get the min timestamp of the block
 	ts, hasTs := block.Min(t.timeColumn)
