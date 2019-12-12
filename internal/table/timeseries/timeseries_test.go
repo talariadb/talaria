@@ -17,7 +17,8 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-const testFile2 = "../../../test/test1-zlib.orc"
+const testFile2 = "../../../test/test2.orc"
+const testFile3 = "../../../test/test3.orc"
 
 type noopMembership int
 
@@ -34,8 +35,8 @@ func TestTimeseries(t *testing.T) {
 		DataDir: dir,
 		Storage: &config.Storage{
 			TTLInSec:   3600,
-			KeyColumn:  "_col5",
-			TimeColumn: "_col0",
+			KeyColumn:  "string1",
+			TimeColumn: "int1",
 		},
 	}
 
@@ -50,37 +51,77 @@ func TestTimeseries(t *testing.T) {
 	defer eventlog.Close()
 
 	// Append some files
-	f2, err := ioutil.ReadFile(testFile2)
-	assert.NoError(t, err)
-	blocks, err := block.FromOrcBy(f2, cfg.Storage.KeyColumn)
-	assert.NoError(t, err)
-	for _, block := range blocks {
-		assert.NoError(t, eventlog.Append(block))
+	{
+		b, err := ioutil.ReadFile(testFile3)
+		assert.NoError(t, err)
+		blocks, err := block.FromOrcBy(b, cfg.Storage.KeyColumn)
+		assert.NoError(t, err)
+		for _, block := range blocks {
+			assert.NoError(t, eventlog.Append(block))
+		}
 	}
 
 	// Get the schema
-	schema, err := eventlog.Schema()
-	assert.NoError(t, err)
-	assert.Len(t, schema, 9)
+	{
+		schema, err := eventlog.Schema()
+		assert.NoError(t, err)
+		assert.Len(t, schema, 2)
+	}
 
 	// Get the splits
-	splits, err := eventlog.GetSplits([]string{}, newSplitQuery("Good"), 10000)
-	assert.NoError(t, err)
-	assert.Len(t, splits, 1)
-	assert.Equal(t, "127.0.0.1", splits[0].Addrs[0])
+	{
+		splits, err := eventlog.GetSplits([]string{}, newSplitQuery("110010100101010010101000100001"), 10000)
+		assert.NoError(t, err)
+		assert.Len(t, splits, 1)
+		assert.Equal(t, "127.0.0.1", splits[0].Addrs[0])
 
-	// Get the rows
-	page, err := eventlog.GetRows(splits[0].Key, []string{"_col5"}, 1*1024*1024)
-	assert.NotNil(t, page)
-	assert.NoError(t, err)
-	assert.Len(t, page.Columns, 1)
-	assert.Equal(t, 103400, page.Columns[0].Count())
+		// Get the rows
+		page, err := eventlog.GetRows(splits[0].Key, []string{"string1"}, 1*1024*1024)
+		assert.NotNil(t, page)
+		assert.NoError(t, err)
+		assert.Len(t, page.Columns, 1)
+		assert.Equal(t, 5, page.Columns[0].Count())
+	}
+
+	// Append a file with a different schema
+	{
+		b, err := ioutil.ReadFile(testFile2)
+		assert.NoError(t, err)
+		blocks, err := block.FromOrcBy(b, cfg.Storage.KeyColumn)
+		assert.NoError(t, err)
+		for _, block := range blocks {
+			assert.NoError(t, eventlog.Append(block))
+		}
+	}
+
+	// Get the schema
+	{
+		schema, err := eventlog.Schema()
+		assert.NoError(t, err)
+		assert.Len(t, schema, 8)
+	}
+
+	// Get the splits
+	{
+		splits, err := eventlog.GetSplits([]string{}, newSplitQuery("110010100101010010101000100001"), 10000)
+		assert.NoError(t, err)
+		assert.Len(t, splits, 1)
+		assert.Equal(t, "127.0.0.1", splits[0].Addrs[0])
+
+		// Get the rows
+		page, err := eventlog.GetRows(splits[0].Key, []string{"string1", "long1"}, 1*1024*1024)
+		assert.NotNil(t, page)
+		assert.NoError(t, err)
+		assert.Len(t, page.Columns, 1)
+		assert.Equal(t, 1, page.Columns[0].Count())
+	}
+
 }
 
 func newSplitQuery(eventName string) *presto.PrestoThriftTupleDomain {
 	return &presto.PrestoThriftTupleDomain{
 		Domains: map[string]*presto.PrestoThriftDomain{
-			"_col5": {
+			"string1": {
 				ValueSet: &presto.PrestoThriftValueSet{
 					RangeValueSet: &presto.PrestoThriftRangeValueSet{
 						Ranges: []*presto.PrestoThriftRange{{
