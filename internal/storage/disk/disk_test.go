@@ -35,11 +35,6 @@ func run(f func(store *Storage)) {
 	f(store)
 }
 
-func TestPrefixOf(t *testing.T) {
-	assert.Equal(t, []byte{0x33}, prefixOf(asBytes("3000"), asBytes("3999")))
-	assert.Equal(t, []byte(nil), prefixOf(asBytes("300"), asBytes("600")))
-}
-
 func TestGC(t *testing.T) {
 	runTest(t, func(store *Storage) {
 		assert.NotPanics(t, func() {
