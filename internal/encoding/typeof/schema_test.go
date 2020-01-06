@@ -41,3 +41,36 @@ func TestSchemaCompare(t *testing.T) {
 	assert.NotNil(t, subset)
 	assert.Equal(t, `[{"column":"b","type":"VARCHAR"}]`, subset.String())
 }
+
+func TestSchemaUnion(t *testing.T) {
+	s1 := Schema{
+		"b": String,
+		"a": Int32,
+	}
+
+	s2 := Schema{
+		"a": Int32,
+		"c": JSON,
+	}
+
+	clean := s1.Union(s2)
+	assert.True(t, clean)
+	assert.Equal(t, `[{"column":"a","type":"INTEGER"},{"column":"b","type":"VARCHAR"},{"column":"c","type":"JSON"}]`, s1.String())
+}
+
+func TestSchemaUnion_Mismatch(t *testing.T) {
+	s1 := Schema{
+		"b": String,
+		"a": Int32,
+	}
+
+	s2 := Schema{
+		"b": String,
+		"a": Int64,
+		"c": JSON,
+	}
+
+	clean := s1.Union(s2)
+	assert.False(t, clean)
+	assert.Equal(t, `[{"column":"a","type":"INTEGER"},{"column":"b","type":"VARCHAR"}]`, s1.String())
+}

@@ -66,6 +66,22 @@ func (s Schema) Except(other Schema) Schema {
 	return result
 }
 
+// Union combines two schemas together. It returns a true if a union has mismatched types or not
+// in case of a type mismatch.
+func (s *Schema) Union(other Schema) bool {
+	combined := *s
+	for name, typ := range other {
+		if _, exists := combined[name]; exists && combined[name] != typ {
+			return false
+		}
+
+		combined[name] = typ
+	}
+
+	s = &combined
+	return true
+}
+
 type columnType struct {
 	Column string `json:"column"`
 	Type   string `json:"type"`

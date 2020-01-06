@@ -6,7 +6,6 @@ package disk
 import (
 	"bytes"
 	"context"
-	"io"
 	"log"
 	"os"
 	"runtime/debug"
@@ -14,24 +13,17 @@ import (
 
 	"github.com/dgraph-io/badger"
 	"github.com/grab/async"
+	"github.com/grab/talaria/internal/encoding/key"
 	"github.com/grab/talaria/internal/monitor"
+	"github.com/grab/talaria/internal/storage"
 )
 
 const (
 	ctxTag = "disk"
 )
 
-// contract represents an eventlog storage contract.
-type contract interface {
-	io.Closer
-	Append(key, value []byte, ttl time.Duration) error
-	Range(seek, until []byte, f func(key, value []byte) bool) error
-}
-
 // Assert contract compliance
-var _ contract = new(Storage)
-
-// ------------------------------------------------------------------------------------------------------------
+var _ storage.Storage = new(Storage)
 
 // Storage represents disk storage.
 type Storage struct {
@@ -101,7 +93,7 @@ func (s *Storage) Range(seek, until []byte, f func(key, value []byte) bool) erro
 	return s.db.View(func(tx *badger.Txn) error {
 		it := tx.NewIterator(badger.IteratorOptions{
 			PrefetchValues: false,
-			Prefix:         prefixOf(seek, until),
+			Prefix:         key.PrefixOf(seek, until),
 		})
 		defer it.Close()
 
@@ -190,25 +182,4 @@ func handlePanic() {
 	if r := recover(); r != nil {
 		log.Printf("panic recovered: %ss \n %s", r, debug.Stack())
 	}
-}
-
-// Computes a common prefix between two keys (common leading bytes) which is
-// then used as a prefix for Badger to narrow down SSTables to traverse.
-func prefixOf(seek, until []byte) []byte {
-	var prefix []byte
-
-	// Calculate the minimum length
-	length := len(seek)
-	if len(until) < length {
-		length = len(until)
-	}
-
-	// Iterate through the bytes and append common ones
-	for i := 0; i < length; i++ {
-		if seek[i] != until[i] {
-			break
-		}
-		prefix = append(prefix, seek[i])
-	}
-	return prefix
 }
