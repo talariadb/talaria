@@ -17,7 +17,7 @@ type Storage interface {
 	io.Closer
 	Iterator
 	Appender
-	Delete(key []byte) error
+	Delete(...[]byte) error
 }
 
 // Iterator represents a contract that allows iterating over a storage.
