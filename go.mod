@@ -17,6 +17,7 @@ require (
 	github.com/hako/durafmt v0.0.0-20191009132224-3f39dc1ed9f4
 	github.com/hashicorp/go-immutable-radix v1.1.0 // indirect
 	github.com/hashicorp/go-msgpack v0.5.5 // indirect
+	github.com/hashicorp/go-multierror v1.0.0
 	github.com/hashicorp/go-sockaddr v1.0.2 // indirect
 	github.com/hashicorp/golang-lru v0.5.3 // indirect
 	github.com/hashicorp/memberlist v0.1.5
