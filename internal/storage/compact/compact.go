@@ -81,9 +81,10 @@ func (s *Storage) Compact(ctx context.Context) (interface{}, error) {
 		hash = key.HashOf(k)
 
 		// If the hash is unchanged and schemas merge cleanly, accumulate...
-		if previous == 0 || (hash == previous && schema.Union(input.Schema())) {
+		if mergedSchema, ok := schema.Union(input.Schema()); previous == 0 || (ok && hash == previous) {
 			blocks = append(blocks, input)
 			merged = append(merged, k)
+			schema = mergedSchema
 			return false
 		}
 

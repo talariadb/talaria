@@ -68,18 +68,21 @@ func (s Schema) Except(other Schema) Schema {
 
 // Union combines two schemas together. It returns a true if a union has mismatched types or not
 // in case of a type mismatch.
-func (s *Schema) Union(other Schema) bool {
-	combined := *s
+func (s Schema) Union(other Schema) (Schema, bool) {
+	combined := make(Schema, len(other))
+	for name, typ := range s {
+		combined[name] = typ
+	}
+
 	for name, typ := range other {
-		if _, exists := combined[name]; exists && combined[name] != typ {
-			return false
+		if _, exists := s[name]; exists && combined[name] != typ {
+			return s, false
 		}
 
 		combined[name] = typ
 	}
 
-	s = &combined
-	return true
+	return combined, true
 }
 
 type columnType struct {
