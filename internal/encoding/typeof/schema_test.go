@@ -53,9 +53,9 @@ func TestSchemaUnion(t *testing.T) {
 		"c": JSON,
 	}
 
-	clean := s1.Union(s2)
+	merged, clean := s1.Union(s2)
 	assert.True(t, clean)
-	assert.Equal(t, `[{"column":"a","type":"INTEGER"},{"column":"b","type":"VARCHAR"},{"column":"c","type":"JSON"}]`, s1.String())
+	assert.Equal(t, `[{"column":"a","type":"INTEGER"},{"column":"b","type":"VARCHAR"},{"column":"c","type":"JSON"}]`, merged.String())
 }
 
 func TestSchemaUnion_Mismatch(t *testing.T) {
@@ -70,7 +70,7 @@ func TestSchemaUnion_Mismatch(t *testing.T) {
 		"c": JSON,
 	}
 
-	clean := s1.Union(s2)
+	merged, clean := s1.Union(s2)
 	assert.False(t, clean)
-	assert.Equal(t, `[{"column":"a","type":"INTEGER"},{"column":"b","type":"VARCHAR"}]`, s1.String())
+	assert.Equal(t, `[{"column":"a","type":"INTEGER"},{"column":"b","type":"VARCHAR"}]`, merged.String())
 }
