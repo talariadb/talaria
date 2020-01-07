@@ -56,10 +56,16 @@ func (s *Storage) Range(seek, until []byte, f func(key, value []byte) bool) erro
 	return s.buffer.Range(seek, until, f)
 }
 
+// Delete deletes a key from the buffer.
+func (s *Storage) Delete(key []byte) error {
+	return s.buffer.Delete(key)
+}
+
 // Compact runs the compaction on the storage
 func (s *Storage) Compact(ctx context.Context) (interface{}, error) {
 	var hash uint32
 	var blocks []block.Block
+	var merged [][]byte
 
 	// Iterate through all of the blocks in the storage
 	schema := make(typeof.Schema, 4)
@@ -77,6 +83,7 @@ func (s *Storage) Compact(ctx context.Context) (interface{}, error) {
 		// If the hash is unchanged and schemas merge cleanly, accumulate...
 		if previous == 0 || (hash == previous && schema.Union(input.Schema())) {
 			blocks = append(blocks, input)
+			merged = append(merged, k)
 			return false
 		}
 
@@ -86,9 +93,17 @@ func (s *Storage) Compact(ctx context.Context) (interface{}, error) {
 			return true
 		}
 
+		//  Delete all of the keys that we have appended
+		for _, mergedKey := range merged {
+			if err := s.buffer.Delete(mergedKey); err != nil {
+				s.monitor.Errorf("compact: unable to delete the key %v, %v", mergedKey, err.Error())
+			}
+		}
+
 		// Reset both the schema and the set of blocks
 		schema = make(typeof.Schema, len(schema))
 		blocks = blocks[:0]
+		merged = merged[:0]
 		return false
 	}); err != nil {
 		return nil, err

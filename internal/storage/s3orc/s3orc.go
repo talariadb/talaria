@@ -4,9 +4,11 @@
 package s3orc
 
 import (
+	"context"
 	"errors"
 	"time"
 
+	"github.com/grab/async"
 	"github.com/grab/talaria/internal/encoding/block"
 	"github.com/grab/talaria/internal/encoding/typeof"
 	"github.com/grab/talaria/internal/monitor"
@@ -19,13 +21,18 @@ var _ storage.Merger = new(Storage)
 
 // Storage represents s3/orc storage.
 type Storage struct {
-	monitor monitor.Client // The monitor client
+	monitor monitor.Client  // The monitor client
+	workers async.Task      // The worker pool
+	tasks   chan async.Task // The task channel to upload
 }
 
 // New creates a new storage implementation.
-func New(monitor monitor.Client) *Storage {
+func New(monitor monitor.Client, concurrency int) *Storage {
+	tasks := make(chan async.Task, concurrency)
 	return &Storage{
 		monitor: monitor,
+		tasks:   tasks,
+		workers: async.Consume(context.Background(), concurrency, tasks),
 	}
 }
 
@@ -41,5 +48,6 @@ func (s *Storage) Merge(blocks []block.Block, schema typeof.Schema) ([]byte, []b
 
 // Close is used to gracefully close storage.
 func (s *Storage) Close() error {
-	return errors.New("not implemented")
+	s.workers.Cancel()
+	return nil
 }
