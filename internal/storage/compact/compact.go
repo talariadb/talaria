@@ -5,6 +5,7 @@ package compact
 
 import (
 	"context"
+	"runtime"
 	"time"
 
 	"github.com/grab/async"
@@ -20,7 +21,9 @@ var _ storage.Storage = new(Storage)
 
 // Storage represents compactor storage.
 type Storage struct {
-	compact async.Task       // The compaction task
+	compact async.Task       // The compaction worker
+	workers async.Task       // The worker pool
+	tasks   chan async.Task  // The task channel to upload
 	monitor monitor.Client   // The monitor client
 	merger  storage.Merger   // The merging (join) function
 	buffer  storage.Storage  // The storage to use for buffering
@@ -29,8 +32,12 @@ type Storage struct {
 
 // New creates a new storage implementation.
 func New(buffer storage.Storage, dest storage.Appender, merger storage.Merger, monitor monitor.Client, interval time.Duration) *Storage {
+	concurrency := 2 * runtime.NumCPU()
+	tasks := make(chan async.Task, concurrency)
 	s := &Storage{
 		monitor: monitor,
+		tasks:   tasks,
+		workers: async.Consume(context.Background(), concurrency, tasks),
 		merger:  merger,
 		buffer:  buffer,
 		dest:    dest,
@@ -88,41 +95,43 @@ func (s *Storage) Compact(ctx context.Context) (interface{}, error) {
 			return false
 		}
 
-		// Join the blocks together and append them
-		if err := s.joinAndAppend(blocks, schema); err != nil {
-			s.monitor.Errorf("compact: unable to merge, %v", err.Error())
-			return true
-		}
-
-		//  Delete all of the keys that we have appended
-		if err := s.buffer.Delete(merged...); err != nil {
-			s.monitor.Errorf("compact: unable to delete a key, %v", err.Error())
-		}
+		// Merge asynchronously and delete the keys on a successful merge
+		s.merge(merged, blocks, schema)
 
 		// Reset both the schema and the set of blocks
 		schema = make(typeof.Schema, len(schema))
-		blocks = blocks[:0]
-		merged = merged[:0]
+		blocks = make([]block.Block, 0, 16)
+		merged = make([][]byte, 0, 16)
 		return false
 	}); err != nil {
 		return nil, err
 	}
 
-	// Join and append one last time
-	if err := s.joinAndAppend(blocks, schema); err != nil {
-		s.monitor.Errorf("compact: unable to merge, %v", err.Error())
-	}
-	return nil, nil
+	// Merge one last time and wait
+	return s.merge(merged, blocks, schema).Outcome()
 }
 
-// joinAndAppend adds an key-value pair to the underlying database
-func (s *Storage) joinAndAppend(blocks []block.Block, schema typeof.Schema) error {
+// merge adds an key-value pair to the underlying database
+func (s *Storage) merge(keys [][]byte, blocks []block.Block, schema typeof.Schema) async.Task {
+	work := async.NewTask(func(ctx context.Context) (_ interface{}, err error) {
+		key, value := s.merger.Merge(blocks, schema)
 
-	// Join the blocks together
-	key, value := s.merger.Merge(blocks, schema)
+		// TODO: figure out the TTL that should be set
+		if err = s.dest.Append(key, value, 0); err != nil {
+			s.monitor.Errorf("compact: unable to merge, %v", err.Error())
+			return
+		}
 
-	// TODO: figure out the TTL that should be set
-	return s.dest.Append(key, value, 0)
+		//  Delete all of the keys that we have appended
+		if err = s.buffer.Delete(keys...); err != nil {
+			s.monitor.Errorf("compact: unable to delete a key, %v", err.Error())
+		}
+		return
+	})
+
+	// Add the task to the work queue
+	s.tasks <- work
+	return work
 }
 
 // Close is used to gracefully close storage.
