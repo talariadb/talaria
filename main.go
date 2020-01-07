@@ -13,11 +13,12 @@ import (
 	"github.com/DataDog/datadog-go/statsd"
 	"github.com/grab/talaria/internal/config"
 	"github.com/grab/talaria/internal/ingress/s3sqs"
-	"github.com/grab/talaria/internal/monitor"
+	monitorpkg "github.com/grab/talaria/internal/monitor"
 	"github.com/grab/talaria/internal/monitor/logging"
+	"github.com/grab/talaria/internal/monitor/logging/table"
 	"github.com/grab/talaria/internal/server"
 	"github.com/grab/talaria/internal/server/cluster"
-	"github.com/grab/talaria/internal/storage/disk"
+	"github.com/grab/talaria/internal/table/log"
 	"github.com/grab/talaria/internal/table/nodes"
 	"github.com/grab/talaria/internal/table/timeseries"
 	talaria "github.com/grab/talaria/proto"
@@ -40,7 +41,12 @@ func main() {
 		panic(err)
 	}
 
-	monitor := monitor.New(logger, s, "talaria", cfg.Env)
+	monitorWithStdout := monitorpkg.New(logger, s, "talaria", cfg.Env)
+
+	// Open the storage for the log table
+	logTable := log.New(cfg.Log, cfg.DataDir, gossip, monitorWithStdout) // The log table
+	monitor := monitorpkg.New(table.NewTable(logTable), s, "talaria", cfg.Env)
+	monitor.Infof("starting the log table ...")
 
 	monitor.Count1("system", "event", "type:start")
 	defer monitor.Count1("system", "event", "type:stop")
@@ -48,17 +54,11 @@ func main() {
 
 	startMonitor(monitor)
 
-	// Open the storage for the main data
-	store := disk.New(monitor)
-	err = store.Open(cfg.DataDir)
-	if err != nil {
-		panic(err)
-	}
-
 	// Start the server and open the database
 	server := server.New(cfg, monitor,
-		timeseries.New(cfg.Presto.Table, cfg.Storage, store, gossip, monitor), // The primary timeseries table
+		timeseries.New(cfg.Presto.Table, cfg.Storage, cfg.DataDir, gossip, monitor), // The primary timeseries table
 		nodes.New(gossip), // Cluster membership info table
+		logTable,
 	)
 
 	// Create an S3 + SQS ingestion
@@ -98,7 +98,7 @@ func main() {
 	}
 }
 
-func startMonitor(m monitor.Client) {
+func startMonitor(m monitorpkg.Client) {
 	m.TrackDiskSpace()
 }
 

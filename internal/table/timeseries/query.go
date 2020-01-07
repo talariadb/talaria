@@ -56,21 +56,30 @@ func decodeQuery(splitKey []byte) (out *query, err error) {
 }
 
 // parseThriftDomain creates a set of queries from the presto constraint
-func parseThriftDomain(req *presto.PrestoThriftTupleDomain, keyColumn, timeColumn string) ([]query, error) {
+func parseThriftDomain(req *presto.PrestoThriftTupleDomain, hashKey, sortKey string) ([]query, error) {
 	if req.Domains == nil {
-		return nil, fmt.Errorf("your query must contain '%s' constraint", keyColumn)
+		return nil, fmt.Errorf("your query must contain Presto thrift domains")
 	}
 
 	// Retrieve necessary constraints
-	keyColumnDomain, hasEvent := req.Domains[keyColumn]
+	if len(hashKey) == 0 {
+		return parseWithSort(req, sortKey)
+	}
+
+	return parseWithHashAndSort(req, hashKey, sortKey)
+}
+
+// parse the request given hashKey is present, and also check whether the bound of sortKey (time) is provided
+func parseWithHashAndSort(req *presto.PrestoThriftTupleDomain, hashKey, sortKey string) ([]query, error) {
+	keyColumnDomain, hasEvent := req.Domains[hashKey]
 	if !hasEvent || keyColumnDomain.ValueSet == nil || keyColumnDomain.ValueSet.RangeValueSet == nil {
-		return nil, fmt.Errorf("your query must contain '%s' constraint", keyColumn)
+		return nil, fmt.Errorf("your query must contain '%s' constraint", hashKey)
 	}
 
 	// Get time bounds
 	from := time.Unix(0, 0)
 	until := time.Unix(math.MaxInt64, 0)
-	if tsi, hasTsi := req.Domains[timeColumn]; hasTsi && tsi.ValueSet != nil && tsi.ValueSet.RangeValueSet != nil {
+	if tsi, hasTsi := req.Domains[sortKey]; hasTsi && tsi.ValueSet != nil && tsi.ValueSet.RangeValueSet != nil {
 		if len(keyColumnDomain.ValueSet.RangeValueSet.Ranges) == 1 {
 			if t0, t1, ok := tsi.ValueSet.RangeValueSet.Ranges[0].AsTimeRange(); ok {
 				println("time bound", t0.String(), " until ", t1.String())
@@ -92,6 +101,21 @@ func parseThriftDomain(req *presto.PrestoThriftTupleDomain, keyColumn, timeColum
 			}
 		}
 	}
-
 	return queries, nil
+}
+
+// parse the request given hashKey is not present, check whether the bound of sortKey (time) is provided
+func parseWithSort(req *presto.PrestoThriftTupleDomain, sortKey string) ([]query, error) {
+	// Get time bounds
+	from := time.Unix(0, 0)
+	until := time.Unix(math.MaxInt64, 0)
+	if tsi, hasTsi := req.Domains[sortKey]; hasTsi && tsi.ValueSet != nil && tsi.ValueSet.RangeValueSet != nil {
+		if t0, t1, ok := tsi.ValueSet.RangeValueSet.Ranges[0].AsTimeRange(); ok {
+			println("time bound", t0.String(), " until ", t1.String())
+			from = t0
+			until = t1
+		}
+	}
+
+	return []query{newQuery("", from, until)}, nil
 }

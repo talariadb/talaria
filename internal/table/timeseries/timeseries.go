@@ -6,8 +6,11 @@ package timeseries
 import (
 	"fmt"
 	"io"
+	"path"
 	"sync/atomic"
 	"time"
+
+	"github.com/grab/talaria/internal/storage/disk"
 
 	"github.com/grab/talaria/internal/config"
 	"github.com/grab/talaria/internal/encoding/block"
@@ -52,7 +55,14 @@ type Table struct {
 }
 
 // New creates a new table implementation.
-func New(name string, cfg *config.Storage, store Storage, cluster Membership, monitor monitor.Client) *Table {
+func New(name string, cfg *config.Storage, dataDir string, cluster Membership, monitor monitor.Client) *Table {
+	store := disk.New(monitor)
+	tableDir := path.Join(dataDir, name)
+	err := store.Open(tableDir)
+	if err != nil {
+		panic(err)
+	}
+
 	return &Table{
 		name:       name,
 		store:      store,

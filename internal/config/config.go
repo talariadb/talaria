@@ -35,6 +35,7 @@ type Config struct {
 	Sqs       *SQS     `json:"sqs"`
 	Presto    *Presto  `json:"presto"`
 	Storage   *Storage `json:"storage"`
+	Log       *Log     `json:"log"`
 	Statsd    *StatsD  `json:"statsd"`
 }
 
@@ -65,6 +66,11 @@ type Storage struct {
 	TimeColumn string `json:"timeColumn"` // The column to use as time, defaults to 'tsi'.
 }
 
+// Log represents the log configuration
+type Log struct {
+	TTLInSec int64 `json:"ttlInSec"` // The ttl for the log, defaults to 1 day.
+}
+
 // StatsD represents the configuration for statsD client
 type StatsD struct {
 	Host string `json:"host"`
@@ -81,6 +87,9 @@ func Load(envVar string) *Config {
 			TTLInSec:   3600,
 			KeyColumn:  "event",
 			TimeColumn: "tsi",
+		},
+		Log: &Log{
+			TTLInSec: 24 * 3600, // 1 day
 		},
 		GRPC: &GRPC{
 			Port: 8080,

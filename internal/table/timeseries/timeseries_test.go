@@ -12,7 +12,6 @@ import (
 	"github.com/grab/talaria/internal/encoding/block"
 	"github.com/grab/talaria/internal/monitor"
 	"github.com/grab/talaria/internal/presto"
-	"github.com/grab/talaria/internal/storage/disk"
 	"github.com/grab/talaria/internal/table/timeseries"
 	"github.com/stretchr/testify/assert"
 )
@@ -42,10 +41,7 @@ func TestTimeseries(t *testing.T) {
 
 	// Start the server and open the database
 	monitor := monitor.NewNoop()
-	store := disk.New(monitor)
-	assert.NoError(t, store.Open(cfg.DataDir))
-
-	eventlog := timeseries.New("eventlog", cfg.Storage, store, new(noopMembership), monitor)
+	eventlog := timeseries.New("eventlog", cfg.Storage, cfg.DataDir, new(noopMembership), monitor)
 	assert.NotNil(t, eventlog)
 	assert.Equal(t, "eventlog", eventlog.Name())
 	defer eventlog.Close()

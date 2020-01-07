@@ -145,7 +145,7 @@ func makeBlocks(v map[string]presto.NamedColumns) ([]Block, error) {
 	blocks := make([]Block, 0, len(v))
 	for k, columns := range v {
 		block := Block{Key: nocopy.String(k)}
-		if err := block.writeColumns(columns); err != nil {
+		if err := block.WriteColumns(columns); err != nil {
 			return nil, err
 		}
 		blocks = append(blocks, block)

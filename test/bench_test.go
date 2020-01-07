@@ -13,7 +13,6 @@ import (
 	"github.com/grab/talaria/internal/monitor"
 	"github.com/grab/talaria/internal/presto"
 	"github.com/grab/talaria/internal/server"
-	"github.com/grab/talaria/internal/storage/disk"
 	"github.com/grab/talaria/internal/table/timeseries"
 	talaria "github.com/grab/talaria/proto"
 )
@@ -46,14 +45,12 @@ func BenchmarkQuery(b *testing.B) {
 		},
 	}
 
-	// Open the file
+	// create monitor
 	monitor := monitor.NewNoop()
-	store := disk.New(monitor)
-	noerror(store.Open(cfg.DataDir))
 
 	// Start the server and open the database
 	server := server.New(cfg, monitor,
-		timeseries.New("eventlog", cfg.Storage, store, new(noopMembership), monitor),
+		timeseries.New("eventlog", cfg.Storage, cfg.DataDir, new(noopMembership), monitor),
 	)
 	defer server.Close()
 

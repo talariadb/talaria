@@ -16,7 +16,6 @@ import (
 	"github.com/grab/talaria/internal/monitor/statsd"
 	"github.com/grab/talaria/internal/server"
 	"github.com/grab/talaria/internal/server/cluster"
-	"github.com/grab/talaria/internal/storage/disk"
 	"github.com/grab/talaria/internal/table/nodes"
 	"github.com/grab/talaria/internal/table/timeseries"
 	talaria "github.com/grab/talaria/proto"
@@ -47,15 +46,12 @@ func main() {
 	// Create a logger
 	monitor := monitor.New(logging.NewStandard(), statsd.NewNoop(), "talaria", "dev")
 
-	// Open the file
+	// Init the gossip
 	gossip := cluster.New(7946)
-	store := disk.New(monitor)
-	noerror(store.Open(cfg.DataDir))
-
 	gossip.JoinHostname("localhost")
 
 	// Start the server and open the database
-	eventlog := timeseries.New(cfg.Presto.Table, cfg.Storage, store, gossip, monitor)
+	eventlog := timeseries.New(cfg.Presto.Table, cfg.Storage, cfg.DataDir, gossip, monitor)
 	server := server.New(cfg, monitor,
 		eventlog,
 		nodes.New(gossip),

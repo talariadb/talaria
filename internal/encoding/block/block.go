@@ -129,7 +129,7 @@ func (b *Block) Min(column string) (int64, bool) {
 }
 
 // Writes a set of columns into the block
-func (b *Block) writeColumns(columns presto.NamedColumns) error {
+func (b *Block) WriteColumns(columns presto.NamedColumns) error {
 	var offset uint32
 	var buffer bytes.Buffer
 
