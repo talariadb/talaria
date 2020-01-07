@@ -11,28 +11,29 @@ import (
 	"github.com/grab/talaria/internal/encoding/block"
 	"github.com/grab/talaria/internal/encoding/key"
 	"github.com/grab/talaria/internal/encoding/typeof"
+	"github.com/grab/talaria/internal/monitor"
 	"github.com/grab/talaria/internal/storage"
 )
-
-type joinFunc = func([]block.Block, typeof.Schema) ([]byte, []byte)
 
 // Assert contract compliance
 var _ storage.Storage = new(Storage)
 
 // Storage represents compactor storage.
 type Storage struct {
-	compact async.Task      // The compaction task
-	buffer  storage.Storage // The storage to use for buffering
-	db      storage.Storage // The compaction destination
-	join    joinFunc        // The compaction function
+	compact async.Task       // The compaction task
+	monitor monitor.Client   // The monitor client
+	merger  storage.Merger   // The merging (join) function
+	buffer  storage.Storage  // The storage to use for buffering
+	dest    storage.Appender // The compaction destination
 }
 
 // New creates a new storage implementation.
-func New(buffer, db storage.Storage, interval time.Duration, join joinFunc) *Storage {
+func New(buffer storage.Storage, dest storage.Appender, merger storage.Merger, monitor monitor.Client, interval time.Duration) *Storage {
 	s := &Storage{
-		buffer: buffer,
-		db:     db,
-		join:   join,
+		monitor: monitor,
+		merger:  merger,
+		buffer:  buffer,
+		dest:    dest,
 	}
 	s.compact = async.Repeat(context.Background(), interval, s.Compact)
 	return s
@@ -47,21 +48,25 @@ func (s *Storage) Append(key, value []byte, ttl time.Duration) error {
 // the store. If f returns false, range stops the iteration. The API is designed to be very similar to the concurrent
 // map. The implementation must guarantee that the keys are lexigraphically sorted.
 func (s *Storage) Range(seek, until []byte, f func(key, value []byte) bool) error {
+	if iter, ok := s.dest.(storage.Iterator); ok {
+		return iter.Range(seek, until, f)
+	}
+
+	// If the destination cannot be iterated over, read from the buffer instead
 	return s.buffer.Range(seek, until, f)
 }
 
 // Compact runs the compaction on the storage
 func (s *Storage) Compact(ctx context.Context) (interface{}, error) {
-	var schema typeof.Schema
 	var hash uint32
 	var blocks []block.Block
 
 	// Iterate through all of the blocks in the storage
-	var rangeErr error
+	schema := make(typeof.Schema, 4)
 	if err := s.buffer.Range(key.First(), key.Last(), func(k, v []byte) bool {
 		input, err := block.FromBuffer(v)
 		if err != nil {
-			rangeErr = err
+			s.monitor.Errorf("compact: unable to read a buffer, %v", err.Error())
 			return true
 		}
 
@@ -77,7 +82,7 @@ func (s *Storage) Compact(ctx context.Context) (interface{}, error) {
 
 		// Join the blocks together and append them
 		if err := s.joinAndAppend(blocks, schema); err != nil {
-			rangeErr = err
+			s.monitor.Errorf("compact: unable to merge, %v", err.Error())
 			return true
 		}
 
@@ -89,28 +94,25 @@ func (s *Storage) Compact(ctx context.Context) (interface{}, error) {
 		return nil, err
 	}
 
-	// If we have encountered an error during the iteration, return the error
-	if rangeErr != nil {
-		return nil, rangeErr
-	}
-
 	// Join and append one last time
-	return nil, s.joinAndAppend(blocks, schema)
+	if err := s.joinAndAppend(blocks, schema); err != nil {
+		s.monitor.Errorf("compact: unable to merge, %v", err.Error())
+	}
+	return nil, nil
 }
 
 // joinAndAppend adds an key-value pair to the underlying database
 func (s *Storage) joinAndAppend(blocks []block.Block, schema typeof.Schema) error {
 
 	// Join the blocks together
-	key, value := s.join(blocks, schema)
+	key, value := s.merger.Merge(blocks, schema)
 
 	// TODO: figure out the TTL that should be set
-	return s.db.Append(key, value, 0)
+	return s.dest.Append(key, value, 0)
 }
 
 // Close is used to gracefully close storage.
 func (s *Storage) Close() error {
-	s.compact.Cancel()  // Cancel periodic compaction
-	s.buffer.Close()    // Close the buffer
-	return s.db.Close() // Close the database
+	s.compact.Cancel()
+	return storage.Close(s.buffer, s.dest)
 }
