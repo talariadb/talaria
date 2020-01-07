@@ -132,9 +132,7 @@ func (s *Storage) purge() (deleted, total int) {
 			total++
 			key := it.Item().Key()
 			if it.Item().ExpiresAt() <= uint64(time.Now().Unix()) {
-				if err := s.db.Update(func(tx *badger.Txn) error {
-					return tx.Delete(key)
-				}); err == nil {
+				if err := s.Delete(key); err == nil {
 					deleted++
 				}
 			}
@@ -142,6 +140,13 @@ func (s *Storage) purge() (deleted, total int) {
 		return nil
 	})
 	return
+}
+
+// Delete deletes a key from the storage
+func (s *Storage) Delete(key []byte) error {
+	return s.db.Update(func(tx *badger.Txn) error {
+		return tx.Delete(key)
+	})
 }
 
 // GC runs the garbage collection on the storage
