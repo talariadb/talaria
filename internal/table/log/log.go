@@ -4,7 +4,6 @@
 package log
 
 import (
-	"io"
 	"time"
 
 	"github.com/grab/talaria/internal/monitor/logging"
@@ -21,13 +20,6 @@ import (
 const (
 	table = "log"
 )
-
-// Storage represents an underlying storage layer.
-type Storage interface {
-	io.Closer
-	Append(key, value []byte, ttl time.Duration) error
-	Range(seek, until []byte, f func(key, value []byte) bool) error
-}
 
 // Membership represents a contract required for recovering cluster information.
 type Membership interface {

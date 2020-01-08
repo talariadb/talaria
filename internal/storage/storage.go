@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/grab/talaria/internal/encoding/block"
+	"github.com/grab/talaria/internal/encoding/key"
 	"github.com/grab/talaria/internal/encoding/typeof"
 	"github.com/hashicorp/go-multierror"
 )
@@ -17,17 +18,17 @@ type Storage interface {
 	io.Closer
 	Iterator
 	Appender
-	Delete(...[]byte) error
+	Delete(...key.Key) error
 }
 
 // Iterator represents a contract that allows iterating over a storage.
 type Iterator interface {
-	Range(seek, until []byte, f func(key, value []byte) bool) error
+	Range(seek, until key.Key, f func(key, value []byte) bool) error
 }
 
 // Appender represents a contract that allows appending to a storage.
 type Appender interface {
-	Append(key, value []byte, ttl time.Duration) error
+	Append(key key.Key, value []byte, ttl time.Duration) error
 }
 
 // Merger represents a contract that merges two or more blocks together.

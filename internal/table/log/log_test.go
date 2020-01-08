@@ -8,10 +8,9 @@ import (
 	"os"
 	"testing"
 
-	"github.com/grab/talaria/internal/monitor/logging"
-
 	"github.com/grab/talaria/internal/config"
 	"github.com/grab/talaria/internal/monitor"
+	"github.com/grab/talaria/internal/monitor/logging"
 	"github.com/grab/talaria/internal/presto"
 	"github.com/stretchr/testify/assert"
 )

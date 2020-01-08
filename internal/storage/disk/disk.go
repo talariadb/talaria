@@ -76,7 +76,7 @@ func (s *Storage) Open(dir string) error {
 }
 
 // Append adds an event into the storage.
-func (s *Storage) Append(key, value []byte, ttl time.Duration) error {
+func (s *Storage) Append(key key.Key, value []byte, ttl time.Duration) error {
 	return s.db.Update(func(tx *badger.Txn) error {
 		return tx.SetEntry(&badger.Entry{
 			Key:       key,
@@ -89,7 +89,7 @@ func (s *Storage) Append(key, value []byte, ttl time.Duration) error {
 // Range performs a range query against the storage. It calls f sequentially for each key and value present in
 // the store. If f returns false, range stops the iteration. The API is designed to be very similar to the concurrent
 // map. The implementation must guarantee that the keys are lexigraphically sorted.
-func (s *Storage) Range(seek, until []byte, f func(key, value []byte) bool) error {
+func (s *Storage) Range(seek, until key.Key, f func(key, value []byte) bool) error {
 	return s.db.View(func(tx *badger.Txn) error {
 		it := tx.NewIterator(badger.IteratorOptions{
 			PrefetchValues: false,
@@ -143,7 +143,7 @@ func (s *Storage) purge() (deleted, total int) {
 }
 
 // Delete deletes one or multiple keys from the storage.
-func (s *Storage) Delete(keys ...[]byte) error {
+func (s *Storage) Delete(keys ...key.Key) error {
 	return s.db.Update(func(tx *badger.Txn) error {
 		for _, key := range keys {
 			if err := tx.Delete(key); err != nil {

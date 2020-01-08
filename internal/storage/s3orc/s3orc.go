@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/grab/talaria/internal/encoding/block"
+	"github.com/grab/talaria/internal/encoding/key"
 	"github.com/grab/talaria/internal/encoding/typeof"
 	"github.com/grab/talaria/internal/monitor"
 	"github.com/grab/talaria/internal/storage"
@@ -30,7 +31,7 @@ func New(monitor monitor.Client, concurrency int) *Storage {
 }
 
 // Append adds an event into the buffer.
-func (s *Storage) Append(key, value []byte, ttl time.Duration) error {
+func (s *Storage) Append(key key.Key, value []byte, ttl time.Duration) error {
 	return errors.New("not implemented")
 }
 

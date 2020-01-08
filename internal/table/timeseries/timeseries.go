@@ -10,14 +10,14 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/grab/talaria/internal/storage/disk"
-
 	"github.com/grab/talaria/internal/config"
 	"github.com/grab/talaria/internal/encoding/block"
 	"github.com/grab/talaria/internal/encoding/key"
 	"github.com/grab/talaria/internal/encoding/typeof"
 	"github.com/grab/talaria/internal/monitor"
 	"github.com/grab/talaria/internal/presto"
+	"github.com/grab/talaria/internal/storage"
+	"github.com/grab/talaria/internal/storage/disk"
 	"github.com/grab/talaria/internal/table"
 )
 
@@ -30,13 +30,6 @@ const (
 // Assert the contract
 var _ table.Table = new(Table)
 
-// Storage represents an underlying storage layer.
-type Storage interface {
-	io.Closer
-	Append(key, value []byte, ttl time.Duration) error
-	Range(seek, until []byte, f func(key, value []byte) bool) error
-}
-
 // Membership represents a contract required for recovering cluster information.
 type Membership interface {
 	Members() []string
@@ -44,14 +37,14 @@ type Membership interface {
 
 // Table represents a timeseries table.
 type Table struct {
-	name       string         // The name of the table
-	keyColumn  string         // The name of the key column
-	timeColumn string         // The name of the time column
-	ttl        time.Duration  // The default TTL
-	store      Storage        // The storage to use
-	schema     atomic.Value   // The latest schema
-	cluster    Membership     // The membership list to use
-	monitor    monitor.Client // The monitoring client
+	name       string          // The name of the table
+	keyColumn  string          // The name of the key column
+	timeColumn string          // The name of the time column
+	ttl        time.Duration   // The default TTL
+	store      storage.Storage // The storage to use
+	schema     atomic.Value    // The latest schema
+	cluster    Membership      // The membership list to use
+	monitor    monitor.Client  // The monitoring client
 }
 
 // New creates a new table implementation.

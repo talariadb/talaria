@@ -17,8 +17,11 @@ const size = 16
 // Next is used as a sequence number, it's okay to overflow.
 var next uint32
 
+// Key represents a lexicographically sorted key
+type Key []byte
+
 // New generates a new key for the storage.
-func New(eventName string, tsi time.Time) []byte {
+func New(eventName string, tsi time.Time) Key {
 	out := make([]byte, size)
 	binary.BigEndian.PutUint32(out[0:4], murmur3.Sum32([]byte(eventName)))
 	binary.BigEndian.PutUint64(out[4:12], uint64(tsi.Unix()))
@@ -27,13 +30,13 @@ func New(eventName string, tsi time.Time) []byte {
 }
 
 // HashOf returns the hash value of the key
-func HashOf(k []byte) uint32 {
+func HashOf(k Key) uint32 {
 	return binary.BigEndian.Uint32(k[0:4])
 }
 
 // PrefixOf a common prefix between two keys (common leading bytes) which is
 // then used as a prefix for Badger to narrow down SSTables to traverse.
-func PrefixOf(seek, until []byte) []byte {
+func PrefixOf(seek, until Key) []byte {
 	var prefix []byte
 
 	// Calculate the minimum length
@@ -53,12 +56,12 @@ func PrefixOf(seek, until []byte) []byte {
 }
 
 // First returns the smallest possible key
-func First() []byte {
+func First() Key {
 	return make([]byte, size)
 }
 
 // Last returns the largest possible key
-func Last() []byte {
+func Last() Key {
 	out := make([]byte, size)
 	for i := 0; i < size; i++ {
 		out[i] = math.MaxUint8

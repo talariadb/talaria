@@ -43,9 +43,9 @@ func (m merger) Merge(blocks []block.Block, schema typeof.Schema) ([]byte, []byt
 }
 
 // Appender mock
-type appender func(key, value []byte, ttl time.Duration) error
+type appender func(key key.Key, value []byte, ttl time.Duration) error
 
-func (m appender) Append(key, value []byte, ttl time.Duration) error {
+func (m appender) Append(key key.Key, value []byte, ttl time.Duration) error {
 	return m(key, value, ttl)
 }
 
@@ -72,7 +72,7 @@ func run(f func(store *disk.Storage)) {
 func TestRange(t *testing.T) {
 	runTest(t, func(buffer *disk.Storage) {
 		var count int
-		var dest appender = func(key, value []byte, ttl time.Duration) error {
+		var dest appender = func(key key.Key, value []byte, ttl time.Duration) error {
 			count++
 			return nil
 		}

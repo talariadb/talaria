@@ -47,14 +47,14 @@ func New(buffer storage.Storage, dest storage.Appender, merger storage.Merger, m
 }
 
 // Append adds an event into the buffer.
-func (s *Storage) Append(key, value []byte, ttl time.Duration) error {
+func (s *Storage) Append(key key.Key, value []byte, ttl time.Duration) error {
 	return s.buffer.Append(key, value, ttl)
 }
 
 // Range performs a range query against the storage. It calls f sequentially for each key and value present in
 // the store. If f returns false, range stops the iteration. The API is designed to be very similar to the concurrent
 // map. The implementation must guarantee that the keys are lexigraphically sorted.
-func (s *Storage) Range(seek, until []byte, f func(key, value []byte) bool) error {
+func (s *Storage) Range(seek, until key.Key, f func(key, value []byte) bool) error {
 	if iter, ok := s.dest.(storage.Iterator); ok {
 		return iter.Range(seek, until, f)
 	}
@@ -64,7 +64,7 @@ func (s *Storage) Range(seek, until []byte, f func(key, value []byte) bool) erro
 }
 
 // Delete deletes a key from the buffer.
-func (s *Storage) Delete(keys ...[]byte) error {
+func (s *Storage) Delete(keys ...key.Key) error {
 	return s.buffer.Delete(keys...)
 }
 
@@ -72,7 +72,7 @@ func (s *Storage) Delete(keys ...[]byte) error {
 func (s *Storage) Compact(ctx context.Context) (interface{}, error) {
 	var hash uint32
 	var blocks []block.Block
-	var merged [][]byte
+	var merged []key.Key
 
 	// Iterate through all of the blocks in the storage
 	schema := make(typeof.Schema, 4)
@@ -101,7 +101,7 @@ func (s *Storage) Compact(ctx context.Context) (interface{}, error) {
 		// Reset both the schema and the set of blocks
 		schema = make(typeof.Schema, len(schema))
 		blocks = make([]block.Block, 0, 16)
-		merged = make([][]byte, 0, 16)
+		merged = make([]key.Key, 0, 16)
 		return false
 	}); err != nil {
 		return nil, err
@@ -112,7 +112,7 @@ func (s *Storage) Compact(ctx context.Context) (interface{}, error) {
 }
 
 // merge adds an key-value pair to the underlying database
-func (s *Storage) merge(keys [][]byte, blocks []block.Block, schema typeof.Schema) async.Task {
+func (s *Storage) merge(keys []key.Key, blocks []block.Block, schema typeof.Schema) async.Task {
 	work := async.NewTask(func(ctx context.Context) (_ interface{}, err error) {
 		key, value := s.merger.Merge(blocks, schema)
 
