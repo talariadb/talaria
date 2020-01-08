@@ -32,7 +32,7 @@ type Storage struct {
 
 // New creates a new storage implementation.
 func New(buffer storage.Storage, dest storage.Appender, merger storage.Merger, monitor monitor.Client, interval time.Duration) *Storage {
-	concurrency := 2 * runtime.NumCPU()
+	concurrency := runtime.NumCPU()
 	tasks := make(chan async.Task, concurrency)
 	s := &Storage{
 		monitor: monitor,

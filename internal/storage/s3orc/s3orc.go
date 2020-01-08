@@ -24,7 +24,7 @@ type Storage struct {
 }
 
 // New creates a new storage implementation.
-func New(monitor monitor.Client, concurrency int) *Storage {
+func New(monitor monitor.Client) *Storage {
 	return &Storage{
 		monitor: monitor,
 	}
@@ -37,6 +37,9 @@ func (s *Storage) Append(key key.Key, value []byte, ttl time.Duration) error {
 
 // Merge merges multiple blocks together and ouputs a valid orc file to be uploaded to s3.
 func (s *Storage) Merge(blocks []block.Block, schema typeof.Schema) ([]byte, []byte) {
+
+	// TODO: use orc.SchemaFor(schema)
+
 	return nil, nil
 }
 
