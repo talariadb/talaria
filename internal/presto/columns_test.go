@@ -405,7 +405,7 @@ func TestAppend_Timestamp(t *testing.T) {
 		count     int
 	}{
 		{
-			desc:  "timestamp appended",
+			desc:  "timestamp appended int",
 			input: int64(321),
 			output: &PrestoThriftTimestamp{
 				Nulls:      []bool{false, false},
@@ -416,11 +416,22 @@ func TestAppend_Timestamp(t *testing.T) {
 			count:     2,
 		},
 		{
-			desc:  "timestamp appended",
+			desc:  "timestamp appended UNIX",
 			input: time.Unix(321, 0),
 			output: &PrestoThriftTimestamp{
 				Nulls:      []bool{false, false},
-				Timestamps: []int64{123, 321},
+				Timestamps: []int64{123, 321000},
+			},
+			outputRes: 10,
+			size:      20,
+			count:     2,
+		},
+		{
+			desc:  "timestamp appended UNIX with nanosecond",
+			input: time.Unix(321, 50000000),
+			output: &PrestoThriftTimestamp{
+				Nulls:      []bool{false, false},
+				Timestamps: []int64{123, 321050},
 			},
 			outputRes: 10,
 			size:      20,
