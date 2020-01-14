@@ -13,9 +13,12 @@ import (
 func TestSchemaFor(t *testing.T) {
 	s := typeof.Schema{
 		"a": typeof.Int32,
+		"b": typeof.String,
+		"c": typeof.Int64,
+		"d": typeof.String,
 	}
 
 	out, err := SchemaFor(s)
 	assert.NoError(t, err)
-	assert.Equal(t, "struct<a:int>", out.String())
+	assert.Equal(t, "struct<a:int,b:string,c:bigint,d:string>", out.String())
 }
