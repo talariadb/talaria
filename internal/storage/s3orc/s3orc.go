@@ -20,11 +20,11 @@ var _ storage.Merger = new(Storage)
 
 // Storage represents s3/orc storage.
 type Storage struct {
-	monitor monitor.Client // The monitor client
+	monitor monitor.Monitor // The monitor client
 }
 
 // New creates a new storage implementation.
-func New(monitor monitor.Client) *Storage {
+func New(monitor monitor.Monitor) *Storage {
 	return &Storage{
 		monitor: monitor,
 	}

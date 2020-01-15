@@ -82,7 +82,6 @@ func parseWithHashAndSort(req *presto.PrestoThriftTupleDomain, hashKey, sortKey 
 	if tsi, hasTsi := req.Domains[sortKey]; hasTsi && tsi.ValueSet != nil && tsi.ValueSet.RangeValueSet != nil {
 		if len(keyColumnDomain.ValueSet.RangeValueSet.Ranges) == 1 {
 			if t0, t1, ok := tsi.ValueSet.RangeValueSet.Ranges[0].AsTimeRange(); ok {
-				println("time bound", t0.String(), " until ", t1.String())
 				from = t0
 				until = t1
 			}
@@ -111,7 +110,6 @@ func parseWithSort(req *presto.PrestoThriftTupleDomain, sortKey string) ([]query
 	until := time.Unix(math.MaxInt64, 0)
 	if tsi, hasTsi := req.Domains[sortKey]; hasTsi && tsi.ValueSet != nil && tsi.ValueSet.RangeValueSet != nil {
 		if t0, t1, ok := tsi.ValueSet.RangeValueSet.Ranges[0].AsTimeRange(); ok {
-			println("time bound", t0.String(), " until ", t1.String())
 			from = t0
 			until = t1
 		}

@@ -13,7 +13,7 @@ import (
 type noopClient struct{}
 
 // NewNoop ...
-func NewNoop() Client {
+func NewNoop() Monitor {
 	return &noopClient{}
 }
 
@@ -21,12 +21,6 @@ func NewNoop() Client {
 func (c *noopClient) TrackDiskSpace() async.Task {
 	return async.NewTask(func(ctx context.Context) (interface{}, error) { return nil, nil })
 }
-
-// DefaultTags ...
-func (c *noopClient) DefaultTags() []string { return []string{} }
-
-// WithHost ...
-func (c *noopClient) WithHost(hostname string) Client { return c }
 
 // Duration ...
 func (c *noopClient) Duration(contextTag, key string, start time.Time, tags ...string) {}
@@ -43,16 +37,10 @@ func (c *noopClient) Count1(contextTag, key string, tags ...string) {}
 // Count increases or Decrease the value of something over time
 func (c *noopClient) Count(contextTag, key string, amount int64, tags ...string) {}
 
-func (c *noopClient) Errorf(f string, v ...interface{}) {}
+func (c *noopClient) Error(error) {}
 
-func (c *noopClient) Warningf(f string, v ...interface{}) {}
+func (c *noopClient) Warning(error) {}
 
-func (c *noopClient) Infof(f string, v ...interface{}) {}
+func (c *noopClient) Info(f string, v ...interface{}) {}
 
-func (c *noopClient) Debugf(f string, v ...interface{}) {}
-
-// WarnWithStats ...
-func (c *noopClient) WarnWithStats(tag, errType, message string, args ...interface{}) {}
-
-// ErrorWithStats ...
-func (c *noopClient) ErrorWithStats(tag, errType, message string, args ...interface{}) {}
+func (c *noopClient) Debug(f string, v ...interface{}) {}

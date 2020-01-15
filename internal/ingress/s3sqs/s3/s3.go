@@ -5,7 +5,6 @@ package s3
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"io"
 	"strings"
@@ -17,7 +16,8 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
-	"github.com/grab/talaria/internal/monitor/logging"
+	"github.com/grab/talaria/internal/monitor"
+	"github.com/grab/talaria/internal/monitor/errors"
 )
 
 // All the errors
@@ -42,11 +42,11 @@ type client struct {
 	uploader   *s3manager.Uploader
 	downloader *s3manager.Downloader
 	awsClient  *s3.S3
-	logger     logging.Logger
+	monitor    monitor.Monitor
 }
 
 // New a new S3 Client.
-func New(region string, retries int, logger logging.Logger, keys ...string) Client {
+func New(region string, retries int, monitor monitor.Monitor, keys ...string) Client {
 	conf := aws.NewConfig().
 		WithRegion(region).
 		WithMaxRetries(retries)
@@ -57,16 +57,16 @@ func New(region string, retries int, logger logging.Logger, keys ...string) Clie
 		panic(fmt.Errorf("unable to create AWS session: %s", err))
 	}
 
-	return NewFromSession(sess, logger)
+	return NewFromSession(sess, monitor)
 }
 
 // NewFromSession a new S3 Client with the supplied AWS session
-func NewFromSession(sess *session.Session, logger logging.Logger) Client {
+func NewFromSession(sess *session.Session, monitor monitor.Monitor) Client {
 	return &client{
 		uploader:   s3manager.NewUploader(sess, func(u *s3manager.Uploader) { u.Concurrency = 128 }),
 		downloader: s3manager.NewDownloader(sess, func(d *s3manager.Downloader) { d.Concurrency = 128 }),
 		awsClient:  s3.New(sess),
-		logger:     logger,
+		monitor:    monitor,
 	}
 }
 
@@ -74,7 +74,7 @@ func NewFromSession(sess *session.Session, logger logging.Logger) Client {
 func (s *client) Upload(ctx context.Context, bucket, key string, body io.Reader, grantReadCanonicalID string) (err error) {
 	defer func() {
 		if r := recover(); r != nil {
-			s.logger.Errorf("s3: panic recovered. err: %v", r)
+			s.monitor.Error(errors.Newf("s3: panic recovered. err: %v", r))
 		}
 	}()
 
@@ -111,7 +111,7 @@ func (s *client) getLatestKey(ctx context.Context, bucket, prefix string) (*s3.L
 	}
 	list, err := s.awsClient.ListObjectsV2WithContext(ctx, input)
 	if err != nil {
-		s.logger.Errorf("s3: error while listing files/dir under bucket, key", bucket, prefix, err)
+		s.monitor.Error(errors.Internal("s3: error while listing files/dir", err))
 		return nil, "", convertError(err)
 	}
 
@@ -126,7 +126,7 @@ func (s *client) getLatestKey(ctx context.Context, bucket, prefix string) (*s3.L
 		}
 	}
 
-	s.logger.Debugf("s3: latest key (%s) found", key)
+	s.monitor.Debug("s3: latest key (%s) found", key)
 	if key == "" {
 		return nil, "", ErrNoSuchKey
 	}
@@ -141,7 +141,7 @@ func (s *client) Download(ctx context.Context, bucket, key string) ([]byte, erro
 		Key:    aws.String(key),
 	})
 	if err != nil {
-		s.logger.Errorf("s3: error while downloading from s3 ", bucket, key, err)
+		s.monitor.Error(errors.Internal("s3: error while downloading from s3", err))
 		return nil, convertError(err)
 	}
 	return w.Bytes()[:n], nil
@@ -156,7 +156,7 @@ func (s *client) DownloadLatestFolder(ctx context.Context, bucket, prefix string
 	parent := getParentFolder(latestKey)
 	// if no parent found, just download latest key
 	if parent == "" {
-		s.logger.Debugf("s3: no parent found. Downloading single file...", latestKey)
+		s.monitor.Debug("s3: no parent found. Downloading single file...", latestKey)
 		return s.Download(ctx, bucket, latestKey)
 	}
 
@@ -165,7 +165,7 @@ func (s *client) DownloadLatestFolder(ctx context.Context, bucket, prefix string
 	objects := list.Contents
 	for _, o := range objects {
 		if found := strings.Contains(*o.Key, parent); found {
-			s.logger.Debugf("s3: found another file in parent...", parent, *o.Key)
+			s.monitor.Debug("s3: found another file in parent...", parent, *o.Key)
 			if err := s.downloadWithWriter(ctx, w, bucket, *o.Key); err != nil {
 				return nil, err
 			}
@@ -180,11 +180,10 @@ func (s *client) downloadWithWriter(ctx context.Context, w *aws.WriteAtBuffer, b
 	var b []byte
 	var err error
 	if b, err = s.Download(ctx, bucket, key); err != nil {
-		return err
+		return errors.Internal("s3: unable to download", err)
 	}
 	if _, err := w.WriteAt(b, lengths3); err != nil {
-		s.logger.Errorf("s3: error while writing to main aws buffer at length", err.Error())
-		return err
+		return errors.Internal("s3: error while writing to main aws buffer at length", err)
 	}
 
 	return nil

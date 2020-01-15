@@ -13,7 +13,6 @@ import (
 	"github.com/grab/talaria/internal/encoding/typeof"
 	"github.com/grab/talaria/internal/presto"
 	talaria "github.com/grab/talaria/proto"
-	"github.com/kelindar/binary/nocopy"
 )
 
 // FromBatchBy creates a block from a talaria protobuf-encoded batch. It
@@ -144,8 +143,8 @@ func findParitionKey(dict map[uint32][]byte, partitionBy string) (uint32, bool) 
 func makeBlocks(v map[string]presto.NamedColumns) ([]Block, error) {
 	blocks := make([]Block, 0, len(v))
 	for k, columns := range v {
-		block := Block{Key: nocopy.String(k)}
-		if err := block.WriteColumns(columns); err != nil {
+		block, err := FromColumns(k, columns)
+		if err != nil {
 			return nil, err
 		}
 		blocks = append(blocks, block)

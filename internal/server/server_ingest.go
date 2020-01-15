@@ -7,6 +7,7 @@ import (
 	"context"
 
 	"github.com/grab/talaria/internal/encoding/block"
+	"github.com/grab/talaria/internal/monitor/errors"
 	"github.com/grab/talaria/internal/table"
 	talaria "github.com/grab/talaria/proto"
 )
@@ -21,7 +22,7 @@ func (s *Server) Ingest(ctx context.Context, request *talaria.IngestRequest) (*t
 	// Read blocks and repartition by the specified key
 	blocks, err := block.FromRequestBy(request, s.conf.Storage.KeyColumn)
 	if err != nil {
-		return nil, err
+		return nil, errors.Internal("unable to read the block", err)
 	}
 
 	// Iterate through all of the appenders and append the blocks to them

@@ -4,9 +4,9 @@
 package server
 
 import (
-	"fmt"
 	"time"
 
+	"github.com/grab/talaria/internal/monitor/errors"
 	"github.com/grab/talaria/internal/presto"
 	"github.com/grab/talaria/internal/table"
 )
@@ -128,21 +128,20 @@ func (s *Server) PrestoGetRows(splitID *presto.PrestoThriftId, columns []string,
 	// Parse the incoming thriftID
 	id, err := decodeID(splitID, nextToken)
 	if err != nil {
-		s.monitor.ErrorWithStats(ctxTag, "decode_query", "[error:%s] decoding query failed", err)
-		return nil, err
+		return nil, errors.Internal("decoding query failed", err)
 	}
 
 	// Retrieve the table
 	table, err := s.getTable(id.Table)
 	if err != nil {
-		return nil, err
+		return nil, errors.Internal("unable to retrieve a table", err)
 	}
 
 	// Retrieve the rows for the table
 	result := new(presto.PrestoThriftPageResult)
 	page, err := table.GetRows(id.Split, columns, maxBytes)
 	if err != nil {
-		return nil, err
+		return nil, errors.Internal("unable to get rows from a table", err)
 	}
 
 	// If a page has a token, we need to create a split to continue iterating
@@ -162,7 +161,7 @@ func (s *Server) PrestoGetRows(splitID *presto.PrestoThriftId, columns []string,
 func (s *Server) getTable(name string) (table.Table, error) {
 	table, ok := s.tables[name]
 	if !ok {
-		return nil, fmt.Errorf("table %s not found", name)
+		return nil, errors.Newf("table %s not found", name)
 	}
 	return table, nil
 }

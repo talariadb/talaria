@@ -13,9 +13,8 @@ import (
 	"github.com/DataDog/datadog-go/statsd"
 	"github.com/grab/talaria/internal/config"
 	"github.com/grab/talaria/internal/ingress/s3sqs"
-	monitorpkg "github.com/grab/talaria/internal/monitor"
+	"github.com/grab/talaria/internal/monitor"
 	"github.com/grab/talaria/internal/monitor/logging"
-	"github.com/grab/talaria/internal/monitor/logging/table"
 	"github.com/grab/talaria/internal/server"
 	"github.com/grab/talaria/internal/server/cluster"
 	"github.com/grab/talaria/internal/table/log"
@@ -33,7 +32,6 @@ func main() {
 
 	// Setup gossip
 	gossip := cluster.New(7946)
-	logger := logging.NewStandard()
 
 	// StatsD
 	s, err := statsd.New(cfg.Statsd.Host + ":" + strconv.FormatInt(cfg.Statsd.Port, 10))
@@ -41,16 +39,17 @@ func main() {
 		panic(err)
 	}
 
-	monitorWithStdout := monitorpkg.New(logger, s, "talaria", cfg.Env)
+	// Create a log table and a simple stdout monitor
+	stdout := monitor.New(logging.NewStandard(), s, "talaria", cfg.Env)
+	logTbl := log.New(cfg.Log, cfg.DataDir, gossip, stdout)
 
-	// Open the storage for the log table
-	logTable := log.New(cfg.Log, cfg.DataDir, gossip, monitorWithStdout) // The log table
-	monitor := monitorpkg.New(table.NewTable(logTable), s, "talaria", cfg.Env)
-	monitor.Infof("starting the log table ...")
+	// Setup a monitor with a table output
+	monitor := monitor.New(logTbl, s, "talaria", cfg.Env)
+	monitor.Info("starting the log table ...")
 
 	monitor.Count1("system", "event", "type:start")
 	defer monitor.Count1("system", "event", "type:stop")
-	monitor.Infof("starting the server and database ...")
+	monitor.Info("starting the server and database ...")
 
 	startMonitor(monitor)
 
@@ -58,7 +57,7 @@ func main() {
 	server := server.New(cfg, monitor,
 		timeseries.New(cfg.Presto.Table, cfg.Storage, cfg.DataDir, gossip, monitor), // The primary timeseries table
 		nodes.New(gossip), // Cluster membership info table
-		logTable,
+		logTbl,
 	)
 
 	// Create an S3 + SQS ingestion
@@ -68,12 +67,12 @@ func main() {
 	}
 
 	// Start ingesting
-	monitor.Infof("starting ingestion ...")
+	monitor.Info("starting ingestion ...")
 	ingestor.Range(func(v []byte) bool {
 		if _, err := server.Ingest(context.Background(), &talaria.IngestRequest{
 			Data: &talaria.IngestRequest_Orc{Orc: v},
 		}); err != nil {
-			monitor.WarnWithStats(logTag, "ingestor_append", "unable to append data from queue due to %s", err.Error())
+			monitor.Warning(err)
 		}
 		return false
 	})
@@ -92,13 +91,13 @@ func main() {
 	gossip.JoinHostname(cfg.Domain)
 
 	// Start listen
-	monitor.Infof("starting server listener ...")
+	monitor.Info("starting server listener ...")
 	if err := server.Listen(ctx, cfg.Presto.Port, cfg.GRPC.Port); err != nil {
 		panic(err)
 	}
 }
 
-func startMonitor(m monitorpkg.Client) {
+func startMonitor(m monitor.Monitor) {
 	m.TrackDiskSpace()
 }
 

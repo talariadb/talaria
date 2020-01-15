@@ -1,17 +1,20 @@
 // Copyright 2019 Grabtaxi Holdings PTE LTE (GRAB), All rights reserved.
 // Use of this source code is governed by an MIT-style license that can be found in the LICENSE file
 
-package monitor
+package monitor_test
 
 import (
 	"testing"
 	"time"
 
+	"github.com/grab/talaria/internal/monitor"
+	"github.com/grab/talaria/internal/monitor/logging"
+	"github.com/grab/talaria/internal/monitor/statsd"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestNoop(t *testing.T) {
-	c := NewNoop()
+	c := monitor.New(logging.NewNoop(), statsd.NewNoop(), "x", "y")
 	testTag := "tag"
 	testKey := "key"
 	testStart := time.Now()

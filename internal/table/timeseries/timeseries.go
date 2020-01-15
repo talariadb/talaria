@@ -15,6 +15,7 @@ import (
 	"github.com/grab/talaria/internal/encoding/key"
 	"github.com/grab/talaria/internal/encoding/typeof"
 	"github.com/grab/talaria/internal/monitor"
+	"github.com/grab/talaria/internal/monitor/errors"
 	"github.com/grab/talaria/internal/presto"
 	"github.com/grab/talaria/internal/storage"
 	"github.com/grab/talaria/internal/storage/disk"
@@ -44,11 +45,11 @@ type Table struct {
 	store      storage.Storage // The storage to use
 	schema     atomic.Value    // The latest schema
 	cluster    Membership      // The membership list to use
-	monitor    monitor.Client  // The monitoring client
+	monitor    monitor.Monitor // The monitoring client
 }
 
 // New creates a new table implementation.
-func New(name string, cfg *config.Storage, dataDir string, cluster Membership, monitor monitor.Client) *Table {
+func New(name string, cfg *config.Storage, dataDir string, cluster Membership, monitor monitor.Monitor) *Table {
 	store := disk.New(monitor)
 	tableDir := path.Join(dataDir, name)
 	err := store.Open(tableDir)
@@ -127,7 +128,7 @@ func (t *Table) GetRows(splitID []byte, requestedColumns []string, maxBytes int6
 	// Parse the incoming query
 	query, err := decodeQuery(splitID)
 	if err != nil {
-		t.monitor.ErrorWithStats(ctxTag, "decode_query", "[error:%s] decoding query failed", err)
+		t.monitor.Error(errors.Internal("decoding query failed", err))
 		return nil, err
 	}
 
@@ -155,7 +156,7 @@ func (t *Table) GetRows(splitID []byte, requestedColumns []string, maxBytes int6
 		bytesLeft -= frame.Size()
 		return readError != io.EOF
 	}); err != nil {
-		t.monitor.WarnWithStats(ctxTag, "range_key", "[error:%s] range through the key failed", err)
+		t.monitor.Warning(errors.Internal("range through the key failed", err))
 		return
 	}
 
@@ -174,7 +175,7 @@ func (t *Table) GetRows(splitID []byte, requestedColumns []string, maxBytes int6
 func (t *Table) readDataFrame(schema typeof.Schema, buffer []byte, maxBytes int) (presto.NamedColumns, error) {
 	result, err := block.Read(buffer, schema)
 	if err != nil {
-		return nil, err
+		return nil, errors.Internal("block read failed", err)
 	}
 
 	// If we don't have enough space, skip this data frame and stop here

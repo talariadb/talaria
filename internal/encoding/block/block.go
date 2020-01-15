@@ -31,14 +31,6 @@ type Block struct {
 	schema  typeof.Schema  `binary:"-"` // The cached schema of the block
 }
 
-// FromBuffer unmarshals a block from a in-memory buffer.
-func FromBuffer(b []byte) (block Block, err error) {
-	if err = binary.Unmarshal(b, &block); err != nil {
-		return
-	}
-	return
-}
-
 // Read decodes the block and selects the columns
 func Read(buffer []byte, desiredSchema typeof.Schema) (presto.NamedColumns, error) {
 	block, err := FromBuffer(buffer)
@@ -129,7 +121,7 @@ func (b *Block) Min(column string) (int64, bool) {
 }
 
 // Writes a set of columns into the block
-func (b *Block) WriteColumns(columns presto.NamedColumns) error {
+func (b *Block) writeColumns(columns presto.NamedColumns) error {
 	var offset uint32
 	var buffer bytes.Buffer
 

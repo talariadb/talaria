@@ -14,6 +14,7 @@ import (
 	"github.com/grab/async"
 	"github.com/grab/talaria/internal/config"
 	"github.com/grab/talaria/internal/monitor"
+	"github.com/grab/talaria/internal/monitor/errors"
 	"github.com/grab/talaria/internal/presto"
 	"github.com/grab/talaria/internal/table"
 	talaria "github.com/grab/talaria/proto"
@@ -41,7 +42,7 @@ type Storage interface {
 // ------------------------------------------------------------------------------------------------------------
 
 // New creates a new talaria server.
-func New(conf *config.Config, monitor monitor.Client, tables ...table.Table) *Server {
+func New(conf *config.Config, monitor monitor.Monitor, tables ...table.Table) *Server {
 	const maxMessageSize = 32 * 1024 * 1024 // 32 MB
 	server := &Server{
 		server:  grpc.NewServer(grpc.MaxRecvMsgSize(maxMessageSize)),
@@ -64,7 +65,7 @@ func New(conf *config.Config, monitor monitor.Client, tables ...table.Table) *Se
 type Server struct {
 	server  *grpc.Server           // The underlying gRPC server
 	conf    *config.Config         // The presto configuration
-	monitor monitor.Client         // The monitoring layer
+	monitor monitor.Monitor        // The monitoring layer
 	cancel  context.CancelFunc     // The cancellation function for the server
 	tables  map[string]table.Table // The list of tables
 }
@@ -100,7 +101,7 @@ func (s *Server) Close() {
 	// Close all the open tables
 	for _, t := range s.tables {
 		if err := t.Close(); err != nil {
-			s.monitor.Errorf(err.Error())
+			s.monitor.Error(err)
 		}
 	}
 }
@@ -108,6 +109,6 @@ func (s *Server) Close() {
 // handlePanic handles the panic and logs it out.
 func (s *Server) handlePanic() {
 	if r := recover(); r != nil {
-		s.monitor.Errorf("panic recovered: %ss \n %s", r, debug.Stack())
+		s.monitor.Error(errors.Newf("panic recovered: %ss \n %s", r, debug.Stack()))
 	}
 }

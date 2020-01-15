@@ -8,6 +8,8 @@ import (
 	"runtime"
 	"time"
 
+	"github.com/grab/talaria/internal/monitor/errors"
+
 	"github.com/grab/async"
 	"github.com/grab/talaria/internal/encoding/block"
 	"github.com/grab/talaria/internal/encoding/key"
@@ -24,14 +26,14 @@ type Storage struct {
 	compact async.Task       // The compaction worker
 	workers async.Task       // The worker pool
 	tasks   chan async.Task  // The task channel to upload
-	monitor monitor.Client   // The monitor client
+	monitor monitor.Monitor  // The monitor client
 	merger  storage.Merger   // The merging (join) function
 	buffer  storage.Storage  // The storage to use for buffering
 	dest    storage.Appender // The compaction destination
 }
 
 // New creates a new storage implementation.
-func New(buffer storage.Storage, dest storage.Appender, merger storage.Merger, monitor monitor.Client, interval time.Duration) *Storage {
+func New(buffer storage.Storage, dest storage.Appender, merger storage.Merger, monitor monitor.Monitor, interval time.Duration) *Storage {
 	concurrency := runtime.NumCPU()
 	tasks := make(chan async.Task, concurrency)
 	s := &Storage{
@@ -79,7 +81,7 @@ func (s *Storage) Compact(ctx context.Context) (interface{}, error) {
 	if err := s.buffer.Range(key.First(), key.Last(), func(k, v []byte) bool {
 		input, err := block.FromBuffer(v)
 		if err != nil {
-			s.monitor.Errorf("compact: unable to read a buffer, %v", err.Error())
+			s.monitor.Error(errors.Internal("compact: unable to read a buffer", err))
 			return true
 		}
 
@@ -118,13 +120,13 @@ func (s *Storage) merge(keys []key.Key, blocks []block.Block, schema typeof.Sche
 
 		// TODO: figure out the TTL that should be set
 		if err = s.dest.Append(key, value, 0); err != nil {
-			s.monitor.Errorf("compact: unable to merge, %v", err.Error())
+			s.monitor.Error(err)
 			return
 		}
 
 		//  Delete all of the keys that we have appended
 		if err = s.buffer.Delete(keys...); err != nil {
-			s.monitor.Errorf("compact: unable to delete a key, %v", err.Error())
+			s.monitor.Error(err)
 		}
 		return
 	})

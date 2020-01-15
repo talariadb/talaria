@@ -15,6 +15,7 @@ import (
 	"github.com/grab/async"
 	"github.com/grab/talaria/internal/encoding/key"
 	"github.com/grab/talaria/internal/monitor"
+	"github.com/grab/talaria/internal/monitor/errors"
 	"github.com/grab/talaria/internal/storage"
 )
 
@@ -27,13 +28,13 @@ var _ storage.Storage = new(Storage)
 
 // Storage represents disk storage.
 type Storage struct {
-	gc      async.Task     // Closing channel
-	db      *badger.DB     // The underlying key-value store
-	monitor monitor.Client // The stats client
+	gc      async.Task      // Closing channel
+	db      *badger.DB      // The underlying key-value store
+	monitor monitor.Monitor // The stats client
 }
 
 // New creates a new disk-backed storage which internally uses badger KV.
-func New(m monitor.Client) *Storage {
+func New(m monitor.Monitor) *Storage {
 	return &Storage{
 		monitor: m,
 	}
@@ -61,7 +62,11 @@ func (s *Storage) Open(dir string) error {
 	opts.LevelSizeMultiplier = 3
 	opts.MaxLevels = 25
 	opts.Truncate = true
-	opts.Logger = s.monitor
+
+	// Check if monitor is a badger logger
+	if logger, ok := s.monitor.(badger.Logger); ok {
+		opts.Logger = logger
+	}
 
 	// Attempt to open the database
 	db, err := badger.Open(opts)
@@ -77,13 +82,16 @@ func (s *Storage) Open(dir string) error {
 
 // Append adds an event into the storage.
 func (s *Storage) Append(key key.Key, value []byte, ttl time.Duration) error {
-	return s.db.Update(func(tx *badger.Txn) error {
+	if err := s.db.Update(func(tx *badger.Txn) error {
 		return tx.SetEntry(&badger.Entry{
 			Key:       key,
 			Value:     value,
 			ExpiresAt: uint64(time.Now().Add(ttl).Unix()),
 		})
-	})
+	}); err != nil {
+		return errors.Internal("unable to append", err)
+	}
+	return nil
 }
 
 // Range performs a range query against the storage. It calls f sequentially for each key and value present in
@@ -144,14 +152,17 @@ func (s *Storage) purge() (deleted, total int) {
 
 // Delete deletes one or multiple keys from the storage.
 func (s *Storage) Delete(keys ...key.Key) error {
-	return s.db.Update(func(tx *badger.Txn) error {
+	if err := s.db.Update(func(tx *badger.Txn) error {
 		for _, key := range keys {
 			if err := tx.Delete(key); err != nil {
 				return err
 			}
 		}
 		return nil
-	})
+	}); err != nil {
+		return errors.Internal("unable to delete", err)
+	}
+	return nil
 }
 
 // GC runs the garbage collection on the storage
@@ -164,7 +175,7 @@ func (s *Storage) GC(ctx context.Context) (interface{}, error) {
 	}
 
 	deleted, total := s.purge()
-	s.monitor.Debugf("deleted %v / %v items, available %v", deleted, total, total-deleted)
+	s.monitor.Debug("deleted %v / %v items, available %v", deleted, total, total-deleted)
 	s.monitor.Gauge(ctxTag, "GC.purge", float64(deleted), "type:deleted")
 	s.monitor.Gauge(ctxTag, "GC.purge", float64(total), "type:total")
 
@@ -174,7 +185,7 @@ func (s *Storage) GC(ctx context.Context) (interface{}, error) {
 			return nil, nil
 		}
 		s.monitor.Count1(ctxTag, "vlog.GC", "type:completed")
-		s.monitor.Debugf("cycle completed")
+		s.monitor.Debug("cycle completed")
 	}
 	return nil, nil
 }

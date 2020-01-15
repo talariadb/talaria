@@ -8,7 +8,7 @@ import (
 	"os"
 )
 
-const prefix = "talaria "
+const prefix = ""
 
 // Logger is implemented by any logging system that is used for standard logs.
 type Logger interface {

@@ -4,17 +4,16 @@
 package log
 
 import (
+	"fmt"
 	"time"
-
-	"github.com/grab/talaria/internal/monitor/logging"
 
 	"github.com/grab/talaria/internal/config"
 	"github.com/grab/talaria/internal/encoding/block"
 	"github.com/grab/talaria/internal/encoding/typeof"
 	"github.com/grab/talaria/internal/monitor"
+	"github.com/grab/talaria/internal/monitor/logging"
 	"github.com/grab/talaria/internal/presto"
 	"github.com/grab/talaria/internal/table/timeseries"
-	"github.com/kelindar/binary/nocopy"
 )
 
 const (
@@ -34,7 +33,7 @@ type Table struct {
 }
 
 // New creates a new table implementation.
-func New(log *config.Log, dataDir string, cluster Membership, monitor monitor.Client) *Table {
+func New(log *config.Log, dataDir string, cluster Membership, monitor monitor.Monitor) *Table {
 	cfg := &config.Storage{
 		TTLInSec:   log.TTLInSec,
 		TimeColumn: "time",
@@ -47,10 +46,30 @@ func New(log *config.Log, dataDir string, cluster Membership, monitor monitor.Cl
 	}
 }
 
+// Errorf writes out an error message into the output logger.
+func (t *Table) Errorf(f string, v ...interface{}) {
+	t.Append(fmt.Sprintf("[error] "+f, v...), logging.LevelError)
+}
+
+// Warningf writes out a warning message into the output logger.
+func (t *Table) Warningf(f string, v ...interface{}) {
+	t.Append(fmt.Sprintf("[warning]: "+f, v...), logging.LevelWarning)
+}
+
+// Infof writes out a warning message into the output logger.
+func (t *Table) Infof(f string, v ...interface{}) {
+	t.Append(fmt.Sprintf(f, v...), logging.LevelInfo)
+}
+
+// Debugf writes out a warning message into the output logger.
+func (t *Table) Debugf(f string, v ...interface{}) {
+	t.Append(fmt.Sprintf(f, v...), logging.LevelDebug)
+}
+
 // Append converts message to a block and append to timeseries
 func (t *Table) Append(msg string, level logging.Level) error {
 	columns := t.toColumns(msg, level)
-	block, err := makeBlock(columns)
+	block, err := block.FromColumns("", columns)
 	if err != nil {
 		return err
 	}
@@ -65,14 +84,4 @@ func (t *Table) toColumns(msg string, level logging.Level) presto.NamedColumns {
 	columns.Append("level", string(level), typeof.String)
 	columns.Append("message", msg, typeof.String)
 	return columns
-}
-
-// makeBlocks creates a set of blocks from a set of named columns
-func makeBlock(columns presto.NamedColumns) (block.Block, error) {
-	b := block.Block{Key: nocopy.String("")}
-	if err := b.WriteColumns(columns); err != nil {
-		return block.Block{}, err
-	}
-
-	return b, nil
 }

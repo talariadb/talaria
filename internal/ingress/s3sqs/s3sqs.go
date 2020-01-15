@@ -15,6 +15,7 @@ import (
 	"github.com/grab/talaria/internal/ingress/s3sqs/s3"
 	"github.com/grab/talaria/internal/ingress/s3sqs/sqs"
 	"github.com/grab/talaria/internal/monitor"
+	"github.com/grab/talaria/internal/monitor/errors"
 	"golang.org/x/sync/semaphore"
 )
 
@@ -27,7 +28,7 @@ const (
 type Ingress struct {
 	sqs     Reader              // The SQS reader to use.
 	s3      Downloader          // The S3 downloader to use.
-	monitor monitor.Client      // The monitor to use.
+	monitor monitor.Monitor     // The monitor to use.
 	cancel  context.CancelFunc  // The cancellation function to apply at the end.
 	limit   *semaphore.Weighted // The limit of workers
 }
@@ -45,7 +46,7 @@ type Reader interface {
 }
 
 // New creates a new ingestion with SQS/S3 files.
-func New(conf *config.SQS, region string, monitor monitor.Client) (*Ingress, error) {
+func New(conf *config.SQS, region string, monitor monitor.Monitor) (*Ingress, error) {
 	downloader := s3.New(region, 5, monitor)
 	reader, err := sqs.NewReader(conf, region)
 	if err != nil {
@@ -56,7 +57,7 @@ func New(conf *config.SQS, region string, monitor monitor.Client) (*Ingress, err
 }
 
 // NewWith creates a new ingestion with SQS/S3 files.
-func NewWith(reader Reader, downloader Downloader, monitor monitor.Client) *Ingress {
+func NewWith(reader Reader, downloader Downloader, monitor monitor.Monitor) *Ingress {
 	return &Ingress{
 		sqs:     reader,
 		s3:      downloader,
@@ -92,14 +93,14 @@ func (s *Ingress) drain(ctx context.Context, queue <-chan *awssqs.Message, handl
 
 			// Ack message received
 			if err := s.acknowledge(msg); err != nil {
-				s.monitor.ErrorWithStats(ctxTag, "ack_sqs", err.Error())
+				s.monitor.Error(err)
 				continue
 			}
 
 			// Unmarshal the event
 			var events events
 			if err := json.Unmarshal([]byte(*msg.Body), &events); err != nil {
-				s.monitor.ErrorWithStats(ctxTag, "unmarshal_msg", err.Error())
+				s.monitor.Error(errors.Internal("sqs: unable to unmarshal", err))
 				continue // Ignore corrupt events
 			}
 
@@ -107,13 +108,13 @@ func (s *Ingress) drain(ctx context.Context, queue <-chan *awssqs.Message, handl
 				bucket := event.S3.Bucket.Name
 				key, err := url.QueryUnescape(event.S3.Object.Key)
 				if err != nil {
-					s.monitor.ErrorWithStats(ctxTag, "query_unescape", err.Error())
+					s.monitor.Error(errors.Internal("sqs: unable to unescape query", err))
 					continue
 				}
 
 				// Wait until we can proceed
 				if err := s.limit.Acquire(ctx, 1); err != nil {
-					s.monitor.ErrorWithStats(tag, "limit_acquire", err.Error())
+					s.monitor.Debug("sqs: reached concurrency limit")
 					continue
 				}
 
@@ -129,7 +130,10 @@ func (s *Ingress) acknowledge(msg *awssqs.Message) error {
 		return nil
 	}
 
-	return s.sqs.DeleteMessage(msg)
+	if err := s.sqs.DeleteMessage(msg); err != nil {
+		return errors.Internal("sqs: unable to delete", err)
+	}
+	return nil
 }
 
 // Ingest downloads an object from S3 and applies a handler to the downloaded
@@ -140,11 +144,11 @@ func (s *Ingress) ingest(bucket, key string, handler func(v []byte) bool) {
 	data, err := s.s3.Download(context.Background(), bucket, key)
 	defer s.limit.Release(1)
 	if err != nil {
-		s.monitor.ErrorWithStats(ctxTag, "semaphore release", err.Error())
+		s.monitor.Error(err)
 		return
 	}
 
-	s.monitor.Infof("s3sqs: downloading %v", key)
+	s.monitor.Info("sqs: downloading %v", key)
 
 	// Call the handler
 	_ = handler(data)

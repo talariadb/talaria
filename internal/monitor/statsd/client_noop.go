@@ -10,11 +10,8 @@ import (
 // Client defines the statsD client exported interface
 type Client interface {
 	Timing(name string, value time.Duration, tags []string, rate float64) error
-
 	Gauge(name string, value float64, tags []string, rate float64) error
-
 	Histogram(name string, value float64, tags []string, rate float64) error
-
 	Count(name string, value int64, tags []string, rate float64) error
 }
 
