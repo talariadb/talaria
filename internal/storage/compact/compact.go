@@ -8,13 +8,12 @@ import (
 	"runtime"
 	"time"
 
-	"github.com/grab/talaria/internal/monitor/errors"
-
 	"github.com/grab/async"
 	"github.com/grab/talaria/internal/encoding/block"
 	"github.com/grab/talaria/internal/encoding/key"
 	"github.com/grab/talaria/internal/encoding/typeof"
 	"github.com/grab/talaria/internal/monitor"
+	"github.com/grab/talaria/internal/monitor/errors"
 	"github.com/grab/talaria/internal/storage"
 )
 
@@ -23,9 +22,8 @@ var _ storage.Storage = new(Storage)
 
 // Storage represents compactor storage.
 type Storage struct {
-	compact async.Task       // The compaction worker
-	workers async.Task       // The worker pool
-	tasks   chan async.Task  // The task channel to upload
+	compact async.Task // The compaction worker
+
 	monitor monitor.Monitor  // The monitor client
 	merger  storage.Merger   // The merging (join) function
 	buffer  storage.Storage  // The storage to use for buffering
@@ -34,18 +32,29 @@ type Storage struct {
 
 // New creates a new storage implementation.
 func New(buffer storage.Storage, dest storage.Appender, merger storage.Merger, monitor monitor.Monitor, interval time.Duration) *Storage {
-	concurrency := runtime.NumCPU()
-	tasks := make(chan async.Task, concurrency)
 	s := &Storage{
 		monitor: monitor,
-		tasks:   tasks,
-		workers: async.Consume(context.Background(), concurrency, tasks),
 		merger:  merger,
 		buffer:  buffer,
 		dest:    dest,
 	}
-	s.compact = async.Repeat(context.Background(), interval, s.Compact)
+	s.compact = compactEvery(interval, s.Compact)
 	return s
+}
+
+// compactEvery returns the task that compacts on a regular interval.
+func compactEvery(interval time.Duration, compact async.Work) async.Task {
+	return async.Invoke(context.Background(), func(ctx context.Context) (interface{}, error) {
+		for {
+			select {
+			case <-ctx.Done():
+				return nil, nil
+			default:
+				time.Sleep(interval)
+				compact(ctx)
+			}
+		}
+	})
 }
 
 // Append adds an event into the buffer.
@@ -76,6 +85,10 @@ func (s *Storage) Compact(ctx context.Context) (interface{}, error) {
 	var blocks []block.Block
 	var merged []key.Key
 
+	concurrency := runtime.NumCPU()
+	queue := make(chan async.Task, concurrency)
+	wpool := async.Consume(context.Background(), concurrency, queue)
+
 	// Iterate through all of the blocks in the storage
 	schema := make(typeof.Schema, 4)
 	if err := s.buffer.Range(key.First(), key.Last(), func(k, v []byte) bool {
@@ -92,13 +105,13 @@ func (s *Storage) Compact(ctx context.Context) (interface{}, error) {
 		// If the hash is unchanged and schemas merge cleanly, accumulate...
 		if mergedSchema, ok := schema.Union(input.Schema()); previous == 0 || (ok && hash == previous) {
 			blocks = append(blocks, input)
-			merged = append(merged, k)
+			merged = append(merged, key.Clone(k))
 			schema = mergedSchema
 			return false
 		}
 
 		// Merge asynchronously and delete the keys on a successful merge
-		s.merge(merged, blocks, schema)
+		queue <- s.merge(merged, blocks, schema)
 
 		// Reset both the schema and the set of blocks
 		schema = make(typeof.Schema, len(schema))
@@ -109,13 +122,19 @@ func (s *Storage) Compact(ctx context.Context) (interface{}, error) {
 		return nil, err
 	}
 
-	// Merge one last time and wait
-	return s.merge(merged, blocks, schema).Outcome()
+	// Merge one last time if we still have block
+	if len(blocks) > 0 {
+		queue <- s.merge(merged, blocks, schema)
+	}
+
+	// Wait for the pool to be close
+	close(queue)
+	return wpool.Outcome()
 }
 
 // merge adds an key-value pair to the underlying database
 func (s *Storage) merge(keys []key.Key, blocks []block.Block, schema typeof.Schema) async.Task {
-	work := async.NewTask(func(ctx context.Context) (_ interface{}, err error) {
+	return async.NewTask(func(ctx context.Context) (_ interface{}, err error) {
 		key, value := s.merger.Merge(blocks, schema)
 
 		// TODO: figure out the TTL that should be set
@@ -130,10 +149,6 @@ func (s *Storage) merge(keys []key.Key, blocks []block.Block, schema typeof.Sche
 		}
 		return
 	})
-
-	// Add the task to the work queue
-	s.tasks <- work
-	return work
 }
 
 // Close is used to gracefully close storage.

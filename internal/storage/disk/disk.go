@@ -162,6 +162,7 @@ func (s *Storage) Delete(keys ...key.Key) error {
 	}); err != nil {
 		return errors.Internal("unable to delete", err)
 	}
+
 	return nil
 }
 

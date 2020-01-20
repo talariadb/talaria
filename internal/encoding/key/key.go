@@ -34,6 +34,13 @@ func HashOf(k Key) uint32 {
 	return binary.BigEndian.Uint32(k[0:4])
 }
 
+// Clone clones a key
+func Clone(k Key) Key {
+	b := make(Key, 16)
+	copy(b, k)
+	return b[:len(k)]
+}
+
 // PrefixOf a common prefix between two keys (common leading bytes) which is
 // then used as a prefix for Badger to narrow down SSTables to traverse.
 func PrefixOf(seek, until Key) []byte {

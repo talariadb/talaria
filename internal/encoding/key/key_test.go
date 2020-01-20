@@ -22,6 +22,10 @@ func TestPrefixOf(t *testing.T) {
 	assert.Equal(t, []byte(nil), PrefixOf(asKey("300"), asKey("600")))
 }
 
+func TestClone(t *testing.T) {
+	assert.Equal(t, asKey("3000"), Clone(asKey("3000")))
+}
+
 func asKey(s string) Key {
 	return Key(s)
 }
