@@ -49,15 +49,15 @@ func TestNamedColumns(t *testing.T) {
 	nc.FillNulls()
 
 	// Must have 3 levels with nulls in the middle
-	assert.Equal(t, []int32{1, 1, 0}, nc["a"].AsBlock().IntegerData.Ints)
-	assert.Equal(t, []bool{false, false, true}, nc["a"].AsBlock().IntegerData.Nulls)
-	assert.Equal(t, []int32{2, 0, 1}, nc["b"].AsBlock().IntegerData.Ints)
-	assert.Equal(t, []bool{false, true, false}, nc["b"].AsBlock().IntegerData.Nulls)
-	assert.Equal(t, []byte{0x68, 0x69, 0x68, 0x69}, nc["c"].AsBlock().VarcharData.Bytes)
-	assert.Equal(t, []int32{0, 2, 2}, nc["c"].AsBlock().VarcharData.Sizes)
-	assert.Equal(t, []bool{true, false, false}, nc["c"].AsBlock().VarcharData.Nulls)
-	assert.Equal(t, []float64{0, 0, 1.5}, nc["d"].AsBlock().DoubleData.Doubles)
-	assert.Equal(t, []bool{true, true, false}, nc["d"].AsBlock().DoubleData.Nulls)
+	assert.Equal(t, []int32{1, 1, 0}, nc["a"].AsThrift().IntegerData.Ints)
+	assert.Equal(t, []bool{false, false, true}, nc["a"].AsThrift().IntegerData.Nulls)
+	assert.Equal(t, []int32{2, 0, 1}, nc["b"].AsThrift().IntegerData.Ints)
+	assert.Equal(t, []bool{false, true, false}, nc["b"].AsThrift().IntegerData.Nulls)
+	assert.Equal(t, []byte{0x68, 0x69, 0x68, 0x69}, nc["c"].AsThrift().VarcharData.Bytes)
+	assert.Equal(t, []int32{0, 2, 2}, nc["c"].AsThrift().VarcharData.Sizes)
+	assert.Equal(t, []bool{true, false, false}, nc["c"].AsThrift().VarcharData.Nulls)
+	assert.Equal(t, []float64{0, 0, 1.5}, nc["d"].AsThrift().DoubleData.Doubles)
+	assert.Equal(t, []bool{true, true, false}, nc["d"].AsThrift().DoubleData.Nulls)
 }
 
 func Test_toTime(t *testing.T) {
@@ -128,7 +128,7 @@ func TestNewColumn(t *testing.T) {
 		assert.Equal(t, tc.output, c)
 
 		if c != nil {
-			assert.Equal(t, 0, c.AsBlock().Size())
+			assert.Equal(t, 0, c.AsThrift().Size())
 			assert.Equal(t, 0, c.Size())
 		}
 	}

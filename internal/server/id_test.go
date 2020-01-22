@@ -12,10 +12,10 @@ import (
 
 func TestSplitCodec(t *testing.T) {
 	assert.NotPanics(t, func() {
-		id := encodeID("roman", []byte("ABC"))
+		id := encodeThriftID("roman", []byte("ABC"))
 		assert.Equal(t, []byte{0x5, 0x72, 0x6f, 0x6d, 0x61, 0x6e, 0x3, 0x41, 0x42, 0x43}, id.Id)
 
-		out, err := decodeID(id, new(presto.PrestoThriftNullableToken))
+		out, err := decodeThriftID(id, new(presto.PrestoThriftNullableToken))
 		assert.NoError(t, err)
 		assert.Equal(t, "roman", out.Table)
 		assert.Equal(t, []byte("ABC"), out.Split)

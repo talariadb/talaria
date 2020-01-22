@@ -6,12 +6,11 @@ package presto
 import (
 	"context"
 	"fmt"
-	"math"
 	"net"
 	"net/rpc"
-	"time"
 
 	"github.com/grab/talaria/internal/encoding/typeof"
+	talaria "github.com/grab/talaria/proto"
 	"github.com/samuel/go-thrift/thrift"
 )
 
@@ -21,11 +20,12 @@ const frameSize = 1 << 24 // 16MB
 type Column interface {
 	Append(v interface{}) int
 	AppendBlock([]Column)
-	AsBlock() *PrestoThriftBlock
 	Count() int
 	Size() int
 	Kind() typeof.Type
 	Min() (int64, bool)
+	AsThrift() *PrestoThriftBlock
+	AsProto() *talaria.Column
 }
 
 // Serve creates and serves thrift RPC for presto. Context is used for cancellation purposes.
@@ -190,54 +190,4 @@ func (b *PrestoThriftBlock) Count() int {
 		return b.JsonData.Count()
 	}
 	return 0
-}
-
-// ------------------------------------------------------------------------------------------------------------
-
-// AsTimeRange converts thrift range as a time range
-func (r *PrestoThriftRange) AsTimeRange() (time.Time, time.Time, bool) {
-
-	// We must always have a low bound
-	zero := time.Unix(0, 0)
-	if r.Low == nil || r.Low.Value == nil || r.Low.Value.BigintData == nil {
-		return zero, zero, false
-	}
-
-	switch {
-
-	// Concrete interval [t0, t1]
-	case r.Low.Bound == PrestoThriftBoundExactly &&
-		r.High != nil && r.High.Bound == PrestoThriftBoundExactly && r.High.Value.BigintData != nil:
-		return toTime(r.Low.Value.BigintData.Min()), toTime(r.High.Value.BigintData.Min()), true
-
-	// Lower bound [t0, max]
-	case r.Low.Bound == PrestoThriftBoundAbove:
-		return toTime(r.Low.Value.BigintData.Min()), time.Unix(math.MaxInt64, 0), true
-
-	// Upper bound [min, t0]
-	case r.Low.Bound == PrestoThriftBoundBelow:
-		return time.Unix(0, 0), toTime(r.Low.Value.BigintData.Min()), true
-
-	}
-
-	return zero, zero, false
-}
-
-// Converts time provided to a golang time
-func toTime(t int64, ok bool) time.Time {
-	if !ok {
-		return time.Unix(t, 0)
-	}
-
-	watermark := time.Date(2010, 1, 1, 0, 0, 0, 0, time.UTC)
-	switch {
-	case t > watermark.UnixNano():
-		return time.Unix(0, t)
-	case t > watermark.UnixNano()/1000:
-		return time.Unix(0, t*1000)
-	case t > watermark.UnixNano()/1000000:
-		return time.Unix(0, t*1000000)
-	default:
-		return time.Unix(t, 0)
-	}
 }

@@ -127,7 +127,7 @@ func (b *Block) writeColumns(columns presto.NamedColumns) error {
 
 	b.Columns = make(nocopy.ByteMap, len(columns))
 	for name, column := range columns {
-		size, err := writeValue(column.AsBlock(), &buffer)
+		size, err := writeValue(column.AsThrift(), &buffer)
 		if err != nil {
 			return err
 		}

@@ -8,7 +8,6 @@ import (
 
 	"github.com/grab/talaria/internal/monitor/errors"
 	"github.com/grab/talaria/internal/presto"
-	"github.com/grab/talaria/internal/table"
 )
 
 // PrestoGetIndexSplits returns a batch of index splits for the given batch of keys.
@@ -19,8 +18,7 @@ func (s *Server) PrestoGetIndexSplits(schemaTableName *presto.PrestoThriftSchema
 // PrestoGetSplits returns a batch of splits.
 func (s *Server) PrestoGetSplits(schemaTableName *presto.PrestoThriftSchemaTableName, desiredColumns *presto.PrestoThriftNullableColumnSet, outputConstraint *presto.PrestoThriftTupleDomain, maxSplitCount int32, nextToken *presto.PrestoThriftNullableToken) (*presto.PrestoThriftSplitBatch, error) {
 	defer s.handlePanic()
-	const tag = "PrestoGetSplits"
-	defer s.monitor.Duration(ctxTag, funcTag, time.Now(), "func:"+tag)
+	defer s.monitor.Duration(ctxTag, funcTag, time.Now(), "func:get_splits")
 
 	// Retrieve the table
 	table, err := s.getTable(schemaTableName.TableName)
@@ -46,7 +44,7 @@ func (s *Server) PrestoGetSplits(schemaTableName *presto.PrestoThriftSchemaTable
 	batch := new(presto.PrestoThriftSplitBatch)
 	for _, split := range splits {
 		tsplit := &presto.PrestoThriftSplit{
-			SplitId: encodeID(table.Name(), []byte(split.Key)),
+			SplitId: encodeThriftID(table.Name(), []byte(split.Key)),
 			Hosts:   make([]*presto.PrestoThriftHostAddress, 0, len(split.Addrs)),
 		}
 
@@ -61,8 +59,7 @@ func (s *Server) PrestoGetSplits(schemaTableName *presto.PrestoThriftSchemaTable
 // PrestoGetTableMetadata returns metadata for a given table.
 func (s *Server) PrestoGetTableMetadata(schemaTableName *presto.PrestoThriftSchemaTableName) (*presto.PrestoThriftNullableTableMetadata, error) {
 	defer s.handlePanic()
-	const tag = "PrestoGetTableMetadata"
-	defer s.monitor.Duration(ctxTag, funcTag, time.Now(), "func:"+tag)
+	defer s.monitor.Duration(ctxTag, funcTag, time.Now(), "func:get_table_metadata")
 
 	// Retrieve the table
 	table, err := s.getTable(schemaTableName.TableName)
@@ -97,8 +94,7 @@ func (s *Server) PrestoGetTableMetadata(schemaTableName *presto.PrestoThriftSche
 // PrestoListSchemaNames returns available schema names.
 func (s *Server) PrestoListSchemaNames() ([]string, error) {
 	defer s.handlePanic()
-	const tag = "PrestoListSchemaNames"
-	defer s.monitor.Duration(ctxTag, funcTag, time.Now(), "func:"+tag)
+	defer s.monitor.Duration(ctxTag, funcTag, time.Now(), "func:get_schemas")
 
 	return []string{s.conf.Presto.Schema}, nil
 }
@@ -106,8 +102,7 @@ func (s *Server) PrestoListSchemaNames() ([]string, error) {
 // PrestoListTables returns tables for the given schema name.
 func (s *Server) PrestoListTables(schemaNameOrNull *presto.PrestoThriftNullableSchemaName) ([]*presto.PrestoThriftSchemaTableName, error) {
 	defer s.handlePanic()
-	const tag = "PrestoListTables"
-	defer s.monitor.Duration(ctxTag, funcTag, time.Now(), "func:"+tag)
+	defer s.monitor.Duration(ctxTag, funcTag, time.Now(), "func:get_tables")
 
 	// Return all of the tables configured in the server
 	tables := make([]*presto.PrestoThriftSchemaTableName, 0, len(s.tables))
@@ -122,11 +117,11 @@ func (s *Server) PrestoListTables(schemaNameOrNull *presto.PrestoThriftNullableS
 
 // PrestoGetRows returns a batch of rows for the given split.
 func (s *Server) PrestoGetRows(splitID *presto.PrestoThriftId, columns []string, maxBytes int64, nextToken *presto.PrestoThriftNullableToken) (*presto.PrestoThriftPageResult, error) {
-	const tag = "PrestoGetRows"
-	defer s.monitor.Duration(ctxTag, funcTag, time.Now(), "func:"+tag)
+	defer s.handlePanic()
+	defer s.monitor.Duration(ctxTag, funcTag, time.Now(), "func:get_rows")
 
 	// Parse the incoming thriftID
-	id, err := decodeID(splitID, nextToken)
+	id, err := decodeThriftID(splitID, nextToken)
 	if err != nil {
 		return nil, errors.Internal("decoding query failed", err)
 	}
@@ -146,22 +141,13 @@ func (s *Server) PrestoGetRows(splitID *presto.PrestoThriftId, columns []string,
 
 	// If a page has a token, we need to create a split to continue iterating
 	if page.NextToken != nil {
-		result.NextToken = encodeID(table.Name(), page.NextToken)
+		result.NextToken = encodeThriftID(table.Name(), page.NextToken)
 	}
 
 	// Return the result set
 	for _, b := range page.Columns {
-		result.ColumnBlocks = append(result.ColumnBlocks, b.AsBlock())
+		result.ColumnBlocks = append(result.ColumnBlocks, b.AsThrift())
 		result.RowCount = int32(b.Count())
 	}
 	return result, nil
-}
-
-// getTable returns the table or errors out
-func (s *Server) getTable(name string) (table.Table, error) {
-	table, ok := s.tables[name]
-	if !ok {
-		return nil, errors.Newf("table %s not found", name)
-	}
-	return table, nil
 }

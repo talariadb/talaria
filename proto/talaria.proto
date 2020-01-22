@@ -1,6 +1,27 @@
 syntax = "proto3";
 package talaria;
 
+// ---------------------------------------------------------------------------
+//                              Ingress Service
+// ---------------------------------------------------------------------------
+
+// Ingress represents a Talaria ingress frontend.
+service Ingress {
+  rpc Ingest(IngestRequest) returns (IngestResponse) {}
+}
+
+// IngestRequest represents an ingestion request.
+message IngestRequest {
+  oneof data {
+    Batch batch = 1; // Batch of events
+    bytes orc   = 2; // An orc file
+  }
+}
+
+// IngestResponse represents an ingestion response.
+message IngestResponse { }
+
+
 // Batch represents an event batch. It contains a map of strings in order
 // to minimize the size.
 message Batch {
@@ -27,18 +48,128 @@ message Value {
   }
 }
 
-// IngestRequest represents an ingestion request.
-message IngestRequest {
-  oneof data {
-    Batch batch = 1; // Batch of events
-    bytes orc   = 2; // An orc file
+// ---------------------------------------------------------------------------
+//                              Query Service
+// ---------------------------------------------------------------------------
+
+// Ingress represents a Talaria ingress frontend.
+service Query {
+
+  // Describe returns the list of schema/table combinations and the metadata
+  rpc Describe(DescribeRequest) returns (DescribeResponse) {}
+
+  // GetSplits returns the list of splits for a particular table/filter combination
+  rpc GetSplits(GetSplitsRequest) returns (GetSplitsResponse) {}
+
+  // GetRows returns the rows for a particular split
+  rpc GetRows(GetRowsRequest) returns (GetRowsResponse) {}
+}
+
+// DescribeRequest represents an request to list the tables and schemas.
+message DescribeRequest { }
+
+// DescribeResponse represents an response that returns tables and their schemas.
+message DescribeResponse { 
+  repeated TableMeta tables  = 1; // The set of table metadata
+}
+
+// TableMeta represents table metadata
+message TableMeta {
+  string              schema  = 1; // The schema for the table
+  string              table   = 2; // The table name
+  repeated ColumnMeta columns = 3; // The list of columns of the table
+}
+
+// ColumnMeta represents a column metadata
+message ColumnMeta {
+  string name    = 1; // The name of the column (eg. tsi)
+  string type    = 2; // The SQL type of the column (eg. varchar)
+  string comment = 3; // The optional comment for the column
+}
+
+// GetSplitsRequest represents an request to get the splits for a table.
+message GetSplitsRequest { 
+  string          schema    = 1; // The schema for the table
+  string          table     = 2; // The table name
+  repeated string columns   = 3; // The set of desired columns
+  repeated string filters   = 4; // The set of filters
+  int32           maxSplits = 5; // The maximum splits that should be returned.
+  bytes           nextToken = 6; // The cursor representing the next token
+}
+
+// GetSplitsResponse represents an response containing the splits for a table.
+message GetSplitsResponse { 
+  repeated Split splits    = 1; // The list of splits that can be queried
+  bytes          nextToken = 2; // The cursor representing the next token
+}
+
+// Endpoint represents a host/port combination
+message Endpoint {
+  string host = 1; // The hostname for the endpoint
+  int32  port = 2; // The port for the endpoint
+}
+
+// Split represents the split information
+message Split {
+  bytes             splitID = 1; // The split identifier
+  repeated Endpoint hosts   = 2; // The set of hosts
+}
+
+// GetRowsRequest represents an request to get the rows for a split.
+message GetRowsRequest { 
+  bytes           splitID   = 1; // The split identifier
+  repeated string columns   = 2; // The set of desired columns
+  int64           maxBytes  = 3; // The maximum bytes that should be returned.
+  bytes           nextToken = 4; // The cursor representing the next token
+}
+
+// GetRowsResponse represents a response that returns the rows.
+message GetRowsResponse { 
+  repeated Column columns   = 1; // The set of columnar data
+  int32           rowCount  = 2; // The number of rows returned
+  bytes           nextToken = 3; // The cursor representing the next token
+}
+
+// Column represents a column.
+message Column { 
+  oneof value {
+    ColumnOfInt32   int32   = 1;
+    ColumnOfInt64   int64   = 2;
+    ColumnOfFloat64 float64 = 3;
+    ColumnOfString  string  = 4;
+    ColumnOfBools   bool    = 5;
+    ColumnOfInt64   time    = 6;
+    ColumnOfString  json    = 7;
   }
 }
 
-// IngestResponse represents an ingestion response.
-message IngestResponse { }
+// Column containing Int32 values
+message ColumnOfInt32 {
+  repeated bool nulls = 1; // Determines if a value for a corresponding row is null.
+  repeated int32 ints = 2; // Values for each row. If row is null then value is ignored.
+}
 
-// Ingress represents a Talaria ingress frontend.
-service Ingress {
-  rpc Ingest(IngestRequest) returns (IngestResponse) {}
+// Column containing Int64 values
+message ColumnOfInt64 {
+  repeated bool nulls  = 1; // Determines if a value for a corresponding row is null.
+  repeated int64 longs = 2; // Values for each row. If row is null then value is ignored.
+}
+
+// Column containing Float64 values
+message ColumnOfFloat64 {
+  repeated bool   nulls   = 1; // Determines if a value for a corresponding row is null.
+  repeated double doubles = 2; // Values for each row. If row is null then value is ignored.
+}
+
+// Column containing Boolean values
+message ColumnOfBools {
+  repeated bool nulls = 1; // Determines if a value for a corresponding row is null.
+  repeated bool bools = 2; // Values for each row. If row is null then value is ignored.
+}
+
+// Column containing String values
+message ColumnOfString {
+  repeated bool  nulls = 1; // Determines if a value for a corresponding row is null.
+  repeated int32 sizes = 2; // Contains the length in bytes for the corresponding element.
+  bytes          bytes = 3; // The UTF-8 encoded byte values.
 }

@@ -8,15 +8,33 @@ import (
 	"github.com/kelindar/binary"
 )
 
-// thriftID represents a split key along with the table name
-type thriftID struct {
+// SplitID represents a split key along with the table name
+type SplitID struct {
 	Table string // The name of the table
 	Split []byte // The encoded split key
 }
 
+// encodeThriftID creates a split ID by encoding a query.
+func encodeThriftID(table string, split []byte) *presto.PrestoThriftId {
+	return &presto.PrestoThriftId{
+		Id: encodeID(table, split),
+	}
+}
+
+// decodeThriftID unmarshals thrift ID back to a struct.
+func decodeThriftID(id *presto.PrestoThriftId, token *presto.PrestoThriftNullableToken) (out *SplitID, err error) {
+	if token.Token != nil {
+		id = token.Token
+	}
+
+	out = new(SplitID)
+	err = binary.Unmarshal(id.Id, out)
+	return
+}
+
 // encodeID creates a split ID by encoding a query.
-func encodeID(table string, split []byte) *presto.PrestoThriftId {
-	b, err := binary.Marshal(&thriftID{
+func encodeID(table string, split []byte) []byte {
+	b, err := binary.Marshal(&SplitID{
 		Table: table,
 		Split: split,
 	})
@@ -24,18 +42,16 @@ func encodeID(table string, split []byte) *presto.PrestoThriftId {
 		panic(err)
 	}
 
-	return &presto.PrestoThriftId{
-		Id: b,
-	}
+	return b
 }
 
 // decodeID unmarshals thrift ID back to a struct.
-func decodeID(id *presto.PrestoThriftId, token *presto.PrestoThriftNullableToken) (out *thriftID, err error) {
-	if token.Token != nil {
-		id = token.Token
+func decodeID(id, token []byte) (out *SplitID, err error) {
+	if token != nil {
+		id = token
 	}
 
-	out = new(thriftID)
-	err = binary.Unmarshal(id.Id, out)
+	out = new(SplitID)
+	err = binary.Unmarshal(id, out)
 	return
 }

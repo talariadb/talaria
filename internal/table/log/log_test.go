@@ -70,14 +70,14 @@ func TestLog(t *testing.T) {
 		assert.Len(t, page.Columns, 3)
 
 		assert.Equal(t, 2, page.Columns[0].Count())
-		vd := page.Columns[0].AsBlock().VarcharData
+		vd := page.Columns[0].AsThrift().VarcharData
 		assert.Equal(t, "hello world", string(vd.Bytes[:vd.Sizes[0]]))
 		assert.Equal(t, "test message", string(vd.Bytes[vd.Sizes[0]:vd.Sizes[0]+vd.Sizes[1]]))
 
-		td := page.Columns[1].AsBlock().TimestampData
+		td := page.Columns[1].AsThrift().TimestampData
 		assert.Len(t, td.Timestamps, 2)
 
-		ld := page.Columns[2].AsBlock().VarcharData
+		ld := page.Columns[2].AsThrift().VarcharData
 		assert.Equal(t, "info", string(ld.Bytes[:ld.Sizes[0]]))
 		assert.Equal(t, "warning", string(ld.Bytes[ld.Sizes[0]:ld.Sizes[0]+ld.Sizes[1]]))
 	}

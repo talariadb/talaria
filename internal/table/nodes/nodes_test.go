@@ -42,11 +42,11 @@ func TestNodes(t *testing.T) {
 	assert.NotNil(t, page)
 	assert.NoError(t, err)
 	assert.Len(t, page.Columns, 6)
-	assert.NotEmpty(t, page.Columns[0].AsBlock().VarcharData.Bytes)
-	assert.Contains(t, string(page.Columns[1].AsBlock().VarcharData.Bytes), "seconds")
-	assert.Equal(t, 1, page.Columns[2].AsBlock().BigintData.Count())
-	assert.Equal(t, `["127.0.0.1"]`, string(page.Columns[4].AsBlock().VarcharData.Bytes))
-	assert.Equal(t, `127.0.0.1:8080`, string(page.Columns[5].AsBlock().VarcharData.Bytes))
+	assert.NotEmpty(t, page.Columns[0].AsThrift().VarcharData.Bytes)
+	assert.Contains(t, string(page.Columns[1].AsThrift().VarcharData.Bytes), "seconds")
+	assert.Equal(t, 1, page.Columns[2].AsThrift().BigintData.Count())
+	assert.Equal(t, `["127.0.0.1"]`, string(page.Columns[4].AsThrift().VarcharData.Bytes))
+	assert.Equal(t, `127.0.0.1:8080`, string(page.Columns[5].AsThrift().VarcharData.Bytes))
 }
 
 func TestNodes_NoColumn(t *testing.T) {

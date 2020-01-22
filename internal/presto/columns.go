@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/grab/talaria/internal/encoding/typeof"
+	talaria "github.com/grab/talaria/proto"
 )
 
 // Append adds a value to the block.
@@ -57,10 +58,22 @@ func (b *PrestoThriftInteger) AppendBlock(blocks []Column) {
 	}
 }
 
-// AsBlock returns a block for the response.
-func (b *PrestoThriftInteger) AsBlock() *PrestoThriftBlock {
+// AsThrift returns a block for the response.
+func (b *PrestoThriftInteger) AsThrift() *PrestoThriftBlock {
 	return &PrestoThriftBlock{
 		IntegerData: b,
+	}
+}
+
+// AsProto returns a block for the response.
+func (b *PrestoThriftInteger) AsProto() *talaria.Column {
+	return &talaria.Column{
+		Value: &talaria.Column_Int32{
+			Int32: &talaria.ColumnOfInt32{
+				Nulls: b.Nulls,
+				Ints:  b.Ints,
+			},
+		},
 	}
 }
 
@@ -133,10 +146,22 @@ func (b *PrestoThriftBigint) AppendBlock(blocks []Column) {
 	}
 }
 
-// AsBlock returns a block for the response.
-func (b *PrestoThriftBigint) AsBlock() *PrestoThriftBlock {
+// AsThrift returns a block for the response.
+func (b *PrestoThriftBigint) AsThrift() *PrestoThriftBlock {
 	return &PrestoThriftBlock{
 		BigintData: b,
+	}
+}
+
+// AsProto returns a block for the response.
+func (b *PrestoThriftBigint) AsProto() *talaria.Column {
+	return &talaria.Column{
+		Value: &talaria.Column_Int64{
+			Int64: &talaria.ColumnOfInt64{
+				Nulls: b.Nulls,
+				Longs: b.Longs,
+			},
+		},
 	}
 }
 
@@ -209,10 +234,22 @@ func (b *PrestoThriftDouble) AppendBlock(blocks []Column) {
 	}
 }
 
-// AsBlock returns a block for the response.
-func (b *PrestoThriftDouble) AsBlock() *PrestoThriftBlock {
+// AsThrift returns a block for the response.
+func (b *PrestoThriftDouble) AsThrift() *PrestoThriftBlock {
 	return &PrestoThriftBlock{
 		DoubleData: b,
+	}
+}
+
+// AsProto returns a block for the response.
+func (b *PrestoThriftDouble) AsProto() *talaria.Column {
+	return &talaria.Column{
+		Value: &talaria.Column_Float64{
+			Float64: &talaria.ColumnOfFloat64{
+				Nulls:   b.Nulls,
+				Doubles: b.Doubles,
+			},
+		},
 	}
 }
 
@@ -278,10 +315,23 @@ func (b *PrestoThriftVarchar) AppendBlock(blocks []Column) {
 	}
 }
 
-// AsBlock returns a block for the response.
-func (b *PrestoThriftVarchar) AsBlock() *PrestoThriftBlock {
+// AsThrift returns a block for the response.
+func (b *PrestoThriftVarchar) AsThrift() *PrestoThriftBlock {
 	return &PrestoThriftBlock{
 		VarcharData: b,
+	}
+}
+
+// AsProto returns a block for the response.
+func (b *PrestoThriftVarchar) AsProto() *talaria.Column {
+	return &talaria.Column{
+		Value: &talaria.Column_String_{
+			String_: &talaria.ColumnOfString{
+				Nulls: b.Nulls,
+				Sizes: b.Sizes,
+				Bytes: b.Bytes,
+			},
+		},
 	}
 }
 
@@ -342,10 +392,22 @@ func (b *PrestoThriftBoolean) AppendBlock(blocks []Column) {
 	}
 }
 
-// AsBlock returns a block for the response.
-func (b *PrestoThriftBoolean) AsBlock() *PrestoThriftBlock {
+// AsThrift returns a block for the response.
+func (b *PrestoThriftBoolean) AsThrift() *PrestoThriftBlock {
 	return &PrestoThriftBlock{
 		BooleanData: b,
+	}
+}
+
+// AsProto returns a block for the response.
+func (b *PrestoThriftBoolean) AsProto() *talaria.Column {
+	return &talaria.Column{
+		Value: &talaria.Column_Bool{
+			Bool: &talaria.ColumnOfBools{
+				Nulls: b.Nulls,
+				Bools: b.Booleans,
+			},
+		},
 	}
 }
 
@@ -416,10 +478,22 @@ func (b *PrestoThriftTimestamp) AppendBlock(blocks []Column) {
 	}
 }
 
-// AsBlock returns a block for the response.
-func (b *PrestoThriftTimestamp) AsBlock() *PrestoThriftBlock {
+// AsThrift returns a block for the response.
+func (b *PrestoThriftTimestamp) AsThrift() *PrestoThriftBlock {
 	return &PrestoThriftBlock{
 		TimestampData: b,
+	}
+}
+
+// AsProto returns a block for the response.
+func (b *PrestoThriftTimestamp) AsProto() *talaria.Column {
+	return &talaria.Column{
+		Value: &talaria.Column_Time{
+			Time: &talaria.ColumnOfInt64{
+				Nulls: b.Nulls,
+				Longs: b.Timestamps,
+			},
+		},
 	}
 }
 
@@ -497,10 +571,23 @@ func (b *PrestoThriftJson) AppendBlock(blocks []Column) {
 	}
 }
 
-// AsBlock returns a block for the response.
-func (b *PrestoThriftJson) AsBlock() *PrestoThriftBlock {
+// AsThrift returns a block for the response.
+func (b *PrestoThriftJson) AsThrift() *PrestoThriftBlock {
 	return &PrestoThriftBlock{
 		JsonData: b,
+	}
+}
+
+// AsProto returns a block for the response.
+func (b *PrestoThriftJson) AsProto() *talaria.Column {
+	return &talaria.Column{
+		Value: &talaria.Column_Json{
+			Json: &talaria.ColumnOfString{
+				Nulls: b.Nulls,
+				Sizes: b.Sizes,
+				Bytes: b.Bytes,
+			},
+		},
 	}
 }
 

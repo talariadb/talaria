@@ -51,8 +51,9 @@ func New(conf *config.Config, monitor monitor.Monitor, tables ...table.Table) *S
 		tables:  make(map[string]table.Table),
 	}
 
-	// Register the gRPC server
+	// Register the gRPC servers
 	talaria.RegisterIngressServer(server.server, server)
+	talaria.RegisterQueryServer(server.server, server)
 
 	// Build a registry of tables
 	for _, table := range tables {

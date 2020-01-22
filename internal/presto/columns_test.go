@@ -98,7 +98,8 @@ func TestAppend_Bigint(t *testing.T) {
 			assert.Equal(t, td.output, output, td.desc)
 			assert.Equal(t, td.size, output.Size(), td.desc)
 			assert.Equal(t, td.count, output.Count(), td.desc)
-			assert.NotNil(t, output.AsBlock().BigintData)
+			assert.NotNil(t, output.AsThrift().BigintData)
+			assert.NotZero(t, output.AsProto().Value.Size())
 		})
 	}
 }
@@ -174,7 +175,8 @@ func TestAppend_Varchar(t *testing.T) {
 			assert.Equal(t, td.output, output, td.desc)
 			assert.Equal(t, td.size, output.Size(), td.desc)
 			assert.Equal(t, td.count, output.Count(), td.desc)
-			assert.NotNil(t, output.AsBlock().VarcharData)
+			assert.NotNil(t, output.AsThrift().VarcharData)
+			assert.NotZero(t, output.AsProto().Value.Size())
 		})
 	}
 }
@@ -246,7 +248,8 @@ func TestAppend_Double(t *testing.T) {
 			assert.Equal(t, td.output, output, td.desc)
 			assert.Equal(t, td.size, output.Size(), td.desc)
 			assert.Equal(t, td.count, output.Count(), td.desc)
-			assert.NotNil(t, output.AsBlock().DoubleData)
+			assert.NotNil(t, output.AsThrift().DoubleData)
+			assert.NotZero(t, output.AsProto().Value.Size())
 		})
 	}
 }
@@ -318,7 +321,8 @@ func TestAppend_Int32(t *testing.T) {
 			assert.Equal(t, td.output, output, td.desc)
 			assert.Equal(t, td.size, output.Size(), td.desc)
 			assert.Equal(t, td.count, output.Count(), td.desc)
-			assert.NotNil(t, output.AsBlock().IntegerData)
+			assert.NotNil(t, output.AsThrift().IntegerData)
+			assert.NotZero(t, output.AsProto().Value.Size())
 		})
 	}
 }
@@ -390,7 +394,8 @@ func TestAppend_Boolean(t *testing.T) {
 			assert.Equal(t, td.output, output, td.desc)
 			assert.Equal(t, td.size, output.Size(), td.desc)
 			assert.Equal(t, td.count, output.Count(), td.desc)
-			assert.NotNil(t, output.AsBlock().BooleanData)
+			assert.NotNil(t, output.AsThrift().BooleanData)
+			assert.NotZero(t, output.AsProto().Value.Size())
 		})
 	}
 }
@@ -484,7 +489,8 @@ func TestAppend_Timestamp(t *testing.T) {
 			assert.Equal(t, td.output, output, td.desc)
 			assert.Equal(t, td.size, output.Size(), td.desc)
 			assert.Equal(t, td.count, output.Count(), td.desc)
-			assert.NotNil(t, output.AsBlock().TimestampData)
+			assert.NotNil(t, output.AsThrift().TimestampData)
+			assert.NotZero(t, output.AsProto().Value.Size())
 		})
 	}
 }
@@ -572,7 +578,8 @@ func TestAppend_Json(t *testing.T) {
 			assert.Equal(t, td.output, output, td.desc)
 			assert.Equal(t, td.size, output.Size(), td.desc)
 			assert.Equal(t, td.count, output.Count(), td.desc)
-			assert.NotNil(t, output.AsBlock().JsonData)
+			assert.NotNil(t, output.AsThrift().JsonData)
+			assert.NotZero(t, output.AsProto().Value.Size())
 		})
 	}
 }
