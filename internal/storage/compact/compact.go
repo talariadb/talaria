@@ -135,10 +135,21 @@ func (s *Storage) Compact(ctx context.Context) (interface{}, error) {
 // merge adds an key-value pair to the underlying database
 func (s *Storage) merge(keys []key.Key, blocks []block.Block, schema typeof.Schema) async.Task {
 	return async.NewTask(func(ctx context.Context) (_ interface{}, err error) {
+
+		// Get the max expiration time for merging
+		now, max := time.Now().Unix(), int64(0)
+		for _, b := range blocks {
+			if b.Expires > max {
+				max = b.Expires
+			}
+		}
+
+		// Merge all blocks together
 		key, value := s.merger.Merge(blocks, schema)
 
-		// TODO: figure out the TTL that should be set
-		if err = s.dest.Append(key, value, 0); err != nil {
+		// Append to the destination
+		ttl := time.Duration(max-now) * time.Second
+		if err = s.dest.Append(key, value, ttl); err != nil {
 			s.monitor.Error(err)
 			return
 		}

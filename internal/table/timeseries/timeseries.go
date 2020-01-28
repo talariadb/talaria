@@ -205,6 +205,7 @@ func (t *Table) Append(block block.Block) error {
 	t.schema.Store(block.Schema())
 
 	// Append the block to the store
+	block.Expires = time.Now().Add(t.ttl).Unix()
 	return t.store.Append(key.New(string(block.Key), time.Unix(0, ts)), buffer, t.ttl)
 }
 

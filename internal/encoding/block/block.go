@@ -28,6 +28,7 @@ type Block struct {
 	Key     nocopy.String  // The key of the block
 	Columns nocopy.ByteMap // The encoded column metadata
 	Data    nocopy.Bytes   // The set of columnar data
+	Expires int64          // The expiration time for the block, in unix seconds
 	schema  typeof.Schema  `binary:"-"` // The cached schema of the block
 }
 
