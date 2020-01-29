@@ -1,12 +1,13 @@
 // Copyright 2019 Grabtaxi Holdings PTE LTE (GRAB), All rights reserved.
 // Use of this source code is governed by an MIT-style license that can be found in the LICENSE file
 
-package presto
+package column
 
 import (
 	"fmt"
 
 	"github.com/grab/talaria/internal/encoding/typeof"
+	"github.com/grab/talaria/internal/presto"
 )
 
 const maxNullCount = 25000
@@ -31,38 +32,38 @@ func NullColumn(t typeof.Type, count int) Column {
 
 	switch t {
 	case typeof.String:
-		return &PrestoThriftVarchar{
+		return &presto.PrestoThriftVarchar{
 			Nulls: zNulls[:count],
 			Sizes: zInt32[:count],
 			Bytes: []byte{},
 		}
 	case typeof.Int32:
-		return &PrestoThriftInteger{
+		return &presto.PrestoThriftInteger{
 			Nulls: zNulls[:count],
 			Ints:  zInt32[:count],
 		}
 	case typeof.Int64:
-		return &PrestoThriftBigint{
+		return &presto.PrestoThriftBigint{
 			Nulls: zNulls[:count],
 			Longs: zInt64[:count],
 		}
 	case typeof.Float64:
-		return &PrestoThriftDouble{
+		return &presto.PrestoThriftDouble{
 			Nulls:   zNulls[:count],
 			Doubles: zFloat64[:count],
 		}
 	case typeof.Bool:
-		return &PrestoThriftBoolean{
+		return &presto.PrestoThriftBoolean{
 			Nulls:    zNulls[:count],
 			Booleans: zBool[:count],
 		}
 	case typeof.Timestamp:
-		return &PrestoThriftTimestamp{
+		return &presto.PrestoThriftTimestamp{
 			Nulls:      zNulls[:count],
 			Timestamps: zInt64[:count],
 		}
 	case typeof.JSON:
-		return &PrestoThriftJson{
+		return &presto.PrestoThriftJson{
 			Nulls: zNulls[:count],
 			Sizes: zInt32[:count],
 			Bytes: []byte{},

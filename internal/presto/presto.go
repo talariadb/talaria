@@ -23,6 +23,7 @@ type Column interface {
 	Count() int
 	Size() int
 	Kind() typeof.Type
+	Last() interface{}
 	Min() (int64, bool)
 	AsThrift() *PrestoThriftBlock
 	AsProto() *talaria.Column
@@ -63,92 +64,6 @@ func Serve(ctx context.Context, port int32, service PrestoThriftService) error {
 }
 
 // ------------------------------------------------------------------------------------------------------------
-
-// NamedColumns represents a set of named columns
-type NamedColumns map[string]Column
-
-// Append adds a value at a particular index to the block.
-func (c NamedColumns) Append(name string, value interface{}, typ typeof.Type) bool {
-	if col, exists := c[name]; exists {
-		return col.Append(value) > 0
-	}
-
-	// Skip unsupported types
-	if typ == typeof.Unsupported {
-		return false
-	}
-
-	// If column does not exist, create it and fill it with nulls up until the max - 1
-	newColumn := NewColumn(typ)
-	until := c.Max() - 1
-	for i := 0; i < until; i++ {
-		newColumn.Append(nil)
-	}
-
-	c[name] = newColumn
-	return newColumn.Append(value) > 0
-}
-
-// Max finds the maximum count of a column in the set
-func (c NamedColumns) Max() (max int) {
-	for _, column := range c {
-		if count := column.Count(); count > max {
-			max = count
-		}
-	}
-	return
-}
-
-// FillNulls adds nulls onto all uneven columns left.
-func (c NamedColumns) FillNulls() {
-	max := c.Max()
-	for _, column := range c {
-		delta := max - column.Count()
-		for i := 0; i < delta; i++ {
-			column.Append(nil)
-		}
-	}
-}
-
-// Size returns the space (in bytes) required for the set of blocks.
-func (c NamedColumns) Size() (size int) {
-	for _, block := range c {
-		size += block.Size()
-	}
-	return
-}
-
-// Any retrieves any column from the set.
-func (c NamedColumns) Any() Column {
-	for _, block := range c {
-		return block
-	}
-	return nil
-}
-
-// ------------------------------------------------------------------------------------------------------------
-
-// NewColumn creates a new appendable column
-func NewColumn(t typeof.Type) Column {
-	switch t {
-	case typeof.String:
-		return new(PrestoThriftVarchar)
-	case typeof.Int32:
-		return new(PrestoThriftInteger)
-	case typeof.Int64:
-		return new(PrestoThriftBigint)
-	case typeof.Float64:
-		return new(PrestoThriftDouble)
-	case typeof.Bool:
-		return new(PrestoThriftBoolean)
-	case typeof.Timestamp:
-		return new(PrestoThriftTimestamp)
-	case typeof.JSON:
-		return new(PrestoThriftJson)
-	}
-
-	panic(fmt.Errorf("presto: unknown type %v", t))
-}
 
 // Size returns the size of the block.
 func (b *PrestoThriftBlock) Size() int {

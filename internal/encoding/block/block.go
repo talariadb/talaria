@@ -9,6 +9,7 @@ import (
 	"fmt"
 
 	"github.com/golang/snappy"
+	"github.com/grab/talaria/internal/column"
 	"github.com/grab/talaria/internal/encoding/typeof"
 	"github.com/grab/talaria/internal/presto"
 	"github.com/kelindar/binary"
@@ -33,7 +34,7 @@ type Block struct {
 }
 
 // Read decodes the block and selects the columns
-func Read(buffer []byte, desiredSchema typeof.Schema) (presto.NamedColumns, error) {
+func Read(buffer []byte, desiredSchema typeof.Schema) (column.Columns, error) {
 	block, err := FromBuffer(buffer)
 	if err != nil {
 		return nil, err
@@ -49,7 +50,7 @@ func Read(buffer []byte, desiredSchema typeof.Schema) (presto.NamedColumns, erro
 	// Select the valid columns
 	common := schema.Except(misses)
 	if len(common) == 0 {
-		return presto.NamedColumns{}, nil
+		return column.Columns{}, nil
 	}
 
 	// Select the common columns
@@ -63,7 +64,7 @@ func Read(buffer []byte, desiredSchema typeof.Schema) (presto.NamedColumns, erro
 
 	// For every miss, create an empty column
 	for col, typ := range misses {
-		result[col] = presto.NullColumn(typ, count)
+		result[col] = column.NullColumn(typ, count)
 	}
 
 	return result, nil
@@ -87,8 +88,8 @@ func (b *Block) Encode() ([]byte, error) {
 }
 
 // Select selects a set of thrift columns
-func (b *Block) Select(columns typeof.Schema) (presto.NamedColumns, error) {
-	response := make(presto.NamedColumns, len(columns))
+func (b *Block) Select(columns typeof.Schema) (column.Columns, error) {
+	response := make(column.Columns, len(columns))
 	for column := range columns {
 		meta, ok := b.Columns[column]
 		if !ok {
@@ -122,7 +123,7 @@ func (b *Block) Min(column string) (int64, bool) {
 }
 
 // Writes a set of columns into the block
-func (b *Block) writeColumns(columns presto.NamedColumns) error {
+func (b *Block) writeColumns(columns column.Columns) error {
 	var offset uint32
 	var buffer bytes.Buffer
 

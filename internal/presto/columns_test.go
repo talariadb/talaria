@@ -39,6 +39,7 @@ func TestAppend_Bigint(t *testing.T) {
 		outputRes int
 		size      int
 		count     int
+		last      interface{}
 	}{
 		{
 			desc:  "int64 appended",
@@ -47,6 +48,7 @@ func TestAppend_Bigint(t *testing.T) {
 				Nulls: []bool{false, false},
 				Longs: []int64{123, 321},
 			},
+			last:      int64(321),
 			outputRes: 10,
 			size:      20,
 			count:     2,
@@ -58,6 +60,7 @@ func TestAppend_Bigint(t *testing.T) {
 				Nulls: []bool{false, true},
 				Longs: []int64{123, 0},
 			},
+			last:      nil,
 			outputRes: 10,
 			size:      20,
 			count:     2,
@@ -72,6 +75,7 @@ func TestAppend_Bigint(t *testing.T) {
 				Nulls: []bool{false, false},
 				Longs: []int64{123, 456},
 			},
+			last:  int64(456),
 			size:  20,
 			count: 2,
 		},
@@ -100,6 +104,7 @@ func TestAppend_Bigint(t *testing.T) {
 			assert.Equal(t, td.count, output.Count(), td.desc)
 			assert.NotNil(t, output.AsThrift().BigintData)
 			assert.NotZero(t, output.AsProto().Value.Size())
+			assert.Equal(t, td.last, output.Last())
 		})
 	}
 }
@@ -112,6 +117,7 @@ func TestAppend_Varchar(t *testing.T) {
 		outputRes int
 		size      int
 		count     int
+		last      interface{}
 	}{
 		{
 			desc:  "varchar appended",
@@ -121,6 +127,7 @@ func TestAppend_Varchar(t *testing.T) {
 				Sizes: []int32{2, 5},
 				Bytes: []byte("hihello"),
 			},
+			last:      "hello",
 			outputRes: 11,
 			size:      19,
 			count:     2,
@@ -133,6 +140,7 @@ func TestAppend_Varchar(t *testing.T) {
 				Sizes: []int32{2, 0},
 				Bytes: []byte("hi"),
 			},
+			last:      nil,
 			outputRes: 6,
 			size:      14,
 			count:     2,
@@ -149,6 +157,7 @@ func TestAppend_Varchar(t *testing.T) {
 				Sizes: []int32{2, 5},
 				Bytes: []byte("hiworld"),
 			},
+			last:  "world",
 			count: 2,
 		},
 	}
@@ -177,6 +186,7 @@ func TestAppend_Varchar(t *testing.T) {
 			assert.Equal(t, td.count, output.Count(), td.desc)
 			assert.NotNil(t, output.AsThrift().VarcharData)
 			assert.NotZero(t, output.AsProto().Value.Size())
+			assert.Equal(t, td.last, output.Last())
 		})
 	}
 }
@@ -189,6 +199,7 @@ func TestAppend_Double(t *testing.T) {
 		outputRes int
 		size      int
 		count     int
+		last      interface{}
 	}{
 		{
 			desc:  "int64 appended",
@@ -197,6 +208,7 @@ func TestAppend_Double(t *testing.T) {
 				Nulls:   []bool{false, false},
 				Doubles: []float64{123, 321},
 			},
+			last:      float64(321),
 			outputRes: 10,
 			size:      20,
 			count:     2,
@@ -208,6 +220,7 @@ func TestAppend_Double(t *testing.T) {
 				Nulls:   []bool{false, true},
 				Doubles: []float64{123, 0},
 			},
+			last:      nil,
 			outputRes: 10,
 			size:      20,
 			count:     2,
@@ -222,6 +235,7 @@ func TestAppend_Double(t *testing.T) {
 				Nulls:   []bool{false, false},
 				Doubles: []float64{123, 456},
 			},
+			last:  float64(456),
 			size:  20,
 			count: 2,
 		},
@@ -250,6 +264,7 @@ func TestAppend_Double(t *testing.T) {
 			assert.Equal(t, td.count, output.Count(), td.desc)
 			assert.NotNil(t, output.AsThrift().DoubleData)
 			assert.NotZero(t, output.AsProto().Value.Size())
+			assert.Equal(t, td.last, output.Last())
 		})
 	}
 }
@@ -262,6 +277,7 @@ func TestAppend_Int32(t *testing.T) {
 		outputRes int
 		size      int
 		count     int
+		last      interface{}
 	}{
 		{
 			desc:  "int32 appended",
@@ -270,6 +286,7 @@ func TestAppend_Int32(t *testing.T) {
 				Nulls: []bool{false, false},
 				Ints:  []int32{123, 321},
 			},
+			last:      int32(321),
 			outputRes: 6,
 			size:      12,
 			count:     2,
@@ -281,6 +298,7 @@ func TestAppend_Int32(t *testing.T) {
 				Nulls: []bool{false, true},
 				Ints:  []int32{123, 0},
 			},
+			last:      nil,
 			outputRes: 6,
 			size:      12,
 			count:     2,
@@ -295,6 +313,7 @@ func TestAppend_Int32(t *testing.T) {
 				Nulls: []bool{false, false},
 				Ints:  []int32{123, 456},
 			},
+			last:  int32(456),
 			size:  12,
 			count: 2,
 		},
@@ -323,6 +342,7 @@ func TestAppend_Int32(t *testing.T) {
 			assert.Equal(t, td.count, output.Count(), td.desc)
 			assert.NotNil(t, output.AsThrift().IntegerData)
 			assert.NotZero(t, output.AsProto().Value.Size())
+			assert.Equal(t, td.last, output.Last())
 		})
 	}
 }
@@ -335,6 +355,7 @@ func TestAppend_Boolean(t *testing.T) {
 		outputRes int
 		size      int
 		count     int
+		last      interface{}
 	}{
 		{
 			desc:  "bool appended",
@@ -343,6 +364,7 @@ func TestAppend_Boolean(t *testing.T) {
 				Nulls:    []bool{false, false},
 				Booleans: []bool{true, false},
 			},
+			last:      false,
 			outputRes: 4,
 			size:      8,
 			count:     2,
@@ -354,6 +376,7 @@ func TestAppend_Boolean(t *testing.T) {
 				Nulls:    []bool{false, true},
 				Booleans: []bool{true, false},
 			},
+			last:      nil,
 			outputRes: 4,
 			size:      8,
 			count:     2,
@@ -368,6 +391,7 @@ func TestAppend_Boolean(t *testing.T) {
 				Nulls:    []bool{false, false},
 				Booleans: []bool{true, false},
 			},
+			last:  false,
 			size:  8,
 			count: 2,
 		},
@@ -396,6 +420,7 @@ func TestAppend_Boolean(t *testing.T) {
 			assert.Equal(t, td.count, output.Count(), td.desc)
 			assert.NotNil(t, output.AsThrift().BooleanData)
 			assert.NotZero(t, output.AsProto().Value.Size())
+			assert.Equal(t, td.last, output.Last())
 		})
 	}
 }
@@ -408,6 +433,7 @@ func TestAppend_Timestamp(t *testing.T) {
 		outputRes int
 		size      int
 		count     int
+		last      interface{}
 	}{
 		{
 			desc:  "timestamp appended int",
@@ -416,6 +442,7 @@ func TestAppend_Timestamp(t *testing.T) {
 				Nulls:      []bool{false, false},
 				Timestamps: []int64{123, 321},
 			},
+			last:      int64(321),
 			outputRes: 10,
 			size:      20,
 			count:     2,
@@ -427,6 +454,7 @@ func TestAppend_Timestamp(t *testing.T) {
 				Nulls:      []bool{false, false},
 				Timestamps: []int64{123, 321000},
 			},
+			last:      int64(321000),
 			outputRes: 10,
 			size:      20,
 			count:     2,
@@ -438,6 +466,7 @@ func TestAppend_Timestamp(t *testing.T) {
 				Nulls:      []bool{false, false},
 				Timestamps: []int64{123, 321050},
 			},
+			last:      int64(321050),
 			outputRes: 10,
 			size:      20,
 			count:     2,
@@ -449,6 +478,7 @@ func TestAppend_Timestamp(t *testing.T) {
 				Nulls:      []bool{false, true},
 				Timestamps: []int64{123, 0},
 			},
+			last:      nil,
 			outputRes: 10,
 			size:      20,
 			count:     2,
@@ -463,6 +493,7 @@ func TestAppend_Timestamp(t *testing.T) {
 				Nulls:      []bool{false, false},
 				Timestamps: []int64{123, 456},
 			},
+			last:  int64(456),
 			size:  20,
 			count: 2,
 		},
@@ -491,6 +522,7 @@ func TestAppend_Timestamp(t *testing.T) {
 			assert.Equal(t, td.count, output.Count(), td.desc)
 			assert.NotNil(t, output.AsThrift().TimestampData)
 			assert.NotZero(t, output.AsProto().Value.Size())
+			assert.Equal(t, td.last, output.Last())
 		})
 	}
 }
@@ -503,6 +535,7 @@ func TestAppend_Json(t *testing.T) {
 		outputRes int
 		size      int
 		count     int
+		last      interface{}
 	}{
 		{
 			desc:  "json appended",
@@ -512,6 +545,7 @@ func TestAppend_Json(t *testing.T) {
 				Sizes: []int32{2, 5},
 				Bytes: []byte("hihello"),
 			},
+			last:      json.RawMessage("hello"),
 			outputRes: 11,
 			size:      19,
 			count:     2,
@@ -524,6 +558,7 @@ func TestAppend_Json(t *testing.T) {
 				Sizes: []int32{2, 5},
 				Bytes: []byte("hihello"),
 			},
+			last:      json.RawMessage("hello"),
 			outputRes: 11,
 			size:      19,
 			count:     2,
@@ -536,6 +571,7 @@ func TestAppend_Json(t *testing.T) {
 				Sizes: []int32{2, 0},
 				Bytes: []byte("hi"),
 			},
+			last:      nil,
 			outputRes: 6,
 			size:      14,
 			count:     2,
@@ -552,6 +588,7 @@ func TestAppend_Json(t *testing.T) {
 				Sizes: []int32{2, 5},
 				Bytes: []byte("hiworld"),
 			},
+			last:  json.RawMessage("world"),
 			count: 2,
 		},
 	}
@@ -580,6 +617,7 @@ func TestAppend_Json(t *testing.T) {
 			assert.Equal(t, td.count, output.Count(), td.desc)
 			assert.NotNil(t, output.AsThrift().JsonData)
 			assert.NotZero(t, output.AsProto().Value.Size())
+			assert.Equal(t, td.last, output.Last())
 		})
 	}
 }

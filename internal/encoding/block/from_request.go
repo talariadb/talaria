@@ -6,17 +6,18 @@ package block
 import (
 	"fmt"
 
+	"github.com/grab/talaria/internal/column"
 	talaria "github.com/grab/talaria/proto"
 )
 
 // FromRequestBy creates a block from a talaria protobuf-encoded request. It
 // repartitions the batch by a given partition key at the same time.
-func FromRequestBy(request *talaria.IngestRequest, partitionBy string) ([]Block, error) {
+func FromRequestBy(request *talaria.IngestRequest, partitionBy string, computed ...*column.Computed) ([]Block, error) {
 	switch data := request.GetData().(type) {
 	case *talaria.IngestRequest_Batch:
-		return FromBatchBy(data.Batch, partitionBy)
+		return FromBatchBy(data.Batch, partitionBy, computed...)
 	case *talaria.IngestRequest_Orc:
-		return FromOrcBy(data.Orc, partitionBy)
+		return FromOrcBy(data.Orc, partitionBy, computed...)
 	case nil: // The field is not set.
 		return nil, nil
 	default:

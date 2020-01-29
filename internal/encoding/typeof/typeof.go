@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"reflect"
+	"strings"
 	"time"
 
 	"github.com/scritchley/orc"
@@ -167,7 +168,67 @@ func (t Type) SQL() string {
 	panic(fmt.Errorf("typeof: sql type for %v is not found", t))
 }
 
-// Name returns the name of the type
-func (t Type) Name() string {
-	return t.Reflect().Name()
+// String returns the name of the type
+func (t Type) String() string {
+	switch t {
+	case Int32:
+		return "int32"
+	case Int64:
+		return "int64"
+	case Float64:
+		return "float64"
+	case String:
+		return "string"
+	case Bool:
+		return "bool"
+	case Timestamp:
+		return "timestamp"
+	case JSON:
+		return "json"
+	default:
+		return "unsupported"
+	}
+}
+
+// UnmarshalText unmarshals the type from text
+func (t *Type) UnmarshalText(text []byte) error {
+	switch strings.ToLower(string(text)) {
+	default:
+		*t = Unsupported
+	case "int32", "integer", "uint32":
+		*t = Int32
+	case "int64", "bigint", "long", "uint64":
+		*t = Int64
+	case "float64", "double":
+		*t = Float64
+	case "string", "text", "varchar":
+		*t = String
+	case "bool", "boolean":
+		*t = Bool
+	case "timestamp", "time":
+		*t = Timestamp
+	case "json", "map":
+		*t = JSON
+	}
+	return nil
+}
+
+// MarshalText encodes the type to text
+func (t *Type) MarshalText() ([]byte, error) {
+	return []byte(t.String()), nil
+}
+
+// UnmarshalJSON decodes the json-encoded type
+func (t *Type) UnmarshalJSON(b []byte) error {
+	var text string
+	if err := json.Unmarshal(b, &text); err != nil {
+		return err
+	}
+
+	return t.UnmarshalText([]byte(text))
+}
+
+// MarshalJSON encodes the type to JSON
+func (t Type) MarshalJSON() ([]byte, error) {
+	return json.Marshal(t.String())
 }

@@ -8,15 +8,15 @@ import (
 	"fmt"
 	"strconv"
 
+	"github.com/grab/talaria/internal/column"
 	"github.com/grab/talaria/internal/encoding/orc"
 	"github.com/grab/talaria/internal/encoding/typeof"
-	"github.com/grab/talaria/internal/presto"
 	orctype "github.com/scritchley/orc"
 )
 
 // FromOrcBy decodes a set of blocks from an orc file and repartitions
 // it by the specified partition key.
-func FromOrcBy(payload []byte, partitionBy string) ([]Block, error) {
+func FromOrcBy(payload []byte, partitionBy string, computed ...*column.Computed) ([]Block, error) {
 	const max = 10000
 	iter, err := orc.FromBuffer(payload)
 	if err != nil {
@@ -35,7 +35,7 @@ func FromOrcBy(payload []byte, partitionBy string) ([]Block, error) {
 	blocks := make([]Block, 0, 128)
 
 	// Create presto columns and iterate
-	result, count := make(map[string]presto.NamedColumns, 16), 0
+	result, count := make(map[string]column.Columns, 16), 0
 	_, _ = iter.Range(func(rowIdx int, row []interface{}) bool {
 		if count%max == 0 {
 			pending, err := makeBlocks(result)
@@ -44,7 +44,7 @@ func FromOrcBy(payload []byte, partitionBy string) ([]Block, error) {
 			}
 
 			blocks = append(blocks, pending...)
-			result = make(map[string]presto.NamedColumns, 16)
+			result = make(map[string]column.Columns, 16)
 		}
 
 		// Get the partition value, must be a string
@@ -56,7 +56,7 @@ func FromOrcBy(payload []byte, partitionBy string) ([]Block, error) {
 		// Get the block for that partition
 		columns, exists := result[partition]
 		if !exists {
-			columns = make(presto.NamedColumns, 16)
+			columns = make(column.Columns, 16)
 			result[partition] = columns
 		}
 
@@ -75,7 +75,9 @@ func FromOrcBy(payload []byte, partitionBy string) ([]Block, error) {
 			columns.Append(columnName, v, columnType)
 		}
 
+		// Append computed columns and fill nulls for the row
 		count++
+		columns.AppendComputed(computed)
 		columns.FillNulls()
 		return false
 	}, cols...)

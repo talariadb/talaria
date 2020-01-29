@@ -9,6 +9,7 @@ import (
 	"math"
 	"reflect"
 	"time"
+	"unsafe"
 
 	"github.com/grab/talaria/internal/encoding/typeof"
 	talaria "github.com/grab/talaria/proto"
@@ -56,6 +57,15 @@ func (b *PrestoThriftInteger) AppendBlock(blocks []Column) {
 		b.Nulls = append(b.Nulls, block.Nulls...)
 		b.Ints = append(b.Ints, block.Ints...)
 	}
+}
+
+// Last returns the last value
+func (b *PrestoThriftInteger) Last() interface{} {
+	offset := len(b.Nulls) - 1
+	if offset < 0 || b.Nulls[offset] {
+		return nil
+	}
+	return b.Ints[offset]
 }
 
 // AsThrift returns a block for the response.
@@ -146,6 +156,15 @@ func (b *PrestoThriftBigint) AppendBlock(blocks []Column) {
 	}
 }
 
+// Last returns the last value
+func (b *PrestoThriftBigint) Last() interface{} {
+	offset := len(b.Nulls) - 1
+	if offset < 0 || b.Nulls[offset] {
+		return nil
+	}
+	return b.Longs[offset]
+}
+
 // AsThrift returns a block for the response.
 func (b *PrestoThriftBigint) AsThrift() *PrestoThriftBlock {
 	return &PrestoThriftBlock{
@@ -234,6 +253,15 @@ func (b *PrestoThriftDouble) AppendBlock(blocks []Column) {
 	}
 }
 
+// Last returns the last value
+func (b *PrestoThriftDouble) Last() interface{} {
+	offset := len(b.Nulls) - 1
+	if offset < 0 || b.Nulls[offset] {
+		return nil
+	}
+	return b.Doubles[offset]
+}
+
 // AsThrift returns a block for the response.
 func (b *PrestoThriftDouble) AsThrift() *PrestoThriftBlock {
 	return &PrestoThriftBlock{
@@ -315,6 +343,18 @@ func (b *PrestoThriftVarchar) AppendBlock(blocks []Column) {
 	}
 }
 
+// Last returns the last value
+func (b *PrestoThriftVarchar) Last() interface{} {
+	offset := len(b.Nulls) - 1
+	if offset < 0 || b.Nulls[offset] {
+		return nil
+	}
+
+	size := int(b.Sizes[offset])
+	out := b.Bytes[len(b.Bytes)-size:]
+	return binaryToString(&out)
+}
+
 // AsThrift returns a block for the response.
 func (b *PrestoThriftVarchar) AsThrift() *PrestoThriftBlock {
 	return &PrestoThriftBlock{
@@ -390,6 +430,15 @@ func (b *PrestoThriftBoolean) AppendBlock(blocks []Column) {
 		b.Nulls = append(b.Nulls, block.Nulls...)
 		b.Booleans = append(b.Booleans, block.Booleans...)
 	}
+}
+
+// Last returns the last value
+func (b *PrestoThriftBoolean) Last() interface{} {
+	offset := len(b.Nulls) - 1
+	if offset < 0 || b.Nulls[offset] {
+		return nil
+	}
+	return b.Booleans[offset]
 }
 
 // AsThrift returns a block for the response.
@@ -476,6 +525,15 @@ func (b *PrestoThriftTimestamp) AppendBlock(blocks []Column) {
 		b.Nulls = append(b.Nulls, block.Nulls...)
 		b.Timestamps = append(b.Timestamps, block.Timestamps...)
 	}
+}
+
+// Last returns the last value
+func (b *PrestoThriftTimestamp) Last() interface{} {
+	offset := len(b.Nulls) - 1
+	if offset < 0 || b.Nulls[offset] {
+		return nil
+	}
+	return b.Timestamps[offset]
 }
 
 // AsThrift returns a block for the response.
@@ -571,6 +629,17 @@ func (b *PrestoThriftJson) AppendBlock(blocks []Column) {
 	}
 }
 
+// Last returns the last value
+func (b *PrestoThriftJson) Last() interface{} {
+	offset := len(b.Nulls) - 1
+	if offset < 0 || b.Nulls[offset] {
+		return nil
+	}
+
+	size := int(b.Sizes[offset])
+	return json.RawMessage(b.Bytes[len(b.Bytes)-size:])
+}
+
 // AsThrift returns a block for the response.
 func (b *PrestoThriftJson) AsThrift() *PrestoThriftBlock {
 	return &PrestoThriftBlock{
@@ -610,4 +679,9 @@ func (b *PrestoThriftJson) Kind() typeof.Type {
 // Min returns the minimum value of the column (only works for numbers).
 func (b *PrestoThriftJson) Min() (int64, bool) {
 	return 0, false
+}
+
+// Converts binary to string in a zero-alloc manner
+func binaryToString(b *[]byte) string {
+	return *(*string)(unsafe.Pointer(b))
 }

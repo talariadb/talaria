@@ -6,6 +6,7 @@ package server
 import (
 	"context"
 	"fmt"
+	"github.com/grab/talaria/internal/column"
 	"io"
 	"net"
 	"runtime/debug"
@@ -51,6 +52,18 @@ func New(conf *config.Config, monitor monitor.Monitor, tables ...table.Table) *S
 		tables:  make(map[string]table.Table),
 	}
 
+	// Load computed columns
+	for _, c := range conf.Computed {
+		col, err := column.NewComputed(c.Name, c.Type, c.Func)
+		if err != nil {
+			monitor.Error(err)
+			continue
+		}
+
+		monitor.Info("loaded computed column %v of type %v", c.Name, c.Type)
+		server.computed = append(server.computed, col)
+	}
+
 	// Register the gRPC servers
 	talaria.RegisterIngressServer(server.server, server)
 	talaria.RegisterQueryServer(server.server, server)
@@ -64,11 +77,12 @@ func New(conf *config.Config, monitor monitor.Monitor, tables ...table.Table) *S
 
 // Server represents the talaria server which should implement presto thrift interface.
 type Server struct {
-	server  *grpc.Server           // The underlying gRPC server
-	conf    *config.Config         // The presto configuration
-	monitor monitor.Monitor        // The monitoring layer
-	cancel  context.CancelFunc     // The cancellation function for the server
-	tables  map[string]table.Table // The list of tables
+	server   *grpc.Server           // The underlying gRPC server
+	conf     *config.Config         // The presto configuration
+	monitor  monitor.Monitor        // The monitoring layer
+	cancel   context.CancelFunc     // The cancellation function for the server
+	tables   map[string]table.Table // The list of tables
+	computed []*column.Computed     // The set of computed columns
 }
 
 // Listen starts listening on presto RPC & gRPC.

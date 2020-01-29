@@ -25,38 +25,38 @@ var testBatch = &talaria.Batch{
 	},
 	Events: []*talaria.Event{
 		{Value: map[uint32]*talaria.Value{
-			1: &talaria.Value{Value: &talaria.Value_Int64{Int64: 10}},
-			2: &talaria.Value{Value: &talaria.Value_Int64{Int64: 20}},
-			4: &talaria.Value{Value: &talaria.Value_String_{String_: 5}}, // event1
+			1: {Value: &talaria.Value_Int64{Int64: 10}},
+			2: {Value: &talaria.Value_Int64{Int64: 20}},
+			4: {Value: &talaria.Value_String_{String_: 5}}, // event1
 		}},
 		{Value: map[uint32]*talaria.Value{
-			2: &talaria.Value{Value: &talaria.Value_Int64{Int64: 20}},
-			4: &talaria.Value{Value: &talaria.Value_String_{String_: 5}}, // event1
+			2: {Value: &talaria.Value_Int64{Int64: 20}},
+			4: {Value: &talaria.Value_String_{String_: 5}}, // event1
 		}},
 		{Value: map[uint32]*talaria.Value{
-			2: &talaria.Value{Value: &talaria.Value_String_{String_: 7}},
-			4: &talaria.Value{Value: &talaria.Value_String_{String_: 6}}, // event2
+			2: {Value: &talaria.Value_String_{String_: 7}},
+			4: {Value: &talaria.Value_String_{String_: 6}}, // event2
 		}},
 		{Value: map[uint32]*talaria.Value{
-			2: &talaria.Value{Value: &talaria.Value_String_{String_: 7}},
-			4: &talaria.Value{Value: &talaria.Value_String_{String_: 6}}, // event2
+			2: {Value: &talaria.Value_String_{String_: 7}},
+			4: {Value: &talaria.Value_String_{String_: 6}}, // event2
 		}},
 		{Value: map[uint32]*talaria.Value{
-			2: &talaria.Value{Value: &talaria.Value_String_{String_: 7}},
-			4: &talaria.Value{Value: &talaria.Value_String_{String_: 6}}, // event2
+			2: {Value: &talaria.Value_String_{String_: 7}},
+			4: {Value: &talaria.Value_String_{String_: 6}}, // event2
 		}},
 		{Value: map[uint32]*talaria.Value{
-			2: &talaria.Value{Value: &talaria.Value_Time{Time: 100}},
-			8: &talaria.Value{Value: &talaria.Value_Json{Json: 10}},
-			4: &talaria.Value{Value: &talaria.Value_String_{String_: 9}}, // event3
+			2: {Value: &talaria.Value_Time{Time: 100}},
+			8: {Value: &talaria.Value_Json{Json: 10}},
+			4: {Value: &talaria.Value_String_{String_: 9}}, // event3
 		}},
 		{Value: map[uint32]*talaria.Value{
-			2: &talaria.Value{Value: &talaria.Value_String_{String_: 7}},
-			4: &talaria.Value{Value: &talaria.Value_String_{String_: 6}}, // event2
+			2: {Value: &talaria.Value_String_{String_: 7}},
+			4: {Value: &talaria.Value_String_{String_: 6}}, // event2
 		}},
 		{Value: map[uint32]*talaria.Value{
-			2: &talaria.Value{Value: &talaria.Value_String_{String_: 7}},
-			4: &talaria.Value{Value: &talaria.Value_String_{String_: 6}}, // event2
+			2: {Value: &talaria.Value_String_{String_: 7}},
+			4: {Value: &talaria.Value_String_{String_: 6}}, // event2
 		}},
 	},
 }
@@ -65,4 +65,15 @@ func TestBlock_FromBatch(t *testing.T) {
 	blocks, err := FromBatchBy(testBatch, "d")
 	assert.NoError(t, err)
 	assert.Len(t, blocks, 3) // Number of partitions
+
+	// Find the event2 block
+	var block Block
+	for _, b := range blocks {
+		if string(b.Key) == "event3" {
+			block = b
+		}
+	}
+
+	assert.Equal(t, "event3", string(block.Key))
+
 }

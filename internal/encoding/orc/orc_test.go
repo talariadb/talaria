@@ -27,13 +27,13 @@ func TestOrcRead(t *testing.T) {
 	{
 		kind, ok := schema[column]
 		assert.True(t, ok)
-		assert.Equal(t, "string", kind.Name())
+		assert.Equal(t, "string", kind.String())
 	}
 
 	{
 		kind, ok := schema["int1"]
 		assert.True(t, ok)
-		assert.Equal(t, "int32", kind.Name())
+		assert.Equal(t, "int32", kind.String())
 	}
 
 	count := 0

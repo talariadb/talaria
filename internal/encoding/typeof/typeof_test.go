@@ -4,6 +4,7 @@
 package typeof
 
 import (
+	"encoding/json"
 	"reflect"
 	"testing"
 
@@ -104,5 +105,17 @@ func TestFromOrc(t *testing.T) {
 }
 
 func TestName(t *testing.T) {
-	assert.Equal(t, "int32", Int32.Name())
+	assert.Equal(t, "int32", Int32.String())
+}
+
+func TestMarshalJSON(t *testing.T) {
+	types := []Type{Int32, Int64, Float64, Bool, String, Timestamp, JSON}
+	for _, typ := range types {
+		enc, err := json.Marshal(typ)
+		assert.NoError(t, err)
+
+		var out Type
+		assert.NoError(t, json.Unmarshal(enc, &out))
+		assert.Equal(t, typ, out)
+	}
 }

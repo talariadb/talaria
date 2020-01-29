@@ -10,6 +10,7 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/grab/talaria/internal/column"
 	"github.com/grab/talaria/internal/config"
 	"github.com/grab/talaria/internal/encoding/block"
 	"github.com/grab/talaria/internal/encoding/key"
@@ -163,7 +164,7 @@ func (t *Table) GetRows(splitID []byte, requestedColumns []string, maxBytes int6
 	// Merge columns together at once, reducing allocations
 	result.Columns = make([]presto.Column, 0, len(requestedColumns))
 	for _, columnName := range requestedColumns {
-		column := presto.NewColumn(localSchema[columnName])
+		column := column.NewColumn(localSchema[columnName])
 		column.AppendBlock(frames[columnName])
 		result.Columns = append(result.Columns, column)
 	}
@@ -172,7 +173,7 @@ func (t *Table) GetRows(splitID []byte, requestedColumns []string, maxBytes int6
 }
 
 // ReadDataFrame reads a column data frame and returns the set of columns requested.
-func (t *Table) readDataFrame(schema typeof.Schema, buffer []byte, maxBytes int) (presto.NamedColumns, error) {
+func (t *Table) readDataFrame(schema typeof.Schema, buffer []byte, maxBytes int) (column.Columns, error) {
 	result, err := block.Read(buffer, schema)
 	if err != nil {
 		return nil, errors.Internal("block read failed", err)
@@ -196,6 +197,7 @@ func (t *Table) Append(block block.Block) error {
 	}
 
 	// Encode the block
+	block.Expires = time.Now().Add(t.ttl).Unix()
 	buffer, err := block.Encode()
 	if err != nil {
 		return err
@@ -205,7 +207,6 @@ func (t *Table) Append(block block.Block) error {
 	t.schema.Store(block.Schema())
 
 	// Append the block to the store
-	block.Expires = time.Now().Add(t.ttl).Unix()
 	return t.store.Append(key.New(string(block.Key), time.Unix(0, ts)), buffer, t.ttl)
 }
 

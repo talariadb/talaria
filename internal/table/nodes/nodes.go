@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/emitter-io/address"
+	"github.com/grab/talaria/internal/column"
 	"github.com/grab/talaria/internal/encoding/typeof"
 	"github.com/grab/talaria/internal/presto"
 	"github.com/grab/talaria/internal/table"
@@ -100,7 +101,7 @@ func (t *Table) GetRows(splitID []byte, columns []string, maxBytes int64) (*tabl
 
 // getColumn returns a coolumn info requested
 func (t *Table) getColumn(columnName string, columnType typeof.Type) (presto.Column, error) {
-	column := presto.NewColumn(columnType)
+	column := column.NewColumn(columnType)
 	switch columnName {
 	case "address":
 		column.Append(t.cluster.Addr())

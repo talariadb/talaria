@@ -4,7 +4,7 @@
 package block
 
 import (
-	"github.com/grab/talaria/internal/presto"
+	"github.com/grab/talaria/internal/column"
 	"github.com/kelindar/binary"
 	"github.com/kelindar/binary/nocopy"
 )
@@ -18,7 +18,7 @@ func FromBuffer(b []byte) (block Block, err error) {
 }
 
 // FromColumns creates a block from a set of presto named columns
-func FromColumns(key string, columns presto.NamedColumns) (blk Block, err error) {
+func FromColumns(key string, columns column.Columns) (blk Block, err error) {
 	blk = Block{Key: nocopy.String(key)}
 	err = blk.writeColumns(columns)
 	return

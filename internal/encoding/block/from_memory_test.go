@@ -7,13 +7,13 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grab/talaria/internal/column"
 	"github.com/grab/talaria/internal/encoding/typeof"
-	"github.com/grab/talaria/internal/presto"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestBlock_FromColumns(t *testing.T) {
-	columns := make(presto.NamedColumns, 4)
+	columns := make(column.Columns, 4)
 	columns.Append("time", time.Unix(0, 0), typeof.Timestamp)
 	columns.Append("address", "10.0.0.1", typeof.String)
 	columns.Append("level", "warn", typeof.String)

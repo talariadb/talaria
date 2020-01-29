@@ -7,12 +7,12 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/grab/talaria/internal/column"
 	"github.com/grab/talaria/internal/config"
 	"github.com/grab/talaria/internal/encoding/block"
 	"github.com/grab/talaria/internal/encoding/typeof"
 	"github.com/grab/talaria/internal/monitor"
 	"github.com/grab/talaria/internal/monitor/logging"
-	"github.com/grab/talaria/internal/presto"
 	"github.com/grab/talaria/internal/table/timeseries"
 )
 
@@ -77,8 +77,8 @@ func (t *Table) Append(msg string, level logging.Level) error {
 	return t.Table.Append(block)
 }
 
-func (t *Table) toColumns(msg string, level logging.Level) presto.NamedColumns {
-	columns := make(presto.NamedColumns, 4)
+func (t *Table) toColumns(msg string, level logging.Level) column.Columns {
+	columns := make(column.Columns, 4)
 	columns.Append("time", time.Now(), typeof.Timestamp)
 	columns.Append("address", t.cluster.Addr(), typeof.String)
 	columns.Append("level", string(level), typeof.String)

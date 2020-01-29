@@ -10,14 +10,14 @@ import (
 	"time"
 	"unsafe"
 
+	"github.com/grab/talaria/internal/column"
 	"github.com/grab/talaria/internal/encoding/typeof"
-	"github.com/grab/talaria/internal/presto"
 	talaria "github.com/grab/talaria/proto"
 )
 
 // FromBatchBy creates a block from a talaria protobuf-encoded batch. It
 // repartitions the batch by a given partition key at the same time.
-func FromBatchBy(batch *talaria.Batch, partitionBy string) ([]Block, error) {
+func FromBatchBy(batch *talaria.Batch, partitionBy string, computed ...*column.Computed) ([]Block, error) {
 	if batch == nil || batch.Strings == nil || batch.Events == nil {
 		return nil, errEmptyBatch
 	}
@@ -28,7 +28,7 @@ func FromBatchBy(batch *talaria.Batch, partitionBy string) ([]Block, error) {
 		return nil, errPartitionNotFound
 	}
 
-	result := make(map[string]presto.NamedColumns, 16)
+	result := make(map[string]column.Columns, 16)
 	for _, event := range batch.Events {
 		if event.Value == nil {
 			continue
@@ -43,7 +43,7 @@ func FromBatchBy(batch *talaria.Batch, partitionBy string) ([]Block, error) {
 		// Get the block for that partition
 		columns, exists := result[partition]
 		if !exists {
-			columns = make(presto.NamedColumns, 16)
+			columns = make(column.Columns, 16)
 			result[partition] = columns
 		}
 
@@ -62,6 +62,8 @@ func FromBatchBy(batch *talaria.Batch, partitionBy string) ([]Block, error) {
 			columns.Append(stringAt(batch.Strings, k), columnValue, typ)
 		}
 
+		// Append computed columns and fill nulls for the row
+		columns.AppendComputed(computed)
 		columns.FillNulls()
 	}
 
@@ -140,7 +142,7 @@ func findParitionKey(dict map[uint32][]byte, partitionBy string) (uint32, bool) 
 }
 
 // makeBlocks creates a set of blocks from a set of named columns
-func makeBlocks(v map[string]presto.NamedColumns) ([]Block, error) {
+func makeBlocks(v map[string]column.Columns) ([]Block, error) {
 	blocks := make([]Block, 0, len(v))
 	for k, columns := range v {
 		block, err := FromColumns(k, columns)

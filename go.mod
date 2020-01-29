@@ -7,7 +7,7 @@ require (
 	github.com/DataDog/datadog-go v2.2.0+incompatible
 	github.com/Knetic/govaluate v3.0.0+incompatible
 	github.com/armon/go-metrics v0.0.0-20190430140413-ec5e00d3c878 // indirect
-	github.com/aws/aws-sdk-go v1.25.14
+	github.com/aws/aws-sdk-go v1.25.31
 	github.com/dgraph-io/badger v1.6.0
 	github.com/dgryski/go-farm v0.0.0-20191112170834-c2139c5d712b // indirect
 	github.com/emitter-io/address v1.0.0
@@ -23,6 +23,8 @@ require (
 	github.com/hashicorp/golang-lru v0.5.3 // indirect
 	github.com/hashicorp/memberlist v0.1.5
 	github.com/kelindar/binary v1.0.8
+	github.com/kelindar/loader v0.0.0-20191110093814-1408a474c5b4
+	github.com/kelindar/lua v0.0.2
 	github.com/miekg/dns v1.1.22 // indirect
 	github.com/ricochet2200/go-disk-usage v0.0.0-20150921141558-f0d1b743428f
 	github.com/samuel/go-thrift v0.0.0-20190219015601-e8b6b52668fe

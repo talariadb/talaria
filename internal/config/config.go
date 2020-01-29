@@ -18,6 +18,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
+	"github.com/grab/talaria/internal/encoding/typeof"
 )
 
 const (
@@ -26,17 +27,18 @@ const (
 
 // Config global
 type Config struct {
-	Hostname  string   `json:"hostname"`
-	GRPC      *GRPC    `json:"grpc"`
-	DataDir   string   `json:"dataDir"`
-	AwsRegion string   `json:"awsRegion"`
-	Env       string   `json:"env"`
-	Domain    string   `json:"domain"`
-	Sqs       *SQS     `json:"sqs"`
-	Presto    *Presto  `json:"presto"`
-	Storage   *Storage `json:"storage"`
-	Log       *Log     `json:"log"`
-	Statsd    *StatsD  `json:"statsd"`
+	Hostname  string     `json:"hostname"`
+	GRPC      *GRPC      `json:"grpc"`
+	DataDir   string     `json:"dataDir"`
+	AwsRegion string     `json:"awsRegion"`
+	Env       string     `json:"env"`
+	Domain    string     `json:"domain"`
+	Sqs       *SQS       `json:"sqs"`
+	Presto    *Presto    `json:"presto"`
+	Storage   *Storage   `json:"storage"`
+	Log       *Log       `json:"log"`
+	Statsd    *StatsD    `json:"statsd"`
+	Computed  []Computed `json:"computed"`
 }
 
 // GRPC represents the configuration for gRPC server
@@ -75,6 +77,13 @@ type Log struct {
 type StatsD struct {
 	Host string `json:"host"`
 	Port int64  `json:"port"`
+}
+
+// Computed represents a computed column
+type Computed struct {
+	Name string      `json:"name"`
+	Type typeof.Type `json:"type"`
+	Func string      `json:"func"`
 }
 
 // Load loads the configuration
