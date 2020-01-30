@@ -33,13 +33,20 @@ type Table struct {
 }
 
 // New creates a new table implementation.
-func New(log *config.Log, dataDir string, cluster Membership, monitor monitor.Monitor) *Table {
-	cfg := &config.Storage{
-		TTLInSec:   log.TTLInSec,
-		TimeColumn: "time",
+func New(cfg config.Func, dataDir string, cluster Membership, monitor monitor.Monitor) *Table {
+	sortBy := func() string {
+		return cfg().Tables.Log.SortBy
 	}
 
-	base := timeseries.New(table, cfg, dataDir, cluster, monitor)
+	hashBy := func() string {
+		return ""
+	}
+
+	schema := func() *typeof.Schema {
+		return nil
+	}
+
+	base := timeseries.New(cfg().Tables.Log.Name, hashBy, sortBy, cfg().Tables.Log.TTL, dataDir, cluster, monitor, schema)
 	return &Table{
 		Table:   *base,
 		cluster: cluster,

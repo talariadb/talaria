@@ -24,26 +24,32 @@ func TestSplitCodec(t *testing.T) {
 	})
 }
 
+func getColumn(column string) func() string {
+	return func() string {
+		return column
+	}
+}
+
 func TestParse(t *testing.T) {
 	domain := newSplitQuery("test")
-	table := &Table{keyColumn: "_col5", timeColumn: "NA"}
-	queries, err := parseThriftDomain(domain, table.keyColumn, table.timeColumn)
+	table := &Table{keyColumn: getColumn("_col5"), timeColumn: getColumn("NA")}
+	queries, err := parseThriftDomain(domain, table.keyColumn(), table.timeColumn())
 	assert.NoError(t, err)
 	assert.Len(t, queries, 1)
 }
 
 func TestParseWithoutKeyColumn(t *testing.T) {
 	domain := newSplitQuery("test")
-	table := &Table{keyColumn: "_col6", timeColumn: "NA"}
-	queries, err := parseThriftDomain(domain, table.keyColumn, table.timeColumn)
+	table := &Table{keyColumn: getColumn("col6"), timeColumn: getColumn("NA")}
+	queries, err := parseThriftDomain(domain, table.keyColumn(), table.timeColumn())
 	assert.Error(t, err)
 	assert.Nil(t, queries)
 }
 
 func TestParseKeyColDisabled(t *testing.T) {
 	domain := newSplitQuery("test")
-	table := &Table{keyColumn: "", timeColumn: "NA"}
-	queries, err := parseThriftDomain(domain, table.keyColumn, table.timeColumn)
+	table := &Table{keyColumn: getColumn(""), timeColumn: getColumn("NA")}
+	queries, err := parseThriftDomain(domain, table.keyColumn(), table.timeColumn())
 	assert.Nil(t, err)
 	assert.Len(t, queries, 1)
 }

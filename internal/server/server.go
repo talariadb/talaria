@@ -6,13 +6,13 @@ package server
 import (
 	"context"
 	"fmt"
-	"github.com/grab/talaria/internal/column"
 	"io"
 	"net"
 	"runtime/debug"
 	"time"
 
 	"github.com/grab/async"
+	"github.com/grab/talaria/internal/column"
 	"github.com/grab/talaria/internal/config"
 	"github.com/grab/talaria/internal/monitor"
 	"github.com/grab/talaria/internal/monitor/errors"
@@ -43,7 +43,7 @@ type Storage interface {
 // ------------------------------------------------------------------------------------------------------------
 
 // New creates a new talaria server.
-func New(conf *config.Config, monitor monitor.Monitor, tables ...table.Table) *Server {
+func New(conf config.Func, monitor monitor.Monitor, tables ...table.Table) *Server {
 	const maxMessageSize = 32 * 1024 * 1024 // 32 MB
 	server := &Server{
 		server:  grpc.NewServer(grpc.MaxRecvMsgSize(maxMessageSize)),
@@ -53,7 +53,7 @@ func New(conf *config.Config, monitor monitor.Monitor, tables ...table.Table) *S
 	}
 
 	// Load computed columns
-	for _, c := range conf.Computed {
+	for _, c := range conf().Computed {
 		col, err := column.NewComputed(c.Name, c.Type, c.Func)
 		if err != nil {
 			monitor.Error(err)
@@ -78,7 +78,7 @@ func New(conf *config.Config, monitor monitor.Monitor, tables ...table.Table) *S
 // Server represents the talaria server which should implement presto thrift interface.
 type Server struct {
 	server   *grpc.Server           // The underlying gRPC server
-	conf     *config.Config         // The presto configuration
+	conf     config.Func            // The presto configuration
 	monitor  monitor.Monitor        // The monitoring layer
 	cancel   context.CancelFunc     // The cancellation function for the server
 	tables   map[string]table.Table // The list of tables

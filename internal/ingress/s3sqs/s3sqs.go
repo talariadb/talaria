@@ -46,7 +46,7 @@ type Reader interface {
 }
 
 // New creates a new ingestion with SQS/S3 files.
-func New(conf *config.SQS, region string, monitor monitor.Monitor) (*Ingress, error) {
+func New(conf *config.S3SQS, region string, monitor monitor.Monitor) (*Ingress, error) {
 	downloader := s3.New(region, 5, monitor)
 	reader, err := sqs.NewReader(conf, region)
 	if err != nil {

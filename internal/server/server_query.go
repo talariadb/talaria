@@ -35,7 +35,7 @@ func (s *Server) Describe(ctx context.Context, _ *talaria.DescribeRequest) (*tal
 		}
 
 		tables = append(tables, &talaria.TableMeta{
-			Schema:  s.conf.Presto.Schema,
+			Schema:  s.conf().Readers.Presto.Schema,
 			Table:   table.Name(),
 			Columns: columns,
 		})
@@ -58,7 +58,7 @@ func (s *Server) GetSplits(ctx context.Context, request *talaria.GetSplitsReques
 	}
 
 	// Build the domain
-	hashKey, sortKey := s.conf.Storage.KeyColumn, s.conf.Storage.TimeColumn
+	hashKey, sortKey := s.conf().Tables.Timeseries.HashBy, s.conf().Tables.Timeseries.SortBy
 	domain, err := presto.NewDomain(hashKey, sortKey, request.Filters...)
 	if err != nil {
 		return nil, err
@@ -79,7 +79,7 @@ func (s *Server) GetSplits(ctx context.Context, request *talaria.GetSplitsReques
 		}
 
 		for _, addr := range split.Addrs {
-			tsplit.Hosts = append(tsplit.Hosts, &talaria.Endpoint{Host: addr, Port: s.conf.Presto.Port})
+			tsplit.Hosts = append(tsplit.Hosts, &talaria.Endpoint{Host: addr, Port: s.conf().Readers.Presto.Port})
 		}
 		response.Splits = append(response.Splits, &tsplit)
 	}

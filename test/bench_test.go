@@ -8,8 +8,10 @@ import (
 	"io/ioutil"
 	"os"
 	"testing"
+	"time"
 
 	"github.com/grab/talaria/internal/config"
+	"github.com/grab/talaria/internal/encoding/typeof"
 	"github.com/grab/talaria/internal/monitor"
 	"github.com/grab/talaria/internal/presto"
 	"github.com/grab/talaria/internal/server"
@@ -25,32 +27,55 @@ func (m noopMembership) Members() []string {
 	return []string{"127.0.0.1:9876"}
 }
 
+type benchMockConfigurer struct {
+	dir string
+}
+
+func (m *benchMockConfigurer) Configure(c *config.Config) error {
+	c.Readers.Presto = &config.Presto{
+		Port: 9876,
+	}
+
+	c.Tables.Timeseries = &config.Timeseries{
+		Name:   "eventlog",
+		TTL:    3600,
+		HashBy: "_col5",
+		SortBy: "_col1",
+	}
+
+	c.Storage.Directory = m.dir
+	return nil
+}
+
 // BenchmarkQuery runs a benchmark for a main GetRows function for querying
 // To run it, go in the directory and do 'go test -benchmem -bench=. -benchtime=1s'
 // BenchmarkQuery/query-8         	     152	   7861139 ns/op	39066130 B/op	    6284 allocs/op
+
+// After using the new config
+// BenchmarkQuery/query-12         	     200	   9258478 ns/op	39084453 B/op	    6294 allocs/op
 func BenchmarkQuery(b *testing.B) {
 	dir, err := ioutil.TempDir(".", "testdata-")
 	noerror(err)
 	defer func() { _ = os.RemoveAll(dir) }()
-
-	cfg := &config.Config{
-		Presto: &config.Presto{
-			Port: 9876,
-		},
-		DataDir: dir,
-		Storage: &config.Storage{
-			TTLInSec:   3600,
-			KeyColumn:  "_col5",
-			TimeColumn: "_col0",
-		},
-	}
+	cfg := config.Load(context.Background(), 60*time.Second, &benchMockConfigurer{dir: dir})
 
 	// create monitor
 	monitor := monitor.NewNoop()
 
+	sortBy := func() string {
+		return cfg().Tables.Timeseries.SortBy
+	}
+
+	hashBy := func() string {
+		return cfg().Tables.Timeseries.HashBy
+	}
+
+	schema := func() *typeof.Schema {
+		return cfg().Tables.Timeseries.Schema
+	}
 	// Start the server and open the database
 	server := server.New(cfg, monitor,
-		timeseries.New("eventlog", cfg.Storage, cfg.DataDir, new(noopMembership), monitor),
+		timeseries.New("eventlog", hashBy, sortBy, cfg().Tables.Timeseries.TTL, cfg().Storage.Directory, new(noopMembership), monitor, schema),
 	)
 	defer server.Close()
 

@@ -9,8 +9,10 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
 	"github.com/grab/talaria/internal/config"
+	"github.com/grab/talaria/internal/encoding/typeof"
 	"github.com/grab/talaria/internal/monitor"
 	"github.com/grab/talaria/internal/monitor/logging"
 	"github.com/grab/talaria/internal/monitor/statsd"
@@ -19,29 +21,52 @@ import (
 	"github.com/grab/talaria/internal/table/nodes"
 	"github.com/grab/talaria/internal/table/timeseries"
 	talaria "github.com/grab/talaria/proto"
+	"gopkg.in/yaml.v2"
 )
 
+type mockConfigurer struct {
+	dir string
+}
+
+func (m *mockConfigurer) Configure(c *config.Config) error {
+
+	c.Readers.Presto = &config.Presto{
+		Port:   8042,
+		Schema: "talaria",
+	}
+
+	c.Writers.GRPC = &config.GRPC{
+		Port: 8043,
+	}
+	c.Tables.Timeseries = &config.Timeseries{
+		Name:   "eventlog",
+		TTL:    3600,
+		HashBy: "string1",
+		SortBy: "int1",
+	}
+
+	c.Storage.Directory = m.dir
+
+	dat, err := ioutil.ReadFile("./test-schema.yaml")
+	if err != nil {
+		return err
+	}
+	err = yaml.Unmarshal(dat, &c.Tables.Timeseries.Schema)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 func main() {
+
 	dir, err := ioutil.TempDir(".", "testdata-")
 	noerror(err)
 	defer func() { _ = os.RemoveAll(dir) }()
 
-	cfg := &config.Config{
-		Presto: &config.Presto{
-			Port:   8042,
-			Schema: "talaria",
-			Table:  "eventlog",
-		},
-		GRPC: &config.GRPC{
-			Port: 8043,
-		},
-		DataDir: dir,
-		Storage: &config.Storage{
-			TTLInSec:   3600,
-			KeyColumn:  "string1",
-			TimeColumn: "int1",
-		},
-	}
+	cfg := config.Load(context.Background(), 60*time.Second, &mockConfigurer{
+		dir: dir,
+	})
 
 	// Create a logger
 	monitor := monitor.New(logging.NewStandard(), statsd.NewNoop(), "talaria", "dev")
@@ -50,8 +75,20 @@ func main() {
 	gossip := cluster.New(7946)
 	gossip.JoinHostname("localhost")
 
+	sortBy := func() string {
+		return cfg().Tables.Timeseries.SortBy
+	}
+
+	hashBy := func() string {
+		return cfg().Tables.Timeseries.HashBy
+	}
+
+	schemaFunc := func() *typeof.Schema {
+		return cfg().Tables.Timeseries.Schema
+	}
+
 	// Start the server and open the database
-	eventlog := timeseries.New(cfg.Presto.Table, cfg.Storage, cfg.DataDir, gossip, monitor)
+	eventlog := timeseries.New(cfg().Tables.Timeseries.Name, hashBy, sortBy, cfg().Tables.Timeseries.TTL, cfg().Storage.Directory, gossip, monitor, schemaFunc)
 	server := server.New(cfg, monitor,
 		eventlog,
 		nodes.New(gossip),
@@ -84,8 +121,8 @@ func main() {
 	println("  where string1 = '110010100101010010101000100001'")
 
 	// Start listen
-	println("start listening on", cfg.Presto.Port)
-	noerror(server.Listen(ctx, cfg.Presto.Port, cfg.GRPC.Port))
+	println("start listening on", cfg().Readers.Presto.Port)
+	noerror(server.Listen(ctx, cfg().Readers.Presto.Port, cfg().Writers.GRPC.Port))
 }
 
 func noerror(err error) {

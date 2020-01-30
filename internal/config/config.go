@@ -4,79 +4,93 @@
 package config
 
 import (
-	"encoding/json"
-	"errors"
-	"fmt"
-	"io/ioutil"
-	"log"
-	"net/http"
-	"net/url"
-	"os"
-	"strings"
+	"context"
+	"time"
 
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/s3"
-	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	"github.com/grab/talaria/internal/encoding/typeof"
-)
-
-const (
-	logTag = "config"
 )
 
 // Config global
 type Config struct {
-	Hostname  string     `json:"hostname"`
-	GRPC      *GRPC      `json:"grpc"`
-	DataDir   string     `json:"dataDir"`
-	AwsRegion string     `json:"awsRegion"`
-	Env       string     `json:"env"`
-	Domain    string     `json:"domain"`
-	Sqs       *SQS       `json:"sqs"`
-	Presto    *Presto    `json:"presto"`
-	Storage   *Storage   `json:"storage"`
-	Log       *Log       `json:"log"`
-	Statsd    *StatsD    `json:"statsd"`
-	Computed  []Computed `json:"computed"`
+	URI      string     `json:"uri" yaml:"uri" env:"URI"`
+	Env      string     `json:"env" yaml:"env" env:"ENV"` // The environment (eg: prd, stg)
+	Domain   string     `json:"domain" yaml:"domain" env:"DOMAIN"`
+	Readers  Readers    `json:"readers" yaml:"readers" env:"READERS"`
+	Writers  Writers    `json:"writers" yaml:"writers" env:"WRITERS"`
+	Storage  Storage    `json:"storage" yaml:"storage" env:"STORAGE"`
+	Tables   Tables     `json:"tables" yaml:"tables" env:"TABLES"`
+	Statsd   *StatsD    `json:"statsd,omitempty" yaml:"statsd" env:"STATSD"`
+	Computed []Computed `json:"computed" yaml:"computed" env:"COMPUTED"`
 }
 
-// GRPC represents the configuration for gRPC server
+// Tables is a list of table configs
+type Tables struct {
+	Timeseries *Timeseries `json:"timeseries,omitempty" yaml:"timeseries"  env:"TIMESERIES"`
+	Log        *Log        `json:"log,omitempty" yaml:"log" env:"LOG"`
+	Nodes      *Nodes      `json:"nodes,omitempty" yaml:"nodes" env:"NODES"`
+}
+
+// Timeseries is the config for the timeseries table
+type Timeseries struct {
+	Name   string         `json:"name" yaml:"name" env:"NAME"`                 // The name of the table
+	TTL    int64          `json:"ttl,omitempty" yaml:"ttl" env:"TTL"`          // The ttl (in seconds) for the storage, defaults to 1 hour.
+	HashBy string         `json:"hashBy,omitempty" yaml:"hashBy" env:"HASHBY"` // The column to use as key (metric), defaults to 'event'.
+	SortBy string         `json:"sortBy,omitempty" yaml:"sortBy" env:"SORTBY"` // The column to use as time, defaults to 'tsi'.
+	Schema *typeof.Schema `json:"schema" yaml:"schema" env:"SCHEMA"`           // The schema of the table
+}
+
+// Log is the config for log table
+type Log struct {
+	Name   string `json:"name" yaml:"name" env:"NAME"`                 // The name of the table
+	TTL    int64  `json:"ttl,omitempty" yaml:"ttl" env:"TTL"`          // The ttl (in seconds) for the storage, defaults to 1 hour.
+	SortBy string `json:"sortBy,omitempty" yaml:"sortBy" env:"SORTBY"` // The column to use as time, defaults to 'time'.
+}
+
+// Nodes
+type Nodes struct {
+	Name string `json:"name" yaml:"name" env:"NAME"` // The name of the table
+}
+
+// Storage is the location to write the data
+type Storage struct {
+	Directory string `json:"dir" yaml:"dir" env:"DIR"`
+}
+
+// Readers are ways to read the data
+type Readers struct {
+	Presto *Presto `json:"presto" yaml:"presto" env:"PRESTO"`
+}
+
+// Writers are sources to write data
+type Writers struct {
+	GRPC  *GRPC  `json:"grpc,omitempty" yaml:"grpc" env:"GRPC"`    // The GRPC ingress
+	S3SQS *S3SQS `json:"s3sqs,omitempty" yaml:"s3sqs" env:"S3SQS"` // The S3SQS ingress
+}
+
+// GRPC represents the configuration for gRPC ingress
 type GRPC struct {
-	Port int32 `json:"port"` // The port for the gRPC listener (default: 8080)
+	Port int32 `json:"port" yaml:"port" env:"PORT"` // The port for the gRPC listener (default: 8080)
 }
 
-// SQS represents the aws SQS configuration
-type SQS struct {
-	QueueURL          string `json:"endpoint"`
-	WaitTimeout       int64  `json:"waitTimeout"`       // in seconds
-	VisibilityTimeout *int64 `json:"visibilityTimeout"` // in seconds
-	MaxRetries        int    `json:"maxRetries"`
+// S3SQS represents the aws S3 SQS configuration
+type S3SQS struct {
+	Region            string `json:"region" yaml:"region" env:"REGION"`
+	Queue             string `json:"queue" yaml:"queue" env:"QUEUE"`
+	WaitTimeout       int64  `json:"waitTimeout,omitempty" yaml:"waitTimeout" env:"WAITTIMEOUT"`                   // in seconds
+	VisibilityTimeout *int64 `json:"visibilityTimeout,omitempty" yaml:"visibilityTimeout" env:"VISIBILITYTIMEOUT"` // in seconds
+	Retries           int    `json:"retries" yaml:"retries" env:"RETRIES"`
 }
 
 // Presto represents the Presto configuration
 type Presto struct {
-	Port   int32  `json:"port"`
-	Schema string `json:"schema"`
-	Table  string `json:"table"`
-}
-
-// Storage represents the storage configuration
-type Storage struct {
-	TTLInSec   int64  `json:"ttlInSec"`   // The ttl for the storage, defaults to 1 hour.
-	KeyColumn  string `json:"keyColumn"`  // The column to use as key (metric), defaults to 'event'.
-	TimeColumn string `json:"timeColumn"` // The column to use as time, defaults to 'tsi'.
-}
-
-// Log represents the log configuration
-type Log struct {
-	TTLInSec int64 `json:"ttlInSec"` // The ttl for the log, defaults to 1 day.
+	Port   int32  `json:"port" yaml:"port" env:"PORT"`
+	Schema string `json:"schema" yaml:"schema" env:"SCHEMA"`
 }
 
 // StatsD represents the configuration for statsD client
 type StatsD struct {
-	Host string `json:"host"`
-	Port int64  `json:"port"`
+	Host string `json:"host" yaml:"host" env:"HOST"`
+	Port int64  `json:"port" port:"port" env:"PORT"`
 }
 
 // Computed represents a computed column
@@ -86,128 +100,15 @@ type Computed struct {
 	Func string      `json:"func"`
 }
 
-// Load loads the configuration
-func Load(envVar string) *Config {
-	cfg := &Config{
-		Presto: &Presto{
-			Port: 8042,
-		},
-		Storage: &Storage{
-			TTLInSec:   3600,
-			KeyColumn:  "event",
-			TimeColumn: "tsi",
-		},
-		Log: &Log{
-			TTLInSec: 24 * 3600, // 1 day
-		},
-		GRPC: &GRPC{
-			Port: 8080,
-		},
+type Func func() *Config
+
+// Load iterates through all the providers and fills the config object.
+// Order of providers is important as the the last provider can override the previous one
+// It sets watch on the config for hot reload of the config
+func Load(ctx context.Context, d time.Duration, configurers ...Configurer) Func {
+	cs := newStore(d, configurers)
+	cs.watch(ctx)
+	return func() *Config {
+		return cs.config.Load().(*Config)
 	}
-
-	// Load the configuration
-	if err := loadJSONEnvPath(envVar, cfg); err != nil {
-		panic(fmt.Errorf("failed to load config file with error %s", err))
-	}
-
-	return cfg
-}
-
-// LoadJSONEnvPath gets your config from the json file provided by env var,
-// and fills your struct with the option
-func loadJSONEnvPath(envVar string, config interface{}) error {
-	if config == nil {
-		return errors.New("configuration is empty")
-	}
-
-	filename := os.Getenv(envVar)
-	if filename == "" {
-		return fmt.Errorf("Env var is empty: %s", envVar)
-	}
-	log.Printf("loading config from envVar %s, file = %s", envVar, filename)
-	return loadJSONFile(filename, config)
-}
-
-// Loader represents a configuration loader delegate
-type loader func(string) ([]byte, error)
-
-// LoadJSONFile gets your config from the json file,
-// and fills your struct with the option
-func loadJSONFile(filename string, config interface{}) error {
-	if config == nil {
-		return errors.New("configuration is empty")
-	}
-
-	// Default to loading from file, for safety
-	loadConfig := loader(loadFromFile)
-
-	// If the filename provided is actually an HTTP or HTTPS uri, let's load from there
-	// In future, we can add ucm://
-	if strings.HasPrefix(filename, "http://") || strings.HasPrefix(filename, "https://") {
-		loadConfig = loader(loadFromHTTP)
-	}
-
-	// If the URL points to S3, use S3 SDK to load the configuration from
-	if strings.HasPrefix(filename, "s3://") {
-		loadConfig = loader(loadFromS3)
-	}
-
-	// Load the configuration
-	bytes, err := loadConfig(filename)
-	if err != nil {
-		return err
-	}
-	json.Unmarshal(bytes, config)
-	return nil
-}
-
-// loads a file from HTTP
-func loadFromHTTP(uri string) ([]byte, error) {
-	resp, err := http.Get(uri)
-	if err != nil {
-		return nil, err
-	}
-	defer func() { _ = resp.Body.Close() }()
-
-	// Write the body to file
-	log.Printf("%s : loading config from HTTP %s", logTag, uri)
-	return ioutil.ReadAll(resp.Body)
-}
-
-// loads a file from OS File
-func loadFromFile(uri string) ([]byte, error) {
-	log.Printf("%s : loading config from OS File %s", logTag, uri)
-	return ioutil.ReadFile(uri)
-}
-
-// loads a file from S3
-func loadFromS3(uri string) ([]byte, error) {
-	log.Printf("%s : loading config from S3 %s", logTag, uri)
-
-	// Parse the URL
-	u, err := url.Parse(uri)
-	if err != nil {
-		return nil, err
-	}
-
-	// Create the session
-	conf := aws.NewConfig()
-	sess, err := session.NewSession(conf)
-	if err != nil {
-		return nil, err
-	}
-
-	// Download the file
-	w := &aws.WriteAtBuffer{}
-	c := s3manager.NewDownloader(sess)
-	_, err = c.Download(w, &s3.GetObjectInput{
-		Bucket: aws.String(u.Host),
-		Key:    aws.String(u.Path),
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	// Successfully downloaded the configuration
-	return w.Bytes(), nil
 }

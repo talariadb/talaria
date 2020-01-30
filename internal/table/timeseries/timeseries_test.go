@@ -4,13 +4,16 @@
 package timeseries_test
 
 import (
+	"context"
 	"io/ioutil"
 	"os"
 	"testing"
+	"time"
 
 	"github.com/grab/talaria/internal/config"
 	"github.com/grab/talaria/internal/encoding/block"
-	"github.com/grab/talaria/internal/monitor"
+	"github.com/grab/talaria/internal/encoding/typeof"
+	monitor2 "github.com/grab/talaria/internal/monitor"
 	"github.com/grab/talaria/internal/presto"
 	"github.com/grab/talaria/internal/table/timeseries"
 	"github.com/stretchr/testify/assert"
@@ -25,23 +28,44 @@ func (m noopMembership) Members() []string {
 	return []string{"127.0.0.1"}
 }
 
-func TestTimeseries(t *testing.T) {
-	dir, err := ioutil.TempDir(".", "testdata-")
-	assert.NoError(t, err)
-	defer func() { _ = os.RemoveAll(dir) }()
+type mockConfigurer struct {
+	dir string
+}
 
-	cfg := config.Config{
-		DataDir: dir,
-		Storage: &config.Storage{
-			TTLInSec:   3600,
-			KeyColumn:  "string1",
-			TimeColumn: "int1",
-		},
+func (m *mockConfigurer) Configure(c *config.Config) error {
+
+	c.Tables.Timeseries = &config.Timeseries{
+		Name:   "eventlog",
+		TTL:    3600,
+		HashBy: "string1",
+		SortBy: "int1",
+	}
+
+	c.Storage.Directory = m.dir
+	return nil
+}
+
+func TestTimeseries(t *testing.T) {
+	dir, _ := ioutil.TempDir(".", "testdata-")
+	cfg := config.Load(context.Background(), 60*time.Second, &mockConfigurer{
+		dir: dir,
+	})
+	defer func() { _ = os.RemoveAll(dir) }()
+	sortBy := func() string {
+		return cfg().Tables.Timeseries.SortBy
+	}
+
+	hashBy := func() string {
+		return cfg().Tables.Timeseries.HashBy
+	}
+
+	schema := func() *typeof.Schema {
+		return cfg().Tables.Timeseries.Schema
 	}
 
 	// Start the server and open the database
-	monitor := monitor.NewNoop()
-	eventlog := timeseries.New("eventlog", cfg.Storage, cfg.DataDir, new(noopMembership), monitor)
+	monitor := monitor2.NewNoop()
+	eventlog := timeseries.New("eventlog", hashBy, sortBy, cfg().Tables.Timeseries.TTL, cfg().Storage.Directory, new(noopMembership), monitor, schema)
 	assert.NotNil(t, eventlog)
 	assert.Equal(t, "eventlog", eventlog.Name())
 	defer eventlog.Close()
@@ -50,7 +74,7 @@ func TestTimeseries(t *testing.T) {
 	{
 		b, err := ioutil.ReadFile(testFile3)
 		assert.NoError(t, err)
-		blocks, err := block.FromOrcBy(b, cfg.Storage.KeyColumn)
+		blocks, err := block.FromOrcBy(b, cfg().Tables.Timeseries.HashBy)
 		assert.NoError(t, err)
 		for _, block := range blocks {
 			assert.NoError(t, eventlog.Append(block))
@@ -66,7 +90,7 @@ func TestTimeseries(t *testing.T) {
 
 	// Get the splits
 	{
-		splits, err := eventlog.GetSplits([]string{}, newSplitQuery("110010100101010010101000100001", cfg.Storage.KeyColumn), 10000)
+		splits, err := eventlog.GetSplits([]string{}, newSplitQuery("110010100101010010101000100001", cfg().Tables.Timeseries.HashBy), 10000)
 		assert.NoError(t, err)
 		assert.Len(t, splits, 1)
 		assert.Equal(t, "127.0.0.1", splits[0].Addrs[0])
@@ -83,7 +107,7 @@ func TestTimeseries(t *testing.T) {
 	{
 		b, err := ioutil.ReadFile(testFile2)
 		assert.NoError(t, err)
-		blocks, err := block.FromOrcBy(b, cfg.Storage.KeyColumn)
+		blocks, err := block.FromOrcBy(b, cfg().Tables.Timeseries.HashBy)
 		assert.NoError(t, err)
 		for _, block := range blocks {
 			assert.NoError(t, eventlog.Append(block))
@@ -99,7 +123,7 @@ func TestTimeseries(t *testing.T) {
 
 	// Get the splits
 	{
-		splits, err := eventlog.GetSplits([]string{}, newSplitQuery("110010100101010010101000100001", cfg.Storage.KeyColumn), 10000)
+		splits, err := eventlog.GetSplits([]string{}, newSplitQuery("110010100101010010101000100001", cfg().Tables.Timeseries.HashBy), 10000)
 		assert.NoError(t, err)
 		assert.Len(t, splits, 1)
 		assert.Equal(t, "127.0.0.1", splits[0].Addrs[0])

@@ -21,12 +21,12 @@ const (
 )
 
 // NewReader returns a reader
-func NewReader(c *config.SQS, region string) (*Reader, error) {
+func NewReader(c *config.S3SQS, region string) (*Reader, error) {
 	const defaultVisibilityTimeout = time.Second * 30
 
 	conf := aws.NewConfig().
 		WithRegion(region).
-		WithMaxRetries(c.MaxRetries)
+		WithMaxRetries(c.Retries)
 
 	// Create the session
 	sess, err := session.NewSession(conf)
@@ -44,7 +44,7 @@ func NewReader(c *config.SQS, region string) (*Reader, error) {
 		sqs:               consumer,
 		stopCh:            make(chan struct{}),
 		visibilityTimeout: visibilityTimeout,
-		queueURL:          c.QueueURL,
+		queueURL:          c.Queue,
 		waitTimeSeconds:   c.WaitTimeout,
 	}, nil
 }

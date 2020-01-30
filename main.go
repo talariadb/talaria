@@ -9,9 +9,14 @@ import (
 	"os/signal"
 	"strconv"
 	"syscall"
+	"time"
 
 	"github.com/DataDog/datadog-go/statsd"
 	"github.com/grab/talaria/internal/config"
+	"github.com/grab/talaria/internal/config/env"
+	"github.com/grab/talaria/internal/config/s3"
+	"github.com/grab/talaria/internal/config/static"
+	"github.com/grab/talaria/internal/encoding/typeof"
 	"github.com/grab/talaria/internal/ingress/s3sqs"
 	"github.com/grab/talaria/internal/monitor"
 	"github.com/grab/talaria/internal/monitor/logging"
@@ -28,23 +33,34 @@ const (
 )
 
 func main() {
-	cfg := config.Load("TALARIA_CONF")
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	//cfg := config.Load("TALARIA_CONF")
+	cfg := config.Load(
+		ctx,
+		60*time.Second,
+		static.New(),
+		env.New("TALARIA_CONF"),
+		s3.New(),
+	)
+	cfgVal := cfg()
 
 	// Setup gossip
 	gossip := cluster.New(7946)
 
 	// StatsD
-	s, err := statsd.New(cfg.Statsd.Host + ":" + strconv.FormatInt(cfg.Statsd.Port, 10))
+	s, err := statsd.New(cfgVal.Statsd.Host + ":" + strconv.FormatInt(cfgVal.Statsd.Port, 10))
 	if err != nil {
 		panic(err)
 	}
 
 	// Create a log table and a simple stdout monitor
-	stdout := monitor.New(logging.NewStandard(), s, "talaria", cfg.Env)
-	logTbl := log.New(cfg.Log, cfg.DataDir, gossip, stdout)
+	stdout := monitor.New(logging.NewStandard(), s, "talaria", cfgVal.Env)
+	logTbl := log.New(cfg, cfgVal.Storage.Directory, gossip, stdout)
 
 	// Setup a monitor with a table output
-	monitor := monitor.New(logTbl, s, "talaria", cfg.Env)
+	monitor := monitor.New(logTbl, s, "talaria", cfgVal.Env)
 	monitor.Info("starting the log table ...")
 
 	monitor.Count1("system", "event", "type:start")
@@ -53,15 +69,27 @@ func main() {
 
 	startMonitor(monitor)
 
+	sortBy := func() string {
+		return cfg().Tables.Timeseries.SortBy
+	}
+
+	hashBy := func() string {
+		return cfg().Tables.Timeseries.HashBy
+	}
+
+	schema := func() *typeof.Schema {
+		return cfg().Tables.Timeseries.Schema
+	}
+
 	// Start the server and open the database
 	server := server.New(cfg, monitor,
-		timeseries.New(cfg.Presto.Table, cfg.Storage, cfg.DataDir, gossip, monitor), // The primary timeseries table
+		timeseries.New(cfgVal.Tables.Timeseries.Name, hashBy, sortBy, cfgVal.Tables.Timeseries.TTL, cfgVal.Storage.Directory, gossip, monitor, schema), // The primary timeseries table
 		nodes.New(gossip), // Cluster membership info table
 		logTbl,
 	)
 
 	// Create an S3 + SQS ingestion
-	ingestor, err := s3sqs.New(cfg.Sqs, cfg.AwsRegion, monitor)
+	ingestor, err := s3sqs.New(cfgVal.Writers.S3SQS, cfgVal.Writers.S3SQS.Region, monitor)
 	if err != nil {
 		panic(err)
 	}
@@ -78,8 +106,6 @@ func main() {
 	})
 
 	// onSignal will be called when a OS-level signal is received.
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
 	onSignal(func(_ os.Signal) {
 		cancel()         // Cancel the context
 		gossip.Close()   // Close the gossip layer
@@ -88,11 +114,11 @@ func main() {
 	})
 
 	// Join the cluster
-	gossip.JoinHostname(cfg.Domain)
+	gossip.JoinHostname(cfgVal.Domain)
 
 	// Start listen
 	monitor.Info("starting server listener ...")
-	if err := server.Listen(ctx, cfg.Presto.Port, cfg.GRPC.Port); err != nil {
+	if err := server.Listen(ctx, cfgVal.Readers.Presto.Port, cfgVal.Writers.GRPC.Port); err != nil {
 		panic(err)
 	}
 }

@@ -11,7 +11,6 @@ import (
 	"time"
 
 	"github.com/grab/talaria/internal/column"
-	"github.com/grab/talaria/internal/config"
 	"github.com/grab/talaria/internal/encoding/block"
 	"github.com/grab/talaria/internal/encoding/key"
 	"github.com/grab/talaria/internal/encoding/typeof"
@@ -39,18 +38,23 @@ type Membership interface {
 
 // Table represents a timeseries table.
 type Table struct {
-	name       string          // The name of the table
-	keyColumn  string          // The name of the key column
-	timeColumn string          // The name of the time column
-	ttl        time.Duration   // The default TTL
-	store      storage.Storage // The storage to use
-	schema     atomic.Value    // The latest schema
-	cluster    Membership      // The membership list to use
-	monitor    monitor.Monitor // The monitoring client
+	name         string          // The name of the table
+	keyColumn    HashBy          // The name of the key column
+	timeColumn   SortBy          // The name of the time column
+	ttl          time.Duration   // The default TTL
+	store        storage.Storage // The storage to use
+	schema       atomic.Value    // The latest schema
+	cluster      Membership      // The membership list to use
+	monitor      monitor.Monitor // The monitoring client
+	staticSchema StaticSchema    // The static schema of the timeseries table
 }
 
+type HashBy func() string
+type SortBy func() string
+type StaticSchema func() *typeof.Schema
+
 // New creates a new table implementation.
-func New(name string, cfg *config.Storage, dataDir string, cluster Membership, monitor monitor.Monitor) *Table {
+func New(name string, hashBy HashBy, sortBy SortBy, ttl int64, dataDir string, cluster Membership, monitor monitor.Monitor, staticSchema StaticSchema) *Table {
 	store := disk.New(monitor)
 	tableDir := path.Join(dataDir, name)
 	err := store.Open(tableDir)
@@ -59,13 +63,14 @@ func New(name string, cfg *config.Storage, dataDir string, cluster Membership, m
 	}
 
 	return &Table{
-		name:       name,
-		store:      store,
-		keyColumn:  cfg.KeyColumn,
-		timeColumn: cfg.TimeColumn,
-		ttl:        time.Duration(cfg.TTLInSec) * time.Second,
-		cluster:    cluster,
-		monitor:    monitor,
+		name:         name,
+		store:        store,
+		keyColumn:    hashBy,
+		timeColumn:   sortBy,
+		ttl:          time.Duration(ttl) * time.Second,
+		cluster:      cluster,
+		monitor:      monitor,
+		staticSchema: staticSchema,
 	}
 }
 
@@ -88,7 +93,7 @@ func (t *Table) Schema() (typeof.Schema, error) {
 func (t *Table) GetSplits(desiredColumns []string, outputConstraint *presto.PrestoThriftTupleDomain, maxSplitCount int) ([]table.Split, error) {
 
 	// Create a new query and validate it
-	queries, err := parseThriftDomain(outputConstraint, t.keyColumn, t.timeColumn)
+	queries, err := parseThriftDomain(outputConstraint, t.keyColumn(), t.timeColumn())
 	if err != nil {
 		t.monitor.Count1(ctxTag, errTag, "tag:parse_domain")
 		return nil, err
@@ -191,7 +196,7 @@ func (t *Table) readDataFrame(schema typeof.Schema, buffer []byte, maxBytes int)
 func (t *Table) Append(block block.Block) error {
 
 	// Get the min timestamp of the block
-	ts, hasTs := block.Min(t.timeColumn)
+	ts, hasTs := block.Min(t.timeColumn())
 	if !hasTs || ts < 0 {
 		ts = 0
 	}
@@ -212,11 +217,18 @@ func (t *Table) Append(block block.Block) error {
 
 // getSchema gets the latest ingested schema.
 func (t *Table) getSchema() typeof.Schema {
-	v := t.schema.Load()
-	if v != nil {
-		if schema, ok := v.(typeof.Schema); ok {
-			return schema
+	// first get the static schema. If missing then use the dynamic schema
+	v := t.staticSchema()
+	if v == nil {
+		s := t.schema.Load()
+		if s != nil {
+			if schema, ok := s.(typeof.Schema); ok {
+				return schema
+			}
+			return typeof.Schema{}
 		}
+		return typeof.Schema{}
 	}
-	return typeof.Schema{}
+
+	return *v
 }

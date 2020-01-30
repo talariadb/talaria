@@ -1,0 +1,29 @@
+mode: staging
+env: staging
+domain: "staging-stalker-headless-svc.default.svc.cluster.local"
+readers:
+  presto:
+    schema: grab_x
+    port: 8042
+writers:
+  grpc:
+    port: 8080
+  s3sqs:
+    region: "ap-southeast-1"
+    queue: "https://sqs.ap-southeast-1.amazonaws.com/683171044260/stg-mcd-consumer-sqs"
+    waitTimeout: 1
+    retries: 5
+storage:
+  dir: "/data"
+tables:
+  timeseries:
+    name: eventlog
+    ttl: 3600
+    hashBy: event
+  log:
+    name: logs
+  nodes:
+    name: nodes
+statsd:
+  host: "statsd-prd.grab-x.net"
+  port: 8126

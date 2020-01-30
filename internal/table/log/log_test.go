@@ -4,9 +4,11 @@
 package log
 
 import (
+	"context"
 	"io/ioutil"
 	"os"
 	"testing"
+	"time"
 
 	"github.com/grab/talaria/internal/config"
 	"github.com/grab/talaria/internal/monitor"
@@ -25,18 +27,32 @@ func (m noopMembership) Addr() string {
 	return "127.0.0.1"
 }
 
+type mockConfigurer struct {
+	dir string
+}
+
+func (m *mockConfigurer) Configure(c *config.Config) error {
+	c.Storage.Directory = m.dir
+	c.Tables.Log = &config.Log{
+		TTL:  60,
+		Name: "log",
+	}
+	return nil
+}
+
 func TestLog(t *testing.T) {
 	dir, err := ioutil.TempDir(".", "testlog-")
 	assert.NoError(t, err)
+
 	defer func() { _ = os.RemoveAll(dir) }()
 
-	cfg := config.Config{
-		DataDir: dir,
-	}
+	cfg := config.Load(context.Background(), 60*time.Second, &mockConfigurer{
+		dir: dir,
+	})
 
 	// Start the server and open the database
 	monitor := monitor.NewNoop()
-	logs := New(&config.Log{TTLInSec: 60}, cfg.DataDir, new(noopMembership), monitor)
+	logs := New(cfg, cfg().Storage.Directory, new(noopMembership), monitor)
 	assert.NotNil(t, logs)
 	assert.Equal(t, "log", logs.Name())
 	defer logs.Close()
