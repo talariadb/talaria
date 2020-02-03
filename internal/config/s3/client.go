@@ -1,24 +1,18 @@
+// Copyright 2020 Grabtaxi Holdings PTE LTE (GRAB), All rights reserved.
+// Use of this source code is governed by an MIT-style license that can be found in the LICENSE file
+
 package s3
 
 import (
 	"context"
-	"io"
-	"runtime"
+	"time"
 
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/s3"
-	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	"github.com/grab/talaria/internal/monitor/errors"
+	"github.com/kelindar/loader/s3"
 )
 
 type downloader interface {
-	DownloadWithContext(ctx aws.Context, w io.WriterAt, input *s3.GetObjectInput, options ...func(*s3manager.Downloader)) (n int64, err error)
-}
-
-// Client interface to interact with S3
-type Client interface {
-	Download(ctx context.Context, bucket, key string) ([]byte, error)
+	DownloadIf(ctx context.Context, bucket, prefix string, updatedSince time.Time) ([]byte, error)
 }
 
 type client struct {
@@ -33,28 +27,25 @@ func newClient(dl downloader) (*client, error) {
 		}, nil
 	}
 
-	// Create the session
-	conf := aws.NewConfig()
-	sess, err := session.NewSession(conf)
+	c, err := s3.New("", 5)
+
 	if err != nil {
-		return nil, errors.Internal("unable to create a session", err)
+		return nil, errors.Internal("unable to create loader client for s3", err)
 	}
 
 	return &client{
-		downloader: s3manager.NewDownloader(sess, func(d *s3manager.Downloader) { d.Concurrency = runtime.NumCPU() }),
+		downloader: c,
 	}, nil
 }
 
 // Download a specific key from the bucket
 func (s *client) Download(ctx context.Context, bucket, key string) ([]byte, error) {
-	w := new(aws.WriteAtBuffer)
-	n, err := s.downloader.DownloadWithContext(ctx, w, &s3.GetObjectInput{
-		Bucket: aws.String(bucket),
-		Key:    aws.String(key),
-	})
+	downloadedAt := time.Now()
+	downloadedAt.Add(-1 * time.Second * 90)
+	data, err := s.downloader.DownloadIf(ctx, bucket, key, downloadedAt)
 	if err != nil {
 		return nil, err
 	}
 
-	return w.Bytes()[:n], nil
+	return data, nil
 }

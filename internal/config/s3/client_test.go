@@ -1,31 +1,32 @@
+// Copyright 2020 Grabtaxi Holdings PTE LTE (GRAB), All rights reserved.
+// Use of this source code is governed by an MIT-style license that can be found in the LICENSE file
+
 package s3
 
 import (
-	"io"
 	"testing"
+	"time"
 
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/service/s3"
-	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	"github.com/stretchr/testify/assert"
 	"golang.org/x/net/context"
 )
 
-type downloadMock func(ctx aws.Context, w io.WriterAt, input *s3.GetObjectInput, options ...func(*s3manager.Downloader)) (n int64, err error)
+type downloadMock func(ctx context.Context, bucket, prefix string, updatedSince time.Time) ([]byte, error)
 
-func (d downloadMock) DownloadWithContext(ctx aws.Context, w io.WriterAt, input *s3.GetObjectInput, options ...func(*s3manager.Downloader)) (n int64, err error) {
-	return d(ctx, w, input, options...)
+func (d downloadMock) DownloadIf(ctx context.Context, bucket, prefix string, updatedSince time.Time) ([]byte, error) {
+	return d(ctx, bucket, prefix, updatedSince)
 }
 
 func TestClient(t *testing.T) {
 	var down downloadMock
-	down = func(ctx aws.Context, w io.WriterAt, input *s3.GetObjectInput, options ...func(*s3manager.Downloader)) (n int64, err error) {
-		return int64(0), nil
+	down = func(ctx context.Context, bucket, prefix string, updatedSince time.Time) ([]byte, error) {
+		return []byte("abc"), nil
 	}
 	cl, err := newClient(down)
 	assert.Nil(t, err)
 	assert.NotNil(t, cl)
 
-	_, err = cl.Download(context.Background(), "an", "cd")
+	v, err := cl.Download(context.Background(), "an", "cd")
 	assert.Nil(t, err)
+	assert.Equal(t, string(v), "abc")
 }

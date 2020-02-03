@@ -1,4 +1,4 @@
-// Copyright 2019 Grabtaxi Holdings PTE LTE (GRAB), All rights reserved.
+// Copyright 2020 Grabtaxi Holdings PTE LTE (GRAB), All rights reserved.
 // Use of this source code is governed by an MIT-style license that can be found in the LICENSE file
 
 package s3
@@ -52,7 +52,7 @@ func (s *Configurer) Configure(c *config.Config) error {
 		if err != nil {
 			return err
 		}
-		err = yaml.Unmarshal(b, c.Tables.Timeseries.Schema)
+		err = yaml.Unmarshal(b, &c.Tables.Timeseries.Schema)
 		if err != nil {
 			return err
 		}

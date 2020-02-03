@@ -1,13 +1,13 @@
+// Copyright 2020 Grabtaxi Holdings PTE LTE (GRAB), All rights reserved.
+// Use of this source code is governed by an MIT-style license that can be found in the LICENSE file
+
 package s3
 
 import (
-	"fmt"
-	"io"
+	"context"
 	"testing"
+	"time"
 
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/service/s3"
-	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	"github.com/grab/talaria/internal/config"
 	"github.com/grab/talaria/internal/config/static"
 	"github.com/stretchr/testify/assert"
@@ -23,8 +23,8 @@ func TestConfigure(t *testing.T) {
 	c.Tables.Timeseries.Name = "abc"
 
 	var down downloadMock
-	down = func(ctx aws.Context, w io.WriterAt, input *s3.GetObjectInput, options ...func(*s3manager.Downloader)) (n int64, err error) {
-		return int64(0), nil
+	down = func(ctx context.Context, bucket, prefix string, updatedSince time.Time) ([]byte, error) {
+		return []byte("a: b"), nil
 	}
 	cl, err := newClient(down)
 	assert.Nil(t, err)
@@ -33,7 +33,6 @@ func TestConfigure(t *testing.T) {
 	}
 
 	err = s3C.Configure(c)
-	fmt.Printf("%+v\n", c.Tables.Timeseries)
 	assert.Nil(t, err)
 
 }
