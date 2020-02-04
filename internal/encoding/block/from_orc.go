@@ -11,7 +11,7 @@ import (
 	"github.com/grab/talaria/internal/column"
 	"github.com/grab/talaria/internal/encoding/orc"
 	"github.com/grab/talaria/internal/encoding/typeof"
-	orctype "github.com/scritchley/orc"
+	orctype "github.com/crphang/orc"
 )
 
 // FromOrcBy decodes a set of blocks from an orc file and repartitions

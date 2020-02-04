@@ -32,6 +32,10 @@ github.com/coreos/etcd v3.3.10+incompatible/go.mod h1:uF7uidLiAD3TWHmW31ZFd/JWoc
 github.com/coreos/go-etcd v2.0.0+incompatible/go.mod h1:Jez6KQU2B/sWsbdaef3ED8NzMklzPG4d5KIOhIy30Tk=
 github.com/coreos/go-semver v0.2.0/go.mod h1:nnelYz7RCh+5ahJtPPxZlU+153eP4D4r3EedlOD2RNk=
 github.com/cpuguy83/go-md2man v1.0.10/go.mod h1:SmD6nW6nTyfqj6ABTjUi3V3JVMnlJmwcJI5acqYI6dE=
+github.com/crphang/orc v0.0.0-20200128093536-c9b885778b24 h1:anuqPndZJTbL11YaEMmL0v97ar3cViLZEX1lfTpLxSQ=
+github.com/crphang/orc v0.0.0-20200128093536-c9b885778b24/go.mod h1:q3qhWuetBXw5s/vb2hvAlLe9rBJ5Ibd2/l5aWUoMIGA=
+github.com/crphang/orc v0.0.1 h1:nFao9WxE3Mp2nogIzPTpOpkXxebQ7GwVoSzIMIaUYFE=
+github.com/crphang/orc v0.0.1/go.mod h1:q3qhWuetBXw5s/vb2hvAlLe9rBJ5Ibd2/l5aWUoMIGA=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
@@ -145,6 +149,8 @@ github.com/samuel/go-thrift v0.0.0-20190219015601-e8b6b52668fe h1:gD4vkYmuoWVgdV
 github.com/samuel/go-thrift v0.0.0-20190219015601-e8b6b52668fe/go.mod h1:Vrkh1pnjV9Bl8c3P9zH0/D4NlOHWP5d4/hF4YTULaec=
 github.com/scritchley/orc v0.0.0-20190624124445-231963c46c29 h1:AQqRR1bIf6UIn0TiIE0kcKuq0sacc4zWwYkDQ/3RAP4=
 github.com/scritchley/orc v0.0.0-20190624124445-231963c46c29/go.mod h1:U4h1RViHcbDQl9stSaImdd7N3/ZnUkZ2yombj5cSgEY=
+github.com/scritchley/orc v0.0.0-20200117172124-9a1bb50386e0 h1:TNmFljoYMgnxB3w6vL04y4FOe0R3xytMGWotVTnSBg8=
+github.com/scritchley/orc v0.0.0-20200117172124-9a1bb50386e0/go.mod h1:U4h1RViHcbDQl9stSaImdd7N3/ZnUkZ2yombj5cSgEY=
 github.com/sean-/seed v0.0.0-20170313163322-e2103e2c3529 h1:nn5Wsu0esKSJiIVhscUtVbo7ada43DJhG55ua/hjS5I=
 github.com/sean-/seed v0.0.0-20170313163322-e2103e2c3529/go.mod h1:DxrIzT+xaE7yg65j358z/aeFdxmN0P9QXhEzd20vsDc=
 github.com/spaolacci/murmur3 v1.1.0 h1:7c1g84S4BPRrfL5Xrdp6fOJ206sU9y293DDHaoy0bLI=

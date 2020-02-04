@@ -8,7 +8,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/scritchley/orc"
+	"github.com/crphang/orc"
 	"github.com/stretchr/testify/assert"
 )
 

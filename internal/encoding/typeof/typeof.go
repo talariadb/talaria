@@ -10,7 +10,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/scritchley/orc"
+	"github.com/crphang/orc"
 )
 
 // The types of the columns supported

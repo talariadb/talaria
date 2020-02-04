@@ -120,6 +120,22 @@ func (b *PrestoThriftInteger) Min() (int64, bool) {
 	return int64(min), min != math.MaxInt32
 }
 
+// Range iterates over the column executing f on its elements
+func (b *PrestoThriftInteger) Range(from int, until int, f func(int, interface{})) {
+	for i := from; i < until; i++ {
+		if i >= len(b.Ints) {
+			break
+		}
+
+		if b.Nulls[i] {
+			f(i, nil)
+			continue
+		}
+
+		f(i, b.Ints[i])
+	}
+}
+
 // ------------------------------------------------------------------------------------------------------------
 
 // Append adds a value to the block.
@@ -217,6 +233,22 @@ func (b *PrestoThriftBigint) Kind() typeof.Type {
 	return typeof.Int64
 }
 
+// Range iterates over the column executing f on its elements
+func (b *PrestoThriftBigint) Range(from int, until int, f func(int, interface{})) {
+	for i := from; i < until; i++ {
+		if i >= len(b.Longs) {
+			break
+		}
+
+		if b.Nulls[i] {
+			f(i, nil)
+			continue
+		}
+
+		f(i, b.Longs[i])
+	}
+}
+
 // ------------------------------------------------------------------------------------------------------------
 
 // Append adds a value to the block.
@@ -300,6 +332,22 @@ func (b *PrestoThriftDouble) Kind() typeof.Type {
 // Min returns the minimum value of the column (only works for numbers).
 func (b *PrestoThriftDouble) Min() (int64, bool) {
 	return 0, false
+}
+
+// Range iterates over the column executing f on its elements
+func (b *PrestoThriftDouble) Range(from int, until int, f func(int, interface{})) {
+	for i := from; i < until; i++ {
+		if i >= len(b.Doubles) {
+			break
+		}
+
+		if b.Nulls[i] {
+			f(i, nil)
+			continue
+		}
+
+		f(i, b.Doubles[i])
+	}
 }
 
 // ------------------------------------------------------------------------------------------------------------
@@ -396,6 +444,31 @@ func (b *PrestoThriftVarchar) Min() (int64, bool) {
 	return 0, false
 }
 
+// Range iterates over the column executing f on its elements
+func (b *PrestoThriftVarchar) Range(from int, until int, f func(int, interface{})) {
+	var offset int32
+	// Seek to current offset
+	for k := 0; k < from; k++ {
+		offset += b.Sizes[k]
+	}
+
+	for i := from; i < until; i++ {
+		if i >= len(b.Sizes) {
+			break
+		}
+
+		size := b.Sizes[i]
+		if b.Nulls[i] {
+			f(i, nil)
+			continue
+		}
+
+		v := b.Bytes[offset:offset+size]
+		f(i, binaryToString(&v))
+		offset += size
+	}
+}
+
 // ------------------------------------------------------------------------------------------------------------
 
 // Append adds a value to the block.
@@ -479,6 +552,22 @@ func (b *PrestoThriftBoolean) Kind() typeof.Type {
 // Min returns the minimum value of the column (only works for numbers).
 func (b *PrestoThriftBoolean) Min() (int64, bool) {
 	return 0, false
+}
+
+// Range iterates over the column executing f on its elements
+func (b *PrestoThriftBoolean) Range(from int, until int, f func(int, interface{})) {
+	for i := from; i < until; i++ {
+		if i >= len(b.Booleans) {
+			break
+		}
+
+		if b.Nulls[i] {
+			f(i, nil)
+			continue
+		}
+
+		f(i, b.Booleans[i])
+	}
 }
 
 // ------------------------------------------------------------------------------------------------------------
@@ -574,6 +663,22 @@ func (b *PrestoThriftTimestamp) Kind() typeof.Type {
 // Min returns the minimum value of the column (only works for numbers).
 func (b *PrestoThriftTimestamp) Min() (int64, bool) {
 	return 0, false
+}
+
+// Range iterates over the column executing f on its elements
+func (b *PrestoThriftTimestamp) Range(from int, until int, f func(int, interface{})) {
+	for i := from; i < until; i++ {
+		if i >= len(b.Timestamps) {
+			break
+		}
+
+		if b.Nulls[i] {
+			f(i, nil)
+			continue
+		}
+
+		f(i, b.Timestamps[i])
+	}
 }
 
 // ------------------------------------------------------------------------------------------------------------
@@ -681,7 +786,33 @@ func (b *PrestoThriftJson) Min() (int64, bool) {
 	return 0, false
 }
 
+// Range iterates over the column executing f on its elements
+func (b *PrestoThriftJson) Range(from int, until int, f func(int, interface{})) {
+	var offset int32
+	// Seek to current offset
+	for k := 0; k < from; k++ {
+		offset += b.Sizes[k]
+	}
+
+	for i := from; i < until; i++ {
+		if i >= len(b.Sizes) {
+			break
+		}
+
+		size := b.Sizes[i]
+		if b.Nulls[i] {
+			f(i, nil)
+			continue
+		}
+
+		v := b.Bytes[offset:offset+size]
+		f(i, binaryToString(&v))
+		offset += size
+	}
+}
+
 // Converts binary to string in a zero-alloc manner
 func binaryToString(b *[]byte) string {
 	return *(*string)(unsafe.Pointer(b))
 }
+

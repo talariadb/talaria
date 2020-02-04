@@ -8,8 +8,8 @@ import (
 	"errors"
 	"io"
 
+	"github.com/crphang/orc"
 	"github.com/grab/talaria/internal/encoding/typeof"
-	"github.com/scritchley/orc"
 )
 
 var errNoWriter = errors.New("unable to create an orc writer")

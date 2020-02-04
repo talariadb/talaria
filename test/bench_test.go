@@ -16,7 +16,7 @@ import (
 	"github.com/grab/talaria/internal/presto"
 	"github.com/grab/talaria/internal/server"
 	"github.com/grab/talaria/internal/table/timeseries"
-	talaria "github.com/grab/talaria/proto"
+	"github.com/grab/talaria/proto"
 )
 
 const testFile2 = "./test1-zlib.orc"

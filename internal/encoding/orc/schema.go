@@ -4,11 +4,10 @@
 package orc
 
 import (
-	"sort"
 	"strings"
 
+	"github.com/crphang/orc"
 	"github.com/grab/talaria/internal/encoding/typeof"
-	"github.com/scritchley/orc"
 )
 
 // SchemaFor generates a schema
@@ -17,11 +16,7 @@ func SchemaFor(schema typeof.Schema) (*orc.TypeDescription, error) {
 	sb.WriteString("struct<")
 
 	// Ensure keys are sorted
-	schemaKey := make([]string, 0, len(schema))
-	for key := range schema {
-		schemaKey = append(schemaKey, key)
-	}
-	sort.Strings(schemaKey)
+	schemaKey := schema.Columns()
 
 	first := true
 	for _, key := range schemaKey {
