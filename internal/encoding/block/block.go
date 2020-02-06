@@ -108,6 +108,16 @@ func (b *Block) Select(columns typeof.Schema) (column.Columns, error) {
 	return response, nil
 }
 
+// LastRow returns the last row of the block
+func (b *Block) LastRow() (map[string]interface{}, error) {
+	cols, err := b.Select(b.Schema())
+	if err != nil {
+		return nil, err
+	}
+
+	return cols.LastRow(), nil
+}
+
 // Min selects the smallest value for a column (must be an integer or a bigint)
 func (b *Block) Min(column string) (int64, bool) {
 	columns, err := b.Select(typeof.Schema{

@@ -24,7 +24,7 @@ func TestColumns(t *testing.T) {
 	assert.True(t, nc.Append("b", int32(2), typeof.Int32))
 	assert.False(t, nc.Append("x", complex128(1), typeof.Unsupported))
 	assert.Equal(t, 1, nc.Max())
-	assert.Equal(t, 2, len(nc.Last()))
+	assert.Equal(t, 2, len(nc.LastRow()))
 	nc.AppendComputed(data)
 	nc.FillNulls()
 	assert.NotNil(t, nc.Any())
@@ -54,7 +54,7 @@ func TestColumns(t *testing.T) {
 	assert.Equal(t, []bool{true, false, false}, nc["c"].AsThrift().VarcharData.Nulls)
 	assert.Equal(t, []float64{0, 0, 1.5}, nc["d"].AsThrift().DoubleData.Doubles)
 	assert.Equal(t, []bool{true, true, false}, nc["d"].AsThrift().DoubleData.Nulls)
-	assert.Equal(t, 5, len(nc.Last()))
+	assert.Equal(t, 5, len(nc.LastRow()))
 
 }
 

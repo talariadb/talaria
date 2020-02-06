@@ -30,13 +30,14 @@ var _ storage.Merger = new(Storage)
 
 // Storage represents s3/flush storage.
 type Storage struct {
-	monitor monitor.Monitor // The monitor client
-	writer writers.Writer
-	memoryPool *sync.Pool
+	monitor      monitor.Monitor // The monitor client
+	writer       writers.Writer
+	memoryPool   *sync.Pool
+	fileNameFunc func(map[string]interface{}) (string, error)
 }
 
 // New creates a new storage implementation.
-func New(monitor monitor.Monitor, writer writers.Writer) *Storage {
+func New(monitor monitor.Monitor, writer writers.Writer, fileNameFunc func(map[string]interface{}) (string, error)) *Storage {
 	memoryPool := &sync.Pool{
 		New: func() interface{} {
 			return bytes.NewBuffer(make([]byte, 0, 16*1<<20))
@@ -47,6 +48,7 @@ func New(monitor monitor.Monitor, writer writers.Writer) *Storage {
 		monitor: monitor,
 		writer: writer,
 		memoryPool: memoryPool,
+		fileNameFunc: fileNameFunc,
 	}
 }
 
@@ -107,8 +109,20 @@ func (s *Storage) Merge(blocks []block.Block, schema typeof.Schema) ([]byte, []b
 	buffer.Reset()
 	s.memoryPool.Put(buffer)
 
-	// TODO: Expose key as pluggable function
-	return []byte(blocks[0].Key), output
+	return s.generateFileName(blocks[0]), output
+}
+
+func (s *Storage) generateFileName(b block.Block) []byte {
+	row, err := b.LastRow()
+	if err != nil {
+		return []byte{}
+	}
+	output, err := s.fileNameFunc(row)
+	if err != nil {
+		return []byte{}
+	}
+
+	return []byte(output)
 }
 
 // Close is used to gracefully close storage.

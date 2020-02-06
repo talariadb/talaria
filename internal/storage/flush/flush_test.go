@@ -6,6 +6,7 @@ package flush
 import (
 	"bytes"
 	"compress/flate"
+	"github.com/grab/talaria/internal/column"
 
 	eorc "github.com/crphang/orc"
 
@@ -22,9 +23,22 @@ import (
 const testBlockFile = "../../../test/testBlocks"
 
 func TestMerge(t *testing.T) {
-	flusher := New(monitor.NewNoop(), nil)
+	fileNameFunc := func(row map[string]interface{}) (string, error){
+		lua, _ := column.NewComputed("fileName", typeof.String, `
+
+		function main(row)
+			current_time = 0
+			fileName = string.format("%s-%d",row["col0"],0)
+			return fileName
+		end`)
+
+		output, err := lua.Value(row)
+		return output.(string), err
+	}
+	flusher := New(monitor.NewNoop(), writers.NewNoop(), fileNameFunc)
 
 	schema := typeof.Schema{
+		"col0": typeof.String,
 		"col1": typeof.Int64,
 		"col2": typeof.Float64,
 	}
@@ -36,17 +50,17 @@ func TestMerge(t *testing.T) {
 	orcBuffer1 := &bytes.Buffer{}
 	writer, _ := eorc.NewWriter(orcBuffer1,
 		eorc.SetSchema(orcSchema))
-	_ = writer.Write(1, 1.0)
+	_ = writer.Write("eventName", 1, 1.0)
 	_ = writer.Close()
 
 	orcBuffer2 := &bytes.Buffer{}
 	writer, _ = eorc.NewWriter(orcBuffer2,
 		eorc.SetSchema(orcSchema))
-	_ = writer.Write(2, 2.0)
+	_ = writer.Write("eventName", 2, 2.0)
 	_ = writer.Close()
 
-	block1, err := block.FromOrcBy(orcBuffer1.Bytes(), "col1")
-	block2, err := block.FromOrcBy(orcBuffer2.Bytes(), "col1")
+	block1, err := block.FromOrcBy(orcBuffer1.Bytes(), "col0")
+	block2, err := block.FromOrcBy(orcBuffer2.Bytes(), "col0")
 
 	mergedBlocks := []block.Block{}
 	for _, blk := range block1 {
@@ -55,18 +69,22 @@ func TestMerge(t *testing.T) {
 	for _, blk := range block2 {
 		mergedBlocks = append(mergedBlocks, blk)
 	}
-	_, mergedValue := flusher.Merge(mergedBlocks, schema)
+	fileName, mergedValue := flusher.Merge(mergedBlocks, schema)
 
 	orcBuffer := &bytes.Buffer{}
 	writer, _ = eorc.NewWriter(orcBuffer,
 		eorc.SetSchema(orcSchema),
 		eorc.SetCompression(eorc.CompressionZlib{Level: flate.DefaultCompression}))
-	_ = writer.Write(1, 1.0)
-	_ = writer.Write(2, 2.0)
+	_ = writer.Write("eventName", 1, 1.0)
+	_ = writer.Write("eventName", 2, 2.0)
 	_ = writer.Close()
 
 	if !bytes.Equal(orcBuffer.Bytes(), mergedValue) {
 		t.Fatal("Merged orc value differ")
+	}
+
+	if !bytes.Equal([]byte("eventName-0"), fileName) {
+		t.Fatal("File name differ")
 	}
 }
 
@@ -79,7 +97,12 @@ func BenchmarkFlush(b *testing.B) {
 
 	// Create flusher
 	noopWriter := writers.NewNoop()
-	flusher := New(monitor, noopWriter)
+
+	fileNameFunc := func(row map[string]interface{}) (string, error){
+		return "noop", nil
+	}
+
+	flusher := New(monitor, noopWriter, fileNameFunc)
 
 	// Append some files
 

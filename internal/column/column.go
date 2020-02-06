@@ -50,8 +50,8 @@ func (c Columns) Max() (max int) {
 	return
 }
 
-// Last returns the last row
-func (c Columns) Last() map[string]interface{} {
+// LastRow returns the last row
+func (c Columns) LastRow() map[string]interface{} {
 	row := make(map[string]interface{}, len(c))
 	for name, column := range c {
 		row[name] = column.Last()
@@ -65,7 +65,7 @@ func (c Columns) AppendComputed(computed []*Computed) error {
 		return nil
 	}
 
-	row := c.Last()
+	row := c.LastRow()
 	for _, s := range computed {
 		v, err := s.Value(row)
 		if err != nil {
