@@ -1,0 +1,66 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: talaria
+  labels:
+    app: talaria
+spec:
+  serviceName: talaria
+  replicas: 1
+  updateStrategy:
+    type: RollingUpdate
+  selector:
+    matchLabels:
+      app: talaria
+  template:
+    metadata:
+      labels:
+        app: talaria
+    spec:
+      terminationGracePeriodSeconds: 30
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - labelSelector:
+                matchExpressions:
+                  - key: app
+                    operator: In
+                    values:
+                      - talaria
+              topologyKey: kubernetes.io/hostname
+      containers:
+        - image: talariadb/db:latest
+          name: talaria
+          ports:
+            - containerPort: 8042
+              name: thrift
+              protocol: TCP
+            - containerPort: 7946
+              protocol: TCP
+            - containerPort: 7946
+              protocol: UDP
+          imagePullPolicy: Always
+          env:
+            - name: TALARIA_CONF_URI
+              value: ""
+            - name: AWS_REGION
+              value: ap-southeast-1
+            - name: GOMAXPROCS
+              value: "128"
+          volumeMounts:
+            - mountPath: /data
+              name: data
+          resources:
+            requests:
+              memory: "1000Mi"
+              cpu: "1000m"
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        storageClassName: standard
+        resources:
+          requests:
+            storage: 1Gi
