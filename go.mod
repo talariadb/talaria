@@ -27,12 +27,13 @@ require (
 	github.com/kelindar/loader v0.0.0-20191110093814-1408a474c5b4
 	github.com/kelindar/lua v0.0.2
 	github.com/miekg/dns v1.1.22 // indirect
+	github.com/myteksi/hystrix-go v1.1.3
 	github.com/ricochet2200/go-disk-usage v0.0.0-20150921141558-f0d1b743428f
 	github.com/samuel/go-thrift v0.0.0-20190219015601-e8b6b52668fe
+	github.com/smartystreets/goconvey v1.6.4 // indirect
 	github.com/spaolacci/murmur3 v1.1.0
 	github.com/stretchr/objx v0.2.0 // indirect
 	github.com/stretchr/testify v1.4.0
-	github.com/vektra/mockery v0.0.0-20181123154057-e78b021dcbb5 // indirect
 	golang.org/x/crypto v0.0.0-20191011191535-87dc89f01550 // indirect
 	golang.org/x/net v0.0.0-20191206103017-1ddd1de85cb0
 	golang.org/x/sync v0.0.0-20190911185100-cd5d95a43a6e
