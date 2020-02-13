@@ -1,4 +1,4 @@
-// Copyright 2019 Grabtaxi Holdings PTE LTE (GRAB), All rights reserved.
+// Copyright 2019-2020 Grabtaxi Holdings PTE LTE (GRAB), All rights reserved.
 // Use of this source code is governed by an MIT-style license that can be found in the LICENSE file
 
 package timeseries
@@ -35,28 +35,25 @@ type Membership interface {
 
 // Table represents a timeseries table.
 type Table struct {
-	name         string          // The name of the table
-	keyColumn    HashBy          // The name of the key column
-	timeColumn   SortBy          // The name of the time column
-	ttl          time.Duration   // The default TTL
-	store        storage.Storage // The storage to use
-	schema       atomic.Value    // The latest schema
-	cluster      Membership      // The membership list to use
-	monitor      monitor.Monitor // The monitoring client
-	staticSchema StaticSchema    // The static schema of the timeseries table
+	name         string                // The name of the table
+	keyColumn    string                // The name of the key column
+	timeColumn   string                // The name of the time column
+	ttl          time.Duration         // The default TTL
+	store        storage.Storage       // The storage to use
+	schema       atomic.Value          // The latest schema
+	cluster      Membership            // The membership list to use
+	monitor      monitor.Monitor       // The monitoring client
+	staticSchema func() *typeof.Schema // The static schema of the timeseries table
 }
 
+// Config represents the configuration of the storage
 type Config struct {
-	HashBy       HashBy
-	SortBy       SortBy
-	StaticSchema StaticSchema
-	Name         string
-	TTL          int64
+	Name   string
+	TTL    int64
+	HashBy string
+	SortBy string
+	Schema func() *typeof.Schema
 }
-
-type HashBy func() string
-type SortBy func() string
-type StaticSchema func() *typeof.Schema
 
 // New creates a new table implementation.
 func New(cluster Membership, monitor monitor.Monitor, store storage.Storage, cfg Config) *Table {
@@ -68,7 +65,7 @@ func New(cluster Membership, monitor monitor.Monitor, store storage.Storage, cfg
 		ttl:          time.Duration(cfg.TTL) * time.Second,
 		cluster:      cluster,
 		monitor:      monitor,
-		staticSchema: cfg.StaticSchema,
+		staticSchema: cfg.Schema,
 	}
 }
 
@@ -91,7 +88,7 @@ func (t *Table) Schema() (typeof.Schema, error) {
 func (t *Table) GetSplits(desiredColumns []string, outputConstraint *presto.PrestoThriftTupleDomain, maxSplitCount int) ([]table.Split, error) {
 
 	// Create a new query and validate it
-	queries, err := parseThriftDomain(outputConstraint, t.keyColumn(), t.timeColumn())
+	queries, err := parseThriftDomain(outputConstraint, t.keyColumn, t.timeColumn)
 	if err != nil {
 		t.monitor.Count1(ctxTag, errTag, "tag:parse_domain")
 		return nil, err
@@ -194,7 +191,7 @@ func (t *Table) readDataFrame(schema typeof.Schema, buffer []byte, maxBytes int)
 func (t *Table) Append(block block.Block) error {
 
 	// Get the min timestamp of the block
-	ts, hasTs := block.Min(t.timeColumn())
+	ts, hasTs := block.Min(t.timeColumn)
 	if !hasTs || ts < 0 {
 		ts = 0
 	}
@@ -215,18 +212,15 @@ func (t *Table) Append(block block.Block) error {
 
 // getSchema gets the latest ingested schema.
 func (t *Table) getSchema() typeof.Schema {
-	// first get the static schema. If missing then use the dynamic schema
-	v := t.staticSchema()
-	if v == nil {
-		s := t.schema.Load()
-		if s != nil {
-			if schema, ok := s.(typeof.Schema); ok {
-				return schema
-			}
-			return typeof.Schema{}
-		}
-		return typeof.Schema{}
+	if s := t.staticSchema(); s != nil {
+		return *s
 	}
 
-	return *v
+	if s := t.schema.Load(); s != nil {
+		if schema, ok := s.(typeof.Schema); ok {
+			return schema
+		}
+	}
+
+	return typeof.Schema{}
 }

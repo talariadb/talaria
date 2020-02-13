@@ -1,4 +1,4 @@
-// Copyright 2019 Grabtaxi Holdings PTE LTE (GRAB), All rights reserved.
+// Copyright 2019-2020 Grabtaxi Holdings PTE LTE (GRAB), All rights reserved.
 // Use of this source code is governed by an MIT-style license that can be found in the LICENSE file
 
 package main
@@ -76,28 +76,18 @@ func main() {
 	gossip := cluster.New(7946)
 	gossip.JoinHostname("localhost")
 
-	sortBy := func() string {
-		return cfg().Tables.Timeseries.SortBy
-	}
-
-	hashBy := func() string {
-		return cfg().Tables.Timeseries.HashBy
-	}
-
-	schemaFunc := func() *typeof.Schema {
-		return cfg().Tables.Timeseries.Schema
-	}
-	timeseriesCfg := timeseries.Config{
-		HashBy:       hashBy,
-		SortBy:       sortBy,
-		StaticSchema: schemaFunc,
-		Name:         cfg().Tables.Timeseries.Name,
-		TTL:          cfg().Tables.Timeseries.TTL,
-	}
-	store := disk.Open(cfg().Storage.Directory, timeseriesCfg.Name, monitor)
+	store := disk.Open(cfg().Storage.Directory, cfg().Tables.Timeseries.Name, monitor)
 
 	// Start the server and open the database
-	eventlog := timeseries.New(gossip, monitor, store, timeseriesCfg)
+	eventlog := timeseries.New(gossip, monitor, store, timeseries.Config{
+		Name:   cfg().Tables.Timeseries.Name,
+		TTL:    cfg().Tables.Timeseries.TTL,
+		HashBy: cfg().Tables.Timeseries.HashBy,
+		SortBy: cfg().Tables.Timeseries.SortBy,
+		Schema: func() *typeof.Schema {
+			return cfg().Tables.Timeseries.Schema
+		},
+	})
 	server := server.New(cfg, monitor,
 		eventlog,
 		nodes.New(gossip),

@@ -1,4 +1,4 @@
-// Copyright 2019 Grabtaxi Holdings PTE LTE (GRAB), All rights reserved.
+// Copyright 2019-2020 Grabtaxi Holdings PTE LTE (GRAB), All rights reserved.
 // Use of this source code is governed by an MIT-style license that can be found in the LICENSE file
 
 package log
@@ -31,28 +31,14 @@ type Table struct {
 
 // New creates a new table implementation.
 func New(cfg config.Func, cluster Membership, monitor monitor.Monitor) *Table {
-	sortBy := func() string {
-		return cfg().Tables.Log.SortBy
-	}
-
-	hashBy := func() string {
-		return ""
-	}
-
-	schema := func() *typeof.Schema {
-		return nil
-	}
-
-	timeseriesCfg := timeseries.Config{
-		HashBy:       hashBy,
-		SortBy:       sortBy,
-		StaticSchema: schema,
-		Name:         cfg().Tables.Log.Name,
-		TTL:          cfg().Tables.Log.TTL,
-	}
-	store := disk.Open(cfg().Storage.Directory, timeseriesCfg.Name, monitor)
-
-	base := timeseries.New(cluster, monitor, store, timeseriesCfg)
+	store := disk.Open(cfg().Storage.Directory, cfg().Tables.Log.Name, monitor)
+	base := timeseries.New(cluster, monitor, store, timeseries.Config{
+		Name:   cfg().Tables.Log.Name,
+		TTL:    cfg().Tables.Log.TTL,
+		SortBy: cfg().Tables.Log.SortBy,
+		HashBy: "",
+		Schema: func() *typeof.Schema { return nil },
+	})
 	return &Table{
 		Table:   *base,
 		cluster: cluster,

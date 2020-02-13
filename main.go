@@ -1,4 +1,4 @@
-// Copyright 2019 Grabtaxi Holdings PTE LTE (GRAB), All rights reserved.
+// Copyright 2019-2020 Grabtaxi Holdings PTE LTE (GRAB), All rights reserved.
 // Use of this source code is governed by an MIT-style license that can be found in the LICENSE file
 
 package main
@@ -23,8 +23,8 @@ import (
 	"github.com/grab/talaria/internal/server"
 	"github.com/grab/talaria/internal/server/cluster"
 	"github.com/grab/talaria/internal/storage"
-	"github.com/grab/talaria/internal/storage/compact/s3compact"
 	"github.com/grab/talaria/internal/storage/disk"
+	"github.com/grab/talaria/internal/storage/s3compact"
 	"github.com/grab/talaria/internal/table/log"
 	"github.com/grab/talaria/internal/table/nodes"
 	"github.com/grab/talaria/internal/table/timeseries"
@@ -39,31 +39,24 @@ func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	//cfg := config.Load("TALARIA_CONF")
-	cfg := config.Load(
-		ctx,
-		60*time.Second,
-		static.New(),
-		env.New("TALARIA_CONF"),
-		s3.New(),
-	)
-	cfgVal := cfg()
+	configure := config.Load(ctx, 60*time.Second, static.New(), env.New("TALARIA_CONF"), s3.New())
+	conf := configure()
 
 	// Setup gossip
 	gossip := cluster.New(7946)
 
 	// StatsD
-	s, err := statsd.New(cfgVal.Statsd.Host + ":" + strconv.FormatInt(cfgVal.Statsd.Port, 10))
+	s, err := statsd.New(conf.Statsd.Host + ":" + strconv.FormatInt(conf.Statsd.Port, 10))
 	if err != nil {
 		panic(err)
 	}
 
 	// Create a log table and a simple stdout monitor
-	stdout := monitor.New(logging.NewStandard(), s, "talaria", cfgVal.Env)
-	logTbl := log.New(cfg, gossip, stdout)
+	stdout := monitor.New(logging.NewStandard(), s, "talaria", conf.Env)
+	logTbl := log.New(configure, gossip, stdout)
 
 	// Setup a monitor with a table output
-	monitor := monitor.New(logTbl, s, "talaria", cfgVal.Env)
+	monitor := monitor.New(logTbl, s, "talaria", conf.Env)
 	monitor.Info("starting the log table ...")
 
 	monitor.Count1("system", "event", "type:start")
@@ -72,43 +65,32 @@ func main() {
 
 	startMonitor(monitor)
 
-	sortBy := func() string {
-		return cfg().Tables.Timeseries.SortBy
-	}
-
-	hashBy := func() string {
-		return cfg().Tables.Timeseries.HashBy
-	}
-
-	schema := func() *typeof.Schema {
-		return cfg().Tables.Timeseries.Schema
-	}
-	timeseriesCfg := timeseries.Config{
-		HashBy:       hashBy,
-		SortBy:       sortBy,
-		StaticSchema: schema,
-		Name:         cfgVal.Tables.Timeseries.Name,
-		TTL:          cfgVal.Tables.Timeseries.TTL,
-	}
-
 	// create a store
 	var ingestor *s3sqs.Ingress
-	var store storage.Storage
-	store = disk.Open(cfgVal.Storage.Directory, cfgVal.Tables.Timeseries.Name, monitor)
+	store := storage.Storage(disk.Open(conf.Storage.Directory, conf.Tables.Timeseries.Name, monitor))
 
 	// if compact store is enabled then use the compact store
-	if cfgVal.Storage.S3Compact != nil {
-		store = s3compact.New(cfgVal.Storage.S3Compact, monitor, store)
+	if conf.Storage.S3Compact != nil {
+		store = s3compact.New(conf.Storage.S3Compact, monitor, store)
 	}
 
-	server := server.New(cfg, monitor,
-		timeseries.New(gossip, monitor, store, timeseriesCfg), // The primary timeseries table
-		nodes.New(gossip), // Cluster membership info table
+	// Start the new server
+	server := server.New(configure, monitor,
+		timeseries.New(gossip, monitor, store, timeseries.Config{
+			HashBy: conf.Tables.Timeseries.SortBy,
+			SortBy: conf.Tables.Timeseries.HashBy,
+			Name:   conf.Tables.Timeseries.Name,
+			TTL:    conf.Tables.Timeseries.TTL,
+			Schema: func() *typeof.Schema {
+				return configure().Tables.Timeseries.Schema
+			},
+		}),
+		nodes.New(gossip),
 		logTbl,
 	)
 
-	if cfgVal.Writers.S3SQS != nil {
-		ingestor, err := s3sqs.New(cfgVal.Writers.S3SQS, cfgVal.Writers.S3SQS.Region, monitor)
+	if conf.Writers.S3SQS != nil {
+		ingestor, err := s3sqs.New(conf.Writers.S3SQS, conf.Writers.S3SQS.Region, monitor)
 		if err != nil {
 			panic(err)
 		}
@@ -135,11 +117,11 @@ func main() {
 	})
 
 	// Join the cluster
-	gossip.JoinHostname(cfgVal.Domain)
+	gossip.JoinHostname(conf.Domain)
 
 	// Start listen
 	monitor.Info("starting server listener ...")
-	if err := server.Listen(ctx, cfgVal.Readers.Presto.Port, cfgVal.Writers.GRPC.Port); err != nil {
+	if err := server.Listen(ctx, conf.Readers.Presto.Port, conf.Writers.GRPC.Port); err != nil {
 		panic(err)
 	}
 }

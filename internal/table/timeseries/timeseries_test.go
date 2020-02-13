@@ -1,4 +1,4 @@
-// Copyright 2019 Grabtaxi Holdings PTE LTE (GRAB), All rights reserved.
+// Copyright 2019-2020 Grabtaxi Holdings PTE LTE (GRAB), All rights reserved.
 // Use of this source code is governed by an MIT-style license that can be found in the LICENSE file
 
 package timeseries_test
@@ -52,27 +52,22 @@ func TestTimeseries(t *testing.T) {
 		dir: dir,
 	})
 	defer func() { _ = os.RemoveAll(dir) }()
-	sortBy := func() string {
-		return cfg().Tables.Timeseries.SortBy
-	}
-
-	hashBy := func() string {
-		return cfg().Tables.Timeseries.HashBy
-	}
 
 	schema := func() *typeof.Schema {
 		return cfg().Tables.Timeseries.Schema
 	}
+
 	timeseriesCfg := timeseries.Config{
-		HashBy:       hashBy,
-		SortBy:       sortBy,
-		StaticSchema: schema,
-		Name:         "eventlog",
-		TTL:          cfg().Tables.Timeseries.TTL,
+		HashBy: cfg().Tables.Timeseries.HashBy,
+		SortBy: cfg().Tables.Timeseries.SortBy,
+		Schema: schema,
+		Name:   "eventlog",
+		TTL:    cfg().Tables.Timeseries.TTL,
 	}
 
 	monitor := monitor2.NewNoop()
 	store := disk.Open(cfg().Storage.Directory, timeseriesCfg.Name, monitor)
+
 	// Start the server and open the database
 	eventlog := timeseries.New(new(noopMembership), monitor, store, timeseriesCfg)
 	assert.NotNil(t, eventlog)

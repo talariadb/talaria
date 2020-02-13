@@ -1,4 +1,4 @@
-// Copyright 2019 Grabtaxi Holdings PTE LTE (GRAB), All rights reserved.
+// Copyright 2019-2020 Grabtaxi Holdings PTE LTE (GRAB), All rights reserved.
 // Use of this source code is governed by an MIT-style license that can be found in the LICENSE file
 
 package main
@@ -62,24 +62,14 @@ func BenchmarkQuery(b *testing.B) {
 
 	// create monitor
 	monitor := monitor.NewNoop()
-
-	sortBy := func() string {
-		return cfg().Tables.Timeseries.SortBy
-	}
-
-	hashBy := func() string {
-		return cfg().Tables.Timeseries.HashBy
-	}
-
-	schema := func() *typeof.Schema {
-		return cfg().Tables.Timeseries.Schema
-	}
 	timeseriesCfg := timeseries.Config{
-		HashBy:       hashBy,
-		SortBy:       sortBy,
-		StaticSchema: schema,
-		Name:         "eventlog",
-		TTL:          cfg().Tables.Timeseries.TTL,
+		Name:   "eventlog",
+		TTL:    cfg().Tables.Timeseries.TTL,
+		HashBy: cfg().Tables.Timeseries.HashBy,
+		SortBy: cfg().Tables.Timeseries.SortBy,
+		Schema: func() *typeof.Schema {
+			return cfg().Tables.Timeseries.Schema
+		},
 	}
 	store := disk.Open(cfg().Storage.Directory, timeseriesCfg.Name, monitor)
 
