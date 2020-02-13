@@ -51,9 +51,14 @@ type Nodes struct {
 	Name string `json:"name" yaml:"name" env:"NAME"` // The name of the table
 }
 
+// S3Compact stores the config for s3 compaction
+type S3Compact struct {
+}
+
 // Storage is the location to write the data
 type Storage struct {
-	Directory string `json:"dir" yaml:"dir" env:"DIR"`
+	Directory string     `json:"dir" yaml:"dir" env:"DIR"`
+	S3Compact *S3Compact `json:"s3Compact" yaml:"s3Compact" env:"S3COMPACT"`
 }
 
 // Readers are ways to read the data

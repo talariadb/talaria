@@ -15,6 +15,7 @@ import (
 	"github.com/grab/talaria/internal/encoding/typeof"
 	monitor2 "github.com/grab/talaria/internal/monitor"
 	"github.com/grab/talaria/internal/presto"
+	"github.com/grab/talaria/internal/storage/disk"
 	"github.com/grab/talaria/internal/table/timeseries"
 	"github.com/stretchr/testify/assert"
 )
@@ -62,10 +63,18 @@ func TestTimeseries(t *testing.T) {
 	schema := func() *typeof.Schema {
 		return cfg().Tables.Timeseries.Schema
 	}
+	timeseriesCfg := timeseries.Config{
+		HashBy:       hashBy,
+		SortBy:       sortBy,
+		StaticSchema: schema,
+		Name:         "eventlog",
+		TTL:          cfg().Tables.Timeseries.TTL,
+	}
 
-	// Start the server and open the database
 	monitor := monitor2.NewNoop()
-	eventlog := timeseries.New("eventlog", hashBy, sortBy, cfg().Tables.Timeseries.TTL, cfg().Storage.Directory, new(noopMembership), monitor, schema)
+	store := disk.Open(cfg().Storage.Directory, timeseriesCfg.Name, monitor)
+	// Start the server and open the database
+	eventlog := timeseries.New(new(noopMembership), monitor, store, timeseriesCfg)
 	assert.NotNil(t, eventlog)
 	assert.Equal(t, "eventlog", eventlog.Name())
 	defer eventlog.Close()

@@ -46,6 +46,7 @@ func (e *Configurer) Configure(c *config.Config) error {
 		Host: "localhost",
 		Port: 8125,
 	}
+
 	return nil
 }
 

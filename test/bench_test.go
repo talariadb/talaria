@@ -15,8 +15,9 @@ import (
 	"github.com/grab/talaria/internal/monitor"
 	"github.com/grab/talaria/internal/presto"
 	"github.com/grab/talaria/internal/server"
+	"github.com/grab/talaria/internal/storage/disk"
 	"github.com/grab/talaria/internal/table/timeseries"
-	"github.com/grab/talaria/proto"
+	talaria "github.com/grab/talaria/proto"
 )
 
 const testFile2 = "./test1-zlib.orc"
@@ -73,9 +74,18 @@ func BenchmarkQuery(b *testing.B) {
 	schema := func() *typeof.Schema {
 		return cfg().Tables.Timeseries.Schema
 	}
+	timeseriesCfg := timeseries.Config{
+		HashBy:       hashBy,
+		SortBy:       sortBy,
+		StaticSchema: schema,
+		Name:         "eventlog",
+		TTL:          cfg().Tables.Timeseries.TTL,
+	}
+	store := disk.Open(cfg().Storage.Directory, timeseriesCfg.Name, monitor)
+
 	// Start the server and open the database
 	server := server.New(cfg, monitor,
-		timeseries.New("eventlog", hashBy, sortBy, cfg().Tables.Timeseries.TTL, cfg().Storage.Directory, new(noopMembership), monitor, schema),
+		timeseries.New(new(noopMembership), monitor, store, timeseriesCfg),
 	)
 	defer server.Close()
 

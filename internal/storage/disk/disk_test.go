@@ -217,3 +217,12 @@ func populate(store *Storage) {
 		store.Append(key, key, 60*time.Second)
 	}
 }
+
+func TestOpen(t *testing.T) {
+	assert.NotPanicsf(t, func() {
+		disk := Open(".", "test-table", monitor.NewNoop())
+		assert.NotNil(t, disk)
+		disk.Close()
+		os.RemoveAll("test-table")
+	}, "Panic while creating disk storage and opening the directory")
+}

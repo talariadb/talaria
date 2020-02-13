@@ -8,6 +8,7 @@ import (
 	"context"
 	"log"
 	"os"
+	"path"
 	"runtime/debug"
 	"time"
 
@@ -38,6 +39,17 @@ func New(m monitor.Monitor) *Storage {
 	return &Storage{
 		monitor: m,
 	}
+}
+
+// Open creates a disk storage and open the directory
+func Open(dir string, name string, monitor monitor.Monitor) *Storage {
+	diskStorage := New(monitor)
+	tableDir := path.Join(dir, name)
+	err := diskStorage.Open(tableDir)
+	if err != nil {
+		panic(err)
+	}
+	return diskStorage
 }
 
 // Open opens a directory.

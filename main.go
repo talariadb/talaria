@@ -22,6 +22,9 @@ import (
 	"github.com/grab/talaria/internal/monitor/logging"
 	"github.com/grab/talaria/internal/server"
 	"github.com/grab/talaria/internal/server/cluster"
+	"github.com/grab/talaria/internal/storage"
+	"github.com/grab/talaria/internal/storage/compact/s3compact"
+	"github.com/grab/talaria/internal/storage/disk"
 	"github.com/grab/talaria/internal/table/log"
 	"github.com/grab/talaria/internal/table/nodes"
 	"github.com/grab/talaria/internal/table/timeseries"
@@ -57,7 +60,7 @@ func main() {
 
 	// Create a log table and a simple stdout monitor
 	stdout := monitor.New(logging.NewStandard(), s, "talaria", cfgVal.Env)
-	logTbl := log.New(cfg, cfgVal.Storage.Directory, gossip, stdout)
+	logTbl := log.New(cfg, gossip, stdout)
 
 	// Setup a monitor with a table output
 	monitor := monitor.New(logTbl, s, "talaria", cfgVal.Env)
@@ -80,37 +83,55 @@ func main() {
 	schema := func() *typeof.Schema {
 		return cfg().Tables.Timeseries.Schema
 	}
+	timeseriesCfg := timeseries.Config{
+		HashBy:       hashBy,
+		SortBy:       sortBy,
+		StaticSchema: schema,
+		Name:         cfgVal.Tables.Timeseries.Name,
+		TTL:          cfgVal.Tables.Timeseries.TTL,
+	}
 
-	// Start the server and open the database
+	// create a store
+	var ingestor *s3sqs.Ingress
+	var store storage.Storage
+	store = disk.Open(cfgVal.Storage.Directory, cfgVal.Tables.Timeseries.Name, monitor)
+
+	// if compact store is enabled then use the compact store
+	if cfgVal.Storage.S3Compact != nil {
+		store = s3compact.New(cfgVal.Storage.S3Compact, monitor, store)
+	}
+
 	server := server.New(cfg, monitor,
-		timeseries.New(cfgVal.Tables.Timeseries.Name, hashBy, sortBy, cfgVal.Tables.Timeseries.TTL, cfgVal.Storage.Directory, gossip, monitor, schema), // The primary timeseries table
+		timeseries.New(gossip, monitor, store, timeseriesCfg), // The primary timeseries table
 		nodes.New(gossip), // Cluster membership info table
 		logTbl,
 	)
 
-	// Create an S3 + SQS ingestion
-	ingestor, err := s3sqs.New(cfgVal.Writers.S3SQS, cfgVal.Writers.S3SQS.Region, monitor)
-	if err != nil {
-		panic(err)
-	}
-
-	// Start ingesting
-	monitor.Info("starting ingestion ...")
-	ingestor.Range(func(v []byte) bool {
-		if _, err := server.Ingest(context.Background(), &talaria.IngestRequest{
-			Data: &talaria.IngestRequest_Orc{Orc: v},
-		}); err != nil {
-			monitor.Warning(err)
+	if cfgVal.Writers.S3SQS != nil {
+		ingestor, err := s3sqs.New(cfgVal.Writers.S3SQS, cfgVal.Writers.S3SQS.Region, monitor)
+		if err != nil {
+			panic(err)
 		}
-		return false
-	})
+		// Start ingesting
+		monitor.Info("starting ingestion ...")
+		ingestor.Range(func(v []byte) bool {
+			if _, err := server.Ingest(context.Background(), &talaria.IngestRequest{
+				Data: &talaria.IngestRequest_Orc{Orc: v},
+			}); err != nil {
+				monitor.Warning(err)
+			}
+			return false
+		})
+	}
 
 	// onSignal will be called when a OS-level signal is received.
 	onSignal(func(_ os.Signal) {
-		cancel()         // Cancel the context
-		gossip.Close()   // Close the gossip layer
-		ingestor.Close() // First finish and stop ingesting ...
-		server.Close()   // Close the server and database ...
+		cancel()       // Cancel the context
+		gossip.Close() // Close the gossip layer
+		if ingestor != nil {
+			ingestor.Close() // First finish and stop ingesting ...
+		}
+		server.Close() // Close the server and database ...
 	})
 
 	// Join the cluster

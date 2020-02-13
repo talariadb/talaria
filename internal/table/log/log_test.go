@@ -52,7 +52,7 @@ func TestLog(t *testing.T) {
 
 	// Start the server and open the database
 	monitor := monitor.NewNoop()
-	logs := New(cfg, cfg().Storage.Directory, new(noopMembership), monitor)
+	logs := New(cfg, new(noopMembership), monitor)
 	assert.NotNil(t, logs)
 	assert.Equal(t, "log", logs.Name())
 	defer logs.Close()

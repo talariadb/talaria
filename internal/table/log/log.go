@@ -13,11 +13,8 @@ import (
 	"github.com/grab/talaria/internal/encoding/typeof"
 	"github.com/grab/talaria/internal/monitor"
 	"github.com/grab/talaria/internal/monitor/logging"
+	"github.com/grab/talaria/internal/storage/disk"
 	"github.com/grab/talaria/internal/table/timeseries"
-)
-
-const (
-	table = "log"
 )
 
 // Membership represents a contract required for recovering cluster information.
@@ -33,7 +30,7 @@ type Table struct {
 }
 
 // New creates a new table implementation.
-func New(cfg config.Func, dataDir string, cluster Membership, monitor monitor.Monitor) *Table {
+func New(cfg config.Func, cluster Membership, monitor monitor.Monitor) *Table {
 	sortBy := func() string {
 		return cfg().Tables.Log.SortBy
 	}
@@ -46,7 +43,16 @@ func New(cfg config.Func, dataDir string, cluster Membership, monitor monitor.Mo
 		return nil
 	}
 
-	base := timeseries.New(cfg().Tables.Log.Name, hashBy, sortBy, cfg().Tables.Log.TTL, dataDir, cluster, monitor, schema)
+	timeseriesCfg := timeseries.Config{
+		HashBy:       hashBy,
+		SortBy:       sortBy,
+		StaticSchema: schema,
+		Name:         cfg().Tables.Log.Name,
+		TTL:          cfg().Tables.Log.TTL,
+	}
+	store := disk.Open(cfg().Storage.Directory, timeseriesCfg.Name, monitor)
+
+	base := timeseries.New(cluster, monitor, store, timeseriesCfg)
 	return &Table{
 		Table:   *base,
 		cluster: cluster,

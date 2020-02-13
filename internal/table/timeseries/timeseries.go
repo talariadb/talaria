@@ -6,7 +6,6 @@ package timeseries
 import (
 	"fmt"
 	"io"
-	"path"
 	"sync/atomic"
 	"time"
 
@@ -18,14 +17,12 @@ import (
 	"github.com/grab/talaria/internal/monitor/errors"
 	"github.com/grab/talaria/internal/presto"
 	"github.com/grab/talaria/internal/storage"
-	"github.com/grab/talaria/internal/storage/disk"
 	"github.com/grab/talaria/internal/table"
 )
 
 const (
-	ctxTag  = "timeseries"
-	errTag  = "error"
-	funcTag = "func"
+	ctxTag = "timeseries"
+	errTag = "error"
 )
 
 // Assert the contract
@@ -49,28 +46,29 @@ type Table struct {
 	staticSchema StaticSchema    // The static schema of the timeseries table
 }
 
+type Config struct {
+	HashBy       HashBy
+	SortBy       SortBy
+	StaticSchema StaticSchema
+	Name         string
+	TTL          int64
+}
+
 type HashBy func() string
 type SortBy func() string
 type StaticSchema func() *typeof.Schema
 
 // New creates a new table implementation.
-func New(name string, hashBy HashBy, sortBy SortBy, ttl int64, dataDir string, cluster Membership, monitor monitor.Monitor, staticSchema StaticSchema) *Table {
-	store := disk.New(monitor)
-	tableDir := path.Join(dataDir, name)
-	err := store.Open(tableDir)
-	if err != nil {
-		panic(err)
-	}
-
+func New(cluster Membership, monitor monitor.Monitor, store storage.Storage, cfg Config) *Table {
 	return &Table{
-		name:         name,
+		name:         cfg.Name,
 		store:        store,
-		keyColumn:    hashBy,
-		timeColumn:   sortBy,
-		ttl:          time.Duration(ttl) * time.Second,
+		keyColumn:    cfg.HashBy,
+		timeColumn:   cfg.SortBy,
+		ttl:          time.Duration(cfg.TTL) * time.Second,
 		cluster:      cluster,
 		monitor:      monitor,
-		staticSchema: staticSchema,
+		staticSchema: cfg.StaticSchema,
 	}
 }
 

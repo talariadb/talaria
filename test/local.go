@@ -18,6 +18,7 @@ import (
 	"github.com/grab/talaria/internal/monitor/statsd"
 	"github.com/grab/talaria/internal/server"
 	"github.com/grab/talaria/internal/server/cluster"
+	"github.com/grab/talaria/internal/storage/disk"
 	"github.com/grab/talaria/internal/table/nodes"
 	"github.com/grab/talaria/internal/table/timeseries"
 	talaria "github.com/grab/talaria/proto"
@@ -86,9 +87,17 @@ func main() {
 	schemaFunc := func() *typeof.Schema {
 		return cfg().Tables.Timeseries.Schema
 	}
+	timeseriesCfg := timeseries.Config{
+		HashBy:       hashBy,
+		SortBy:       sortBy,
+		StaticSchema: schemaFunc,
+		Name:         cfg().Tables.Timeseries.Name,
+		TTL:          cfg().Tables.Timeseries.TTL,
+	}
+	store := disk.Open(cfg().Storage.Directory, timeseriesCfg.Name, monitor)
 
 	// Start the server and open the database
-	eventlog := timeseries.New(cfg().Tables.Timeseries.Name, hashBy, sortBy, cfg().Tables.Timeseries.TTL, cfg().Storage.Directory, gossip, monitor, schemaFunc)
+	eventlog := timeseries.New(gossip, monitor, store, timeseriesCfg)
 	server := server.New(cfg, monitor,
 		eventlog,
 		nodes.New(gossip),
