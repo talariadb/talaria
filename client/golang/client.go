@@ -103,6 +103,6 @@ func (c *Client) IngestBatch(ctx context.Context, batch pb.Batch) error {
 }
 
 // Close connection
-func (c *Client) Close() {
-	c.conn.Close()
+func (c *Client) Close() error {
+	return c.conn.Close()
 }
