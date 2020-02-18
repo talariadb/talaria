@@ -6,6 +6,7 @@ package s3
 import (
 	"context"
 	"net/url"
+	"strings"
 
 	"github.com/grab/talaria/internal/config"
 	"gopkg.in/yaml.v2"
@@ -36,7 +37,7 @@ func (s *Configurer) Configure(c *config.Config) error {
 	}
 
 	// download the config
-	b, err := s.client.Download(context.Background(), u.Host, u.Path)
+	b, err := s.client.Download(context.Background(), getBucket(u.Host), strings.TrimLeft(u.Path, "/"))
 	if err != nil {
 		return err
 	}
@@ -48,7 +49,7 @@ func (s *Configurer) Configure(c *config.Config) error {
 	// download the schema of the timeseries table by using the same bucket as the config and tablename_schema as the key
 	timeseriesName := c.Tables.Timeseries.Name
 	if timeseriesName != "" {
-		b, err = s.client.Download(context.Background(), u.Host, timeseriesName+"_schema")
+		b, err = s.client.Download(context.Background(), getBucket(u.Host), timeseriesName+"_schema.yaml")
 		if err != nil {
 			return err
 		}
@@ -58,4 +59,8 @@ func (s *Configurer) Configure(c *config.Config) error {
 		}
 	}
 	return nil
+}
+
+func getBucket(host string) string {
+	return strings.Split(host, ".")[0]
 }

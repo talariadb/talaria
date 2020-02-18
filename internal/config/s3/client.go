@@ -5,6 +5,7 @@ package s3
 
 import (
 	"context"
+	"sync/atomic"
 	"time"
 
 	"github.com/grab/talaria/internal/monitor/errors"
@@ -16,6 +17,7 @@ type downloader interface {
 }
 
 type client struct {
+	updatedAt  int64
 	downloader downloader
 }
 
@@ -40,12 +42,12 @@ func newClient(dl downloader) (*client, error) {
 
 // Download a specific key from the bucket
 func (s *client) Download(ctx context.Context, bucket, key string) ([]byte, error) {
-	downloadedAt := time.Now()
-	downloadedAt.Add(-1 * time.Second * 90)
-	data, err := s.downloader.DownloadIf(ctx, bucket, key, downloadedAt)
+	updatedAt := atomic.LoadInt64(&s.updatedAt)
+	data, err := s.downloader.DownloadIf(ctx, bucket, key, time.Unix(updatedAt, 0))
 	if err != nil {
 		return nil, err
 	}
 
+	atomic.StoreInt64(&s.updatedAt, time.Now().Unix())
 	return data, nil
 }
