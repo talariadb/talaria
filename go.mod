@@ -12,10 +12,11 @@ require (
 	github.com/dgraph-io/badger v1.6.0
 	github.com/dgryski/go-farm v0.0.0-20191112170834-c2139c5d712b // indirect
 	github.com/emitter-io/address v1.0.0
+	github.com/emitter-io/stats v1.0.3
 	github.com/gogo/protobuf v1.3.1
 	github.com/golang/snappy v0.0.1
 	github.com/google/btree v1.0.0 // indirect
-	github.com/grab/async v0.0.3
+	github.com/grab/async v0.0.4
 	github.com/hako/durafmt v0.0.0-20191009132224-3f39dc1ed9f4
 	github.com/hashicorp/go-immutable-radix v1.1.0 // indirect
 	github.com/hashicorp/go-msgpack v0.5.5 // indirect
@@ -24,6 +25,7 @@ require (
 	github.com/hashicorp/golang-lru v0.5.3 // indirect
 	github.com/hashicorp/memberlist v0.1.5
 	github.com/kelindar/binary v1.0.8
+	github.com/kelindar/kmeans v0.0.0-20200210034301-1ca04019ef7c
 	github.com/kelindar/loader v0.0.0-20191110093814-1408a474c5b4
 	github.com/kelindar/lua v0.0.2
 	github.com/miekg/dns v1.1.22 // indirect
@@ -39,6 +41,6 @@ require (
 	golang.org/x/sync v0.0.0-20190911185100-cd5d95a43a6e
 	golang.org/x/sys v0.0.0-20191204072324-ce4227a45e2e // indirect
 	google.golang.org/genproto v0.0.0-20191205163323-51378566eb59 // indirect
-	google.golang.org/grpc v1.25.1
+	google.golang.org/grpc v1.27.0
 	gopkg.in/yaml.v2 v2.2.4
 )
