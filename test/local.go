@@ -22,7 +22,6 @@ import (
 	"github.com/grab/talaria/internal/table/nodes"
 	"github.com/grab/talaria/internal/table/timeseries"
 	talaria "github.com/grab/talaria/proto"
-	"gopkg.in/yaml.v2"
 )
 
 type mockConfigurer struct {
@@ -30,7 +29,7 @@ type mockConfigurer struct {
 }
 
 func (m *mockConfigurer) Configure(c *config.Config) error {
-
+	c.Storage.Directory = m.dir
 	c.Readers.Presto = &config.Presto{
 		Port:   8042,
 		Schema: "talaria",
@@ -39,22 +38,12 @@ func (m *mockConfigurer) Configure(c *config.Config) error {
 	c.Writers.GRPC = &config.GRPC{
 		Port: 8043,
 	}
+
 	c.Tables.Timeseries = &config.Timeseries{
 		Name:   "eventlog",
 		TTL:    3600,
 		HashBy: "string1",
 		SortBy: "int1",
-	}
-
-	c.Storage.Directory = m.dir
-
-	dat, err := ioutil.ReadFile("./test-schema.yaml")
-	if err != nil {
-		return err
-	}
-	err = yaml.Unmarshal(dat, &c.Tables.Timeseries.Schema)
-	if err != nil {
-		return err
 	}
 	return nil
 }
