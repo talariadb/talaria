@@ -22,13 +22,12 @@ func (e *Configurer) Configure(c *config.Config) error {
 	// initalize all the pointers in the struct
 	t := reflect.TypeOf(config.Config{})
 	v := reflect.New(t)
-	initializeStruct(t, v.Elem())
 	reflect.ValueOf(c).Elem().Set(v.Elem())
 
 	// Put static values in the config
-	c.Readers.Presto.Port = 8042
+	c.Readers.Presto = &config.Presto{Port: 8042}
 
-	c.Writers.GRPC.Port = 8080
+	c.Writers.GRPC = &config.GRPC{Port: 8080}
 
 	c.Tables.Timeseries = &config.Timeseries{
 		Name:   "eventlog",
@@ -48,25 +47,4 @@ func (e *Configurer) Configure(c *config.Config) error {
 	}
 
 	return nil
-}
-
-func initializeStruct(t reflect.Type, v reflect.Value) {
-	for i := 0; i < v.NumField(); i++ {
-		f := v.Field(i)
-		ft := t.Field(i)
-		switch ft.Type.Kind() {
-		case reflect.Struct:
-			initializeStruct(ft.Type, f)
-		case reflect.Ptr:
-			fv := reflect.New(ft.Type.Elem())
-			switch f.Type().Elem().Kind() {
-			case reflect.Struct:
-				initializeStruct(ft.Type.Elem(), fv.Elem())
-				f.Set(fv)
-			case reflect.Int64, reflect.Int32, reflect.Int, reflect.Float64, reflect.Float32, reflect.String, reflect.Uint64, reflect.Uint, reflect.Uint32, reflect.Bool:
-				f.Set(fv)
-			}
-		default:
-		}
-	}
 }

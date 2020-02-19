@@ -4,32 +4,11 @@
 package static
 
 import (
-	"reflect"
 	"testing"
 
 	"github.com/grab/talaria/internal/config"
 	"github.com/stretchr/testify/assert"
 )
-
-// BenchmarkInitialize-12    	  200000	      8211 ns/op	    2104 B/op	      62 allocs/op
-func BenchmarkInitialize(b *testing.B) {
-
-	b.ReportAllocs()
-	for i := 0; i < b.N; i++ {
-		t1 := reflect.TypeOf(config.Config{})
-		v := reflect.New(t1)
-		initializeStruct(t1, v.Elem())
-		c := v.Interface().(*config.Config)
-		assert.NotNil(b, c.Readers.Presto)
-		assert.NotNil(b, c.Writers.GRPC)
-		assert.NotNil(b, c.Writers.S3SQS)
-		assert.NotNil(b, c.Writers.S3SQS.VisibilityTimeout)
-		assert.NotNil(b, c.Storage)
-		assert.NotNil(b, c.Tables.Timeseries)
-		assert.NotNil(b, c.Tables.Log)
-		assert.NotNil(b, c.Tables.Nodes)
-	}
-}
 
 func TestConfigure(t *testing.T) {
 	c := &config.Config{}

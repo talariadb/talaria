@@ -35,6 +35,7 @@ func TestConfigure(t *testing.T) {
 	}
 
 	err = s3C.Configure(c)
+	assert.Nil(t, c.Storage.S3Compact)
 	assert.Nil(t, err)
 
 }

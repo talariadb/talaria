@@ -37,10 +37,12 @@ require (
 	github.com/stretchr/objx v0.2.0 // indirect
 	github.com/stretchr/testify v1.4.0
 	golang.org/x/crypto v0.0.0-20191011191535-87dc89f01550 // indirect
+	golang.org/x/lint v0.0.0-20190313153728-d0100b6bd8b3 // indirect
 	golang.org/x/net v0.0.0-20191206103017-1ddd1de85cb0
 	golang.org/x/sync v0.0.0-20190911185100-cd5d95a43a6e
 	golang.org/x/sys v0.0.0-20191204072324-ce4227a45e2e // indirect
 	google.golang.org/genproto v0.0.0-20191205163323-51378566eb59 // indirect
 	google.golang.org/grpc v1.27.0
 	gopkg.in/yaml.v2 v2.2.4
+	honnef.co/go/tools v0.0.0-20190523083050-ea95bdfd59fc // indirect
 )
