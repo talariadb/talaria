@@ -4,6 +4,7 @@
 package latency
 
 import (
+	"fmt"
 	"testing"
 	"time"
 
@@ -13,24 +14,29 @@ import (
 func TestManager(t *testing.T) {
 
 	// Start a few servers
-	server1 := serve(2001)
+	server1, port1 := serve()
+	addr1 := fmt.Sprintf("127.0.0.1:%v", port1)
 	defer server1.Stop()
-	server2 := serve(2002)
+
+	server2, port2 := serve()
+	addr2 := fmt.Sprintf("127.0.0.1:%v", port2)
 	defer server2.Stop()
-	server3 := serve(2003)
+
+	server3, port3 := serve()
+	addr3 := fmt.Sprintf("127.0.0.1:%v", port3)
 	defer server3.Stop()
 
 	m := newManager([]int{0, 10, 20, 30, 40, 50, 10000}, 3)
 	defer m.Close()
 	m.watch = newWatcher(m.onPing, 1*time.Millisecond)
-	m.Watch("127.0.0.1:2001")
-	m.Watch("127.0.0.1:2002")
-	m.Watch("127.0.0.1:2003")
+	m.Watch(addr1)
+	m.Watch(addr2)
+	m.Watch(addr3)
 
 	time.Sleep(500 * time.Millisecond)
-	m.Unwatch("127.0.0.1:2001")
-	m.Unwatch("127.0.0.1:2002")
-	m.Unwatch("127.0.0.1:2003")
+	m.Unwatch(addr1)
+	m.Unwatch(addr2)
+	m.Unwatch(addr3)
 	assert.NoError(t, m.watch.Close())
 
 	/* example
@@ -40,8 +46,8 @@ func TestManager(t *testing.T) {
 	*/
 	m.update(3)
 
-	assert.NotZero(t, m.WeightOf("127.0.0.1:2001"))
-	assert.NotZero(t, m.WeightOf("127.0.0.1:2002"))
-	assert.NotZero(t, m.WeightOf("127.0.0.1:2003"))
+	assert.NotZero(t, m.WeightOf(addr1))
+	assert.NotZero(t, m.WeightOf(addr2))
+	assert.NotZero(t, m.WeightOf(addr3))
 
 }

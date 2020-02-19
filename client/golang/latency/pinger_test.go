@@ -6,6 +6,7 @@ package latency
 import (
 	"context"
 	"fmt"
+	"math/rand"
 	"net"
 	"testing"
 	"time"
@@ -16,7 +17,7 @@ import (
 )
 
 func TestPinger(t *testing.T) {
-	server := serve(1234)
+	server, port := serve()
 
 	var sample []time.Duration
 	w := newWatcher(func(addr string, rtt time.Duration) error {
@@ -25,20 +26,22 @@ func TestPinger(t *testing.T) {
 	}, time.Millisecond)
 	assert.NotNil(t, w)
 
-	w.Watch("127.0.0.1:1234")
-	w.Watch("127.0.0.1:1234")
+	addr := fmt.Sprintf("127.0.0.1:%v", port)
+	w.Watch(addr)
+	w.Watch(addr)
 	time.Sleep(500 * time.Millisecond)
 	server.Stop()
 
 	assert.NoError(t, w.Close())
 	assert.NotEmpty(t, sample, 1)
 
-	w.Unwatch("127.0.0.1:1234")
-	_, found := w.conns.Load("127.0.0.1:1234")
+	w.Unwatch(addr)
+	_, found := w.conns.Load(addr)
 	assert.False(t, found)
 }
 
-func serve(port int) *grpc.Server {
+func serve() (*grpc.Server, int) {
+	port := rand.Int31n(63000) + 2000
 	server := grpc.NewServer()
 	go func() {
 		lis, err := net.Listen("tcp", fmt.Sprintf(":%d", port))
@@ -53,7 +56,7 @@ func serve(port int) *grpc.Server {
 		}
 		return
 	}()
-	return server
+	return server, int(port)
 }
 
 type svc struct{}

@@ -4,6 +4,7 @@
 package latency
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -15,17 +16,20 @@ import (
 func TestBalancer(t *testing.T) {
 
 	// Start a few servers
-	server1 := serve(3001)
+
+	server1, port1 := serve()
 	defer server1.Stop()
-	server2 := serve(3002)
+	server2, _ := serve()
 	defer server2.Stop()
-	server3 := serve(3003)
+	server3, _ := serve()
 	defer server3.Stop()
+
+	addr1 := fmt.Sprintf("127.0.0.1:%v", port1)
 
 	b := &pickerBuilder{Name: Name}
 	p := b.Build(base.PickerBuildInfo{
 		ReadySCs: map[balancer.SubConn]base.SubConnInfo{
-			newConn(1): {Address: resolver.Address{Addr: "127.0.0.1:3001"}},
+			newConn(1): {Address: resolver.Address{Addr: addr1}},
 			//	newConn(2): {Address: resolver.Address{Addr: "127.0.0.1:3002"}},
 			//	newConn(3): {Address: resolver.Address{Addr: "127.0.0.1:3003"}},
 		},
