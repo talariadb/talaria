@@ -23,6 +23,7 @@ func (s *Server) PrestoGetSplits(schemaTableName *presto.PrestoThriftSchemaTable
 	// Retrieve the table
 	table, err := s.getTable(schemaTableName.TableName)
 	if err != nil {
+		s.monitor.Error(err)
 		return nil, err
 	}
 
@@ -37,6 +38,7 @@ func (s *Server) PrestoGetSplits(schemaTableName *presto.PrestoThriftSchemaTable
 	// Get the splits
 	splits, err := table.GetSplits(columns, outputConstraint, int(maxSplitCount))
 	if err != nil {
+		s.monitor.Error(err)
 		return nil, err
 	}
 
@@ -64,12 +66,14 @@ func (s *Server) PrestoGetTableMetadata(schemaTableName *presto.PrestoThriftSche
 	// Retrieve the table
 	table, err := s.getTable(schemaTableName.TableName)
 	if err != nil {
+		s.monitor.Error(err)
 		return nil, err
 	}
 
 	// Load the schema
 	schema, err := table.Schema()
 	if err != nil {
+		s.monitor.Error(err)
 		return nil, err
 	}
 
@@ -123,12 +127,14 @@ func (s *Server) PrestoGetRows(splitID *presto.PrestoThriftId, columns []string,
 	// Parse the incoming thriftID
 	id, err := decodeThriftID(splitID, nextToken)
 	if err != nil {
+		s.monitor.Error(err)
 		return nil, errors.Internal("decoding query failed", err)
 	}
 
 	// Retrieve the table
 	table, err := s.getTable(id.Table)
 	if err != nil {
+		s.monitor.Error(err)
 		return nil, errors.Internal("unable to retrieve a table", err)
 	}
 
@@ -136,6 +142,7 @@ func (s *Server) PrestoGetRows(splitID *presto.PrestoThriftId, columns []string,
 	result := new(presto.PrestoThriftPageResult)
 	page, err := table.GetRows(id.Split, columns, maxBytes)
 	if err != nil {
+		s.monitor.Error(err)
 		return nil, errors.Internal("unable to get rows from a table", err)
 	}
 
