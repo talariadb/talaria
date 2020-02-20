@@ -7,7 +7,6 @@ import (
 	"context"
 	"errors"
 	"testing"
-	"time"
 
 	"github.com/grab/talaria/internal/config"
 	"github.com/grab/talaria/internal/config/static"
@@ -20,23 +19,19 @@ func TestConfigure(t *testing.T) {
 	st := static.New()
 	err := st.Configure(c)
 	assert.Nil(t, err)
-	c.URI = "s3://dev-ap-southeast-1-go-app-configs.s3-ap-southeast-1.amazonaws.com/a/b/c/conf-server-conf-stg.json"
+	c.URI = "s3://config.s3-ap-southeast-1.amazonaws.com/a/b/c/conf-server-conf-stg.json"
 	c.Tables.Timeseries.Name = "abc"
 
 	assert.Nil(t, c.Tables.Timeseries.Schema)
 
-	var down downloadMock
-	down = func(ctx context.Context, bucket, prefix string, updatedSince time.Time) ([]byte, error) {
-		assert.Contains(t, []string{"a/b/c/conf-server-conf-stg.json", "a/b/c/abc_schema.yaml"}, prefix, "incorrect prefix")
-		assert.Equal(t, "dev-ap-southeast-1-go-app-configs", bucket, "incorrect bucket")
+	var down downloadMock = func(ctx context.Context, uri string) ([]byte, error) {
+		assert.Contains(t, []string{
+			`s3://config.s3-ap-southeast-1.amazonaws.com/a/b/c/conf-server-conf-stg.json`,
+			`s3://config.s3-ap-southeast-1.amazonaws.com/a/b/c/abc_schema.yaml`},
+			uri, "incorrect uri")
 		return []byte("a: int64"), nil
 	}
-	cl, err := newClient(down)
-	assert.Nil(t, err)
-	s3C := Configurer{
-		client: cl,
-	}
-
+	s3C := NewWith(down)
 	err = s3C.Configure(c)
 
 	assert.Equal(t, typeof.Schema{
@@ -51,26 +46,27 @@ func TestConfigure_NilSchema(t *testing.T) {
 	st := static.New()
 	err := st.Configure(c)
 	assert.Nil(t, err)
-	c.URI = "s3://dev-ap-southeast-1-go-app-configs.s3-ap-southeast-1.amazonaws.com/a/b/c/conf-server-conf-stg.json"
+	c.URI = "s3://config.s3-ap-southeast-1.amazonaws.com/a/b/c/conf-server-conf-stg.json"
 	c.Tables.Timeseries.Name = "abc"
 
 	assert.Nil(t, c.Tables.Timeseries.Schema)
 
-	var down downloadMock
-	down = func(ctx context.Context, bucket, prefix string, updatedSince time.Time) ([]byte, error) {
-		if prefix == "a/b/c/abc_schema.yaml" {
+	var down downloadMock = func(ctx context.Context, uri string) ([]byte, error) {
+		if uri == "s3://config.s3-ap-southeast-1.amazonaws.com/a/b/c/abc_schema.yaml" {
 			return nil, errors.New("not found")
 		}
 		return nil, nil
 	}
-	cl, err := newClient(down)
-	assert.Nil(t, err)
-	s3C := Configurer{
-		client: cl,
-	}
 
-	err = s3C.Configure(c)
+	assert.Nil(t, err)
+	err = NewWith(down).Configure(c)
 
 	assert.Nil(t, c.Tables.Timeseries.Schema)
 	assert.Nil(t, err)
+}
+
+type downloadMock func(ctx context.Context, uri string) ([]byte, error)
+
+func (d downloadMock) Load(ctx context.Context, uri string) ([]byte, error) {
+	return d(ctx, uri)
 }

@@ -79,8 +79,8 @@ func main() {
 	// Start the new server
 	server := server.New(configure, monitor,
 		timeseries.New(gossip, monitor, store, timeseries.Config{
-			HashBy: conf.Tables.Timeseries.SortBy,
-			SortBy: conf.Tables.Timeseries.HashBy,
+			HashBy: conf.Tables.Timeseries.HashBy,
+			SortBy: conf.Tables.Timeseries.SortBy,
 			Name:   conf.Tables.Timeseries.Name,
 			TTL:    conf.Tables.Timeseries.TTL,
 			Schema: func() *typeof.Schema {

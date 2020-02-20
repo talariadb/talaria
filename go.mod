@@ -26,7 +26,7 @@ require (
 	github.com/hashicorp/memberlist v0.1.5
 	github.com/kelindar/binary v1.0.8
 	github.com/kelindar/kmeans v0.0.0-20200210034301-1ca04019ef7c
-	github.com/kelindar/loader v0.0.0-20191110093814-1408a474c5b4
+	github.com/kelindar/loader v0.0.2
 	github.com/kelindar/lua v0.0.2
 	github.com/miekg/dns v1.1.22 // indirect
 	github.com/myteksi/hystrix-go v1.1.3

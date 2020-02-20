@@ -109,6 +109,10 @@ github.com/kelindar/kmeans v0.0.0-20200210034301-1ca04019ef7c h1:aJF9kKZp/nslxaw
 github.com/kelindar/kmeans v0.0.0-20200210034301-1ca04019ef7c/go.mod h1:COZfzjrLqOXW1PRpk7Sf1COFVXUxjZMV22JOd/JBPx8=
 github.com/kelindar/loader v0.0.0-20191110093814-1408a474c5b4 h1:pi2ArfdZSUlLRLPC29w1D7ivP0ZmOtYsh76UHjfFXKk=
 github.com/kelindar/loader v0.0.0-20191110093814-1408a474c5b4/go.mod h1:R/T32WH/c+33Msftyw9PSX/HRpSLDXdlIms1LhnVbP4=
+github.com/kelindar/loader v0.0.1 h1:dy6GMckftqnvhT3eC82GGNVb1U25CkwBOdVFclRAwU0=
+github.com/kelindar/loader v0.0.1/go.mod h1:R/T32WH/c+33Msftyw9PSX/HRpSLDXdlIms1LhnVbP4=
+github.com/kelindar/loader v0.0.2 h1:EZUDyiD7I2TGsacWoc5ytL11iU07TYIyDNgJ7cRy5V4=
+github.com/kelindar/loader v0.0.2/go.mod h1:R/T32WH/c+33Msftyw9PSX/HRpSLDXdlIms1LhnVbP4=
 github.com/kelindar/lua v0.0.2 h1:HkgRttuQfQWHP2uJkXjIYDWsmDl4fVQivLQtynwmmQo=
 github.com/kelindar/lua v0.0.2/go.mod h1:zCY2muj80Y5c3odwn4Ql6kjzpk3GAq9V4JwuVGLOsdA=
 github.com/kelindar/process v0.0.0-20170730150328-69a29e249ec3 h1:6If+E1dikQbdT7DlhZqLplfGkEt6dSoz7+MK+TFC7+U=

@@ -5,24 +5,33 @@ package s3
 
 import (
 	"context"
+	"fmt"
 	"net/url"
 	"path"
-	"strings"
 
 	"github.com/grab/talaria/internal/config"
+	"github.com/kelindar/loader"
 	"gopkg.in/yaml.v2"
 )
 
+type downloader interface {
+	Load(ctx context.Context, uri string) ([]byte, error)
+}
+
 // Configurer to fetch configuration from a s3 object
 type Configurer struct {
-	client *client
+	client downloader
 }
 
 // New creates a new S3 configurer.
 func New() *Configurer {
-	c, _ := newClient(nil)
+	return NewWith(loader.New())
+}
+
+// NewWith creates a new S3 configurer.
+func NewWith(dl downloader) *Configurer {
 	return &Configurer{
-		client: c,
+		client: dl,
 	}
 }
 
@@ -32,15 +41,10 @@ func (s *Configurer) Configure(c *config.Config) error {
 		return nil
 	}
 
-	u, err := url.Parse(c.URI)
-	if err != nil {
-		return err
-	}
-
 	// download the config
-	b, err := s.client.Download(context.Background(), getBucket(u.Host), getPrefix(u.Path))
+	b, err := s.client.Load(context.Background(), c.URI)
 	if err != nil {
-		return err
+		return nil // Unable to load, skip
 	}
 
 	if yaml.Unmarshal(b, c) != nil {
@@ -48,23 +52,24 @@ func (s *Configurer) Configure(c *config.Config) error {
 	}
 
 	// download the schema of the timeseries table by using the same bucket as the config and tablename_schema as the key
-	if name := c.Tables.Timeseries.Name; name != "" {
-		b, err := s.client.Download(context.Background(), getBucket(u.Host), getPrefix(path.Join(path.Dir(u.Path), name+"_schema.yaml")))
-		if err != nil || len(b) == 0 {
-			return nil // Schema not found, continue without it
-		}
+	name := c.Tables.Timeseries.Name
+	if name == "" {
+		return nil
+	}
 
-		if yaml.Unmarshal(b, &c.Tables.Timeseries.Schema) != nil {
-			return err
-		}
+	// Parse the URL
+	u, err := url.Parse(c.URI)
+	if err != nil {
+		return err
+	}
+
+	b, err = s.client.Load(context.Background(), fmt.Sprintf("s3://%v%v/%v_schema.yaml", u.Host, path.Dir(u.Path), name))
+	if err != nil || len(b) == 0 {
+		return nil // Schema not found, continue without it
+	}
+
+	if yaml.Unmarshal(b, &c.Tables.Timeseries.Schema) != nil {
+		return err
 	}
 	return nil
-}
-
-func getBucket(host string) string {
-	return strings.Split(host, ".")[0]
-}
-
-func getPrefix(path string) string {
-	return strings.TrimLeft(path, "/")
 }
