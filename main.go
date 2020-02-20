@@ -52,11 +52,13 @@ func main() {
 	}
 
 	// Create a log table and a simple stdout monitor
-	stdout := monitor.New(logging.NewStandard(), s, "talaria", conf.Env)
+	logStdout := logging.NewStandard()
+	stdout := monitor.New(logStdout, s, "talaria", conf.Env)
 	logTbl := log.New(configure, gossip, stdout)
+	compositeLogger := logging.NewComposite(logTbl, logStdout)
 
 	// Setup a monitor with a table output
-	monitor := monitor.New(logTbl, s, "talaria", conf.Env)
+	monitor := monitor.New(compositeLogger, s, "talaria", conf.Env)
 	monitor.Info("starting the log table ...")
 
 	monitor.Count1("system", "event", "type:start")
