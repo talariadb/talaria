@@ -69,6 +69,8 @@ github.com/gopherjs/gopherjs v0.0.0-20200209183636-89e6cbcd0b6d h1:vr95xIx8Eg3vC
 github.com/gopherjs/gopherjs v0.0.0-20200209183636-89e6cbcd0b6d/go.mod h1:wJfORRmW1u3UXTncJ5qlYoELFm8eSnnEO6hX4iZ3EWY=
 github.com/grab/async v0.0.4 h1:UFKkTxVe5iQDWHKlhdMe5dLRcgShMHrw2i0+RKdHc4c=
 github.com/grab/async v0.0.4/go.mod h1:8zY9m1tryEmU2px8GLmWrHt7QXSQOhyurytRQ3LrzjQ=
+github.com/grab/async v0.0.5 h1:QESBFAKiq5ocTtIcRh8gdha5Xgvu0yStGUefZsOWLPc=
+github.com/grab/async v0.0.5/go.mod h1:8zY9m1tryEmU2px8GLmWrHt7QXSQOhyurytRQ3LrzjQ=
 github.com/hako/durafmt v0.0.0-20191009132224-3f39dc1ed9f4 h1:60gBOooTSmNtrqNaRvrDbi8VAne0REaek2agjnITKSw=
 github.com/hako/durafmt v0.0.0-20191009132224-3f39dc1ed9f4/go.mod h1:5Scbynm8dF1XAPwIwkGPqzkM/shndPm79Jd1003hTjE=
 github.com/hashicorp/errwrap v1.0.0 h1:hLrqtEDnRye3+sgx6z4qVLNuviH3MR5aQ0ykNJa/UYA=

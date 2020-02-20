@@ -44,17 +44,18 @@ func (cs *store) reload(ctx context.Context) (interface{}, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	cs.config.Store(newConfig)
 	return nil, nil
 }
 
 // value ...
 func (cs *store) value() (*Config, error) {
-	c := &Config{}
+	c := new(Config)
+
 	// Iterate through all the loaders to fill this config object
 	for _, p := range cs.configurers {
-		err := p.Configure(c)
-		if err != nil {
+		if err := p.Configure(c); err != nil {
 			log.Printf("%s : error in loadig config %s", p, err)
 			return nil, err
 		}

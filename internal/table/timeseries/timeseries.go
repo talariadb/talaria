@@ -212,7 +212,7 @@ func (t *Table) Append(block block.Block) error {
 
 // getSchema gets the latest ingested schema.
 func (t *Table) getSchema() typeof.Schema {
-	if s := t.staticSchema(); s != nil {
+	if s := t.staticSchema(); s != nil && len(*s) > 0 {
 		return *s
 	}
 
