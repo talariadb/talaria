@@ -4,6 +4,9 @@
 package s3compact
 
 import (
+	"github.com/grab/talaria/internal/column"
+	"github.com/grab/talaria/internal/encoding/typeof"
+	"github.com/grab/talaria/internal/storage/flush/writers"
 	"time"
 
 	"github.com/grab/talaria/internal/config"
@@ -15,10 +18,25 @@ import (
 
 // New returns a compact store
 func New(s3Config *config.S3Compact, monitor monitor.Monitor, store storage.Storage) *compact.Storage {
+	s3Writer, err := writers.NewS3Writer(s3Config.Region, s3Config.Bucket, s3Config.Concurrency)
+	if err != nil {
+		panic(err)
+	}
 
-	// TODO: initialize the s3 writer after chunrong MR for s3 writer is merged.
-	flusher := flush.New(monitor, nil, func(i map[string]interface{}) (s string, e error) {
+	fileNameFunc := func(row map[string]interface{}) (s string, e error) {
 		return "", nil
-	})
-	return compact.New(store, flusher, nil, monitor, 200*time.Millisecond)
+	}
+
+	if s3Config.NameFunc != "" {
+		computedFileName, err := column.NewComputed("fileNameFunc", typeof.String, s3Config.NameFunc)
+		if err != nil {
+			fileNameFunc = func(row map[string]interface{}) (s string, e error) {
+				val, err := computedFileName.Value(row)
+				return val.(string), err
+			}
+		}
+	}
+
+	flusher := flush.New(monitor, s3Writer, fileNameFunc)
+	return compact.New(store, flusher, flusher, monitor, 200*time.Millisecond)
 }

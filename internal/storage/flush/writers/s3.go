@@ -9,6 +9,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	"github.com/grab/talaria/internal/encoding/key"
+	"runtime"
 )
 
 // S3Uploader uploads to underlying backend
@@ -26,6 +27,10 @@ type S3Writer struct {
 
 // NewS3Writer initializes an S3Writer
 func NewS3Writer(region, bucket string, concurrency int) (*S3Writer, error) {
+	if concurrency == 0 {
+		concurrency = runtime.NumCPU()
+	}
+
 	sess, err := session.NewSession(aws.NewConfig().WithRegion(region))
 	if err != nil {
 		return nil, err

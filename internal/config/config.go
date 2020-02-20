@@ -53,6 +53,10 @@ type Nodes struct {
 
 // S3Compact stores the config for s3 compaction
 type S3Compact struct {
+	Region               string `json:"region" yaml:"region" env:"REGION"` // The region of AWS bucket
+	Bucket               string `json:"bucket" yaml:"bucket" env:"BUCKET"` // The name of AWS bucket
+	Concurrency          int    `json:"concurrency" yaml:"concurrency" env:"CONCURRENCY"` // The S3 upload concurrency
+	NameFunc             string `json:"computedFileNameFunc" yaml:"computedFileNameFunc" env:"COMPUTEDFILENAMEFUNC"` // The lua script to compute file name given a row
 }
 
 // Storage is the location to write the data
