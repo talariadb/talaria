@@ -39,7 +39,8 @@ func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	configure := config.Load(ctx, 60*time.Second, static.New(), env.New("TALARIA_CONF"), s3.New())
+	s3Configurer := s3.New(logging.NewStandard())
+	configure := config.Load(ctx, 60*time.Second, static.New(), env.New("TALARIA_CONF"), s3Configurer)
 	conf := configure()
 
 	// Setup gossip
@@ -56,6 +57,9 @@ func main() {
 	stdout := monitor.New(stdLogger, s, "talaria", conf.Env)
 	logTbl := log.New(configure, gossip, stdout)
 	compositeLogger := logging.NewComposite(logTbl, stdLogger)
+
+	// Updating the logger to use the composite logger. This is to make sure the logs from the config is sent to log table as well as stdout
+	s3Configurer.SetLogger(compositeLogger)
 
 	// Setup a monitor with a table output
 	monitor := monitor.New(compositeLogger, s, "talaria", conf.Env)

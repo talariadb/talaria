@@ -11,6 +11,7 @@ import (
 	"github.com/grab/talaria/internal/config"
 	"github.com/grab/talaria/internal/config/static"
 	"github.com/grab/talaria/internal/encoding/typeof"
+	"github.com/grab/talaria/internal/monitor/logging"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -31,7 +32,7 @@ func TestConfigure(t *testing.T) {
 			uri, "incorrect uri")
 		return []byte("a: int64"), nil
 	}
-	s3C := NewWith(down)
+	s3C := NewWith(down, logging.NewNoop())
 	err = s3C.Configure(c)
 
 	assert.Equal(t, typeof.Schema{
@@ -59,7 +60,7 @@ func TestConfigure_NilSchema(t *testing.T) {
 	}
 
 	assert.Nil(t, err)
-	err = NewWith(down).Configure(c)
+	err = NewWith(down, logging.NewNoop()).Configure(c)
 
 	assert.Nil(t, c.Tables.Timeseries.Schema)
 	assert.Nil(t, err)
