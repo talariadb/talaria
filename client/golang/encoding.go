@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"reflect"
+	"sync"
 	"time"
 	"unsafe"
 
@@ -14,24 +15,27 @@ import (
 )
 
 type encoder struct {
+	sync.Mutex
 	next       uint32            // The next index for dictionary buffer
 	dictionary map[string]uint32 // The header contains the dictionary strings
 	batch      *pb.Batch
 }
 
 func newEncoder() *encoder {
-	return &encoder{
-		dictionary: map[string]uint32{},
-	}
+	return new(encoder)
 }
 
 // Encode implements formatter interface
 func (e *encoder) Encode(events []Event) *pb.Batch {
-	// reset buffer at start
+	e.Lock()
+	defer e.Unlock()
+
+	// Reset the buffer
 	e.next = 0
 	e.dictionary = make(map[string]uint32, len(events))
 	e.batch = &pb.Batch{Events: make([]*pb.Event, 0, len(events))}
 
+	// Write the events
 	for _, ev := range events {
 		encoded := e.encodeEvent(ev)
 		e.batch.Events = append(e.batch.Events, encoded)
@@ -39,7 +43,6 @@ func (e *encoder) Encode(events []Event) *pb.Batch {
 
 	// Write the interned strings
 	e.writeDictionary()
-
 	return e.batch
 }
 

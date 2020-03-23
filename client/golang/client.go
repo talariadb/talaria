@@ -29,7 +29,6 @@ type Client struct {
 	netconf netconf          // The network pool configuration.
 	ingress pb.IngressClient // The underlying service.
 	conn    *grpc.ClientConn // The underlying connection
-	encoder *encoder
 }
 
 // Dial creates a new client and connect to Talaria grpc server.
@@ -46,7 +45,6 @@ func Dial(address string, options ...Option) (*Client, error) {
 			Address:     address,
 			DialTimeout: defaultDialTimeout,
 		},
-		encoder: newEncoder(),
 	}
 
 	// Apply the options to overwrite the defaults
@@ -64,7 +62,9 @@ func Dial(address string, options ...Option) (*Client, error) {
 
 func (c *Client) connect() error {
 	var conn *grpc.ClientConn
-	timeoutCtx, _ := context.WithTimeout(context.Background(), c.netconf.DialTimeout)
+	timeoutCtx, cancel := context.WithTimeout(context.Background(), c.netconf.DialTimeout)
+	defer cancel()
+
 	dialOptions := []grpc.DialOption{}
 	if !c.netconf.NonBlocking {
 		dialOptions = append(dialOptions, grpc.WithBlock())
@@ -91,8 +91,7 @@ func (c *Client) isConnectionInsecure() bool {
 
 // IngestBatch sends a batch of events to Talaria server.
 func (c *Client) IngestBatch(ctx context.Context, batch []Event) error {
-	encoded := c.encoder.Encode(batch)
-
+	encoded := newEncoder().Encode(batch)
 	req := &pb.IngestRequest{
 		Data: &pb.IngestRequest_Batch{
 			Batch: encoded,
