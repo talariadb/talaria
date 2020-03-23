@@ -3,13 +3,12 @@ module github.com/grab/talaria
 go 1.13
 
 require (
-	github.com/AndreasBriese/bbloom v0.0.0-20190825152654-46b345b51c96 // indirect
 	github.com/DataDog/datadog-go v2.2.0+incompatible
 	github.com/Knetic/govaluate v3.0.0+incompatible
 	github.com/armon/go-metrics v0.0.0-20190430140413-ec5e00d3c878 // indirect
 	github.com/aws/aws-sdk-go v1.25.31
-	github.com/crphang/orc v0.0.1
-	github.com/dgraph-io/badger v1.6.0
+	github.com/crphang/orc v0.0.3
+	github.com/dgraph-io/badger/v2 v2.0.2
 	github.com/dgryski/go-farm v0.0.0-20191112170834-c2139c5d712b // indirect
 	github.com/emitter-io/address v1.0.0
 	github.com/emitter-io/stats v1.0.3
@@ -27,7 +26,7 @@ require (
 	github.com/kelindar/binary v1.0.8
 	github.com/kelindar/kmeans v0.0.0-20200210034301-1ca04019ef7c
 	github.com/kelindar/loader v0.0.2
-	github.com/kelindar/lua v0.0.2
+	github.com/kelindar/lua v0.0.3
 	github.com/miekg/dns v1.1.22 // indirect
 	github.com/myteksi/hystrix-go v1.1.3
 	github.com/ricochet2200/go-disk-usage v0.0.0-20150921141558-f0d1b743428f

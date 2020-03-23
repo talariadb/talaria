@@ -107,12 +107,12 @@ func asBytes(s string) []byte {
 	return []byte(s)
 }
 
-// BenchmarkRange/head-1-pass-8         	    4620	    257536 ns/op	   12719 B/op	    1078 allocs/op
-// BenchmarkRange/head-2-pass-8         	    4508	    261280 ns/op	   14394 B/op	    1118 allocs/op
-// BenchmarkRange/mid-1-pass-8          	    4591	    256991 ns/op	   12718 B/op	    1079 allocs/op
-// BenchmarkRange/mid-2-pass-8          	    4533	    262039 ns/op	   14387 B/op	    1119 allocs/op
-// BenchmarkRange/tail-1-pass-8         	    5080	    232062 ns/op	   10038 B/op	    1028 allocs/op
-// BenchmarkRange/tail-2-pass-8         	    3366	    349325 ns/op	   15598 B/op	    1556 allocs/op
+// BenchmarkRange/head-1-pass-8         	    5568	    205270 ns/op	   10365 B/op	    1054 allocs/op
+// BenchmarkRange/head-2-pass-8         	    5583	    208472 ns/op	   11836 B/op	    1089 allocs/op
+// BenchmarkRange/mid-1-pass-8          	    5626	    203329 ns/op	   10368 B/op	    1055 allocs/op
+// BenchmarkRange/mid-2-pass-8          	    5449	    209387 ns/op	   11851 B/op	    1090 allocs/op
+// BenchmarkRange/tail-1-pass-8         	    6411	    171898 ns/op	    9353 B/op	    1023 allocs/op
+// BenchmarkRange/tail-2-pass-8         	    4495	    260039 ns/op	   14442 B/op	    1546 allocs/op
 func BenchmarkRange(b *testing.B) {
 	b.Run("head-1-pass", func(b *testing.B) {
 		run(func(store *Storage) {

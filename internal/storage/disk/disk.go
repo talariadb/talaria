@@ -6,13 +6,14 @@ package disk
 import (
 	"bytes"
 	"context"
+	"fmt"
 	"log"
 	"os"
 	"path"
 	"runtime/debug"
 	"time"
 
-	"github.com/dgraph-io/badger"
+	"github.com/dgraph-io/badger/v2"
 	"github.com/grab/async"
 	"github.com/grab/talaria/internal/encoding/key"
 	"github.com/grab/talaria/internal/monitor"
@@ -74,11 +75,7 @@ func (s *Storage) Open(dir string) error {
 	opts.LevelSizeMultiplier = 3
 	opts.MaxLevels = 25
 	opts.Truncate = true
-
-	// Check if monitor is a badger logger
-	if logger, ok := s.monitor.(badger.Logger); ok {
-		opts.Logger = logger
-	}
+	opts.Logger = &logger{s.monitor}
 
 	// Attempt to open the database
 	db, err := badger.Open(opts)
@@ -216,4 +213,26 @@ func handlePanic() {
 	if r := recover(); r != nil {
 		log.Printf("panic recovered: %ss \n %s", r, debug.Stack())
 	}
+}
+
+// ------------------------------------------------------------------------------------------------------------
+
+type logger struct {
+	monitor.Monitor
+}
+
+func (l *logger) Errorf(format string, args ...interface{}) {
+	l.Monitor.Error(fmt.Errorf(format, args...))
+}
+
+func (l *logger) Warningf(format string, args ...interface{}) {
+	l.Monitor.Warning(fmt.Errorf(format, args...))
+}
+
+func (l *logger) Infof(format string, args ...interface{}) {
+	l.Monitor.Info(format, args...)
+}
+
+func (l *logger) Debugf(format string, args ...interface{}) {
+	l.Monitor.Debug(format, args...)
 }
