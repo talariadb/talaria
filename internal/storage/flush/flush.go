@@ -20,8 +20,6 @@ import (
 	"github.com/grab/talaria/internal/monitor/errors"
 	"github.com/grab/talaria/internal/storage"
 	"github.com/grab/talaria/internal/storage/flush/writers"
-
-
 )
 
 // Assert contract compliance
@@ -45,9 +43,9 @@ func New(monitor monitor.Monitor, writer writers.Writer, fileNameFunc func(map[s
 	}
 
 	return &Storage{
-		monitor: monitor,
-		writer: writer,
-		memoryPool: memoryPool,
+		monitor:      monitor,
+		writer:       writer,
+		memoryPool:   memoryPool,
 		fileNameFunc: fileNameFunc,
 	}
 }
@@ -79,8 +77,8 @@ func (s *Storage) Merge(blocks []block.Block, schema typeof.Schema) ([]byte, []b
 		// Fetch columns that is required by the static schema
 		cols := make(column.Columns, 16)
 		for name, typ := range schema {
-			col := rows[name]
-			if col.Kind() != typ {
+			col, ok := rows[name]
+			if !ok || col.Kind() != typ {
 				col = column.NewColumn(typ)
 			}
 
@@ -119,6 +117,7 @@ func (s *Storage) generateFileName(b block.Block) []byte {
 	}
 	output, err := s.fileNameFunc(row)
 	if err != nil {
+		s.monitor.Error(err)
 		return []byte{}
 	}
 

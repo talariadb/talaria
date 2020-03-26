@@ -136,6 +136,9 @@ func (s *Storage) Compact(ctx context.Context) (interface{}, error) {
 func (s *Storage) merge(keys []key.Key, blocks []block.Block, schema typeof.Schema) async.Task {
 	return async.NewTask(func(ctx context.Context) (_ interface{}, err error) {
 
+		if len(blocks) == 0 {
+			return
+		}
 		// Get the max expiration time for merging
 		now, max := time.Now().Unix(), int64(0)
 		for _, b := range blocks {
