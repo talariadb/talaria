@@ -7,15 +7,16 @@ import (
 	"time"
 
 	"github.com/grab/talaria/internal/column"
-	"github.com/grab/talaria/internal/encoding/typeof"
-	"github.com/grab/talaria/internal/storage/flush/writers"
-
 	"github.com/grab/talaria/internal/config"
+	"github.com/grab/talaria/internal/encoding/typeof"
 	"github.com/grab/talaria/internal/monitor"
 	"github.com/grab/talaria/internal/storage"
 	"github.com/grab/talaria/internal/storage/compact"
 	"github.com/grab/talaria/internal/storage/flush"
+	"github.com/grab/talaria/internal/storage/flush/writers"
 )
+
+const defaultInterval = 30 * time.Second
 
 // New returns a compact store
 func New(s3Config *config.S3Compact, monitor monitor.Monitor, store storage.Storage) *compact.Storage {
@@ -24,19 +25,19 @@ func New(s3Config *config.S3Compact, monitor monitor.Monitor, store storage.Stor
 		panic(err)
 	}
 
-	fileNameFunc := func(row map[string]interface{}) (s string, e error) {
+	nameFunc := func(row map[string]interface{}) (s string, e error) {
 		return "", nil
 	}
 
 	if s3Config.NameFunc != "" {
-		computedFileName, err := column.NewComputed("fileNameFunc", typeof.String, s3Config.NameFunc)
-		if err == nil {
-			fileNameFunc = func(row map[string]interface{}) (s string, e error) {
-				val, err := computedFileName.Value(row)
+		if fn, err := column.NewComputed("fileNameFunc", typeof.String, s3Config.NameFunc); err == nil {
+			nameFunc = func(row map[string]interface{}) (s string, e error) {
+				val, err := fn.Value(row)
 				return val.(string), err
 			}
 		}
 	}
-	flusher := flush.New(monitor, s3Writer, fileNameFunc)
-	return compact.New(store, flusher, flusher, monitor, 200*time.Millisecond)
+
+	flusher := flush.New(monitor, s3Writer, nameFunc)
+	return compact.New(store, flusher, flusher, monitor, defaultInterval)
 }

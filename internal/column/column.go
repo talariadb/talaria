@@ -5,21 +5,34 @@ package column
 
 import (
 	"fmt"
+	"regexp"
 
 	"github.com/grab/talaria/internal/encoding/typeof"
 	"github.com/grab/talaria/internal/presto"
 )
 
-// Column contract represent a column that can be appended.
-type Column = presto.Column
+var expr = regexp.MustCompile(`^[a-zA-Z_][a-zA-Z0-9_]*$`)
+
+// IsValidName validates the name of a column
+func IsValidName(name string) bool {
+	return expr.MatchString(name)
+}
 
 // ------------------------------------------------------------------------------------------------------------
+
+// Column contract represent a column that can be appended.
+type Column = presto.Column
 
 // Columns represents a set of named columns
 type Columns map[string]Column
 
 // Append adds a value at a particular index to the block.
 func (c Columns) Append(name string, value interface{}, typ typeof.Type) bool {
+	if !IsValidName(name) {
+		return false
+	}
+
+	// Check if the column exists
 	if col, exists := c[name]; exists {
 		return col.Append(value) > 0
 	}

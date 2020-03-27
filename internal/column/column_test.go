@@ -22,6 +22,7 @@ func TestColumns(t *testing.T) {
 	// Fill level 1
 	assert.True(t, nc.Append("a", int32(1), typeof.Int32))
 	assert.True(t, nc.Append("b", int32(2), typeof.Int32))
+	assert.False(t, nc.Append("123", int32(2), typeof.Int32)) // Invalid
 	assert.False(t, nc.Append("x", complex128(1), typeof.Unsupported))
 	assert.Equal(t, 1, nc.Max())
 	assert.Equal(t, 2, len(nc.LastRow()))
@@ -100,5 +101,22 @@ func TestNewColumn(t *testing.T) {
 			assert.Equal(t, 0, c.AsThrift().Size())
 			assert.Equal(t, 0, c.Size())
 		}
+	}
+}
+
+func TestIsValidName(t *testing.T) {
+	tests := []struct {
+		input  string
+		output bool
+	}{
+		{input: "hi", output: true},
+		{input: "/api/v1/eta/nearby/", output: false},
+		{input: "15ffe3ca0ba2bef00000010955e2d54c", output: false},
+		{input: "b3802fb30f58430ca7fa8c6e04cb8c76", output: true},
+		{input: "server", output: true},
+	}
+
+	for _, tc := range tests {
+		assert.Equal(t, tc.output, IsValidName(tc.input))
 	}
 }

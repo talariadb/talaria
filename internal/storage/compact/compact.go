@@ -22,8 +22,7 @@ var _ storage.Storage = new(Storage)
 
 // Storage represents compactor storage.
 type Storage struct {
-	compact async.Task // The compaction worker
-
+	compact async.Task       // The compaction worker
 	monitor monitor.Monitor  // The monitor client
 	merger  storage.Merger   // The merging (join) function
 	buffer  storage.Storage  // The storage to use for buffering
