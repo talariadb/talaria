@@ -147,13 +147,13 @@ func (s *Storage) merge(keys []key.Key, blocks []block.Block, schema typeof.Sche
 		}
 
 		// Merge all blocks together
-		key, value := s.merger.Merge(blocks, schema)
-
-		// Append to the destination
-		ttl := time.Duration(max-now) * time.Second
-		if err = s.dest.Append(key, value, ttl); err != nil {
-			s.monitor.Error(err)
-			return
+		if key, value := s.merger.Merge(blocks, schema); key != nil {
+			// Append to the destination
+			ttl := time.Duration(max-now) * time.Second
+			if err = s.dest.Append(key, value, ttl); err != nil {
+				s.monitor.Error(err)
+				return
+			}
 		}
 
 		//  Delete all of the keys that we have appended
