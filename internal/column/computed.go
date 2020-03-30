@@ -79,6 +79,11 @@ func (c *Computed) Value(row map[string]interface{}) (interface{}, error) {
 		return nil, err
 	}
 
+	// If there's no new row generated, return nil
+	if out.Type() == lua.TypeNil {
+		return nil, nil
+	}
+
 	switch c.typ {
 	case typeof.Bool:
 		if v, ok := out.(lua.Bool); ok {

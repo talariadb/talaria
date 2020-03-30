@@ -26,7 +26,7 @@ func TestColumns(t *testing.T) {
 	assert.False(t, nc.Append("x", complex128(1), typeof.Unsupported))
 	assert.Equal(t, 1, nc.Max())
 	assert.Equal(t, 2, len(nc.LastRow()))
-	nc.AppendComputed(data)
+	nc.AppendComputed(nc.LastRow(), data)
 	nc.FillNulls()
 	assert.NotNil(t, nc.Any())
 
@@ -34,7 +34,7 @@ func TestColumns(t *testing.T) {
 	assert.True(t, nc.Append("a", int32(1), typeof.Int32))
 	assert.True(t, nc.Append("c", "hi", typeof.String))
 	assert.Equal(t, 2, nc.Max())
-	nc.AppendComputed(data)
+	nc.AppendComputed(nc.LastRow(), data)
 	nc.FillNulls()
 
 	// Fill level 3
@@ -42,7 +42,7 @@ func TestColumns(t *testing.T) {
 	assert.True(t, nc.Append("c", "hi", typeof.String))
 	assert.True(t, nc.Append("d", float64(1.5), typeof.Float64))
 	assert.Equal(t, 3, nc.Max())
-	nc.AppendComputed(data)
+	nc.AppendComputed(nc.LastRow(), data)
 	nc.FillNulls()
 
 	// Must have 3 levels with nulls in the middle

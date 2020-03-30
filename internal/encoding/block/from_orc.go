@@ -8,10 +8,10 @@ import (
 	"fmt"
 	"strconv"
 
+	orctype "github.com/crphang/orc"
 	"github.com/grab/talaria/internal/column"
 	"github.com/grab/talaria/internal/encoding/orc"
 	"github.com/grab/talaria/internal/encoding/typeof"
-	orctype "github.com/crphang/orc"
 )
 
 // FromOrcBy decodes a set of blocks from an orc file and repartitions
@@ -36,7 +36,7 @@ func FromOrcBy(payload []byte, partitionBy string, computed ...*column.Computed)
 
 	// Create presto columns and iterate
 	result, count := make(map[string]column.Columns, 16), 0
-	_, _ = iter.Range(func(rowIdx int, row []interface{}) bool {
+	_, _ = iter.Range(func(rowIdx int, r []interface{}) bool {
 		if count%max == 0 {
 			pending, err := makeBlocks(result)
 			if err != nil {
@@ -48,7 +48,7 @@ func FromOrcBy(payload []byte, partitionBy string, computed ...*column.Computed)
 		}
 
 		// Get the partition value, must be a string
-		partition, ok := convertToString(row[partitionIdx])
+		partition, ok := convertToString(r[partitionIdx])
 		if !ok {
 			return true
 		}
@@ -61,7 +61,8 @@ func FromOrcBy(payload []byte, partitionBy string, computed ...*column.Computed)
 		}
 
 		// Write the events into the block
-		for i, v := range row {
+		row := make(map[string]interface{}, len(r))
+		for i, v := range r {
 			columnName := cols[i]
 			columnType := schema[columnName]
 
@@ -72,12 +73,13 @@ func FromOrcBy(payload []byte, partitionBy string, computed ...*column.Computed)
 				}
 			}
 
+			row[columnName] = v
 			columns.Append(columnName, v, columnType)
 		}
 
 		// Append computed columns and fill nulls for the row
 		count++
-		columns.AppendComputed(computed)
+		columns.AppendComputed(row, computed)
 		columns.FillNulls()
 		return false
 	}, cols...)

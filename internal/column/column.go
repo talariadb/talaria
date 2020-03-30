@@ -73,17 +73,20 @@ func (c Columns) LastRow() map[string]interface{} {
 }
 
 // AppendComputed runs the computed columns and appends them to the set.
-func (c Columns) AppendComputed(computed []*Computed) error {
+func (c Columns) AppendComputed(row map[string]interface{}, computed []*Computed) error {
 	if len(computed) == 0 {
 		return nil
 	}
 
-	row := c.LastRow()
 	for _, s := range computed {
 		v, err := s.Value(row)
 		if err != nil {
 			return err
 		}
+		if v == nil {
+			continue
+		}
+
 		c.Append(s.Name(), v, s.Type())
 	}
 	return nil

@@ -4,8 +4,11 @@
 package block
 
 import (
+	"encoding/json"
 	"testing"
 
+	"github.com/grab/talaria/internal/column"
+	"github.com/grab/talaria/internal/encoding/typeof"
 	talaria "github.com/grab/talaria/proto"
 	"github.com/stretchr/testify/assert"
 )
@@ -46,7 +49,7 @@ var testBatch = &talaria.Batch{
 			4: {Value: &talaria.Value_String_{String_: 6}}, // event2
 		}},
 		{Value: map[uint32]*talaria.Value{
-			2: {Value: &talaria.Value_Time{Time: 100}},
+			2: {Value: &talaria.Value_Time{Time: 1585549847}},
 			8: {Value: &talaria.Value_Json{Json: 10}},
 			4: {Value: &talaria.Value_String_{String_: 9}}, // event3
 		}},
@@ -62,7 +65,16 @@ var testBatch = &talaria.Batch{
 }
 
 func TestBlock_FromBatch(t *testing.T) {
-	blocks, err := FromBatchBy(testBatch, "d")
+	dataColumn, err := column.NewComputed("data", typeof.JSON, `
+	local json = require("json")
+
+	function main(input)
+		return json.encode(input)
+	end`)
+	assert.NoError(t, err)
+
+	// Create blocks
+	blocks, err := FromBatchBy(testBatch, "d", dataColumn)
 	assert.NoError(t, err)
 	assert.Len(t, blocks, 3) // Number of partitions
 
@@ -72,8 +84,20 @@ func TestBlock_FromBatch(t *testing.T) {
 		if string(b.Key) == "event3" {
 			block = b
 		}
+
 	}
 
 	assert.Equal(t, "event3", string(block.Key))
 
+	// Select all of the columns
+	columns, err := block.Select(block.Schema())
+	assert.NoError(t, err)
+	assert.Equal(t, `[{"column":"b","type":"TIMESTAMP"},{"column":"d","type":"VARCHAR"},{"column":"data","type":"JSON"},{"column":"e","type":"JSON"}]`, block.Schema().String())
+
+	// Get the last row
+	row := columns.LastRow()
+	assert.Equal(t, int64(1585549847000), row["b"].(int64)) // Note: Presto Thrift time is in Unix Milliseconds
+	assert.Equal(t, `event3`, row["d"].(string))
+	assert.Equal(t, `{"name": "roman"}`, string(row["e"].(json.RawMessage)))
+	assert.Contains(t, string(row["data"].(json.RawMessage)), "event3")
 }

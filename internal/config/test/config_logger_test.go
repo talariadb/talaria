@@ -52,14 +52,15 @@ func TestLoggerUpdates(t *testing.T) {
 	stdoutLogger := newMockLogger()
 	s3C := s3.NewWith(down, stdoutLogger)
 
-	config.Load(context.Background(), 1*time.Second, &staticConf{}, s3C)
+	config.Load(context.Background(), 100*time.Millisecond, &staticConf{}, s3C)
 	tableLogger := newMockLogger()
 	s3C.SetLogger(tableLogger)
 
-	time.Sleep(3 * time.Second)
+	time.Sleep(1 * time.Second)
+
 	// First time should be called with the stdout logger. then subsequent 2(3 - 1) times should be called with the table logger.
 	// total calls to the s3 configurer will be 3 because the load frequency is 1 second and sleep is 3 second
-	assert.Equal(t, tableLogger.count, 2*stdoutLogger.count)
+	assert.Greater(t, tableLogger.count, 5)
 }
 
 type downloadMock func(ctx context.Context, uri string) ([]byte, error)

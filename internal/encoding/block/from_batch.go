@@ -48,7 +48,9 @@ func FromBatchBy(batch *talaria.Batch, partitionBy string, computed ...*column.C
 		}
 
 		// Write the events into the block
+		row := make(map[string]interface{}, len(event.Value))
 		for k, v := range event.Value {
+			columnName := stringAt(batch.Strings, k)
 			columnValue, err := readValue(batch.Strings, v)
 			if err != nil {
 				return nil, err
@@ -59,11 +61,12 @@ func FromBatchBy(batch *talaria.Batch, partitionBy string, computed ...*column.C
 				continue // Skip
 			}
 
-			columns.Append(stringAt(batch.Strings, k), columnValue, typ)
+			row[columnName] = columnValue
+			columns.Append(columnName, columnValue, typ)
 		}
 
 		// Append computed columns and fill nulls for the row
-		columns.AppendComputed(computed)
+		columns.AppendComputed(row, computed)
 		columns.FillNulls()
 	}
 

@@ -12,10 +12,12 @@ import (
 
 func TestSchemaFor(t *testing.T) {
 	s := typeof.Schema{
-		"a": typeof.Int32,
-		"b": typeof.String,
-		"c": typeof.Int64,
-		"d": typeof.String,
+		"a":        typeof.Int32,
+		"b":        typeof.String,
+		"c":        typeof.Int64,
+		"d":        typeof.String,
+		"/invalid": typeof.String,
+		"123":      typeof.String,
 	}
 
 	out, err := SchemaFor(s)
