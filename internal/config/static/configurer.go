@@ -46,5 +46,7 @@ func (e *Configurer) Configure(c *config.Config) error {
 		Port: 8125,
 	}
 
+	c.AppName = "talaria"
+
 	return nil
 }

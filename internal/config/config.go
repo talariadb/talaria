@@ -13,7 +13,8 @@ import (
 // Config global
 type Config struct {
 	URI      string     `json:"uri" yaml:"uri" env:"URI"`
-	Env      string     `json:"env" yaml:"env" env:"ENV"` // The environment (eg: prd, stg)
+	Env      string     `json:"env" yaml:"env" env:"ENV"`             // The environment (eg: prd, stg)
+	AppName  string     `json:"appName" yaml:"appName" env:"APPNAME"` // app name used for monitoring
 	Domain   string     `json:"domain" yaml:"domain" env:"DOMAIN"`
 	Readers  Readers    `json:"readers" yaml:"readers" env:"READERS"`
 	Writers  Writers    `json:"writers" yaml:"writers" env:"WRITERS"`

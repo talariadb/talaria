@@ -54,7 +54,7 @@ func main() {
 
 	// Create a log table and a simple stdout monitor
 	stdLogger := logging.NewStandard()
-	stdout := monitor.New(stdLogger, s, "talaria", conf.Env)
+	stdout := monitor.New(stdLogger, s, conf.AppName, conf.Env)
 	logTbl := log.New(configure, gossip, stdout)
 	compositeLogger := logging.NewComposite(logTbl, stdLogger)
 
@@ -62,7 +62,7 @@ func main() {
 	s3Configurer.SetLogger(compositeLogger)
 
 	// Setup a monitor with a table output
-	monitor := monitor.New(compositeLogger, s, "talaria", conf.Env)
+	monitor := monitor.New(compositeLogger, s, conf.AppName, conf.Env)
 	monitor.Info("starting the log table ...")
 
 	monitor.Count1("system", "event", "type:start")

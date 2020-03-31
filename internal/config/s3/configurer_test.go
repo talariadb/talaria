@@ -71,3 +71,23 @@ type downloadMock func(ctx context.Context, uri string) ([]byte, error)
 func (d downloadMock) Load(ctx context.Context, uri string) ([]byte, error) {
 	return d(ctx, uri)
 }
+
+func TestUpdateAppName(t *testing.T) {
+	c := &config.Config{}
+	st := static.New()
+	err := st.Configure(c)
+	assert.Nil(t, err)
+	c.URI = "s3://config.s3-ap-southeast-1.amazonaws.com/a/b/c/conf-server-conf-stg.json"
+	c.Tables.Timeseries.Name = "abc"
+
+	assert.Nil(t, c.Tables.Timeseries.Schema)
+
+	var down downloadMock = func(ctx context.Context, uri string) ([]byte, error) {
+		return []byte("appName: talaria-processor"), nil
+	}
+
+	assert.Nil(t, err)
+	err = NewWith(down, logging.NewNoop()).Configure(c)
+	assert.Equal(t, c.AppName, "talaria-processor")
+	assert.Nil(t, err)
+}
