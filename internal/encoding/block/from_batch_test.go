@@ -73,8 +73,14 @@ func TestBlock_FromBatch(t *testing.T) {
 	end`)
 	assert.NoError(t, err)
 
+	// The schema to filter
+	filter := typeof.Schema{
+		"b": typeof.Timestamp,
+		"d": typeof.String,
+	}
+
 	// Create blocks
-	blocks, err := FromBatchBy(testBatch, "d", dataColumn)
+	blocks, err := FromBatchBy(testBatch, "d", &filter, dataColumn)
 	assert.NoError(t, err)
 	assert.Len(t, blocks, 3) // Number of partitions
 
@@ -92,12 +98,11 @@ func TestBlock_FromBatch(t *testing.T) {
 	// Select all of the columns
 	columns, err := block.Select(block.Schema())
 	assert.NoError(t, err)
-	assert.Equal(t, `[{"column":"b","type":"TIMESTAMP"},{"column":"d","type":"VARCHAR"},{"column":"data","type":"JSON"},{"column":"e","type":"JSON"}]`, block.Schema().String())
+	assert.Equal(t, `[{"column":"b","type":"TIMESTAMP"},{"column":"d","type":"VARCHAR"},{"column":"data","type":"JSON"}]`, block.Schema().String())
 
 	// Get the last row
 	row := columns.LastRow()
 	assert.Equal(t, int64(1585549847000), row["b"].(int64)) // Note: Presto Thrift time is in Unix Milliseconds
 	assert.Equal(t, `event3`, row["d"].(string))
-	assert.Equal(t, `{"name": "roman"}`, string(row["e"].(json.RawMessage)))
 	assert.Contains(t, string(row["data"].(json.RawMessage)), "event3")
 }

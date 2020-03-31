@@ -78,7 +78,7 @@ func TestTimeseries(t *testing.T) {
 	{
 		b, err := ioutil.ReadFile(testFile3)
 		assert.NoError(t, err)
-		blocks, err := block.FromOrcBy(b, cfg().Tables.Timeseries.HashBy)
+		blocks, err := block.FromOrcBy(b, cfg().Tables.Timeseries.HashBy, nil)
 		assert.NoError(t, err)
 		for _, block := range blocks {
 			assert.NoError(t, eventlog.Append(block))
@@ -111,7 +111,7 @@ func TestTimeseries(t *testing.T) {
 	{
 		b, err := ioutil.ReadFile(testFile2)
 		assert.NoError(t, err)
-		blocks, err := block.FromOrcBy(b, cfg().Tables.Timeseries.HashBy)
+		blocks, err := block.FromOrcBy(b, cfg().Tables.Timeseries.HashBy, nil)
 		assert.NoError(t, err)
 		for _, block := range blocks {
 			assert.NoError(t, eventlog.Append(block))

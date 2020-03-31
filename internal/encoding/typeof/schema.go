@@ -85,6 +85,12 @@ func (s Schema) Union(other Schema) (Schema, bool) {
 	return combined, true
 }
 
+// Contains checks if the schema contains a specific key
+func (s Schema) Contains(key string, typ Type) bool {
+	t, ok := s[key]
+	return ok && t == typ
+}
+
 type columnType struct {
 	Column string `json:"column"`
 	Type   string `json:"type"`

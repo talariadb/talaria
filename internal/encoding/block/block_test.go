@@ -16,7 +16,7 @@ func TestBlock_Types(t *testing.T) {
 	assert.NotEmpty(t, o)
 	assert.NoError(t, err)
 
-	b, err := FromOrcBy(o, "string1")
+	b, err := FromOrcBy(o, "string1", nil)
 	assert.Equal(t, 2, len(b))
 	assert.NoError(t, err)
 
@@ -65,7 +65,7 @@ func BenchmarkBlockRead(b *testing.B) {
 	o, err := ioutil.ReadFile(testFile)
 	noerror(err)
 
-	blk, err := FromOrcBy(o, "_col5")
+	blk, err := FromOrcBy(o, "_col5", nil)
 	noerror(err)
 
 	// 122MB uncompressed
@@ -96,7 +96,7 @@ func BenchmarkFrom(b *testing.B) {
 		b.ResetTimer()
 		b.ReportAllocs()
 		for n := 0; n < b.N; n++ {
-			_, err = FromOrcBy(orc, "string1")
+			_, err = FromOrcBy(orc, "string1", nil)
 			noerror(err)
 		}
 	})
@@ -105,7 +105,7 @@ func BenchmarkFrom(b *testing.B) {
 		b.ResetTimer()
 		b.ReportAllocs()
 		for n := 0; n < b.N; n++ {
-			_, err = FromBatchBy(testBatch, "d")
+			_, err = FromBatchBy(testBatch, "d", nil)
 			noerror(err)
 		}
 	})

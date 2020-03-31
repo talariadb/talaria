@@ -19,7 +19,7 @@ func TestFromOrc_Nested(t *testing.T) {
 	assert.NotEmpty(t, o)
 	assert.NoError(t, err)
 
-	b, err := FromOrcBy(o, "string1")
+	b, err := FromOrcBy(o, "string1", nil)
 	assert.NoError(t, err)
 	assert.Equal(t, 2, len(b))
 
@@ -34,7 +34,7 @@ func TestFromOrc_LargeFile(t *testing.T) {
 	assert.NotEmpty(t, o)
 	assert.NoError(t, err)
 
-	b, err := FromOrcBy(o, "_col5")
+	b, err := FromOrcBy(o, "_col5", nil)
 	assert.NoError(t, err)
 	assert.Equal(t, 769, len(b))
 }

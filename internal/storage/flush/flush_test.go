@@ -58,8 +58,8 @@ func TestMerge(t *testing.T) {
 	_ = writer.Write("eventName", 2, 2.0)
 	_ = writer.Close()
 
-	block1, err := block.FromOrcBy(orcBuffer1.Bytes(), "col0")
-	block2, err := block.FromOrcBy(orcBuffer2.Bytes(), "col0")
+	block1, err := block.FromOrcBy(orcBuffer1.Bytes(), "col0", nil)
+	block2, err := block.FromOrcBy(orcBuffer2.Bytes(), "col0", nil)
 
 	mergedBlocks := []block.Block{}
 	for _, blk := range block1 {
@@ -136,8 +136,8 @@ func TestMerge_DifferentSchema(t *testing.T) {
 	_ = writer.Write("eventName", 2, 2.0, "s")
 	_ = writer.Close()
 
-	block1, err := block.FromOrcBy(orcBuffer1.Bytes(), "col0")
-	block2, err := block.FromOrcBy(orcBuffer2.Bytes(), "col0")
+	block1, err := block.FromOrcBy(orcBuffer1.Bytes(), "col0", nil)
+	block2, err := block.FromOrcBy(orcBuffer2.Bytes(), "col0", nil)
 
 	mergedBlocks := []block.Block{}
 	for _, blk := range block1 {

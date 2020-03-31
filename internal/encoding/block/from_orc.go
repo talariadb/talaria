@@ -16,7 +16,7 @@ import (
 
 // FromOrcBy decodes a set of blocks from an orc file and repartitions
 // it by the specified partition key.
-func FromOrcBy(payload []byte, partitionBy string, computed ...*column.Computed) ([]Block, error) {
+func FromOrcBy(payload []byte, partitionBy string, filter *typeof.Schema, computed ...*column.Computed) ([]Block, error) {
 	const max = 10000
 	iter, err := orc.FromBuffer(payload)
 	if err != nil {
@@ -74,7 +74,9 @@ func FromOrcBy(payload []byte, partitionBy string, computed ...*column.Computed)
 			}
 
 			row[columnName] = v
-			columns.Append(columnName, v, columnType)
+			if filter == nil || filter.Contains(columnName, columnType) {
+				columns.Append(columnName, v, columnType)
+			}
 		}
 
 		// Append computed columns and fill nulls for the row

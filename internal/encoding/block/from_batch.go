@@ -17,7 +17,7 @@ import (
 
 // FromBatchBy creates a block from a talaria protobuf-encoded batch. It
 // repartitions the batch by a given partition key at the same time.
-func FromBatchBy(batch *talaria.Batch, partitionBy string, computed ...*column.Computed) ([]Block, error) {
+func FromBatchBy(batch *talaria.Batch, partitionBy string, filter *typeof.Schema, computed ...*column.Computed) ([]Block, error) {
 	if batch == nil || batch.Strings == nil || batch.Events == nil {
 		return nil, errEmptyBatch
 	}
@@ -62,7 +62,9 @@ func FromBatchBy(batch *talaria.Batch, partitionBy string, computed ...*column.C
 			}
 
 			row[columnName] = columnValue
-			columns.Append(columnName, columnValue, typ)
+			if filter == nil || filter.Contains(columnName, typ) {
+				columns.Append(columnName, columnValue, typ)
+			}
 		}
 
 		// Append computed columns and fill nulls for the row
