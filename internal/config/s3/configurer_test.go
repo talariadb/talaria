@@ -71,7 +71,6 @@ type downloadMock func(ctx context.Context, uri string) ([]byte, error)
 func (d downloadMock) Load(ctx context.Context, uri string) ([]byte, error) {
 	return d(ctx, uri)
 }
-
 func TestUpdateAppName(t *testing.T) {
 	c := &config.Config{}
 	st := static.New()

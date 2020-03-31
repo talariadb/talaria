@@ -112,8 +112,12 @@ github.com/kelindar/kmeans v0.0.0-20200210034301-1ca04019ef7c h1:aJF9kKZp/nslxaw
 github.com/kelindar/kmeans v0.0.0-20200210034301-1ca04019ef7c/go.mod h1:COZfzjrLqOXW1PRpk7Sf1COFVXUxjZMV22JOd/JBPx8=
 github.com/kelindar/loader v0.0.2 h1:EZUDyiD7I2TGsacWoc5ytL11iU07TYIyDNgJ7cRy5V4=
 github.com/kelindar/loader v0.0.2/go.mod h1:R/T32WH/c+33Msftyw9PSX/HRpSLDXdlIms1LhnVbP4=
+github.com/kelindar/loader v0.0.3 h1:eb05k7KEqfWdB1NFdXf70lhAgaMcW2bgXL17uou616I=
+github.com/kelindar/loader v0.0.3/go.mod h1:R/T32WH/c+33Msftyw9PSX/HRpSLDXdlIms1LhnVbP4=
 github.com/kelindar/lua v0.0.3 h1:mHuPqPKiDehnl5kyARRBsNkJaqJxf3sFh7nN32nHtEI=
 github.com/kelindar/lua v0.0.3/go.mod h1:zCY2muj80Y5c3odwn4Ql6kjzpk3GAq9V4JwuVGLOsdA=
+github.com/kelindar/lua v0.0.4 h1:jv0qU8+8rAHzPDN5QqhZ1tKzSkWDGGTVWWSd0gEXi1g=
+github.com/kelindar/lua v0.0.4/go.mod h1:zCY2muj80Y5c3odwn4Ql6kjzpk3GAq9V4JwuVGLOsdA=
 github.com/kelindar/process v0.0.0-20170730150328-69a29e249ec3 h1:6If+E1dikQbdT7DlhZqLplfGkEt6dSoz7+MK+TFC7+U=
 github.com/kelindar/process v0.0.0-20170730150328-69a29e249ec3/go.mod h1:+lTCLnZFXOkqwD8sLPl6u4erAc0cP8wFegQHfipz7KE=
 github.com/kisielk/errcheck v1.2.0/go.mod h1:/BMXB+zMLi60iA8Vv6Ksmxu/1UDYcXs4uQLJ+jE2L00=

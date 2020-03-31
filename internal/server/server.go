@@ -17,8 +17,11 @@ import (
 	"github.com/grab/talaria/internal/monitor"
 	"github.com/grab/talaria/internal/monitor/errors"
 	"github.com/grab/talaria/internal/presto"
+	"github.com/grab/talaria/internal/scripting/log"
+	"github.com/grab/talaria/internal/scripting/stats"
 	"github.com/grab/talaria/internal/table"
 	talaria "github.com/grab/talaria/proto"
+	"github.com/kelindar/lua"
 	"google.golang.org/grpc"
 )
 
@@ -52,9 +55,15 @@ func New(conf config.Func, monitor monitor.Monitor, tables ...table.Table) *Serv
 		tables:  make(map[string]table.Table),
 	}
 
+	// Create scripting modules
+	modules := []lua.Module{
+		log.New(monitor),
+		stats.New(monitor),
+	}
+
 	// Load computed columns
 	for _, c := range conf().Computed {
-		col, err := column.NewComputed(c.Name, c.Type, c.Func)
+		col, err := column.NewComputed(c.Name, c.Type, c.Func, modules...)
 		if err != nil {
 			monitor.Error(err)
 			continue

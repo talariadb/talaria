@@ -15,7 +15,7 @@ import (
 )
 
 // NewComputed creates a new script from a string
-func NewComputed(name string, typ typeof.Type, code string) (*Computed, error) {
+func NewComputed(name string, typ typeof.Type, code string, modules ...lua.Module) (*Computed, error) {
 
 	// If the string is actually a URL, try to download it
 	var err error
@@ -27,7 +27,7 @@ func NewComputed(name string, typ typeof.Type, code string) (*Computed, error) {
 	}
 
 	// Create a script from the code
-	s, err := lua.FromString(name, code)
+	s, err := lua.FromString(name, code, modules...)
 	if err != nil {
 		return nil, err
 	}

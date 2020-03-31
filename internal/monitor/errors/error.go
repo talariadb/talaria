@@ -68,7 +68,7 @@ func withError(code codes.Code, message string, err error, tags ...Tag) error {
 		grpc:    code,
 		err:     err,
 		Reason:  http.StatusText(status),
-		Target:  caller(3), // makeError -> (eg. Internal) -> X
+		Target:  caller(3), // withError -> (eg. Internal) -> X
 		Message: message,
 	}
 }

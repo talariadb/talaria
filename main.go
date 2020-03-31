@@ -65,8 +65,7 @@ func main() {
 	monitor := monitor.New(compositeLogger, s, conf.AppName, conf.Env)
 	monitor.Info("starting the log table ...")
 
-	monitor.Count1("system", "event", "type:start")
-	defer monitor.Count1("system", "event", "type:stop")
+	monitor.Count1(logTag, "start")
 	monitor.Info("starting the server and database ...")
 
 	startMonitor(monitor)

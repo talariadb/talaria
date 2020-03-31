@@ -11,12 +11,12 @@ import (
 
 // New creates a new internal error
 func New(msg string) error {
-	return Internal(msg, nil)
+	return withError(codes.Internal, msg, nil)
 }
 
 // Newf creates a new internal error with a message format
 func Newf(f string, args ...interface{}) error {
-	return Internal(fmt.Sprintf(f, args...), nil)
+	return withError(codes.Internal, fmt.Sprintf(f, args...), nil)
 }
 
 // Internal ...
