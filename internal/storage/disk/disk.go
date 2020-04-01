@@ -185,7 +185,6 @@ func (s *Storage) GC(ctx context.Context) (interface{}, error) {
 	}
 
 	deleted, total := s.purge()
-	s.monitor.Debug("deleted %v / %v items, available %v", deleted, total, total-deleted)
 	s.monitor.Gauge(ctxTag, "GC.purge", float64(deleted), "type:deleted")
 	s.monitor.Gauge(ctxTag, "GC.purge", float64(total), "type:total")
 
@@ -195,7 +194,6 @@ func (s *Storage) GC(ctx context.Context) (interface{}, error) {
 			return nil, nil
 		}
 		s.monitor.Count1(ctxTag, "vlog.GC", "type:completed")
-		s.monitor.Debug("cycle completed")
 	}
 	return nil, nil
 }
@@ -230,9 +228,7 @@ func (l *logger) Warningf(format string, args ...interface{}) {
 }
 
 func (l *logger) Infof(format string, args ...interface{}) {
-	l.Monitor.Info(format, args...)
 }
 
 func (l *logger) Debugf(format string, args ...interface{}) {
-	l.Monitor.Debug(format, args...)
 }

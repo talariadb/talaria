@@ -114,7 +114,6 @@ func (s *Ingress) drain(ctx context.Context, queue <-chan *awssqs.Message, handl
 
 				// Wait until we can proceed
 				if err := s.limit.Acquire(ctx, 1); err != nil {
-					s.monitor.Debug("sqs: reached concurrency limit")
 					continue
 				}
 
@@ -148,7 +147,7 @@ func (s *Ingress) ingest(bucket, key string, handler func(v []byte) bool) {
 		return
 	}
 
-	s.monitor.Info("sqs: downloading %v", key)
+	//s.monitor.Info("sqs: downloading %v", key)
 
 	// Call the handler
 	_ = handler(data)

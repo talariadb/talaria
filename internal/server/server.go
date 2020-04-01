@@ -19,6 +19,7 @@ import (
 	"github.com/grab/talaria/internal/presto"
 	"github.com/grab/talaria/internal/scripting/log"
 	"github.com/grab/talaria/internal/scripting/stats"
+	"github.com/grab/talaria/internal/server/thriftlog"
 	"github.com/grab/talaria/internal/table"
 	talaria "github.com/grab/talaria/proto"
 	"github.com/kelindar/lua"
@@ -114,7 +115,10 @@ func (s *Server) Listen(ctx context.Context, prestoPort, grpcPort int32) error {
 	})
 
 	// Serve presto and block
-	return presto.Serve(ctx, int32(prestoPort), s)
+	return presto.Serve(ctx, int32(prestoPort), &thriftlog.Service{
+		Service: s,
+		Monitor: s.monitor,
+	})
 }
 
 // Close closes the server and related resources.
@@ -129,6 +133,8 @@ func (s *Server) Close() {
 		}
 	}
 }
+
+// ------------------------------------------------------------------------------------------------------------
 
 // handlePanic handles the panic and logs it out.
 func (s *Server) handlePanic() {

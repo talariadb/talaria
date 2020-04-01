@@ -107,3 +107,24 @@ func (b *PrestoThriftBlock) Count() int {
 	}
 	return 0
 }
+
+// Type returns the data type for the block
+func (b *PrestoThriftBlock) Type() typeof.Type {
+	switch {
+	case b.IntegerData != nil:
+		return typeof.Int32
+	case b.BigintData != nil:
+		return typeof.Int64
+	case b.VarcharData != nil:
+		return typeof.String
+	case b.DoubleData != nil:
+		return typeof.Float64
+	case b.BooleanData != nil:
+		return typeof.Bool
+	case b.TimestampData != nil:
+		return typeof.Timestamp
+	case b.JsonData != nil:
+		return typeof.JSON
+	}
+	return typeof.Unsupported
+}
