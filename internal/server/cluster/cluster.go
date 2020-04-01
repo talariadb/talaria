@@ -4,6 +4,7 @@
 package cluster
 
 import (
+	"io/ioutil"
 	"net"
 	"strconv"
 	"strings"
@@ -34,6 +35,7 @@ func New(port int) *Cluster {
 	cfg.BindPort = port
 	cfg.AdvertisePort = port
 	cfg.AdvertiseAddr = getAddress()
+	cfg.LogOutput = ioutil.Discard // Ignore memberlist logs
 	list, err := memberlist.Create(cfg)
 	if err != nil {
 		panic("failed to create gossip memberlist: " + err.Error())

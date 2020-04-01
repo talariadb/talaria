@@ -4,10 +4,7 @@
 package monitor
 
 import (
-	"context"
 	"time"
-
-	"github.com/grab/async"
 )
 
 type noopClient struct{}
@@ -15,11 +12,6 @@ type noopClient struct{}
 // NewNoop ...
 func NewNoop() Monitor {
 	return &noopClient{}
-}
-
-// TrackDiskSpace ...
-func (c *noopClient) TrackDiskSpace() async.Task {
-	return async.NewTask(func(ctx context.Context) (interface{}, error) { return nil, nil })
 }
 
 // Duration ...

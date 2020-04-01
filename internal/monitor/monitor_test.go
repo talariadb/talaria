@@ -21,7 +21,6 @@ func TestNoop(t *testing.T) {
 	testMsg := "message"
 
 	assert.NotPanics(t, func() {
-		c.TrackDiskSpace()
 		c.Duration(testTag, testKey, testStart)
 		c.Gauge(testTag, testKey, 1)
 		c.Count1(testTag, testKey)

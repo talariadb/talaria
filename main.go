@@ -68,8 +68,6 @@ func main() {
 	monitor.Count1(logTag, "start")
 	monitor.Info("starting the server and database ...")
 
-	startMonitor(monitor)
-
 	// create a store
 	var ingestor *s3sqs.Ingress
 	store := storage.Storage(disk.Open(conf.Storage.Directory, conf.Tables.Timeseries.Name, monitor))
@@ -129,10 +127,6 @@ func main() {
 	if err := server.Listen(ctx, conf.Readers.Presto.Port, conf.Writers.GRPC.Port); err != nil {
 		panic(err)
 	}
-}
-
-func startMonitor(m monitor.Monitor) {
-	m.TrackDiskSpace()
 }
 
 // onSignal hooks a callback for a signal.

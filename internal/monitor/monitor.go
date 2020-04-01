@@ -24,7 +24,6 @@ type StatsdClient interface {
 
 // Monitor represents a contract that a monitor should implement
 type Monitor interface {
-	Tracker
 
 	// Stats
 	Duration(contextTag, key string, start time.Time, tags ...string)

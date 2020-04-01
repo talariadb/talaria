@@ -179,8 +179,11 @@ func (t *Table) readDataFrame(schema typeof.Schema, buffer []byte, maxBytes int)
 		return nil, errors.Internal("block read failed", err)
 	}
 
+	// Log the data frame read
+	t.monitor.Debug("reading a data frame size=%v bytesLeft=%v", result.Size(), maxBytes)
+
 	// If we don't have enough space, skip this data frame and stop here
-	if result.Size() > maxBytes {
+	if result.Size() >= maxBytes {
 		return nil, io.ErrShortBuffer
 	}
 

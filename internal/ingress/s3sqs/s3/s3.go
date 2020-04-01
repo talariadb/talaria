@@ -126,7 +126,6 @@ func (s *client) getLatestKey(ctx context.Context, bucket, prefix string) (*s3.L
 		}
 	}
 
-	s.monitor.Debug("s3: latest key (%s) found", key)
 	if key == "" {
 		return nil, "", ErrNoSuchKey
 	}
@@ -156,7 +155,6 @@ func (s *client) DownloadLatestFolder(ctx context.Context, bucket, prefix string
 	parent := getParentFolder(latestKey)
 	// if no parent found, just download latest key
 	if parent == "" {
-		s.monitor.Debug("s3: no parent found. Downloading single file...", latestKey)
 		return s.Download(ctx, bucket, latestKey)
 	}
 
@@ -165,7 +163,6 @@ func (s *client) DownloadLatestFolder(ctx context.Context, bucket, prefix string
 	objects := list.Contents
 	for _, o := range objects {
 		if found := strings.Contains(*o.Key, parent); found {
-			s.monitor.Debug("s3: found another file in parent...", parent, *o.Key)
 			if err := s.downloadWithWriter(ctx, w, bucket, *o.Key); err != nil {
 				return nil, err
 			}
