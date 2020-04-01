@@ -36,5 +36,5 @@ func TestFromOrc_LargeFile(t *testing.T) {
 
 	b, err := FromOrcBy(o, "_col5", nil)
 	assert.NoError(t, err)
-	assert.Equal(t, 769, len(b))
+	assert.Equal(t, 56, len(b))
 }

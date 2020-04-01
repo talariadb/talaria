@@ -20,10 +20,10 @@ func TestColumns(t *testing.T) {
 	assert.Nil(t, nc.Any())
 
 	// Fill level 1
-	assert.True(t, nc.Append("a", int32(1), typeof.Int32))
-	assert.True(t, nc.Append("b", int32(2), typeof.Int32))
-	assert.False(t, nc.Append("123", int32(2), typeof.Int32)) // Invalid
-	assert.False(t, nc.Append("x", complex128(1), typeof.Unsupported))
+	assert.NotZero(t, nc.Append("a", int32(1), typeof.Int32))
+	assert.NotZero(t, nc.Append("b", int32(2), typeof.Int32))
+	assert.Zero(t, nc.Append("123", int32(2), typeof.Int32)) // Invalid
+	assert.Zero(t, nc.Append("x", complex128(1), typeof.Unsupported))
 	assert.Equal(t, 1, nc.Max())
 	assert.Equal(t, 2, len(nc.LastRow()))
 	nc.AppendComputed(nc.LastRow(), data)
@@ -31,16 +31,16 @@ func TestColumns(t *testing.T) {
 	assert.NotNil(t, nc.Any())
 
 	// Fill level 2
-	assert.True(t, nc.Append("a", int32(1), typeof.Int32))
-	assert.True(t, nc.Append("c", "hi", typeof.String))
+	assert.NotZero(t, nc.Append("a", int32(1), typeof.Int32))
+	assert.NotZero(t, nc.Append("c", "hi", typeof.String))
 	assert.Equal(t, 2, nc.Max())
 	nc.AppendComputed(nc.LastRow(), data)
 	nc.FillNulls()
 
 	// Fill level 3
-	assert.True(t, nc.Append("b", int32(1), typeof.Int32))
-	assert.True(t, nc.Append("c", "hi", typeof.String))
-	assert.True(t, nc.Append("d", float64(1.5), typeof.Float64))
+	assert.NotZero(t, nc.Append("b", int32(1), typeof.Int32))
+	assert.NotZero(t, nc.Append("c", "hi", typeof.String))
+	assert.NotZero(t, nc.Append("d", float64(1.5), typeof.Float64))
 	assert.Equal(t, 3, nc.Max())
 	nc.AppendComputed(nc.LastRow(), data)
 	nc.FillNulls()

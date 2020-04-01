@@ -27,30 +27,30 @@ type Column = presto.Column
 type Columns map[string]Column
 
 // Append adds a value at a particular index to the block.
-func (c Columns) Append(name string, value interface{}, typ typeof.Type) bool {
+func (c Columns) Append(name string, value interface{}, typ typeof.Type) int {
 	if !IsValidName(name) {
-		return false
+		return 0
 	}
 
 	// Check if the column exists
 	if col, exists := c[name]; exists {
-		return col.Append(value) > 0
+		return col.Append(value)
 	}
 
 	// Skip unsupported types
 	if typ == typeof.Unsupported {
-		return false
+		return 0
 	}
 
 	// If column does not exist, create it and fill it with nulls up until the max - 1
-	newColumn := NewColumn(typ)
+	newColumn, size := NewColumn(typ), 0
 	until := c.Max() - 1
 	for i := 0; i < until; i++ {
-		newColumn.Append(nil)
+		size += newColumn.Append(nil)
 	}
 
 	c[name] = newColumn
-	return newColumn.Append(value) > 0
+	return size + newColumn.Append(value)
 }
 
 // Max finds the maximum count of a column in the set
@@ -73,34 +73,33 @@ func (c Columns) LastRow() map[string]interface{} {
 }
 
 // AppendComputed runs the computed columns and appends them to the set.
-func (c Columns) AppendComputed(row map[string]interface{}, computed []*Computed) error {
+func (c Columns) AppendComputed(row map[string]interface{}, computed []*Computed) int {
 	if len(computed) == 0 {
-		return nil
+		return 0
 	}
 
+	size := 0
 	for _, s := range computed {
 		v, err := s.Value(row)
-		if err != nil {
-			return err
-		}
-		if v == nil {
+		if err != nil || v == nil {
 			continue
 		}
 
-		c.Append(s.Name(), v, s.Type())
+		size += c.Append(s.Name(), v, s.Type())
 	}
-	return nil
+	return size
 }
 
 // FillNulls adds nulls onto all uneven columns left.
-func (c Columns) FillNulls() {
+func (c Columns) FillNulls() (size int) {
 	max := c.Max()
 	for _, column := range c {
 		delta := max - column.Count()
 		for i := 0; i < delta; i++ {
-			column.Append(nil)
+			size += column.Append(nil)
 		}
 	}
+	return
 }
 
 // Size returns the space (in bytes) required for the set of blocks.

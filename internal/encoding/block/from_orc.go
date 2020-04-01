@@ -17,7 +17,8 @@ import (
 // FromOrcBy decodes a set of blocks from an orc file and repartitions
 // it by the specified partition key.
 func FromOrcBy(payload []byte, partitionBy string, filter *typeof.Schema, computed ...*column.Computed) ([]Block, error) {
-	const max = 10000
+	const max = 10000000 // 10MB
+
 	iter, err := orc.FromBuffer(payload)
 	if err != nil {
 		return nil, err
@@ -35,14 +36,15 @@ func FromOrcBy(payload []byte, partitionBy string, filter *typeof.Schema, comput
 	blocks := make([]Block, 0, 128)
 
 	// Create presto columns and iterate
-	result, count := make(map[string]column.Columns, 16), 0
+	result, size := make(map[string]column.Columns, 16), 0
 	_, _ = iter.Range(func(rowIdx int, r []interface{}) bool {
-		if count%max == 0 {
+		if size >= max {
 			pending, err := makeBlocks(result)
 			if err != nil {
 				return true
 			}
 
+			size = 0 // Reset the size
 			blocks = append(blocks, pending...)
 			result = make(map[string]column.Columns, 16)
 		}
@@ -75,14 +77,13 @@ func FromOrcBy(payload []byte, partitionBy string, filter *typeof.Schema, comput
 
 			row[columnName] = v
 			if filter == nil || filter.Contains(columnName, columnType) {
-				columns.Append(columnName, v, columnType)
+				size += columns.Append(columnName, v, columnType)
 			}
 		}
 
 		// Append computed columns and fill nulls for the row
-		count++
-		columns.AppendComputed(row, computed)
-		columns.FillNulls()
+		size += columns.AppendComputed(row, computed)
+		size += columns.FillNulls()
 		return false
 	}, cols...)
 

@@ -50,7 +50,7 @@ func (m *benchMockConfigurer) Configure(c *config.Config) error {
 
 // BenchmarkQuery runs a benchmark for a main GetRows function for querying
 // To run it, go in the directory and do 'go test -benchmem -bench=. -benchtime=1s'
-// BenchmarkQuery/query-8         	     163	   7225911 ns/op	39053102 B/op	    6171 allocs/op
+// BenchmarkQuery/query-8         	     188	   6289436 ns/op	35053075 B/op	    1220 allocs/op
 func BenchmarkQuery(b *testing.B) {
 	dir, err := ioutil.TempDir(".", "testdata-")
 	noerror(err)
