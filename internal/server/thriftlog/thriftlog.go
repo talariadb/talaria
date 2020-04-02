@@ -134,6 +134,10 @@ type target struct {
 
 // trace logs a single request/response in a JSON format
 func (s *Service) trace(function string, request, response interface{}, responseErr error) {
+	if responseErr != nil {
+		s.Monitor.Error(responseErr)
+	}
+
 	if r, err := json.Marshal(&target{
 		Func:     function,
 		Request:  request,
@@ -141,8 +145,5 @@ func (s *Service) trace(function string, request, response interface{}, response
 		Error:    responseErr,
 	}); err == nil {
 		s.Monitor.Debug("%v", string(r))
-		if responseErr != nil {
-			s.Monitor.Error(responseErr)
-		}
 	}
 }

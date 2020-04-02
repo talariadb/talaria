@@ -8,9 +8,11 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"strconv"
 	"testing"
 	"time"
 
+	"github.com/grab/talaria/internal/encoding/key"
 	"github.com/grab/talaria/internal/monitor"
 	"github.com/stretchr/testify/assert"
 )
@@ -101,6 +103,34 @@ func TestRange_NoPrefix(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, 3000, count)
 	})
+}
+
+func TestDelete(t *testing.T) {
+	const count = 10000
+	runTest(t, func(store *Storage) {
+
+		// Write some data
+		var keys []key.Key
+		for i := 0; i < count; i++ {
+			k := key.Key(strconv.Itoa(i))
+			keys = append(keys, k)
+			_ = store.Append(k, k, 60*time.Second)
+		}
+
+		// Delete the keys
+		assert.Equal(t, count, countKeys(store))
+		assert.NoError(t, store.Delete(keys...))
+		assert.Equal(t, 0, countKeys(store))
+	})
+}
+
+// countKeys counts the number of keys in the store
+func countKeys(store *Storage) (count int) {
+	store.Range(key.First(), key.Last(), func(k, v []byte) bool {
+		count++
+		return false
+	})
+	return
 }
 
 func asBytes(s string) []byte {

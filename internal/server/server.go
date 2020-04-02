@@ -139,6 +139,6 @@ func (s *Server) Close() {
 // handlePanic handles the panic and logs it out.
 func (s *Server) handlePanic() {
 	if r := recover(); r != nil {
-		s.monitor.Error(errors.Newf("panic recovered: %ss \n %s", r, debug.Stack()))
+		s.monitor.Error(errors.Newf("panic recovered: %s \n %s", r, debug.Stack()))
 	}
 }

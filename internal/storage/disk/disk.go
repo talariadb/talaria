@@ -161,17 +161,36 @@ func (s *Storage) purge() (deleted, total int) {
 
 // Delete deletes one or multiple keys from the storage.
 func (s *Storage) Delete(keys ...key.Key) error {
-	if err := s.db.Update(func(tx *badger.Txn) error {
-		for _, key := range keys {
-			if err := tx.Delete(key); err != nil {
-				return err
+	const msg = "unable to delete"
+
+	txn := s.db.NewTransaction(true)
+	for _, key := range keys {
+		err := txn.Delete(key)
+
+		// If the transaction is too big, commit the current transaction
+		switch {
+		case err == badger.ErrTxnTooBig:
+			if err := txn.Commit(); err != nil {
+				return errors.Internal(msg, err)
 			}
+
+			// Create a new transaction and delete
+			txn = s.db.NewTransaction(true)
+			if err := txn.Delete(key); err != nil {
+				return errors.Internal(msg, err)
+			}
+
+		// On any other error, fail the deletion
+		case err != nil:
+			return errors.Internal(msg, err)
+
 		}
-		return nil
-	}); err != nil {
-		return errors.Internal("unable to delete", err)
 	}
 
+	// Commit the transaction
+	if err := txn.Commit(); err != nil {
+		return errors.Internal(msg, err)
+	}
 	return nil
 }
 
