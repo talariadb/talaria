@@ -134,7 +134,7 @@ func (t *Table) GetRows(splitID []byte, requestedColumns []string, maxBytes int6
 	}
 
 	// Range through the keys in our data store
-	bytesLeft := int(maxBytes)
+	bytesLeft := int(float64(maxBytes) * 0.95) // Leave 5% buffer in case we estimating the size poorly
 	frames := make(map[string][]presto.Column, len(requestedColumns))
 	if err = t.store.Range(query.Begin, query.Until, func(key, value []byte) bool {
 
