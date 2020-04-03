@@ -10,6 +10,7 @@ import (
 	"github.com/grab/talaria/internal/config"
 	"github.com/grab/talaria/internal/encoding/typeof"
 	"github.com/grab/talaria/internal/monitor"
+	"github.com/grab/talaria/internal/scripting"
 	"github.com/grab/talaria/internal/storage"
 	"github.com/grab/talaria/internal/storage/compact"
 	"github.com/grab/talaria/internal/storage/flush"
@@ -19,7 +20,7 @@ import (
 const defaultInterval = 30 * time.Second
 
 // New returns a compact store
-func New(s3Config *config.S3Compact, monitor monitor.Monitor, store storage.Storage) *compact.Storage {
+func New(s3Config *config.S3Compact, monitor monitor.Monitor, store storage.Storage, loader *script.Loader) *compact.Storage {
 	s3Writer, err := writers.NewS3Writer(s3Config.Region, s3Config.Bucket, s3Config.Concurrency)
 	if err != nil {
 		panic(err)
@@ -30,7 +31,7 @@ func New(s3Config *config.S3Compact, monitor monitor.Monitor, store storage.Stor
 	}
 
 	if s3Config.NameFunc != "" {
-		if fn, err := column.NewComputed("fileNameFunc", typeof.String, s3Config.NameFunc); err == nil {
+		if fn, err := column.NewComputed("nameFunc", typeof.String, s3Config.NameFunc, loader); err == nil {
 			nameFunc = func(row map[string]interface{}) (s string, e error) {
 				val, err := fn.Value(row)
 				return val.(string), err

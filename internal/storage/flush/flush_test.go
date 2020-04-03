@@ -15,6 +15,7 @@ import (
 	"github.com/grab/talaria/internal/encoding/orc"
 	"github.com/grab/talaria/internal/encoding/typeof"
 	"github.com/grab/talaria/internal/monitor"
+	"github.com/grab/talaria/internal/scripting"
 	"github.com/grab/talaria/internal/storage/flush/writers"
 	"github.com/kelindar/binary"
 )
@@ -29,7 +30,7 @@ func TestMerge(t *testing.T) {
 			current_time = 0
 			fileName = string.format("%s-%d",row["col0"],0)
 			return fileName
-		end`)
+		end`, script.NewLoader(nil))
 
 		output, err := lua.Value(row)
 		return output.(string), err
@@ -95,7 +96,7 @@ func TestMerge_DifferentSchema(t *testing.T) {
 			current_time = 0
 			fileName = string.format("%s-%d",row["col0"],0)
 			return fileName
-		end`)
+		end`, script.NewLoader(nil))
 
 		output, err := lua.Value(row)
 		return output.(string), err

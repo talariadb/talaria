@@ -14,15 +14,14 @@ import (
 	"github.com/grab/async"
 	"github.com/grab/talaria/internal/column"
 	"github.com/grab/talaria/internal/config"
+	"github.com/grab/talaria/internal/ingress/s3sqs"
 	"github.com/grab/talaria/internal/monitor"
 	"github.com/grab/talaria/internal/monitor/errors"
 	"github.com/grab/talaria/internal/presto"
-	"github.com/grab/talaria/internal/scripting/log"
-	"github.com/grab/talaria/internal/scripting/stats"
+	"github.com/grab/talaria/internal/scripting"
 	"github.com/grab/talaria/internal/server/thriftlog"
 	"github.com/grab/talaria/internal/table"
 	talaria "github.com/grab/talaria/proto"
-	"github.com/kelindar/lua"
 	"google.golang.org/grpc"
 )
 
@@ -47,7 +46,7 @@ type Storage interface {
 // ------------------------------------------------------------------------------------------------------------
 
 // New creates a new talaria server.
-func New(conf config.Func, monitor monitor.Monitor, tables ...table.Table) *Server {
+func New(conf config.Func, monitor monitor.Monitor, loader *script.Loader, tables ...table.Table) *Server {
 	const maxMessageSize = 32 * 1024 * 1024 // 32 MB
 	server := &Server{
 		server:  grpc.NewServer(grpc.MaxRecvMsgSize(maxMessageSize)),
@@ -56,15 +55,9 @@ func New(conf config.Func, monitor monitor.Monitor, tables ...table.Table) *Serv
 		tables:  make(map[string]table.Table),
 	}
 
-	// Create scripting modules
-	modules := []lua.Module{
-		log.New(monitor),
-		stats.New(monitor),
-	}
-
 	// Load computed columns
 	for _, c := range conf().Computed {
-		col, err := column.NewComputed(c.Name, c.Type, c.Func, modules...)
+		col, err := column.NewComputed(c.Name, c.Type, c.Func, loader)
 		if err != nil {
 			monitor.Error(err)
 			continue
@@ -93,12 +86,18 @@ type Server struct {
 	cancel   context.CancelFunc     // The cancellation function for the server
 	tables   map[string]table.Table // The list of tables
 	computed []*column.Computed     // The set of computed columns
+	s3sqs    *s3sqs.Ingress         // The S3SQS Ingress (optional)
 }
 
 // Listen starts listening on presto RPC & gRPC.
 func (s *Server) Listen(ctx context.Context, prestoPort, grpcPort int32) error {
 	ctx, cancel := context.WithCancel(ctx)
 	s.cancel = cancel
+
+	// Asynchronously start ingresting from S3/SQS (if configured)
+	if err := s.pollFromSQS(s.conf()); err != nil {
+		return err
+	}
 
 	// Asynchronously start the gRPC listener
 	async.Invoke(ctx, func(ctx context.Context) (interface{}, error) {
@@ -121,10 +120,40 @@ func (s *Server) Listen(ctx context.Context, prestoPort, grpcPort int32) error {
 	})
 }
 
+// Optionally starts an S3 SQS ingress
+func (s *Server) pollFromSQS(conf *config.Config) (err error) {
+	if conf.Writers.S3SQS == nil {
+		return nil
+	}
+
+	// Create a new ingestor
+	s.s3sqs, err = s3sqs.New(conf.Writers.S3SQS, conf.Writers.S3SQS.Region, s.monitor)
+	if err != nil {
+		return err
+	}
+
+	// Start ingesting
+	s.monitor.Info("starting ingestion from S3/SQS")
+	s.s3sqs.Range(func(v []byte) bool {
+		if _, err := s.Ingest(context.Background(), &talaria.IngestRequest{
+			Data: &talaria.IngestRequest_Orc{Orc: v},
+		}); err != nil {
+			s.monitor.Warning(err)
+		}
+		return false
+	})
+	return nil
+}
+
 // Close closes the server and related resources.
 func (s *Server) Close() {
 	s.server.GracefulStop()
 	s.cancel()
+
+	// Stop S3/SQS ingress
+	if s.s3sqs != nil {
+		s.s3sqs.Close()
+	}
 
 	// Close all the open tables
 	for _, t := range s.tables {

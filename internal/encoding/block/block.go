@@ -7,6 +7,7 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+
 	"github.com/golang/snappy"
 	"github.com/grab/talaria/internal/column"
 	"github.com/grab/talaria/internal/encoding/typeof"

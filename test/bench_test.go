@@ -14,6 +14,7 @@ import (
 	"github.com/grab/talaria/internal/encoding/typeof"
 	"github.com/grab/talaria/internal/monitor"
 	"github.com/grab/talaria/internal/presto"
+	"github.com/grab/talaria/internal/scripting"
 	"github.com/grab/talaria/internal/server"
 	"github.com/grab/talaria/internal/storage/disk"
 	"github.com/grab/talaria/internal/table/timeseries"
@@ -50,7 +51,7 @@ func (m *benchMockConfigurer) Configure(c *config.Config) error {
 
 // BenchmarkQuery runs a benchmark for a main GetRows function for querying
 // To run it, go in the directory and do 'go test -benchmem -bench=. -benchtime=1s'
-// BenchmarkQuery/query-8         	     188	   6289436 ns/op	35053075 B/op	    1220 allocs/op
+// BenchmarkQuery/query-8         	     194	   6067001 ns/op	34924064 B/op	    1504 allocs/op
 func BenchmarkQuery(b *testing.B) {
 	dir, err := ioutil.TempDir(".", "testdata-")
 	noerror(err)
@@ -71,7 +72,7 @@ func BenchmarkQuery(b *testing.B) {
 	store := disk.Open(cfg().Storage.Directory, timeseriesCfg.Name, monitor)
 
 	// Start the server and open the database
-	server := server.New(cfg, monitor,
+	server := server.New(cfg, monitor, script.NewLoader(nil),
 		timeseries.New(new(noopMembership), monitor, store, timeseriesCfg),
 	)
 	defer server.Close()

@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/grab/talaria/internal/encoding/typeof"
+	"github.com/grab/talaria/internal/scripting"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -23,7 +24,8 @@ func Test_Computed(t *testing.T) {
 }
 
 func Test_Download(t *testing.T) {
-	c, err := NewComputed("data", typeof.JSON, "https://raw.githubusercontent.com/kelindar/lua/master/fixtures/json.lua")
+	l := script.NewLoader(nil)
+	c, err := NewComputed("data", typeof.JSON, "https://raw.githubusercontent.com/kelindar/lua/master/fixtures/json.lua", l)
 	out, err := c.Value(map[string]interface{}{
 		"a": 1,
 		"b": "hello",
@@ -35,12 +37,13 @@ func Test_Download(t *testing.T) {
 }
 
 func newDataColumn(t *testing.T) *Computed {
+	l := script.NewLoader(nil)
 	c, err := NewComputed("data", typeof.JSON, `
 	local json = require("json")
 
 	function main(row) 
 		return json.encode(row)
-	end`)
+	end`, l)
 	assert.NoError(t, err)
 	return c
 }

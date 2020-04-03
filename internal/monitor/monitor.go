@@ -5,16 +5,15 @@ package monitor
 
 import (
 	"fmt"
-	"os"
 	"runtime"
 	"strings"
 	"time"
 
 	"github.com/grab/talaria/internal/monitor/errors"
 	"github.com/grab/talaria/internal/monitor/logging"
-	"github.com/ricochet2200/go-disk-usage/du"
 )
 
+// StatsdClient ...
 type StatsdClient interface {
 	Timing(name string, value time.Duration, tags []string, rate float64) error
 	Gauge(name string, value float64, tags []string, rate float64) error
@@ -44,20 +43,13 @@ type clientImpl struct {
 	logger logging.Logger
 	stats  StatsdClient
 	tags   []string
-	du     *du.DiskUsage
 }
 
 // New ...
 func New(log logging.Logger, stats StatsdClient, appname string, env string) Monitor {
-	wd, err := os.Getwd()
-	if err != nil {
-		panic(err)
-	}
-
 	return &clientImpl{
 		logger: log,
 		stats:  stats,
-		du:     du.NewDiskUsage(wd),
 		tags: []string{
 			"app_name:" + appname,
 			"env:" + env,

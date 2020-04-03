@@ -9,6 +9,7 @@ import (
 
 	"github.com/grab/talaria/internal/column"
 	"github.com/grab/talaria/internal/encoding/typeof"
+	"github.com/grab/talaria/internal/scripting"
 	talaria "github.com/grab/talaria/proto"
 	"github.com/stretchr/testify/assert"
 )
@@ -70,7 +71,7 @@ func TestBlock_FromBatch(t *testing.T) {
 
 	function main(input)
 		return json.encode(input)
-	end`)
+	end`, script.NewLoader(nil))
 	assert.NoError(t, err)
 
 	// The schema to filter

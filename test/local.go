@@ -16,6 +16,7 @@ import (
 	"github.com/grab/talaria/internal/monitor"
 	"github.com/grab/talaria/internal/monitor/logging"
 	"github.com/grab/talaria/internal/monitor/statsd"
+	"github.com/grab/talaria/internal/scripting"
 	"github.com/grab/talaria/internal/server"
 	"github.com/grab/talaria/internal/server/cluster"
 	"github.com/grab/talaria/internal/storage/disk"
@@ -77,7 +78,7 @@ func main() {
 			return cfg().Tables.Timeseries.Schema
 		},
 	})
-	server := server.New(cfg, monitor,
+	server := server.New(cfg, monitor, script.NewLoader(nil),
 		eventlog,
 		nodes.New(gossip),
 	)

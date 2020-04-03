@@ -4,16 +4,12 @@
 package column
 
 import (
-	"bytes"
 	"context"
 	"fmt"
-	"io"
-	"net/url"
-	"strings"
 	"time"
 
-	"github.com/grab/async"
 	"github.com/grab/talaria/internal/encoding/typeof"
+	"github.com/grab/talaria/internal/scripting"
 	"github.com/kelindar/loader"
 	"github.com/kelindar/lua"
 )
@@ -27,16 +23,9 @@ const emptyScript = `function main(row)
 end`
 
 // NewComputed creates a new script from a string
-func NewComputed(name string, typ typeof.Type, uriOrCode string, modules ...lua.Module) (*Computed, error) {
-
-	// Create an empty script, we'll update it right away
-	s, err := lua.FromString(name, emptyScript, modules...)
+func NewComputed(name string, typ typeof.Type, uriOrCode string, loader *script.Loader) (*Computed, error) {
+	s, err := loader.Load(name, uriOrCode)
 	if err != nil {
-		return nil, err
-	}
-
-	// If the string is actually a URL, try to download it
-	if err := watch(uriOrCode, s.Update); err != nil {
 		return nil, err
 	}
 
@@ -45,34 +34,6 @@ func NewComputed(name string, typ typeof.Type, uriOrCode string, modules ...lua.
 		typ:  typ,
 	}, nil
 }
-
-func watch(uriOrCode string, onUpdate func(io.Reader) error) error {
-	if _, err := url.Parse(uriOrCode); err != nil {
-		return onUpdate(strings.NewReader(uriOrCode)) // Assume it's the actual lua code
-	}
-
-	// Start watching on the URL
-	updates := Loader.Watch(context.Background(), uriOrCode, 5*time.Minute)
-	u := <-updates
-	if u.Err != nil {
-		return u.Err
-	}
-
-	// Read the updates asynchronously
-	async.Invoke(context.Background(), func(ctx context.Context) (interface{}, error) {
-		for u := range updates {
-			if u.Err == nil {
-				_ = onUpdate(bytes.NewReader(u.Data))
-			}
-		}
-		return nil, nil
-	})
-
-	// Perform a first update
-	return onUpdate(bytes.NewReader(u.Data))
-}
-
-// ------------------------------------------------------------------------------------------
 
 // Computed represents a computed column
 type Computed struct {

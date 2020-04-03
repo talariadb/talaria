@@ -7,19 +7,20 @@ import (
 	"context"
 	"os"
 	"os/signal"
-	"strconv"
 	"syscall"
 	"time"
 
-	"github.com/DataDog/datadog-go/statsd"
 	"github.com/grab/talaria/internal/config"
 	"github.com/grab/talaria/internal/config/env"
 	"github.com/grab/talaria/internal/config/s3"
 	"github.com/grab/talaria/internal/config/static"
 	"github.com/grab/talaria/internal/encoding/typeof"
-	"github.com/grab/talaria/internal/ingress/s3sqs"
 	"github.com/grab/talaria/internal/monitor"
 	"github.com/grab/talaria/internal/monitor/logging"
+	"github.com/grab/talaria/internal/monitor/statsd"
+	"github.com/grab/talaria/internal/scripting"
+	mlog "github.com/grab/talaria/internal/scripting/log"
+	mstats "github.com/grab/talaria/internal/scripting/stats"
 	"github.com/grab/talaria/internal/server"
 	"github.com/grab/talaria/internal/server/cluster"
 	"github.com/grab/talaria/internal/storage"
@@ -28,7 +29,7 @@ import (
 	"github.com/grab/talaria/internal/table/log"
 	"github.com/grab/talaria/internal/table/nodes"
 	"github.com/grab/talaria/internal/table/timeseries"
-	talaria "github.com/grab/talaria/proto"
+	"github.com/kelindar/lua"
 )
 
 const (
@@ -46,39 +47,33 @@ func main() {
 	// Setup gossip
 	gossip := cluster.New(7946)
 
-	// StatsD
-	s, err := statsd.New(conf.Statsd.Host + ":" + strconv.FormatInt(conf.Statsd.Port, 10))
-	if err != nil {
-		panic(err)
-	}
-
 	// Create a log table and a simple stdout monitor
-	stdLogger := logging.NewStandard()
-	stdout := monitor.New(stdLogger, s, conf.AppName, conf.Env)
-	logTbl := log.New(configure, gossip, stdout)
-	compositeLogger := logging.NewComposite(logTbl, stdLogger)
+	stats := statsd.New(conf.Statsd.Host, int(conf.Statsd.Port))
+	logTable := log.New(configure, gossip, monitor.New(
+		logging.NewStandard(), stats, conf.AppName, conf.Env), // Use stdout monitor
+	)
+
+	// Setup the final logger and a monitor
+	logger := logging.NewComposite(logTable, logging.NewStandard())
+	monitor := monitor.New(logger, stats, conf.AppName, conf.Env)
 
 	// Updating the logger to use the composite logger. This is to make sure the logs from the config is sent to log table as well as stdout
-	s3Configurer.SetLogger(compositeLogger)
+	s3Configurer.SetLogger(logger)
 
-	// Setup a monitor with a table output
-	monitor := monitor.New(compositeLogger, s, conf.AppName, conf.Env)
-	monitor.Info("starting the log table ...")
+	// Create a script loader
+	loader := script.NewLoader([]lua.Module{
+		mlog.New(monitor),
+		mstats.New(monitor),
+	})
 
-	monitor.Count1(logTag, "start")
-	monitor.Info("starting the server and database ...")
-
-	// create a store
-	var ingestor *s3sqs.Ingress
+	// Create a storage, if compact store is enabled then use the compact store
 	store := storage.Storage(disk.Open(conf.Storage.Directory, conf.Tables.Timeseries.Name, monitor))
-
-	// if compact store is enabled then use the compact store
 	if conf.Storage.S3Compact != nil {
-		store = s3compact.New(conf.Storage.S3Compact, monitor, store)
+		store = s3compact.New(conf.Storage.S3Compact, monitor, store, loader)
 	}
 
 	// Start the new server
-	server := server.New(configure, monitor,
+	server := server.New(configure, monitor, loader,
 		timeseries.New(gossip, monitor, store, timeseries.Config{
 			HashBy: conf.Tables.Timeseries.HashBy,
 			SortBy: conf.Tables.Timeseries.SortBy,
@@ -89,45 +84,28 @@ func main() {
 			},
 		}),
 		nodes.New(gossip),
-		logTbl,
+		logTable,
 	)
-
-	if conf.Writers.S3SQS != nil {
-		ingestor, err := s3sqs.New(conf.Writers.S3SQS, conf.Writers.S3SQS.Region, monitor)
-		if err != nil {
-			panic(err)
-		}
-		// Start ingesting
-		monitor.Info("starting ingestion ...")
-		ingestor.Range(func(v []byte) bool {
-			if _, err := server.Ingest(context.Background(), &talaria.IngestRequest{
-				Data: &talaria.IngestRequest_Orc{Orc: v},
-			}); err != nil {
-				monitor.Warning(err)
-			}
-			return false
-		})
-	}
 
 	// onSignal will be called when a OS-level signal is received.
 	onSignal(func(_ os.Signal) {
 		cancel()       // Cancel the context
 		gossip.Close() // Close the gossip layer
-		if ingestor != nil {
-			ingestor.Close() // First finish and stop ingesting ...
-		}
-		server.Close() // Close the server and database ...
+		server.Close() // Close the server and database
 	})
 
 	// Join the cluster
 	gossip.JoinHostname(conf.Domain)
 
 	// Start listen
-	monitor.Info("starting server listener ...")
+	monitor.Info("starting talaria server")
+	monitor.Count1(logTag, "start")
 	if err := server.Listen(ctx, conf.Readers.Presto.Port, conf.Writers.GRPC.Port); err != nil {
 		panic(err)
 	}
 }
+
+// Setup monitor
 
 // onSignal hooks a callback for a signal.
 func onSignal(callback func(sig os.Signal)) {
