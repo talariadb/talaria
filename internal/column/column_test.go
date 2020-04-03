@@ -16,7 +16,6 @@ import (
 
 func TestColumns(t *testing.T) {
 	nc := make(Columns, 2)
-	data := []*Computed{newDataColumn(t)}
 	assert.Nil(t, nc.Any())
 
 	// Fill level 1
@@ -26,7 +25,6 @@ func TestColumns(t *testing.T) {
 	assert.Zero(t, nc.Append("x", complex128(1), typeof.Unsupported))
 	assert.Equal(t, 1, nc.Max())
 	assert.Equal(t, 2, len(nc.LastRow()))
-	nc.AppendComputed(nc.LastRow(), data)
 	nc.FillNulls()
 	assert.NotNil(t, nc.Any())
 
@@ -34,7 +32,6 @@ func TestColumns(t *testing.T) {
 	assert.NotZero(t, nc.Append("a", int32(1), typeof.Int32))
 	assert.NotZero(t, nc.Append("c", "hi", typeof.String))
 	assert.Equal(t, 2, nc.Max())
-	nc.AppendComputed(nc.LastRow(), data)
 	nc.FillNulls()
 
 	// Fill level 3
@@ -42,7 +39,6 @@ func TestColumns(t *testing.T) {
 	assert.NotZero(t, nc.Append("c", "hi", typeof.String))
 	assert.NotZero(t, nc.Append("d", float64(1.5), typeof.Float64))
 	assert.Equal(t, 3, nc.Max())
-	nc.AppendComputed(nc.LastRow(), data)
 	nc.FillNulls()
 
 	// Must have 3 levels with nulls in the middle
@@ -55,7 +51,7 @@ func TestColumns(t *testing.T) {
 	assert.Equal(t, []bool{true, false, false}, nc["c"].AsThrift().VarcharData.Nulls)
 	assert.Equal(t, []float64{0, 0, 1.5}, nc["d"].AsThrift().DoubleData.Doubles)
 	assert.Equal(t, []bool{true, true, false}, nc["d"].AsThrift().DoubleData.Nulls)
-	assert.Equal(t, 5, len(nc.LastRow()))
+	assert.Equal(t, 4, len(nc.LastRow()))
 
 }
 

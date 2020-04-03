@@ -66,18 +66,14 @@ var testBatch = &talaria.Batch{
 }
 
 func TestBlock_FromBatch(t *testing.T) {
-	dataColumn, err := column.NewComputed("data", typeof.JSON, `
-	local json = require("json")
-
-	function main(input)
-		return json.encode(input)
-	end`, script.NewLoader(nil))
+	dataColumn, err := newDataColumn()
 	assert.NoError(t, err)
 
 	// The schema to filter
 	filter := typeof.Schema{
-		"b": typeof.Timestamp,
-		"d": typeof.String,
+		"b":    typeof.Timestamp,
+		"d":    typeof.String,
+		"data": typeof.JSON,
 	}
 
 	// Create blocks
@@ -91,7 +87,6 @@ func TestBlock_FromBatch(t *testing.T) {
 		if string(b.Key) == "event3" {
 			block = b
 		}
-
 	}
 
 	assert.Equal(t, "event3", string(block.Key))
@@ -106,4 +101,13 @@ func TestBlock_FromBatch(t *testing.T) {
 	assert.Equal(t, int64(1585549847000), row["b"].(int64)) // Note: Presto Thrift time is in Unix Milliseconds
 	assert.Equal(t, `event3`, row["d"].(string))
 	assert.Contains(t, string(row["data"].(json.RawMessage)), "event3")
+}
+
+func newDataColumn() (*column.Computed, error) {
+	return column.NewComputed("data", typeof.JSON, `
+	local json = require("json")
+
+	function main(input)
+		return json.encode(input)
+	end`, script.NewLoader(nil))
 }

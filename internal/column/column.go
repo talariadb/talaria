@@ -72,24 +72,6 @@ func (c Columns) LastRow() map[string]interface{} {
 	return row
 }
 
-// AppendComputed runs the computed columns and appends them to the set.
-func (c Columns) AppendComputed(row map[string]interface{}, computed []*Computed) int {
-	if len(computed) == 0 {
-		return 0
-	}
-
-	size := 0
-	for _, s := range computed {
-		v, err := s.Value(row)
-		if err != nil || v == nil {
-			continue
-		}
-
-		size += c.Append(s.Name(), v, s.Type())
-	}
-	return size
-}
-
 // FillNulls adds nulls onto all uneven columns left.
 func (c Columns) FillNulls() (size int) {
 	max := c.Max()

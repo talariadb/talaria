@@ -62,8 +62,8 @@ func FromOrcBy(payload []byte, partitionBy string, filter *typeof.Schema, comput
 			result[partition] = columns
 		}
 
-		// Write the events into the block
-		row := make(map[string]interface{}, len(r))
+		// Prepare a row for transformation
+		row := newRow(schema, len(r))
 		for i, v := range r {
 			columnName := cols[i]
 			columnType := schema[columnName]
@@ -75,14 +75,11 @@ func FromOrcBy(payload []byte, partitionBy string, filter *typeof.Schema, comput
 				}
 			}
 
-			row[columnName] = v
-			if filter == nil || filter.Contains(columnName, columnType) {
-				size += columns.Append(columnName, v, columnType)
-			}
+			row.Set(columnName, v)
 		}
 
 		// Append computed columns and fill nulls for the row
-		size += columns.AppendComputed(row, computed)
+		size += row.Transform(computed, filter).AppendTo(columns)
 		size += columns.FillNulls()
 		return false
 	}, cols...)

@@ -6,7 +6,6 @@ package block
 import (
 	"encoding/json"
 	"fmt"
-	"reflect"
 	"time"
 	"unsafe"
 
@@ -47,8 +46,8 @@ func FromBatchBy(batch *talaria.Batch, partitionBy string, filter *typeof.Schema
 			result[partition] = columns
 		}
 
-		// Write the events into the block
-		row := make(map[string]interface{}, len(event.Value))
+		// Prepare a row for transformation
+		row := newRow(nil, len(event.Value))
 		for k, v := range event.Value {
 			columnName := stringAt(batch.Strings, k)
 			columnValue, err := readValue(batch.Strings, v)
@@ -56,19 +55,11 @@ func FromBatchBy(batch *talaria.Batch, partitionBy string, filter *typeof.Schema
 				return nil, err
 			}
 
-			typ, ok := typeof.FromType(reflect.TypeOf(columnValue))
-			if !ok {
-				continue // Skip
-			}
-
-			row[columnName] = columnValue
-			if filter == nil || filter.Contains(columnName, typ) {
-				columns.Append(columnName, columnValue, typ)
-			}
+			row.Set(columnName, columnValue)
 		}
 
 		// Append computed columns and fill nulls for the row
-		columns.AppendComputed(row, computed)
+		row.Transform(computed, filter).AppendTo(columns)
 		columns.FillNulls()
 	}
 
