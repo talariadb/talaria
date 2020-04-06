@@ -105,7 +105,7 @@ func findString(columns []string, partitionBy string) (int, bool) {
 }
 
 // convertToJSON converts an ORC map/list/struct to JSON
-func convertToJSON(value interface{}) (json.RawMessage, bool) {
+func convertToJSON(value interface{}) (string, bool) {
 	switch vt := value.(type) {
 	case []orctype.MapEntry:
 		remap := make(map[string]interface{}, len(vt))
@@ -117,15 +117,15 @@ func convertToJSON(value interface{}) (json.RawMessage, bool) {
 	case []interface{}:
 	case interface{}:
 	default:
-		return nil, false
+		return "", false
 	}
 
 	b, err := json.Marshal(value)
 	if err != nil {
-		return nil, false
+		return "", false
 	}
 
-	return json.RawMessage(b), true
+	return string(json.RawMessage(b)), true
 }
 
 // convertToString converst value to string because currently all the keys in Badger are stored in the form of string before hashing to the byte array
