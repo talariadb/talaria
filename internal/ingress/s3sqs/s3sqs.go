@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"io"
 	"net/url"
+	"runtime"
 	"time"
 
 	awssqs "github.com/aws/aws-sdk-go/service/sqs"
@@ -20,9 +21,10 @@ import (
 )
 
 const (
-	concurrency = 10
-	ctxTag      = "s3sqs"
+	ctxTag = "s3sqs"
 )
+
+var concurrency = int64(runtime.NumCPU() * 3)
 
 // Ingress represents an ingress layer.
 type Ingress struct {
