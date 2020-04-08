@@ -47,7 +47,7 @@ func FromBatchBy(batch *talaria.Batch, partitionBy string, filter *typeof.Schema
 		}
 
 		// Prepare a row for transformation
-		row := newRow(nil, len(event.Value))
+		row := newRow(filter.Clone(), len(event.Value))
 		for k, v := range event.Value {
 			columnName := stringAt(batch.Strings, k)
 			columnValue, err := readValue(batch.Strings, v)

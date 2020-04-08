@@ -77,3 +77,19 @@ func TestSchemaUnion_Mismatch(t *testing.T) {
 	assert.False(t, clean)
 	assert.Equal(t, `[{"column":"a","type":"INTEGER"},{"column":"b","type":"VARCHAR"}]`, merged.String())
 }
+
+func TestSchemaClone1(t *testing.T) {
+	s := Schema{
+		"b": String,
+		"a": Int64,
+		"c": JSON,
+	}
+
+	c := s.Clone()
+	assert.Equal(t, s, c)
+}
+
+func TestSchemaClone2(t *testing.T) {
+	c := (*Schema)(nil).Clone()
+	assert.Equal(t, Schema{}, c)
+}

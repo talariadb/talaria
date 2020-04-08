@@ -91,6 +91,19 @@ func (s Schema) Contains(key string, typ Type) bool {
 	return ok && t == typ
 }
 
+// Clone clones the schema
+func (s *Schema) Clone() (c Schema) {
+	if s == nil {
+		return Schema{}
+	}
+
+	c = make(Schema, len(*s))
+	for name, typ := range *s {
+		c[name] = typ
+	}
+	return
+}
+
 type columnType struct {
 	Column string `json:"column"`
 	Type   string `json:"type"`

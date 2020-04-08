@@ -26,6 +26,7 @@ var testBatch = &talaria.Batch{
 		8:  []byte("e"),
 		9:  []byte("event3"),
 		10: []byte(`{"name": "roman"}`),
+		11: []byte("1234"),
 	},
 	Events: []*talaria.Event{
 		{Value: map[uint32]*talaria.Value{
@@ -50,6 +51,7 @@ var testBatch = &talaria.Batch{
 			4: {Value: &talaria.Value_String_{String_: 6}}, // event2
 		}},
 		{Value: map[uint32]*talaria.Value{
+			1: {Value: &talaria.Value_String_{String_: 11}}, // Int as string
 			2: {Value: &talaria.Value_Time{Time: 1585549847}},
 			8: {Value: &talaria.Value_Json{Json: 10}},
 			4: {Value: &talaria.Value_String_{String_: 9}}, // event3
@@ -71,6 +73,7 @@ func TestBlock_FromBatch(t *testing.T) {
 
 	// The schema to filter
 	filter := typeof.Schema{
+		"a":    typeof.Int64,
 		"b":    typeof.Timestamp,
 		"d":    typeof.String,
 		"data": typeof.JSON,
@@ -94,7 +97,7 @@ func TestBlock_FromBatch(t *testing.T) {
 	// Select all of the columns
 	columns, err := block.Select(block.Schema())
 	assert.NoError(t, err)
-	assert.Equal(t, `[{"column":"b","type":"TIMESTAMP"},{"column":"d","type":"VARCHAR"},{"column":"data","type":"JSON"}]`, block.Schema().String())
+	assert.Equal(t, `[{"column":"a","type":"BIGINT"},{"column":"b","type":"TIMESTAMP"},{"column":"d","type":"VARCHAR"},{"column":"data","type":"JSON"}]`, block.Schema().String())
 
 	// Get the last row
 	row := columns.LastRow()
