@@ -6,6 +6,7 @@ package s3sqs
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/url"
 	"runtime"
@@ -13,10 +14,10 @@ import (
 
 	awssqs "github.com/aws/aws-sdk-go/service/sqs"
 	"github.com/grab/talaria/internal/config"
-	"github.com/grab/talaria/internal/ingress/s3sqs/s3"
 	"github.com/grab/talaria/internal/ingress/s3sqs/sqs"
 	"github.com/grab/talaria/internal/monitor"
 	"github.com/grab/talaria/internal/monitor/errors"
+	"github.com/kelindar/loader"
 	"golang.org/x/sync/semaphore"
 )
 
@@ -29,7 +30,7 @@ var concurrency = int64(runtime.NumCPU() * 3)
 // Ingress represents an ingress layer.
 type Ingress struct {
 	sqs     Reader              // The SQS reader to use.
-	s3      Downloader          // The S3 downloader to use.
+	loader  Downloader          // The S3 downloader to use.
 	monitor monitor.Monitor     // The monitor to use.
 	cancel  context.CancelFunc  // The cancellation function to apply at the end.
 	limit   *semaphore.Weighted // The limit of workers
@@ -37,7 +38,7 @@ type Ingress struct {
 
 // Downloader represents an object downloader
 type Downloader interface {
-	Download(ctx context.Context, bucket, key string) ([]byte, error)
+	Load(ctx context.Context, uri string) ([]byte, error)
 }
 
 // Reader represents a consumer for SQS
@@ -49,20 +50,20 @@ type Reader interface {
 
 // New creates a new ingestion with SQS/S3 files.
 func New(conf *config.S3SQS, region string, monitor monitor.Monitor) (*Ingress, error) {
-	downloader := s3.New(region, 5, monitor)
+	loader := loader.New()
 	reader, err := sqs.NewReader(conf, region)
 	if err != nil {
 		return nil, err
 	}
 
-	return NewWith(reader, downloader, monitor), nil
+	return NewWith(reader, loader, monitor), nil
 }
 
 // NewWith creates a new ingestion with SQS/S3 files.
-func NewWith(reader Reader, downloader Downloader, monitor monitor.Monitor) *Ingress {
+func NewWith(reader Reader, loader Downloader, monitor monitor.Monitor) *Ingress {
 	return &Ingress{
 		sqs:     reader,
-		s3:      downloader,
+		loader:  loader,
 		monitor: monitor,
 		limit:   semaphore.NewWeighted(concurrency),
 	}
@@ -142,7 +143,7 @@ func (s *Ingress) acknowledge(msg *awssqs.Message) error {
 func (s *Ingress) ingest(bucket, key string, handler func(v []byte) bool) {
 	defer s.monitor.Duration(ctxTag, "s3sqs", time.Now())
 
-	data, err := s.s3.Download(context.Background(), bucket, key)
+	data, err := s.loader.Load(context.Background(), fmt.Sprintf("s3://%s/%s", bucket, key))
 	defer s.limit.Release(1)
 	if err != nil {
 		s.monitor.Error(err)

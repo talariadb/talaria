@@ -4,12 +4,12 @@
 package s3sqs
 
 import (
+	"context"
 	"io/ioutil"
 	"sync"
 	"testing"
 
 	awssqs "github.com/aws/aws-sdk-go/service/sqs"
-	"github.com/grab/talaria/internal/ingress/s3sqs/s3"
 	"github.com/grab/talaria/internal/monitor"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -27,8 +27,9 @@ func TestQueueReader(t *testing.T) {
 
 	// Create S3 client mock
 	orc, _ := ioutil.ReadFile("../../../test/test2.orc")
-	s3 := new(s3.MockClient)
-	s3.On("Download", mock.Anything, mock.Anything, mock.Anything).Return(orc, nil)
+	var s3 MockLoader = func(context.Context, string) ([]byte, error) {
+		return orc, nil
+	}
 
 	// Create new storage
 	storage := NewWith(sqs, s3, monitor.NewNoop())

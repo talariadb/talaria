@@ -6,6 +6,8 @@
 package s3sqs
 
 import (
+	"context"
+
 	"github.com/aws/aws-sdk-go/service/sqs"
 	"github.com/stretchr/testify/mock"
 )
@@ -49,4 +51,12 @@ func (_m *MockReader) StartPolling(maxPerRead int64, sleepMs int64, attributeNam
 func (_m *MockReader) Close() error {
 	_m.Called()
 	return nil
+}
+
+// ------------------------------------------------------------------------------------------
+
+type MockLoader func(context.Context, string) ([]byte, error)
+
+func (m MockLoader) Load(ctx context.Context, uri string) ([]byte, error) {
+	return m(ctx, uri)
 }

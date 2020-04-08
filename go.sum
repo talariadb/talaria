@@ -114,6 +114,8 @@ github.com/kelindar/loader v0.0.6 h1:ZhrLyYD0+PryxWi08NK4pt3K3v0vqGyjoxb14w09SGg
 github.com/kelindar/loader v0.0.6/go.mod h1:R/T32WH/c+33Msftyw9PSX/HRpSLDXdlIms1LhnVbP4=
 github.com/kelindar/lua v0.0.4 h1:jv0qU8+8rAHzPDN5QqhZ1tKzSkWDGGTVWWSd0gEXi1g=
 github.com/kelindar/lua v0.0.4/go.mod h1:zCY2muj80Y5c3odwn4Ql6kjzpk3GAq9V4JwuVGLOsdA=
+github.com/kelindar/lua v0.0.5 h1:VqJQGl74ub7fiZcSygHV4aZw/IbFKXA6vzk4pEUu4mk=
+github.com/kelindar/lua v0.0.5/go.mod h1:zCY2muj80Y5c3odwn4Ql6kjzpk3GAq9V4JwuVGLOsdA=
 github.com/kelindar/process v0.0.0-20170730150328-69a29e249ec3 h1:6If+E1dikQbdT7DlhZqLplfGkEt6dSoz7+MK+TFC7+U=
 github.com/kelindar/process v0.0.0-20170730150328-69a29e249ec3/go.mod h1:+lTCLnZFXOkqwD8sLPl6u4erAc0cP8wFegQHfipz7KE=
 github.com/kisielk/errcheck v1.2.0/go.mod h1:/BMXB+zMLi60iA8Vv6Ksmxu/1UDYcXs4uQLJ+jE2L00=
