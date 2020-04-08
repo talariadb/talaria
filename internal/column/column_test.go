@@ -55,6 +55,32 @@ func TestColumns(t *testing.T) {
 
 }
 
+func TestMakeColumns(t *testing.T) {
+	tests := []struct {
+		input  *typeof.Schema
+		output Columns
+	}{
+		{
+			input:  &typeof.Schema{
+				"a":    typeof.Int64,
+				"b":    typeof.Timestamp,
+			},
+			output: Columns {
+				"a": NewColumn(typeof.Int64),
+				"b": NewColumn(typeof.Timestamp),
+			},
+		},
+		{
+			input:  nil,
+			output: make(Columns, 16),
+		},
+	}
+	for _, tc := range tests {
+		c := MakeColumns(tc.input)
+		assert.Equal(t, tc.output, c)
+	}
+}
+
 func TestNewColumn(t *testing.T) {
 	tests := []struct {
 		input  interface{}

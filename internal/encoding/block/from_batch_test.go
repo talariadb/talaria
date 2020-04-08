@@ -77,6 +77,7 @@ func TestBlock_FromBatch(t *testing.T) {
 		"b":    typeof.Timestamp,
 		"d":    typeof.String,
 		"data": typeof.JSON,
+		"another": typeof.Int64,
 	}
 
 	// Create blocks
@@ -97,7 +98,7 @@ func TestBlock_FromBatch(t *testing.T) {
 	// Select all of the columns
 	columns, err := block.Select(block.Schema())
 	assert.NoError(t, err)
-	assert.Equal(t, `[{"column":"a","type":"BIGINT"},{"column":"b","type":"TIMESTAMP"},{"column":"d","type":"VARCHAR"},{"column":"data","type":"JSON"}]`, block.Schema().String())
+	assert.Equal(t, `[{"column":"a","type":"BIGINT"},{"column":"another","type":"BIGINT"},{"column":"b","type":"TIMESTAMP"},{"column":"d","type":"VARCHAR"},{"column":"data","type":"JSON"}]`, block.Schema().String())
 
 	// Get the last row
 	row := columns.LastRow()

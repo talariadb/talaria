@@ -42,7 +42,7 @@ func FromBatchBy(batch *talaria.Batch, partitionBy string, filter *typeof.Schema
 		// Get the block for that partition
 		columns, exists := result[partition]
 		if !exists {
-			columns = make(column.Columns, 16)
+			columns = column.MakeColumns(filter)
 			result[partition] = columns
 		}
 

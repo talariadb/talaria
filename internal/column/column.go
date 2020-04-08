@@ -26,6 +26,19 @@ type Column = presto.Column
 // Columns represents a set of named columns
 type Columns map[string]Column
 
+// MakeColumns initializes a columns based on schema if given
+func MakeColumns(schema *typeof.Schema) Columns {
+	if schema == nil {
+		return make(Columns, 16)
+	}
+
+	columns := make(Columns, len(*schema))
+	for k, t := range *schema {
+		columns[k] = NewColumn(t)
+	}
+	return columns
+}
+
 // Append adds a value at a particular index to the block.
 func (c Columns) Append(name string, value interface{}, typ typeof.Type) int {
 	if !IsValidName(name) {

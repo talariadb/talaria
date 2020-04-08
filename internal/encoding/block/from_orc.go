@@ -58,7 +58,7 @@ func FromOrcBy(payload []byte, partitionBy string, filter *typeof.Schema, comput
 		// Get the block for that partition
 		columns, exists := result[partition]
 		if !exists {
-			columns = make(column.Columns, 16)
+			columns = column.MakeColumns(filter)
 			result[partition] = columns
 		}
 
@@ -80,6 +80,7 @@ func FromOrcBy(payload []byte, partitionBy string, filter *typeof.Schema, comput
 
 		// Append computed columns and fill nulls for the row
 		size += row.Transform(computed, filter).AppendTo(columns)
+
 		size += columns.FillNulls()
 		return false
 	}, cols...)
