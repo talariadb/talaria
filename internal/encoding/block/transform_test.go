@@ -78,3 +78,47 @@ func TestTransform_NoFilter(t *testing.T) {
 	assert.Equal(t, 4, len(out.columns))
 	assert.Equal(t, `[{"column":"a","type":"VARCHAR"},{"column":"b","type":"TIMESTAMP"},{"column":"c","type":"INTEGER"},{"column":"data","type":"JSON"}]`, out.schema.String())
 }
+
+func TestTryParse(t *testing.T) {
+	tests := []struct {
+		input   string
+		typ     typeof.Type
+		expect  interface{}
+		success bool
+	}{
+		{
+			input:   "1234",
+			typ:     typeof.Int64,
+			expect:  int64(1234),
+			success: true,
+		},
+		{
+			input:   "1234",
+			typ:     typeof.Int32,
+			expect:  int32(1234),
+			success: true,
+		},
+		{
+			input: "1234XX",
+			typ:   typeof.Int32,
+		},
+		{
+			input:   "1234.00",
+			typ:     typeof.Float64,
+			expect:  float64(1234),
+			success: true,
+		},
+		{
+			input:   "1985-04-12T23:20:50.00Z",
+			typ:     typeof.Timestamp,
+			expect:  time.Unix(482196050, 0).UTC(),
+			success: true,
+		},
+	}
+
+	for _, tc := range tests {
+		v, ok := tryParse(tc.input, tc.typ)
+		assert.Equal(t, tc.expect, v)
+		assert.Equal(t, tc.success, ok)
+	}
+}
