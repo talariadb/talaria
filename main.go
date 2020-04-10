@@ -105,8 +105,6 @@ func main() {
 	}
 }
 
-// Setup monitor
-
 // onSignal hooks a callback for a signal.
 func onSignal(callback func(sig os.Signal)) {
 	c := make(chan os.Signal, 1)
