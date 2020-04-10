@@ -5,7 +5,12 @@
 [![Go Report Card](https://goreportcard.com/badge/github.com/kelindar/talaria)](https://goreportcard.com/report/github.com/kelindar/talaria)
 [![Docker Pulls](https://img.shields.io/docker/pulls/kelindar/talaria)](https://hub.docker.com/repository/docker/kelindar/talaria/general)
 
+
 This repository contains a fork of TalariaDB, a distributed, highly available, and low latency time-series database for Big Data systems. It was originally [designed and implemented in Grab](https://engineering.grab.com/big-data-real-time-presto-talariadb), where millions and millions of transactions and connections take place every day , which requires a platform scalable data-driven decision making. 
+
+<p align="center">
+    <img width="746" height="348" src=".github/images/query-event.png">
+</p>
 
 ## Introduction
 
