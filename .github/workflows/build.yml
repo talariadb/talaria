@@ -83,19 +83,17 @@ jobs:
         with:
           go-version: 1.14
         id: go
-      - name: Check out code into the Go module directory
-        uses: actions/checkout@v1
-      - name: Build
-        run: |
-          go build .
-      - uses: actions/checkout@v1
       - name: Login to DockerHub Registry
         run: echo ${{ secrets.DOCKERHUB_PASSWORD }} | docker login -u ${{ secrets.DOCKERHUB_USERNAME }} --password-stdin
+      - name: Check out code into the Go module directory
+        uses: actions/checkout@v1
       - name: Get the version
         id: vars
         run: echo ::set-output name=tag::$(echo ${GITHUB_REF:10})
       - name: Build the tagged Docker image
-        run: docker build . --file Dockerfile --build-arg GO_BINARY=talaria --tag kelindar/talaria:${{steps.vars.outputs.tag}}
+        run: |
+          go build .
+          docker build . --file Dockerfile --build-arg GO_BINARY=talaria --tag kelindar/talaria:${{steps.vars.outputs.tag}}
       - name: Push the tagged Docker image
         run: docker push kelindar/talaria:${{steps.vars.outputs.tag}}
       - name: Build the latest Docker image
