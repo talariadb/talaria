@@ -2,7 +2,10 @@ name: Build
 on:
   release:
     types: [published]
-
+env:
+  PROJECT: "github.com/kelindar/talaria"
+  GO111MODULE: "on"
+  
 jobs:
   release-linux-386:
     name: release linux/386
