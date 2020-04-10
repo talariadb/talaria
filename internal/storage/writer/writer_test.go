@@ -1,7 +1,4 @@
-// Copyright 2019-2020 Grabtaxi Holdings PTE LTE (GRAB), All rights reserved.
-// Use of this source code is governed by an MIT-style license that can be found in the LICENSE file
-
-package s3compact
+package writer
 
 import (
 	"testing"
@@ -14,11 +11,12 @@ import (
 )
 
 func TestNew(t *testing.T) {
-	cfg := &config.S3Compact{}
-	s3Compact := New(cfg,
+	cfg := &config.Compaction{}
+	compact := New(cfg,
 		monitor.NewNoop(),
 		disk.New(monitor.NewNoop()),
 		script.NewLoader(nil),
 	)
-	assert.NotNil(t, s3Compact)
+
+	assert.NotNil(t, compact)
 }

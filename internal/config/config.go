@@ -47,23 +47,15 @@ type Log struct {
 	SortBy string `json:"sortBy,omitempty" yaml:"sortBy" env:"SORTBY"` // The column to use as time, defaults to 'time'.
 }
 
-// Nodes
+// Nodes ...
 type Nodes struct {
 	Name string `json:"name" yaml:"name" env:"NAME"` // The name of the table
 }
 
-// S3Compact stores the config for s3 compaction
-type S3Compact struct {
-	Region      string `json:"region" yaml:"region" env:"REGION"`                // The region of AWS bucket
-	Bucket      string `json:"bucket" yaml:"bucket" env:"BUCKET"`                // The name of AWS bucket
-	Concurrency int    `json:"concurrency" yaml:"concurrency" env:"CONCURRENCY"` // The S3 upload concurrency
-	NameFunc    string `json:"nameFunc" yaml:"nameFunc" env:"NAMEFUNC"`          // The lua script to compute file name given a row
-}
-
 // Storage is the location to write the data
 type Storage struct {
-	Directory string     `json:"dir" yaml:"dir" env:"DIR"`
-	S3Compact *S3Compact `json:"s3Compact" yaml:"s3Compact" env:"S3COMPACT"`
+	Directory string      `json:"dir" yaml:"dir" env:"DIR"`
+	Compact   *Compaction `json:"compact" yaml:"compact" env:"COMPACT"`
 }
 
 // Readers are ways to read the data
@@ -110,6 +102,43 @@ type Computed struct {
 	Func string      `json:"func"`
 }
 
+// Compaction represents a configuration for compaction sinks
+type Compaction struct {
+	NameFunc string        `json:"nameFunc" yaml:"nameFunc" env:"NAMEFUNC"` // The lua script to compute file name given a row
+	Interval int           `json:"interval" yaml:"interval" env:"INTERVAL"` // The compaction interval, in seconds
+	S3       *S3Sink       `json:"s3" yaml:"s3" env:"S3"`                   // The S3 writer configuration
+	Azure    *AzureSink    `json:"azure" yaml:"azure" env:"AZURE"`          // The Azure writer configuration
+	BigQuery *BigQuerySink `json:"bigquery" yaml:"bigquery" env:"BIGQUERY"` // The Big Query writer configuration
+	GCS      *GCSSink      `json:"gcs" yaml:"gcs" env:"GCS"`                // The Google Cloud Storage writer configuration
+}
+
+// S3Sink represents a sink for AWS S3 and compatible stores.
+type S3Sink struct {
+	Region      string `json:"region" yaml:"region" env:"REGION"`                // The region of AWS bucket
+	Bucket      string `json:"bucket" yaml:"bucket" env:"BUCKET"`                // The name of AWS bucket
+	Concurrency int    `json:"concurrency" yaml:"concurrency" env:"CONCURRENCY"` // The S3 upload concurrency
+}
+
+// AzureSink reprents a sink to Azure
+type AzureSink struct {
+	Container string `json:"container" yaml:"container" env:"CONTAINER"` // The container name
+	Prefix    string `json:"prefix" yaml:"prefix" env:"PREFIX"`          // The prefix to add
+}
+
+// BigQuerySink reprents a sink to Google Big Query
+type BigQuerySink struct {
+	Project string `json:"project" yaml:"project" env:"PROJECT"` // The project ID
+	Dataset string `json:"dataset" yaml:"dataset" env:"DATASET"` // The dataset ID
+	Table   string `json:"table" yaml:"table" env:"TABLE"`       // The table ID
+}
+
+// GCSSink represents a sink to Google Cloud Storage
+type GCSSink struct {
+	Bucket string `json:"bucket" yaml:"bucket" env:"BUCKET"` // The name of the bucket
+	Prefix string `json:"prefix" yaml:"prefix" env:"PREFIX"` // The prefix to add
+}
+
+// Func represents a config function
 type Func func() *Config
 
 // Load iterates through all the providers and fills the config object.
