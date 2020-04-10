@@ -95,7 +95,7 @@ jobs:
         id: vars
         run: echo ::set-output name=tag::$(echo ${GITHUB_REF:10})
       - name: Build the tagged Docker image
-        run: docker build . --file Dockerfile --tag kelindar/talaria:${{steps.vars.outputs.tag}}
+        run: docker build . --file Dockerfile --build-arg GO_BINARY=talaria --tag kelindar/talaria:${{steps.vars.outputs.tag}}
       - name: Push the tagged Docker image
         run: docker push kelindar/talaria:${{steps.vars.outputs.tag}}
       - name: Build the latest Docker image
