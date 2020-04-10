@@ -1,46 +1,129 @@
 # Talaria
 
-TalariaDB is a distributed, highly available, and low latency time-series database that stores real-time data. It's built on top of [Badger DB.](https://github.com/dgraph-io/badger)  
-Blog: https://engineering.grab.com/big-data-real-time-presto-talariadb
+![Test](https://github.com/kelindar/talaria/workflows/Test/badge.svg) 
+![Release](https://github.com/kelindar/talaria/workflows/Release/badge.svg)
+[![Go Report Card](https://goreportcard.com/badge/github.com/kelindar/talaria)](https://goreportcard.com/report/github.com/kelindar/talaria)
 
-#### About TalariaDB
-In Grab, millions and millions of transactions and connections take place every day on our platform, which requires data-driven decision making. And these decisions need to be made based on real-time data. For example, an experiment might inadvertently cause a significant increase of waiting time for riders.
-  
-To overcome the challenge of retrieving information from large amounts of data, we designed and built 
-TalariaDB. It addresses our need to query at least 2-3 terabytes of data per hour with predictable low query latency and low cost. Most importantly, it plays very nicely with the different tools’ ecosystems and lets us query data using SQL.
+This repository contains a fork of TalariaDB, a distributed, highly available, and low latency time-series database for Big Data systems. It was originally [designed and implemented in Grab](https://engineering.grab.com/big-data-real-time-presto-talariadb), where millions and millions of transactions and connections take place every day , which requires a platform scalable data-driven decision making. 
 
-## Architecture
-![alt text](https://github.com/grab/talaria/raw/master/architecture.png)
+## Introduction
 
-The diagram above shows how TalariaDB ingests and serves data.
-* The upstream ETL pipeline prepares the ORC files and store them in the S3 bucket as input.
-* AWS SQS is created as the event notification service of the S3 bucket and notifies TalariaDB of any new object uploaded on S3.
-* Presto is connected to TalariaDB through Thrift since it implements PrestoThriftService https://prestodb.github.io/docs/current/connector/thrift.html.
-* AWS Route53 is used as DNS web service of TalariaDB, whose domain is registered on Presto cluster. The IP addresses of the DNS record is registered by TalariaDB using Gossip protocol in bootstrap phase.
+TalariaDB helped us to overcome the challenge of retrieving and acting upon the information from large amounts of data. It addressed our need to query at least 2-3 terabytes of data per hour with predictable low query latency and low cost. Most importantly, it plays very nicely with the different tools’ ecosystems and lets us query data using SQL.
 
-Currently this project is currently highly coupled with AWS services like SQS, S3 and Route53. We will make these components (storage, DNS) pluggable and make TalariaDB useful for more generic case.  
+
+From the original design, we have extended Talaria to be setup in a two possible ways:
+
+ 1. As an **event ingestion platform**. This allows you to track events using a simple gRPC endpoint from almost anywhere.
+ 2. As a **data store for hot data**. This allows you to query hot data (e.g. last 6 hours) as it goes through the data pipeline and ultimately ends up in your data lake when compacted.
+
+Talaria is designed around event-based data model. An event is essentially a set of key-value pairs, however to make it consistent we need to define a set of commonly used keys.
+Each event will consist of the following:
+
+* Hash key (e.g: using "event" key). This represents the type of the event and could be prefixed with the source scope (eg. "table1") and using the dot as a logical separator. The separation and namespacing is not required, but strongly recommended to make your system more usable.
+* Sort key (e.g: using "time" key). This represents the time at which the update has occurred, in unix timestamp (as precise as the source allows) and encoded as a 64-bit integer value.
+* Other key-value pairs will represent various values of the columns.
+
+Below is an example of what a payload for an event describing a table update might look like.
+
+| KEY         | VALUE               | DATA TYPE   |
+|-------------|---------------------|-------------|
+| **event**   | table1.update       | `string`    |
+| **time**    | 1586500157          | `int64`     |
+| **column1** | hello               | `string`    |
+| **column2** | { "name": "roman" } | `json`      |
+
+Talaria sypports `string`, `int32`, `int64`, `bool`, `float64`, `timestamp` and `json` data types which are used to construct columns that can be exposed to Presto/SQL.
+
+## Event Ingestion with Talaria
+
+If your organisation needs a reliable and scalable data ingestion platform, you can set up Talaria as one. The main advantage is that such platform is cost-efficient, does not require a complex Kafka setup and even offers in-flight query if you also point a Presto on it. The basic setup allows you to track events using a simple gRPC endpoint from almost anywhere.
+
+![alt text](.github/images/ingest.png)
+
+In order to setup Talaria as an ingestion platform, you will need to enable `compaction` in the configuration, something along these lines:
+
+```yaml
+mode: staging
+env: staging
+domain: "talaria-headless.default.svc.cluster.local"
+storage:
+  dir: "/data"
+  s3Compact: 
+    region: "ap-southeast-1"
+    bucket: "bucket"
+    nameFunc: "s3://bucket/namefunc.lua"
+...
+```
+
+Once this is set up, you can point a gRPC client (see [protobuf definition](proto/talaria.proto)) directly to the ingestion endpoint. Note that we also offer some pre-generated or pre-made ingestion clients [in this repository](/client/).
+
+```
+service Ingress {
+  rpc Ingest(IngestRequest) returns (IngestResponse) {}
+}
+```
+
+
+## Hot Data Query with Talaria
+
+If your organisation requires querying of either hot data (e.g. last n hours) or in-flight data (i.e as ingested), you can also configure Talaria to serve it to Presto using built-in [Presto Thrift](https://prestodb.io/docs/current/connector/thrift.html) connector. 
+
+![alt text](.github/images/query.png)
+
+In the example configuration below we're setting up an `s3 + sqs` writer to continously ingest files from an S3 bucket and an "eventlog" table which will be exposed to Presto.
+
+```yaml
+mode: staging
+env: staging
+domain: "talaria-headless.default.svc.cluster.local"
+writers:
+  grpc:
+    port: 8080
+  s3sqs:
+    region: "ap-southeast-1"
+    queue: "queue-url"
+    waitTimeout: 1
+    retries: 5
+readers:
+  presto:
+    schema: data
+    port: 8042
+storage:
+  dir: "/data"
+tables:
+  timeseries:
+    name: eventlog
+    ttl: 3600
+    hashBy: event
+    sortBy: time
+...
+```
+
+Once you have set up Talaria, you'll need to configure Presto to talk to it using the [Thrift Connector](https://prestodb.io/docs/current/connector/thrift.html). You would need to make sure that:
+ 1. In the properties file you have configured to talk to Talaria through a kubernetes load balancer.
+ 2. Presto can access directly the nodes, without the load balancer.
+
+Once this is done, you should be able to query your data via Presto.
+
+```sql
+select * 
+from talaria.data.eventlog
+where event = 'table1.update'
+limit 1000
+```
 
 
 ## Quick Start
-#### Preconditions
-* setup AWS profile and make sure your machine is accessible to AWS and has enough permission to read from S3, SQS and manipulate Route53 records.
 
-#### Steps
-1. Set env vars
-``` bash
-export X_TALARIA_CONF=(path-to-this-repo)/config-ci.json
-```
-2. Edit config-ci.json with your own configurations (including AWS Route53 and SQS configs)
-3. Start application
-``` bash
-go run (path-to-this-repo)/main.go
-```
+TODO
 
-## About Us
-TalariaDB is maintained by:
+## Contributing
+
+We are open to contributions, feel free to submit a pull request and we'll review it as quickly as we can. TalariaDB is maintained by:
 * [Roman Atachiants](https://www.linkedin.com/in/atachiants/)
-* [Wang Yichao](https://www.linkedin.com/in/wangyichao/)
+* [Yichao Wang](https://www.linkedin.com/in/wangyichao/)
+* [Chun Rong Phang](https://www.linkedin.com/in/phang-chun-rong-6232ab78/)
 
 ## License
 
-TalariaDB is licensed under the --- (LICENSE.md)
+TalariaDB is licensed under the [MIT License](LICENSE.md).
