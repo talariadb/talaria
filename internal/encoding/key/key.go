@@ -9,7 +9,7 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/spaolacci/murmur3"
+	"github.com/twmb/murmur3"
 )
 
 const size = 16
@@ -23,7 +23,7 @@ type Key []byte
 // New generates a new key for the storage.
 func New(eventName string, tsi time.Time) Key {
 	out := make([]byte, size)
-	binary.BigEndian.PutUint32(out[0:4], murmur3.Sum32([]byte(eventName)))
+	binary.BigEndian.PutUint32(out[0:4], murmur3.StringSum32(eventName))
 	binary.BigEndian.PutUint64(out[4:12], uint64(tsi.Unix()))
 	binary.BigEndian.PutUint32(out[12:16], atomic.AddUint32(&next, 1))
 	return out
