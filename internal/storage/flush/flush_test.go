@@ -16,7 +16,7 @@ import (
 	"github.com/grab/talaria/internal/encoding/typeof"
 	"github.com/grab/talaria/internal/monitor"
 	"github.com/grab/talaria/internal/scripting"
-	"github.com/grab/talaria/internal/storage/flush/writers"
+	"github.com/grab/talaria/internal/storage/writer/noop"
 	"github.com/kelindar/binary"
 )
 
@@ -35,7 +35,7 @@ func TestMerge(t *testing.T) {
 		output, err := lua.Value(row)
 		return output.(string), err
 	}
-	flusher := New(monitor.NewNoop(), writers.NewNoop(), fileNameFunc)
+	flusher := New(monitor.NewNoop(), noop.New(), fileNameFunc)
 
 	schema := typeof.Schema{
 		"col0": typeof.String,
@@ -101,7 +101,7 @@ func TestMerge_DifferentSchema(t *testing.T) {
 		output, err := lua.Value(row)
 		return output.(string), err
 	}
-	flusher := New(monitor.NewNoop(), writers.NewNoop(), fileNameFunc)
+	flusher := New(monitor.NewNoop(), noop.New(), fileNameFunc)
 
 	schema := typeof.Schema{
 		"col0": typeof.String,
@@ -174,7 +174,7 @@ func BenchmarkFlush(b *testing.B) {
 	monitor := monitor.NewNoop()
 
 	// Create flusher
-	noopWriter := writers.NewNoop()
+	noopWriter := noop.New()
 
 	fileNameFunc := func(row map[string]interface{}) (string, error) {
 		return "noop", nil

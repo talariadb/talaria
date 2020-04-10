@@ -38,7 +38,7 @@ func TestConfigure(t *testing.T) {
 	assert.Equal(t, typeof.Schema{
 		"a": typeof.Int64,
 	}, *c.Tables.Timeseries.Schema)
-	assert.Nil(t, c.Storage.S3Compact)
+	assert.Nil(t, c.Storage.Compact)
 	assert.Nil(t, err)
 }
 

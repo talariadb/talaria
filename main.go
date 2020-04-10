@@ -25,7 +25,7 @@ import (
 	"github.com/grab/talaria/internal/server/cluster"
 	"github.com/grab/talaria/internal/storage"
 	"github.com/grab/talaria/internal/storage/disk"
-	"github.com/grab/talaria/internal/storage/s3compact"
+	"github.com/grab/talaria/internal/storage/writer"
 	"github.com/grab/talaria/internal/table/log"
 	"github.com/grab/talaria/internal/table/nodes"
 	"github.com/grab/talaria/internal/table/timeseries"
@@ -68,8 +68,8 @@ func main() {
 
 	// Create a storage, if compact store is enabled then use the compact store
 	store := storage.Storage(disk.Open(conf.Storage.Directory, conf.Tables.Timeseries.Name, monitor))
-	if conf.Storage.S3Compact != nil {
-		store = s3compact.New(conf.Storage.S3Compact, monitor, store, loader)
+	if conf.Storage.Compact != nil {
+		store = writer.New(conf.Storage.Compact, monitor, store, loader)
 	}
 
 	// Start the new server

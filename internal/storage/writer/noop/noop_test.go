@@ -1,4 +1,4 @@
-package writers
+package noop
 
 import (
 	"testing"
@@ -7,7 +7,7 @@ import (
 )
 
 func TestNoop(t *testing.T) {
-	noopWriter := NewNoop()
+	noopWriter := New()
 
 	assert.NotPanics(t, func() {
 		_ = noopWriter.Write(nil, nil)

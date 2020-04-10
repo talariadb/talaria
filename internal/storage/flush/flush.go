@@ -10,7 +10,6 @@ import (
 	"time"
 
 	eorc "github.com/crphang/orc"
-
 	"github.com/grab/talaria/internal/column"
 	"github.com/grab/talaria/internal/encoding/block"
 	"github.com/grab/talaria/internal/encoding/key"
@@ -19,23 +18,27 @@ import (
 	"github.com/grab/talaria/internal/monitor"
 	"github.com/grab/talaria/internal/monitor/errors"
 	"github.com/grab/talaria/internal/storage"
-	"github.com/grab/talaria/internal/storage/flush/writers"
 )
 
 // Assert contract compliance
 var _ storage.Appender = new(Storage)
 var _ storage.Merger = new(Storage)
 
+// Writer represents a sink for the flusher.
+type Writer interface {
+	Write(key key.Key, value []byte) error
+}
+
 // Storage represents s3/flush storage.
 type Storage struct {
 	monitor      monitor.Monitor // The monitor client
-	writer       writers.Writer
+	writer       Writer
 	memoryPool   *sync.Pool
 	fileNameFunc func(map[string]interface{}) (string, error)
 }
 
 // New creates a new storage implementation.
-func New(monitor monitor.Monitor, writer writers.Writer, fileNameFunc func(map[string]interface{}) (string, error)) *Storage {
+func New(monitor monitor.Monitor, writer Writer, fileNameFunc func(map[string]interface{}) (string, error)) *Storage {
 	memoryPool := &sync.Pool{
 		New: func() interface{} {
 			return bytes.NewBuffer(make([]byte, 0, 16*1<<20))
