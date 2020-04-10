@@ -2,6 +2,7 @@ package test
 
 import (
 	"context"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -11,7 +12,7 @@ import (
 )
 
 type mockLogger struct {
-	count int
+	count int64
 }
 
 func newMockLogger() *mockLogger {
@@ -19,19 +20,19 @@ func newMockLogger() *mockLogger {
 }
 
 func (l *mockLogger) Errorf(f string, v ...interface{}) {
-	l.count++
+	atomic.AddInt64(&l.count, 1)
 }
 
 func (l *mockLogger) Warningf(f string, v ...interface{}) {
-	l.count++
+	atomic.AddInt64(&l.count, 1)
 }
 
 func (l *mockLogger) Infof(f string, v ...interface{}) {
-	l.count++
+	atomic.AddInt64(&l.count, 1)
 }
 
 func (l *mockLogger) Debugf(f string, v ...interface{}) {
-	l.count++
+	atomic.AddInt64(&l.count, 1)
 }
 
 type staticConf struct{}
@@ -60,7 +61,7 @@ func TestLoggerUpdates(t *testing.T) {
 
 	// First time should be called with the stdout logger. then subsequent 2(3 - 1) times should be called with the table logger.
 	// total calls to the s3 configurer will be 3 because the load frequency is 1 second and sleep is 3 second
-	assert.Greater(t, tableLogger.count, 5)
+	assert.Greater(t, atomic.LoadInt64(&tableLogger.count), int64(5))
 }
 
 type downloadMock func(ctx context.Context, uri string) ([]byte, error)

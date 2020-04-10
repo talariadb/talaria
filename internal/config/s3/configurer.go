@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"net/url"
 	"path"
+	"sync"
 
 	"github.com/grab/talaria/internal/config"
 	"github.com/grab/talaria/internal/monitor/logging"
@@ -21,6 +22,7 @@ type downloader interface {
 
 // Configurer to fetch configuration from a s3 object
 type Configurer struct {
+	sync.Mutex
 	client downloader
 	log    logging.Logger
 }
@@ -32,6 +34,8 @@ func New(log logging.Logger) *Configurer {
 
 // SetLogger to set the logger after initialization
 func (s *Configurer) SetLogger(lo logging.Logger) {
+	s.Lock()
+	defer s.Unlock()
 	s.log = lo
 }
 
@@ -45,6 +49,8 @@ func NewWith(dl downloader, log logging.Logger) *Configurer {
 
 // Configure fetches a yaml config file from a s3 path and populate the config object
 func (s *Configurer) Configure(c *config.Config) error {
+	s.Lock()
+	defer s.Unlock()
 	if c.URI == "" {
 		return nil
 	}

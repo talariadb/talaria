@@ -11,6 +11,7 @@ import (
 	"os"
 	"path"
 	"runtime/debug"
+	"sync/atomic"
 	"time"
 
 	"github.com/dgraph-io/badger/v2"
@@ -22,7 +23,8 @@ import (
 )
 
 const (
-	ctxTag = "disk"
+	ctxTag    = "disk"
+	errClosed = "unable to run commands on a closed database"
 )
 
 // Assert contract compliance
@@ -30,6 +32,7 @@ var _ storage.Storage = new(Storage)
 
 // Storage represents disk storage.
 type Storage struct {
+	closed  int32           // The closed flag
 	gc      async.Task      // Closing channel
 	db      *badger.DB      // The underlying key-value store
 	monitor monitor.Monitor // The stats client
@@ -91,6 +94,10 @@ func (s *Storage) Open(dir string) error {
 
 // Append adds an event into the storage.
 func (s *Storage) Append(key key.Key, value []byte, ttl time.Duration) error {
+	if s.isClosed() {
+		return errors.New(errClosed)
+	}
+
 	if err := s.db.Update(func(tx *badger.Txn) error {
 		return tx.SetEntry(&badger.Entry{
 			Key:       key,
@@ -107,6 +114,10 @@ func (s *Storage) Append(key key.Key, value []byte, ttl time.Duration) error {
 // the store. If f returns false, range stops the iteration. The API is designed to be very similar to the concurrent
 // map. The implementation must guarantee that the keys are lexigraphically sorted.
 func (s *Storage) Range(seek, until key.Key, f func(key, value []byte) bool) error {
+	if s.isClosed() {
+		return errors.New(errClosed)
+	}
+
 	return s.db.View(func(tx *badger.Txn) error {
 		it := tx.NewIterator(badger.IteratorOptions{
 			PrefetchValues: false,
@@ -162,6 +173,9 @@ func (s *Storage) purge() (deleted, total int) {
 // Delete deletes one or multiple keys from the storage.
 func (s *Storage) Delete(keys ...key.Key) error {
 	const msg = "unable to delete"
+	if s.isClosed() {
+		return errors.New(errClosed)
+	}
 
 	txn := s.db.NewTransaction(true)
 	for _, key := range keys {
@@ -222,7 +236,14 @@ func (s *Storage) Close() error {
 	if s.gc != nil {
 		s.gc.Cancel()
 	}
+
+	atomic.StoreInt32(&s.closed, 1)
 	return s.db.Close()
+}
+
+// isClosed checks if the DB is closed or not.
+func (s *Storage) isClosed() bool {
+	return atomic.LoadInt32(&s.closed) == int32(1)
 }
 
 // handlePanic handles the panic and logs it out.
