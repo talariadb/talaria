@@ -10,10 +10,11 @@ import (
 	"path"
 	"sync"
 
+	"github.com/aws/aws-sdk-go/aws"
 	"github.com/grab/talaria/internal/config"
 	"github.com/grab/talaria/internal/monitor/logging"
 	"github.com/kelindar/loader"
-	"gopkg.in/yaml.v2"
+	"github.com/kelindar/loader/s3"
 )
 
 type downloader interface {
@@ -28,8 +29,12 @@ type Configurer struct {
 }
 
 // New creates a new S3 configurer.
-func New(log logging.Logger) *Configurer {
-	return NewWith(loader.New(), log)
+func New(log logging.Logger, s3Config *aws.Config) *Configurer {
+	s3Client, err := s3.NewWithConfig(s3Config)
+	if err != nil {
+		return nil
+	}
+	return NewWith(loader.New(loader.WithS3Client(s3Client)), log)
 }
 
 // SetLogger to set the logger after initialization

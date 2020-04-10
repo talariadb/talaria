@@ -110,6 +110,11 @@ type Computed struct {
 	Func string      `json:"func"`
 }
 
+// S3Config contains configuration of S3
+type Config struct {
+	Region string `json:"region" yaml:"region" env:"REGION"` // The region of AWS bucket
+}
+
 type Func func() *Config
 
 // Load iterates through all the providers and fills the config object.

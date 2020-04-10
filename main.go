@@ -18,7 +18,6 @@ import (
 	"github.com/grab/talaria/internal/monitor"
 	"github.com/grab/talaria/internal/monitor/logging"
 	"github.com/grab/talaria/internal/monitor/statsd"
-	"github.com/grab/talaria/internal/scripting"
 	mlog "github.com/grab/talaria/internal/scripting/log"
 	mstats "github.com/grab/talaria/internal/scripting/stats"
 	"github.com/grab/talaria/internal/server"
@@ -30,6 +29,7 @@ import (
 	"github.com/grab/talaria/internal/table/nodes"
 	"github.com/grab/talaria/internal/table/timeseries"
 	"github.com/kelindar/lua"
+	script "github.com/kelindar/talaria/internal/scripting"
 )
 
 const (
@@ -39,6 +39,9 @@ const (
 func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
+
+	//TODO: Modify to have local configurer that reads configs/secrets that could be mounted by kubernetes
+	// https://kubernetes.io/docs/concepts/configuration/secret/#use-cases
 
 	s3Configurer := s3.New(logging.NewStandard())
 	configure := config.Load(ctx, 60*time.Second, static.New(), env.New("TALARIA_CONF"), s3Configurer)
