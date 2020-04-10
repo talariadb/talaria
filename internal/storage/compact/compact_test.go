@@ -7,6 +7,7 @@ import (
 	"context"
 	"io/ioutil"
 	"os"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -70,9 +71,9 @@ func run(f func(store *disk.Storage)) {
 
 func TestRange(t *testing.T) {
 	runTest(t, func(buffer *disk.Storage) {
-		var count int
+		var count int64
 		var dest appender = func(key key.Key, value []byte, ttl time.Duration) error {
-			count++
+			atomic.AddInt64(&count, 1)
 			return nil
 		}
 
@@ -105,7 +106,7 @@ func TestRange(t *testing.T) {
 
 		// Manually compact, the final count should be 2 (given we have 2 keys)
 		store.Compact(context.Background())
-		assert.Equal(t, 2, count)
+		assert.Equal(t, int64(2), count)
 	})
 }
 

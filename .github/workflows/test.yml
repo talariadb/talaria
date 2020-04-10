@@ -1,5 +1,5 @@
 name: Go
-on: [push]
+on: [push, pull_request]
 env:
   PROJECT: "github.com/kelindar/talaria"
   GO111MODULE: "on"
@@ -7,8 +7,8 @@ env:
 jobs:
 
   test:
-    name: Tests and Coverage
-    runs-on: macos-latest
+    name: Run Tests
+    runs-on: ubuntu-latest
     steps:
 
     - name: Install Go
