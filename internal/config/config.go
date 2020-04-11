@@ -110,12 +110,18 @@ type Compaction struct {
 	Azure    *AzureSink    `json:"azure" yaml:"azure" env:"AZURE"`          // The Azure writer configuration
 	BigQuery *BigQuerySink `json:"bigquery" yaml:"bigquery" env:"BIGQUERY"` // The Big Query writer configuration
 	GCS      *GCSSink      `json:"gcs" yaml:"gcs" env:"GCS"`                // The Google Cloud Storage writer configuration
+	File     *FileSink     `json:"file" yaml:"file" env:"FILE"`             // The local file system writer configuration
 }
 
 // S3Sink represents a sink for AWS S3 and compatible stores.
 type S3Sink struct {
 	Region      string `json:"region" yaml:"region" env:"REGION"`                // The region of AWS bucket
 	Bucket      string `json:"bucket" yaml:"bucket" env:"BUCKET"`                // The name of AWS bucket
+	Prefix      string `json:"prefix" yaml:"prefix" env:"PREFIX"`                // The prefix to add
+	Endpoint    string `json:"endpoint" yaml:"endpoint" env:"ENDPOINT"`          // The custom endpoint to use
+	SSE         string `json:"sse" yaml:"sse" env:"SSE"`                         // The server side encryption to use
+	AccessKey   string `json:"accessKey" yaml:"accessKey" env:"ACCESSKEY"`       // The optional static access key
+	SecretKey   string `json:"secretKey" yaml:"secretKey" env:"SECRETKEY"`       // The optional static secret key
 	Concurrency int    `json:"concurrency" yaml:"concurrency" env:"CONCURRENCY"` // The S3 upload concurrency
 }
 
@@ -136,6 +142,11 @@ type BigQuerySink struct {
 type GCSSink struct {
 	Bucket string `json:"bucket" yaml:"bucket" env:"BUCKET"` // The name of the bucket
 	Prefix string `json:"prefix" yaml:"prefix" env:"PREFIX"` // The prefix to add
+}
+
+// FileSink represents a sink to the local file system
+type FileSink struct {
+	Directory string `json:"dir" yaml:"dir" env:"DIR"`
 }
 
 // Func represents a config function

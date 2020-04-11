@@ -5,11 +5,17 @@ package s3
 
 import (
 	"bytes"
+	"github.com/aws/aws-sdk-go/aws/credentials"
+	"path"
+	"runtime"
+	"strings"
+
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	"github.com/grab/talaria/internal/encoding/key"
-	"runtime"
+	"github.com/grab/talaria/internal/monitor/errors"
 )
 
 // Uploader uploads to underlying backend
@@ -22,22 +28,36 @@ type Uploader interface {
 type Writer struct {
 	uploader Uploader
 	bucket   string
+	prefix   string
+	sse      string
 }
 
 // New initializes a new S3 writer.
-func New(region, bucket string, concurrency int) (*Writer, error) {
+func New(bucket, prefix, region, endpoint, sse, access, secret string, concurrency int) (*Writer, error) {
 	if concurrency == 0 {
 		concurrency = runtime.NumCPU()
 	}
 
-	sess, err := session.NewSession(aws.NewConfig().WithRegion(region))
-	if err != nil {
-		return nil, err
+	config := &aws.Config{
+		Region:           aws.String(region),
+		Endpoint:         aws.String(endpoint),
+		DisableSSL:       aws.Bool(strings.HasPrefix(endpoint, "http://")),
+		S3ForcePathStyle: aws.Bool(endpoint != ""),
 	}
 
+	// Optionally set static credentials
+	if access != "" && secret != "" {
+		config.WithCredentials(credentials.NewStaticCredentials(access, secret, ""))
+	}
+
+	client := s3.New(session.New(), config)
 	return &Writer{
-		uploader: s3manager.NewUploader(sess, func(u *s3manager.Uploader) { u.Concurrency = concurrency }),
-		bucket:   bucket,
+		uploader: s3manager.NewUploaderWithClient(client, func(u *s3manager.Uploader) {
+			u.Concurrency = concurrency
+		}),
+		bucket: bucket,
+		prefix: cleanPrefix(prefix),
+		sse:    sse,
 	}, nil
 }
 
@@ -46,9 +66,21 @@ func (w *Writer) Write(key key.Key, val []byte) error {
 	uploadInput := &s3manager.UploadInput{
 		Bucket: aws.String(w.bucket),
 		Body:   bytes.NewBuffer(val),
-		Key:    aws.String(string(key)),
+		Key:    aws.String(path.Join(w.prefix, string(key))),
 	}
 
-	_, err := w.uploader.Upload(uploadInput)
-	return err
+	// Optionally enable server-side encryption
+	if w.sse != "" {
+		uploadInput.ServerSideEncryption = aws.String(w.sse)
+	}
+
+	// Upload to S3
+	if _, err := w.uploader.Upload(uploadInput); err != nil {
+		return errors.Internal("s3: unable to write", err)
+	}
+	return nil
+}
+
+func cleanPrefix(prefix string) string {
+	return strings.Trim(prefix, "/")
 }

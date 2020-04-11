@@ -12,7 +12,7 @@ import (
 )
 
 func TestS3Writer(t *testing.T) {
-	_, err := New("us-east-1", "testBucket", 128)
+	_, err := New("testBucket", "", "us-east-1", "", "", "", "", 128)
 
 	assert.Nil(t, err)
 }
