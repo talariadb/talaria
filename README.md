@@ -54,10 +54,12 @@ env: staging
 domain: "talaria-headless.default.svc.cluster.local"
 storage:
   dir: "/data"
-  s3Compact: 
-    region: "ap-southeast-1"
-    bucket: "bucket"
-    nameFunc: "s3://bucket/namefunc.lua"
+  compact:                               # enable compaction
+    interval: 60                         # compact every 60 seconds
+    nameFunc: "s3://bucket/namefunc.lua" # file name function
+    s3:                                  # sink to Amazon S3
+      region: "ap-southeast-1"
+      bucket: "bucket"
 ...
 ```
 
@@ -69,6 +71,14 @@ service Ingress {
 }
 ```
 
+Below is a list of currently supported sinks and their example configurations:
+- [Amazon S3](https://aws.amazon.com/s3/) using [s3 sink](./internal/storage/writer/s3).
+- [DigitalOcean Spaces](https://www.digitalocean.com/products/spaces/) using [s3 sink](./internal/storage/writer/s3), a custom endpoint and us-east-1 region.
+- [Google Cloud Storage](https://cloud.google.com/storage/) using [gcs sink](./internal/storage/writer/gcs).
+- Local filesystem using [file sink](./internal/storage/writer/file).
+- [Microsoft Azure Blob Storage](https://azure.microsoft.com/en-us/services/storage/blobs/) using [azure sink](./internal/storage/writer/azure).
+- [Minio](https://min.io/) using [s3 sink](./internal/storage/writer/s3), a custom endpoint and us-east-1 region.
+- [Google Big Query](https://cloud.google.com/bigquery/) using [bigquery sink](./internal/storage/writer/bigquery).
 
 ## Hot Data Query with Talaria
 

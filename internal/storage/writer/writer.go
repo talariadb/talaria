@@ -14,6 +14,7 @@ import (
 	"github.com/grab/talaria/internal/storage/flush"
 	"github.com/grab/talaria/internal/storage/writer/azure"
 	"github.com/grab/talaria/internal/storage/writer/bigquery"
+	"github.com/grab/talaria/internal/storage/writer/file"
 	"github.com/grab/talaria/internal/storage/writer/gcs"
 	"github.com/grab/talaria/internal/storage/writer/noop"
 	"github.com/grab/talaria/internal/storage/writer/s3"
@@ -54,13 +55,15 @@ func New(config *config.Compaction, monitor monitor.Monitor, store storage.Stora
 func newWriter(config *config.Compaction) (flush.Writer, error) {
 	switch {
 	case config.S3 != nil:
-		return s3.New(config.S3.Region, config.S3.Bucket, config.S3.Concurrency)
+		return s3.New(config.S3.Bucket, config.S3.Prefix, config.S3.Region, config.S3.Endpoint, config.S3.SSE, config.S3.Concurrency)
 	case config.Azure != nil:
 		return azure.New(config.Azure.Container, config.Azure.Prefix)
 	case config.GCS != nil:
 		return gcs.New(config.GCS.Bucket, config.GCS.Prefix)
 	case config.BigQuery != nil:
 		return bigquery.New(config.BigQuery.Project, config.BigQuery.Dataset, config.BigQuery.Table)
+	case config.File != nil:
+		return file.New(config.File.Directory)
 	default:
 		return noop.New(), errors.New("compact: writer was not configured")
 	}
