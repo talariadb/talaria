@@ -21,6 +21,7 @@ func TestConfigure(t *testing.T) {
 	err := st.Configure(c)
 	assert.Nil(t, err)
 	c.URI = "s3://config.s3-ap-southeast-1.amazonaws.com/a/b/c/conf-server-conf-stg.json"
+	c.SchemaURI = "s3://config.s3-ap-southeast-1.amazonaws.com/a/b/c/abc_schema.yaml"
 	c.Tables.Timeseries.Name = "abc"
 
 	assert.Nil(t, c.Tables.Timeseries.Schema)
@@ -48,6 +49,7 @@ func TestConfigure_NilSchema(t *testing.T) {
 	err := st.Configure(c)
 	assert.Nil(t, err)
 	c.URI = "s3://config.s3-ap-southeast-1.amazonaws.com/a/b/c/conf-server-conf-stg.json"
+	c.SchemaURI = "s3://config.s3-ap-southeast-1.amazonaws.com/a/b/c/abc_schema.yaml"
 	c.Tables.Timeseries.Name = "abc"
 
 	assert.Nil(t, c.Tables.Timeseries.Schema)

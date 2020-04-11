@@ -5,15 +5,12 @@ package s3
 
 import (
 	"context"
-	"fmt"
-	"net/url"
-	"path"
 	"sync"
 
 	"github.com/grab/talaria/internal/config"
 	"github.com/grab/talaria/internal/monitor/logging"
 	"github.com/kelindar/loader"
-	"gopkg.in/yaml.v2"
+	yaml "gopkg.in/yaml.v2"
 )
 
 type downloader interface {
@@ -73,13 +70,7 @@ func (s *Configurer) Configure(c *config.Config) error {
 		return nil
 	}
 
-	// Parse the URL
-	u, err := url.Parse(c.URI)
-	if err != nil {
-		return err
-	}
-
-	b, err = s.client.Load(context.Background(), fmt.Sprintf("s3://%v%v/%v_schema.yaml", u.Host, path.Dir(u.Path), name))
+	b, err = s.client.Load(context.Background(), c.SchemaURI)
 
 	if err != nil {
 		s.log.Warningf("error in downloading event schema. Load error %+v", err)
