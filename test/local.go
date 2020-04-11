@@ -12,7 +12,6 @@ import (
 	"time"
 
 	"github.com/grab/talaria/internal/config"
-	"github.com/grab/talaria/internal/encoding/typeof"
 	"github.com/grab/talaria/internal/monitor"
 	"github.com/grab/talaria/internal/monitor/logging"
 	"github.com/grab/talaria/internal/monitor/statsd"
@@ -74,9 +73,7 @@ func main() {
 		TTL:    cfg().Tables.Timeseries.TTL,
 		HashBy: cfg().Tables.Timeseries.HashBy,
 		SortBy: cfg().Tables.Timeseries.SortBy,
-		Schema: func() *typeof.Schema {
-			return cfg().Tables.Timeseries.Schema
-		},
+		Schema: "",
 	})
 	server := server.New(cfg, monitor, script.NewLoader(nil),
 		eventlog,

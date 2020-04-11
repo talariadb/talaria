@@ -12,16 +12,16 @@ import (
 
 // Config global
 type Config struct {
-	URI      string     `json:"uri" yaml:"uri" env:"URI"`
-	Env      string     `json:"env" yaml:"env" env:"ENV"`             // The environment (eg: prd, stg)
-	AppName  string     `json:"appName" yaml:"appName" env:"APPNAME"` // app name used for monitoring
-	Domain   string     `json:"domain" yaml:"domain" env:"DOMAIN"`
-	Readers  Readers    `json:"readers" yaml:"readers" env:"READERS"`
-	Writers  Writers    `json:"writers" yaml:"writers" env:"WRITERS"`
-	Storage  Storage    `json:"storage" yaml:"storage" env:"STORAGE"`
-	Tables   Tables     `json:"tables" yaml:"tables" env:"TABLES"`
-	Statsd   *StatsD    `json:"statsd,omitempty" yaml:"statsd" env:"STATSD"`
-	Computed []Computed `json:"computed" yaml:"computed" env:"COMPUTED"`
+	URI       string     `json:"uri" yaml:"uri" env:"URI"`
+	Env       string     `json:"env" yaml:"env" env:"ENV"`             // The environment (eg: prd, stg)
+	AppName   string     `json:"appName" yaml:"appName" env:"APPNAME"` // app name used for monitoring
+	Domain    string     `json:"domain" yaml:"domain" env:"DOMAIN"`
+	Readers   Readers    `json:"readers" yaml:"readers" env:"READERS"`
+	Writers   Writers    `json:"writers" yaml:"writers" env:"WRITERS"`
+	Storage   Storage    `json:"storage" yaml:"storage" env:"STORAGE"`
+	Tables    Tables     `json:"tables" yaml:"tables" env:"TABLES"`
+	Statsd    *StatsD    `json:"statsd,omitempty" yaml:"statsd" env:"STATSD"`
+	Computed  []Computed `json:"computed" yaml:"computed" env:"COMPUTED"`
 }
 
 // Tables is a list of table configs
@@ -37,7 +37,7 @@ type Timeseries struct {
 	TTL    int64          `json:"ttl,omitempty" yaml:"ttl" env:"TTL"`          // The ttl (in seconds) for the storage, defaults to 1 hour.
 	HashBy string         `json:"hashBy,omitempty" yaml:"hashBy" env:"HASHBY"` // The column to use as key (metric), defaults to 'event'.
 	SortBy string         `json:"sortBy,omitempty" yaml:"sortBy" env:"SORTBY"` // The column to use as time, defaults to 'tsi'.
-	Schema *typeof.Schema `json:"schema" yaml:"schema" env:"SCHEMA"`           // The schema of the table
+	Schema string         `json:"schema" yaml:"schema" env:"SCHEMA"`           // The schema of the table
 }
 
 // Log is the config for log table

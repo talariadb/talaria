@@ -37,7 +37,7 @@ func New(cfg config.Func, cluster Membership, monitor monitor.Monitor) *Table {
 		TTL:    cfg().Tables.Log.TTL,
 		SortBy: cfg().Tables.Log.SortBy,
 		HashBy: "",
-		Schema: func() *typeof.Schema { return nil },
+		Schema: "",
 	})
 	return &Table{
 		Table:   *base,

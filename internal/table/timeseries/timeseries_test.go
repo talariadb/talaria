@@ -4,12 +4,6 @@
 package timeseries_test
 
 import (
-	"context"
-	"io/ioutil"
-	"os"
-	"testing"
-	"time"
-
 	"github.com/grab/talaria/internal/config"
 	"github.com/grab/talaria/internal/encoding/block"
 	"github.com/grab/talaria/internal/encoding/typeof"
@@ -18,6 +12,9 @@ import (
 	"github.com/grab/talaria/internal/storage/disk"
 	"github.com/grab/talaria/internal/table/timeseries"
 	"github.com/stretchr/testify/assert"
+	"io/ioutil"
+	"os"
+	"testing"
 )
 
 const testFile2 = "../../../test/test2.orc"
@@ -46,27 +43,20 @@ func (m *mockConfigurer) Configure(c *config.Config) error {
 	return nil
 }
 
-func TestTimeseries(t *testing.T) {
+func TestTimeseries_DynamicSchema(t *testing.T) {
 	dir, _ := ioutil.TempDir(".", "testdata-")
-	cfg := config.Load(context.Background(), 60*time.Second, &mockConfigurer{
-		dir: dir,
-	})
 	defer func() { _ = os.RemoveAll(dir) }()
 
-	schema := func() *typeof.Schema {
-		return cfg().Tables.Timeseries.Schema
-	}
-
 	timeseriesCfg := timeseries.Config{
-		HashBy: cfg().Tables.Timeseries.HashBy,
-		SortBy: cfg().Tables.Timeseries.SortBy,
-		Schema: schema,
+		HashBy: "string1",
+		SortBy: "int1",
+		Schema: "", // For static schema
 		Name:   "eventlog",
-		TTL:    cfg().Tables.Timeseries.TTL,
+		TTL:    3600,
 	}
 
 	monitor := monitor2.NewNoop()
-	store := disk.Open(cfg().Storage.Directory, timeseriesCfg.Name, monitor)
+	store := disk.Open(dir, timeseriesCfg.Name, monitor)
 
 	// Start the server and open the database
 	eventlog := timeseries.New(new(noopMembership), monitor, store, timeseriesCfg)
@@ -78,7 +68,7 @@ func TestTimeseries(t *testing.T) {
 	{
 		b, err := ioutil.ReadFile(testFile3)
 		assert.NoError(t, err)
-		blocks, err := block.FromOrcBy(b, cfg().Tables.Timeseries.HashBy, nil)
+		blocks, err := block.FromOrcBy(b, timeseriesCfg.HashBy, nil)
 		assert.NoError(t, err)
 		for _, block := range blocks {
 			assert.NoError(t, eventlog.Append(block))
@@ -94,7 +84,7 @@ func TestTimeseries(t *testing.T) {
 
 	// Get the splits
 	{
-		splits, err := eventlog.GetSplits([]string{}, newSplitQuery("110010100101010010101000100001", cfg().Tables.Timeseries.HashBy), 10000)
+		splits, err := eventlog.GetSplits([]string{}, newSplitQuery("110010100101010010101000100001", timeseriesCfg.HashBy), 10000)
 		assert.NoError(t, err)
 		assert.Len(t, splits, 1)
 		assert.Equal(t, "127.0.0.1", splits[0].Addrs[0])
@@ -111,7 +101,7 @@ func TestTimeseries(t *testing.T) {
 	{
 		b, err := ioutil.ReadFile(testFile2)
 		assert.NoError(t, err)
-		blocks, err := block.FromOrcBy(b, cfg().Tables.Timeseries.HashBy, nil)
+		blocks, err := block.FromOrcBy(b, timeseriesCfg.HashBy, nil)
 		assert.NoError(t, err)
 		for _, block := range blocks {
 			assert.NoError(t, eventlog.Append(block))
@@ -127,7 +117,7 @@ func TestTimeseries(t *testing.T) {
 
 	// Get the splits
 	{
-		splits, err := eventlog.GetSplits([]string{}, newSplitQuery("110010100101010010101000100001", cfg().Tables.Timeseries.HashBy), 10000)
+		splits, err := eventlog.GetSplits([]string{}, newSplitQuery("110010100101010010101000100001", timeseriesCfg.HashBy), 10000)
 		assert.NoError(t, err)
 		assert.Len(t, splits, 1)
 		assert.Equal(t, "127.0.0.1", splits[0].Addrs[0])
@@ -139,8 +129,39 @@ func TestTimeseries(t *testing.T) {
 		assert.Len(t, page.Columns, 2)
 		assert.Equal(t, 5, page.Columns[0].Count())
 	}
-
 }
+
+func TestTimeSeries_LoadStaticSchema(t *testing.T) {
+	dir, _ := ioutil.TempDir(".", "testdata-")
+	defer func() { _ = os.RemoveAll(dir) }()
+
+	staticSchema := `string1: string
+int1: int64
+`
+	timeseriesCfg := timeseries.Config{
+		HashBy: "string1",
+		SortBy: "int1",
+		Schema: staticSchema, // For static schema
+		Name:   "eventlog",
+		TTL:    3600,
+	}
+
+	monitor := monitor2.NewNoop()
+	store := disk.Open(dir, timeseriesCfg.Name, monitor)
+
+	// Start the server and open the database
+	eventlog := timeseries.New(new(noopMembership), monitor, store, timeseriesCfg)
+	defer eventlog.Close()
+
+	actualSchema, err := eventlog.Schema()
+	assert.Nil(t, err)
+	expectedSchema := typeof.Schema{
+		"string1": typeof.String,
+		"int1": typeof.Int64,
+	}
+	assert.Equal(t, expectedSchema, actualSchema)
+}
+
 
 func newSplitQuery(eventName, colName string) *presto.PrestoThriftTupleDomain {
 	return &presto.PrestoThriftTupleDomain{

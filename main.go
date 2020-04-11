@@ -14,7 +14,6 @@ import (
 	"github.com/grab/talaria/internal/config/env"
 	"github.com/grab/talaria/internal/config/s3"
 	"github.com/grab/talaria/internal/config/static"
-	"github.com/grab/talaria/internal/encoding/typeof"
 	"github.com/grab/talaria/internal/monitor"
 	"github.com/grab/talaria/internal/monitor/logging"
 	"github.com/grab/talaria/internal/monitor/statsd"
@@ -79,9 +78,7 @@ func main() {
 			SortBy: conf.Tables.Timeseries.SortBy,
 			Name:   conf.Tables.Timeseries.Name,
 			TTL:    conf.Tables.Timeseries.TTL,
-			Schema: func() *typeof.Schema {
-				return configure().Tables.Timeseries.Schema
-			},
+			Schema: conf.Tables.Timeseries.Schema,
 		}),
 		nodes.New(gossip),
 		logTable,
