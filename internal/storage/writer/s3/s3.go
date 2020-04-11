@@ -5,6 +5,7 @@ package s3
 
 import (
 	"bytes"
+	"github.com/aws/aws-sdk-go/aws/credentials"
 	"path"
 	"runtime"
 	"strings"
@@ -32,18 +33,24 @@ type Writer struct {
 }
 
 // New initializes a new S3 writer.
-func New(bucket, prefix, region, endpoint, sse string, concurrency int) (*Writer, error) {
+func New(bucket, prefix, region, endpoint, sse, access, secret string, concurrency int) (*Writer, error) {
 	if concurrency == 0 {
 		concurrency = runtime.NumCPU()
 	}
 
-	client := s3.New(session.New(), &aws.Config{
+	config := &aws.Config{
 		Region:           aws.String(region),
 		Endpoint:         aws.String(endpoint),
 		DisableSSL:       aws.Bool(strings.HasPrefix(endpoint, "http://")),
 		S3ForcePathStyle: aws.Bool(endpoint != ""),
-	})
+	}
 
+	// Optionally set static credentials
+	if access != "" && secret != "" {
+		config.WithCredentials(credentials.NewStaticCredentials(access, secret, ""))
+	}
+
+	client := s3.New(session.New(), config)
 	return &Writer{
 		uploader: s3manager.NewUploaderWithClient(client, func(u *s3manager.Uploader) {
 			u.Concurrency = concurrency

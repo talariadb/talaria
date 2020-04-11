@@ -15,6 +15,8 @@ storage:
       prefix: "dir1/"                    # (optional) prefix to add
       endpoint: "http://127.0.0.1"       # (optional) custom endpoint to use
       sse: ""                            # (optional) server-side encryption
+      accessKey: ""                      # (optional) static access key to override
+      secretKey: ""                      # (optional) static secret key to override
       concurrency: 32                    # (optional) upload concurrency, default=NUM_CPU
 ...
 ```

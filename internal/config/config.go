@@ -120,6 +120,8 @@ type S3Sink struct {
 	Prefix      string `json:"prefix" yaml:"prefix" env:"PREFIX"`                // The prefix to add
 	Endpoint    string `json:"endpoint" yaml:"endpoint" env:"ENDPOINT"`          // The custom endpoint to use
 	SSE         string `json:"sse" yaml:"sse" env:"SSE"`                         // The server side encryption to use
+	AccessKey   string `json:"accessKey" yaml:"accessKey" env:"ACCESSKEY"`       // The optional static access key
+	SecretKey   string `json:"secretKey" yaml:"secretKey" env:"SECRETKEY"`       // The optional static secret key
 	Concurrency int    `json:"concurrency" yaml:"concurrency" env:"CONCURRENCY"` // The S3 upload concurrency
 }
 

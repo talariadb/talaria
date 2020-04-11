@@ -55,7 +55,7 @@ func New(config *config.Compaction, monitor monitor.Monitor, store storage.Stora
 func newWriter(config *config.Compaction) (flush.Writer, error) {
 	switch {
 	case config.S3 != nil:
-		return s3.New(config.S3.Bucket, config.S3.Prefix, config.S3.Region, config.S3.Endpoint, config.S3.SSE, config.S3.Concurrency)
+		return s3.New(config.S3.Bucket, config.S3.Prefix, config.S3.Region, config.S3.Endpoint, config.S3.SSE, config.S3.AccessKey, config.S3.SecretKey, config.S3.Concurrency)
 	case config.Azure != nil:
 		return azure.New(config.Azure.Container, config.Azure.Prefix)
 	case config.GCS != nil:
