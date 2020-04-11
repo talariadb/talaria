@@ -10,7 +10,7 @@ import (
 	"github.com/grab/talaria/internal/config"
 	"github.com/grab/talaria/internal/monitor/logging"
 	"github.com/kelindar/loader"
-	yaml "gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v2"
 )
 
 type downloader interface {
@@ -60,28 +60,6 @@ func (s *Configurer) Configure(c *config.Config) error {
 	}
 
 	if yaml.Unmarshal(b, c) != nil {
-		return err
-	}
-
-	// download the schema of the timeseries table by using the same bucket as the config and tablename_schema as the key
-	name := c.Tables.Timeseries.Name
-	if name == "" {
-		s.log.Warningf("error in downloading event schema from s3. Schema name missing")
-		return nil
-	}
-
-	b, err = s.client.Load(context.Background(), c.SchemaURI)
-
-	if err != nil {
-		s.log.Warningf("error in downloading event schema. Load error %+v", err)
-		return nil // Schema not found, continue without it
-	}
-
-	if len(b) == 0 {
-		return nil // Schema not found, continue without it
-	}
-
-	if yaml.Unmarshal(b, &c.Tables.Timeseries.Schema) != nil {
 		return err
 	}
 

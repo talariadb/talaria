@@ -17,8 +17,10 @@ func (s *Server) Ingest(ctx context.Context, request *talaria.IngestRequest) (*t
 	defer s.handlePanic()
 
 	// Read blocks and repartition by the specified key
-	cfg := s.conf().Tables.Timeseries
-	blocks, err := block.FromRequestBy(request, cfg.HashBy, cfg.Schema, s.computed...)
+	timeSeriesConf := s.conf().Tables.Timeseries
+	timeSeriesTable := s.tables[timeSeriesConf.Name]
+	schema, _ := timeSeriesTable.Schema()
+	blocks, err := block.FromRequestBy(request, timeSeriesConf.HashBy, &schema, s.computed...)
 	if err != nil {
 		return nil, errors.Internal("unable to read the block", err)
 	}

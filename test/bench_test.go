@@ -11,7 +11,6 @@ import (
 	"time"
 
 	"github.com/grab/talaria/internal/config"
-	"github.com/grab/talaria/internal/encoding/typeof"
 	"github.com/grab/talaria/internal/monitor"
 	"github.com/grab/talaria/internal/presto"
 	"github.com/grab/talaria/internal/scripting"
@@ -65,9 +64,7 @@ func BenchmarkQuery(b *testing.B) {
 		TTL:    cfg().Tables.Timeseries.TTL,
 		HashBy: cfg().Tables.Timeseries.HashBy,
 		SortBy: cfg().Tables.Timeseries.SortBy,
-		Schema: func() *typeof.Schema {
-			return cfg().Tables.Timeseries.Schema
-		},
+		Schema: "",
 	}
 	store := disk.Open(cfg().Storage.Directory, timeseriesCfg.Name, monitor)
 

@@ -4,8 +4,12 @@
 package timeseries
 
 import (
+	"context"
 	"fmt"
+	"github.com/grab/async"
+	"gopkg.in/yaml.v2"
 	"io"
+	"net/url"
 	"sync/atomic"
 	"time"
 
@@ -18,6 +22,7 @@ import (
 	"github.com/grab/talaria/internal/presto"
 	"github.com/grab/talaria/internal/storage"
 	"github.com/grab/talaria/internal/table"
+	"github.com/kelindar/loader"
 )
 
 const (
@@ -41,9 +46,10 @@ type Table struct {
 	ttl          time.Duration         // The default TTL
 	store        storage.Storage       // The storage to use
 	schema       atomic.Value          // The latest schema
+	loader       *loader.Loader		   // The loader used to watch schema updates
 	cluster      Membership            // The membership list to use
 	monitor      monitor.Monitor       // The monitoring client
-	staticSchema func() *typeof.Schema // The static schema of the timeseries table
+	staticSchema *typeof.Schema 	   // The static schema of the timeseries table
 }
 
 // Config represents the configuration of the storage
@@ -52,12 +58,13 @@ type Config struct {
 	TTL    int64
 	HashBy string
 	SortBy string
-	Schema func() *typeof.Schema
+	Schema string
 }
 
 // New creates a new table implementation.
 func New(cluster Membership, monitor monitor.Monitor, store storage.Storage, cfg Config) *Table {
-	return &Table{
+	// Load Schema From Config
+	t := &Table{
 		name:         cfg.Name,
 		store:        store,
 		keyColumn:    cfg.HashBy,
@@ -65,8 +72,12 @@ func New(cluster Membership, monitor monitor.Monitor, store storage.Storage, cfg
 		ttl:          time.Duration(cfg.TTL) * time.Second,
 		cluster:      cluster,
 		monitor:      monitor,
-		staticSchema: cfg.Schema,
+		loader: 	  loader.New(),
 	}
+
+	t.staticSchema = t.loadStaticSchema(cfg.Schema)
+
+	return t
 }
 
 // Close implements io.Closer interface.
@@ -82,6 +93,46 @@ func (t *Table) Name() string {
 // Schema retrieves the metadata for the table
 func (t *Table) Schema() (typeof.Schema, error) {
 	return t.getSchema(), nil
+}
+
+func (t *Table) loadStaticSchema(uriOrSchema string) *typeof.Schema {
+	staticSchema := &typeof.Schema{}
+
+	if _, err := url.Parse(uriOrSchema); err != nil {
+		if err := yaml.Unmarshal([]byte(uriOrSchema), &staticSchema); err != nil { // Assumes it is inline schema schema
+			return nil
+		}
+
+		return staticSchema
+	}
+
+	// Start watching on the URL
+	updates := t.loader.Watch(context.Background(), uriOrSchema, 5*time.Minute)
+	u := <-updates
+	// Check if given uri has error
+	if u.Err != nil {
+		return nil
+	}
+	// Check if given schema is malformed
+	err := yaml.Unmarshal(u.Data, &staticSchema)
+	if err != nil {
+		return nil
+	}
+
+	// Read the updates asynchronously
+	async.Invoke(context.Background(), func(ctx context.Context) (interface{}, error) {
+		for u := range updates {
+			if u.Err == nil {
+				staticSchema := &typeof.Schema{}
+				if err := yaml.Unmarshal(u.Data, staticSchema); err != nil {
+					t.staticSchema = staticSchema
+				}
+			}
+		}
+		return nil, nil
+	})
+
+	return staticSchema
 }
 
 // GetSplits retrieves the splits
@@ -215,7 +266,7 @@ func (t *Table) Append(block block.Block) error {
 
 // getSchema gets the latest ingested schema.
 func (t *Table) getSchema() typeof.Schema {
-	if s := t.staticSchema(); s != nil && len(*s) > 0 {
+	if s := t.staticSchema; s != nil && len(*s) > 0 {
 		return *s
 	}
 
