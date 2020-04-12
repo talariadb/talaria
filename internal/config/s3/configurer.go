@@ -59,9 +59,8 @@ func (s *Configurer) Configure(c *config.Config) error {
 		return nil // Unable to load, skip
 	}
 
-	if yaml.Unmarshal(b, c) != nil {
+	if err := yaml.Unmarshal(b, c); err != nil {
 		return err
 	}
-
 	return nil
 }
