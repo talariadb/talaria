@@ -88,12 +88,12 @@ func (c *clientImpl) Count(contextTag, key string, amount int64, tags ...string)
 
 // Debug writes out a warning message into the output logger.
 func (c *clientImpl) Debug(f string, v ...interface{}) {
-	c.logger.Debugf(f, v)
+	c.logger.Debugf(f, v...)
 }
 
 // Info writes out a warning message into the output logger.
 func (c *clientImpl) Info(f string, v ...interface{}) {
-	c.logger.Infof(f, v)
+	c.logger.Infof(f, v...)
 }
 
 // Warning writes out a warning message into the output logger.

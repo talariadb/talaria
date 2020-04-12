@@ -8,8 +8,8 @@ import (
 )
 
 func TestWriter(t *testing.T) {
-	c, err := New("./testdata")
-	defer func() { _ = os.RemoveAll("./testdata") }()
+	c, err := New("testdata")
+	defer func() { _ = os.RemoveAll("testdata") }()
 
 	// TODO: Impove test
 	assert.NotNil(t, c)

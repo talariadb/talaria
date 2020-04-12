@@ -1,6 +1,7 @@
 package writer
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/grab/talaria/internal/column"
@@ -28,7 +29,7 @@ func New(config *config.Compaction, monitor monitor.Monitor, store storage.Stora
 	}
 
 	nameFunc := func(row map[string]interface{}) (s string, e error) {
-		return "", nil
+		return fmt.Sprintf("%s.orc", time.Now().UTC().Format("2006-01-02-15-04-05")), nil
 	}
 
 	// Configure the flush interval, default to 30s

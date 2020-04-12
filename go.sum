@@ -150,6 +150,8 @@ github.com/kelindar/binary v1.0.8 h1:YwahocVzCFY+1+WF5JUqwrYZpe4vcNo7JhWKZA/uBQs
 github.com/kelindar/binary v1.0.8/go.mod h1:4zDwr5pQvY3i4xrRd1kC7pcuWvSU/Jbh/v2D0tZUPfE=
 github.com/kelindar/loader v0.0.6 h1:ZhrLyYD0+PryxWi08NK4pt3K3v0vqGyjoxb14w09SGg=
 github.com/kelindar/loader v0.0.6/go.mod h1:R/T32WH/c+33Msftyw9PSX/HRpSLDXdlIms1LhnVbP4=
+github.com/kelindar/loader v0.0.7 h1:9ECo4pVAPPVtyXA0XUcmjAd9cfFmv45FAvnHBEAhZLY=
+github.com/kelindar/loader v0.0.7/go.mod h1:R/T32WH/c+33Msftyw9PSX/HRpSLDXdlIms1LhnVbP4=
 github.com/kelindar/lua v0.0.5 h1:VqJQGl74ub7fiZcSygHV4aZw/IbFKXA6vzk4pEUu4mk=
 github.com/kelindar/lua v0.0.5/go.mod h1:zCY2muj80Y5c3odwn4Ql6kjzpk3GAq9V4JwuVGLOsdA=
 github.com/kisielk/errcheck v1.2.0/go.mod h1:/BMXB+zMLi60iA8Vv6Ksmxu/1UDYcXs4uQLJ+jE2L00=
