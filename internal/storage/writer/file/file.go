@@ -6,8 +6,8 @@ import (
 	"path"
 	"path/filepath"
 
-	"github.com/grab/talaria/internal/encoding/key"
-	"github.com/grab/talaria/internal/monitor/errors"
+	"github.com/kelindar/talaria/internal/encoding/key"
+	"github.com/kelindar/talaria/internal/monitor/errors"
 )
 
 // Writer represents a local file writer.

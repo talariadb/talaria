@@ -9,7 +9,7 @@ import (
 	"io"
 
 	"github.com/crphang/orc"
-	"github.com/grab/talaria/internal/encoding/typeof"
+	"github.com/kelindar/talaria/internal/encoding/typeof"
 )
 
 var errNoWriter = errors.New("unable to create an orc writer")

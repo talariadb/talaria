@@ -7,7 +7,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/grab/talaria/internal/encoding/typeof"
+	"github.com/kelindar/talaria/internal/encoding/typeof"
 )
 
 // Config global

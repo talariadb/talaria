@@ -1,4 +1,4 @@
-module github.com/grab/talaria
+module github.com/kelindar/talaria
 
 go 1.14
 

@@ -6,9 +6,9 @@ package block
 import (
 	"fmt"
 
-	"github.com/grab/talaria/internal/column"
-	"github.com/grab/talaria/internal/encoding/typeof"
-	talaria "github.com/grab/talaria/proto"
+	"github.com/kelindar/talaria/internal/column"
+	"github.com/kelindar/talaria/internal/encoding/typeof"
+	talaria "github.com/kelindar/talaria/proto"
 )
 
 // FromRequestBy creates a block from a talaria protobuf-encoded request. It

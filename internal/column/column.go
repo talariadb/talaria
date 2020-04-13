@@ -7,8 +7,8 @@ import (
 	"fmt"
 	"regexp"
 
-	"github.com/grab/talaria/internal/encoding/typeof"
-	"github.com/grab/talaria/internal/presto"
+	"github.com/kelindar/talaria/internal/encoding/typeof"
+	"github.com/kelindar/talaria/internal/presto"
 )
 
 var expr = regexp.MustCompile(`^[a-zA-Z_][a-zA-Z0-9_]*$`)

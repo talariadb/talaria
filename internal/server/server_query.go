@@ -7,10 +7,10 @@ import (
 	"context"
 	"time"
 
-	"github.com/grab/talaria/internal/monitor/errors"
-	"github.com/grab/talaria/internal/presto"
-	"github.com/grab/talaria/internal/table"
-	talaria "github.com/grab/talaria/proto"
+	"github.com/kelindar/talaria/internal/monitor/errors"
+	"github.com/kelindar/talaria/internal/presto"
+	"github.com/kelindar/talaria/internal/table"
+	talaria "github.com/kelindar/talaria/proto"
 )
 
 // Describe returns the list of schema/table combinations and the metadata

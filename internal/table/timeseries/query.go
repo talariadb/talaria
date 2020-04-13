@@ -10,8 +10,8 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/grab/talaria/internal/encoding/key"
-	"github.com/grab/talaria/internal/presto"
+	"github.com/kelindar/talaria/internal/encoding/key"
+	"github.com/kelindar/talaria/internal/presto"
 	"github.com/kelindar/binary"
 )
 

@@ -6,10 +6,10 @@ package server
 import (
 	"context"
 
-	"github.com/grab/talaria/internal/encoding/block"
-	"github.com/grab/talaria/internal/monitor/errors"
-	"github.com/grab/talaria/internal/table"
-	talaria "github.com/grab/talaria/proto"
+	"github.com/kelindar/talaria/internal/encoding/block"
+	"github.com/kelindar/talaria/internal/monitor/errors"
+	"github.com/kelindar/talaria/internal/table"
+	talaria "github.com/kelindar/talaria/proto"
 )
 
 // Ingest implements ingress.IngressServer

@@ -7,8 +7,8 @@ import (
 	"context"
 	"sync"
 
-	"github.com/grab/talaria/internal/config"
-	"github.com/grab/talaria/internal/monitor/logging"
+	"github.com/kelindar/talaria/internal/config"
+	"github.com/kelindar/talaria/internal/monitor/logging"
 	"github.com/kelindar/loader"
 	"gopkg.in/yaml.v2"
 )

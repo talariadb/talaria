@@ -10,7 +10,7 @@ import (
 	"testing"
 
 	awssqs "github.com/aws/aws-sdk-go/service/sqs"
-	"github.com/grab/talaria/internal/monitor"
+	"github.com/kelindar/talaria/internal/monitor"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )

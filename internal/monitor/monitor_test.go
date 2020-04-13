@@ -7,9 +7,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grab/talaria/internal/monitor"
-	"github.com/grab/talaria/internal/monitor/logging"
-	"github.com/grab/talaria/internal/monitor/statsd"
+	"github.com/kelindar/talaria/internal/monitor"
+	"github.com/kelindar/talaria/internal/monitor/logging"
+	"github.com/kelindar/talaria/internal/monitor/statsd"
 	"github.com/stretchr/testify/assert"
 )
 

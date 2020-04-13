@@ -9,9 +9,9 @@ import (
 	"fmt"
 
 	"github.com/golang/snappy"
-	"github.com/grab/talaria/internal/column"
-	"github.com/grab/talaria/internal/encoding/typeof"
-	"github.com/grab/talaria/internal/presto"
+	"github.com/kelindar/talaria/internal/column"
+	"github.com/kelindar/talaria/internal/encoding/typeof"
+	"github.com/kelindar/talaria/internal/presto"
 	"github.com/kelindar/binary"
 	"github.com/kelindar/binary/nocopy"
 )

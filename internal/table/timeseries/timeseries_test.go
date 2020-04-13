@@ -4,13 +4,13 @@
 package timeseries_test
 
 import (
-	"github.com/grab/talaria/internal/config"
-	"github.com/grab/talaria/internal/encoding/block"
-	"github.com/grab/talaria/internal/encoding/typeof"
-	monitor2 "github.com/grab/talaria/internal/monitor"
-	"github.com/grab/talaria/internal/presto"
-	"github.com/grab/talaria/internal/storage/disk"
-	"github.com/grab/talaria/internal/table/timeseries"
+	"github.com/kelindar/talaria/internal/config"
+	"github.com/kelindar/talaria/internal/encoding/block"
+	"github.com/kelindar/talaria/internal/encoding/typeof"
+	monitor2 "github.com/kelindar/talaria/internal/monitor"
+	"github.com/kelindar/talaria/internal/presto"
+	"github.com/kelindar/talaria/internal/storage/disk"
+	"github.com/kelindar/talaria/internal/table/timeseries"
 	"github.com/stretchr/testify/assert"
 	"io/ioutil"
 	"os"

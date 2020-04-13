@@ -16,10 +16,10 @@ import (
 
 	"github.com/dgraph-io/badger/v2"
 	"github.com/grab/async"
-	"github.com/grab/talaria/internal/encoding/key"
-	"github.com/grab/talaria/internal/monitor"
-	"github.com/grab/talaria/internal/monitor/errors"
-	"github.com/grab/talaria/internal/storage"
+	"github.com/kelindar/talaria/internal/encoding/key"
+	"github.com/kelindar/talaria/internal/monitor"
+	"github.com/kelindar/talaria/internal/monitor/errors"
+	"github.com/kelindar/talaria/internal/storage"
 )
 
 const (

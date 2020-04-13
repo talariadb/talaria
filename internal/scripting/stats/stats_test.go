@@ -8,7 +8,7 @@ import (
 	"github.com/kelindar/lua"
 	"testing"
 
-	"github.com/grab/talaria/internal/monitor"
+	"github.com/kelindar/talaria/internal/monitor"
 	"github.com/stretchr/testify/assert"
 )
 

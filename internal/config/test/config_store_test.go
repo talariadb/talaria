@@ -9,9 +9,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grab/talaria/internal/config"
-	"github.com/grab/talaria/internal/config/env"
-	"github.com/grab/talaria/internal/config/static"
+	"github.com/kelindar/talaria/internal/config"
+	"github.com/kelindar/talaria/internal/config/env"
+	"github.com/kelindar/talaria/internal/config/static"
 	"github.com/stretchr/testify/assert"
 )
 

@@ -13,10 +13,10 @@ import (
 	"time"
 
 	awssqs "github.com/aws/aws-sdk-go/service/sqs"
-	"github.com/grab/talaria/internal/config"
-	"github.com/grab/talaria/internal/ingress/s3sqs/sqs"
-	"github.com/grab/talaria/internal/monitor"
-	"github.com/grab/talaria/internal/monitor/errors"
+	"github.com/kelindar/talaria/internal/config"
+	"github.com/kelindar/talaria/internal/ingress/s3sqs/sqs"
+	"github.com/kelindar/talaria/internal/monitor"
+	"github.com/kelindar/talaria/internal/monitor/errors"
 	"github.com/kelindar/loader"
 	"golang.org/x/sync/semaphore"
 )

@@ -7,10 +7,10 @@ import (
 	"encoding/json"
 	"testing"
 
-	"github.com/grab/talaria/internal/column"
-	"github.com/grab/talaria/internal/encoding/typeof"
-	"github.com/grab/talaria/internal/scripting"
-	talaria "github.com/grab/talaria/proto"
+	"github.com/kelindar/talaria/internal/column"
+	"github.com/kelindar/talaria/internal/encoding/typeof"
+	"github.com/kelindar/talaria/internal/scripting"
+	talaria "github.com/kelindar/talaria/proto"
 	"github.com/stretchr/testify/assert"
 )
 

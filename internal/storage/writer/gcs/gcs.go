@@ -6,8 +6,8 @@ import (
 	"strings"
 
 	"cloud.google.com/go/storage"
-	"github.com/grab/talaria/internal/encoding/key"
-	"github.com/grab/talaria/internal/monitor/errors"
+	"github.com/kelindar/talaria/internal/encoding/key"
+	"github.com/kelindar/talaria/internal/monitor/errors"
 )
 
 // Writer represents a writer for Google Cloud Storage.
