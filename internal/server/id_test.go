@@ -6,7 +6,7 @@ package server
 import (
 	"testing"
 
-	"github.com/grab/talaria/internal/presto"
+	"github.com/kelindar/talaria/internal/presto"
 	"github.com/stretchr/testify/assert"
 )
 

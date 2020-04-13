@@ -10,14 +10,14 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grab/talaria/internal/config"
-	"github.com/grab/talaria/internal/monitor"
-	"github.com/grab/talaria/internal/presto"
-	"github.com/grab/talaria/internal/scripting"
-	"github.com/grab/talaria/internal/server"
-	"github.com/grab/talaria/internal/storage/disk"
-	"github.com/grab/talaria/internal/table/timeseries"
-	talaria "github.com/grab/talaria/proto"
+	"github.com/kelindar/talaria/internal/config"
+	"github.com/kelindar/talaria/internal/monitor"
+	"github.com/kelindar/talaria/internal/presto"
+	"github.com/kelindar/talaria/internal/scripting"
+	"github.com/kelindar/talaria/internal/server"
+	"github.com/kelindar/talaria/internal/storage/disk"
+	"github.com/kelindar/talaria/internal/table/timeseries"
+	talaria "github.com/kelindar/talaria/proto"
 )
 
 const testFile2 = "./test1-zlib.orc"

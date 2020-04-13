@@ -10,10 +10,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grab/talaria/internal/config"
-	"github.com/grab/talaria/internal/monitor"
-	"github.com/grab/talaria/internal/monitor/logging"
-	"github.com/grab/talaria/internal/presto"
+	"github.com/kelindar/talaria/internal/config"
+	"github.com/kelindar/talaria/internal/monitor"
+	"github.com/kelindar/talaria/internal/monitor/logging"
+	"github.com/kelindar/talaria/internal/presto"
 	"github.com/stretchr/testify/assert"
 )
 

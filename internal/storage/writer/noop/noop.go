@@ -1,7 +1,7 @@
 package noop
 
 import (
-	"github.com/grab/talaria/internal/encoding/key"
+	"github.com/kelindar/talaria/internal/encoding/key"
 )
 
 // Writer represents a writer that does not do anything.

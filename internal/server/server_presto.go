@@ -6,8 +6,8 @@ package server
 import (
 	"time"
 
-	"github.com/grab/talaria/internal/monitor/errors"
-	"github.com/grab/talaria/internal/presto"
+	"github.com/kelindar/talaria/internal/monitor/errors"
+	"github.com/kelindar/talaria/internal/presto"
 )
 
 // PrestoGetIndexSplits returns a batch of index splits for the given batch of keys.

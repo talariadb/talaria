@@ -7,14 +7,14 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/grab/talaria/internal/column"
-	"github.com/grab/talaria/internal/config"
-	"github.com/grab/talaria/internal/encoding/block"
-	"github.com/grab/talaria/internal/encoding/typeof"
-	"github.com/grab/talaria/internal/monitor"
-	"github.com/grab/talaria/internal/monitor/logging"
-	"github.com/grab/talaria/internal/storage/disk"
-	"github.com/grab/talaria/internal/table/timeseries"
+	"github.com/kelindar/talaria/internal/column"
+	"github.com/kelindar/talaria/internal/config"
+	"github.com/kelindar/talaria/internal/encoding/block"
+	"github.com/kelindar/talaria/internal/encoding/typeof"
+	"github.com/kelindar/talaria/internal/monitor"
+	"github.com/kelindar/talaria/internal/monitor/logging"
+	"github.com/kelindar/talaria/internal/storage/disk"
+	"github.com/kelindar/talaria/internal/table/timeseries"
 )
 
 // Membership represents a contract required for recovering cluster information.

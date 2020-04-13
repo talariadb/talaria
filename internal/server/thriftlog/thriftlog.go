@@ -6,9 +6,9 @@ package thriftlog
 import (
 	"encoding/json"
 
-	"github.com/grab/talaria/internal/encoding/typeof"
-	"github.com/grab/talaria/internal/monitor"
-	"github.com/grab/talaria/internal/presto"
+	"github.com/kelindar/talaria/internal/encoding/typeof"
+	"github.com/kelindar/talaria/internal/monitor"
+	"github.com/kelindar/talaria/internal/presto"
 )
 
 // Service represents a PrestoThriftService with logging of request/response.

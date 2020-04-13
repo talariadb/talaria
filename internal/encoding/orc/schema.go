@@ -8,7 +8,7 @@ import (
 	"strings"
 
 	"github.com/crphang/orc"
-	"github.com/grab/talaria/internal/encoding/typeof"
+	"github.com/kelindar/talaria/internal/encoding/typeof"
 )
 
 var expr = regexp.MustCompile(`^[a-zA-Z_][a-zA-Z0-9_]*$`)

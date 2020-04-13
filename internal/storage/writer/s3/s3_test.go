@@ -6,7 +6,7 @@ package s3
 import (
 	"testing"
 
-	"github.com/grab/talaria/internal/encoding/key"
+	"github.com/kelindar/talaria/internal/encoding/key"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )

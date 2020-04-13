@@ -11,7 +11,7 @@ import (
 	"time"
 	"unsafe"
 
-	pb "github.com/grab/talaria/proto"
+	pb "github.com/kelindar/talaria/proto"
 )
 
 type encoder struct {

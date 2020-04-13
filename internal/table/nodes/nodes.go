@@ -9,10 +9,10 @@ import (
 	"time"
 
 	"github.com/emitter-io/address"
-	"github.com/grab/talaria/internal/column"
-	"github.com/grab/talaria/internal/encoding/typeof"
-	"github.com/grab/talaria/internal/presto"
-	"github.com/grab/talaria/internal/table"
+	"github.com/kelindar/talaria/internal/column"
+	"github.com/kelindar/talaria/internal/encoding/typeof"
+	"github.com/kelindar/talaria/internal/presto"
+	"github.com/kelindar/talaria/internal/table"
 	"github.com/hako/durafmt"
 )
 

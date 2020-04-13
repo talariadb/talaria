@@ -9,7 +9,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/sqs"
-	"github.com/grab/talaria/internal/config"
+	"github.com/kelindar/talaria/internal/config"
 )
 
 const (

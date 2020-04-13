@@ -11,11 +11,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grab/talaria/internal/encoding/block"
-	"github.com/grab/talaria/internal/encoding/key"
-	"github.com/grab/talaria/internal/encoding/typeof"
-	"github.com/grab/talaria/internal/monitor"
-	"github.com/grab/talaria/internal/storage/disk"
+	"github.com/kelindar/talaria/internal/encoding/block"
+	"github.com/kelindar/talaria/internal/encoding/key"
+	"github.com/kelindar/talaria/internal/encoding/typeof"
+	"github.com/kelindar/talaria/internal/monitor"
+	"github.com/kelindar/talaria/internal/storage/disk"
 	"github.com/stretchr/testify/assert"
 )
 

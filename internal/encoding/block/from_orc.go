@@ -9,9 +9,9 @@ import (
 	"strconv"
 
 	orctype "github.com/crphang/orc"
-	"github.com/grab/talaria/internal/column"
-	"github.com/grab/talaria/internal/encoding/orc"
-	"github.com/grab/talaria/internal/encoding/typeof"
+	"github.com/kelindar/talaria/internal/column"
+	"github.com/kelindar/talaria/internal/encoding/orc"
+	"github.com/kelindar/talaria/internal/encoding/typeof"
 )
 
 // FromOrcBy decodes a set of blocks from an orc file and repartitions

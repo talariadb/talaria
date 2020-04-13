@@ -6,8 +6,8 @@ package column
 import (
 	"fmt"
 
-	"github.com/grab/talaria/internal/encoding/typeof"
-	"github.com/grab/talaria/internal/presto"
+	"github.com/kelindar/talaria/internal/encoding/typeof"
+	"github.com/kelindar/talaria/internal/presto"
 )
 
 const maxNullCount = 25000

@@ -9,8 +9,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grab/talaria/internal/encoding/typeof"
-	"github.com/grab/talaria/internal/presto"
+	"github.com/kelindar/talaria/internal/encoding/typeof"
+	"github.com/kelindar/talaria/internal/presto"
 	"github.com/stretchr/testify/assert"
 )
 

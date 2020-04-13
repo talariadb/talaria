@@ -3,10 +3,10 @@ package writer
 import (
 	"testing"
 
-	"github.com/grab/talaria/internal/config"
-	"github.com/grab/talaria/internal/monitor"
-	"github.com/grab/talaria/internal/scripting"
-	"github.com/grab/talaria/internal/storage/disk"
+	"github.com/kelindar/talaria/internal/config"
+	"github.com/kelindar/talaria/internal/monitor"
+	"github.com/kelindar/talaria/internal/scripting"
+	"github.com/kelindar/talaria/internal/storage/disk"
 	"github.com/stretchr/testify/assert"
 )
 

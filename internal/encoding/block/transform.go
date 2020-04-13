@@ -8,8 +8,8 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/grab/talaria/internal/column"
-	"github.com/grab/talaria/internal/encoding/typeof"
+	"github.com/kelindar/talaria/internal/column"
+	"github.com/kelindar/talaria/internal/encoding/typeof"
 )
 
 // Row represents a single row on which we can perform transformations

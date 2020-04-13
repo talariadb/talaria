@@ -7,9 +7,9 @@ import (
 	"errors"
 	"io"
 
-	"github.com/grab/talaria/internal/encoding/block"
-	"github.com/grab/talaria/internal/encoding/typeof"
-	"github.com/grab/talaria/internal/presto"
+	"github.com/kelindar/talaria/internal/encoding/block"
+	"github.com/kelindar/talaria/internal/encoding/typeof"
+	"github.com/kelindar/talaria/internal/presto"
 )
 
 // Errors commonly occuring in tables
