@@ -1,4 +1,4 @@
-FROM alpine:latest AS builder
+FROM golang:latest AS builder
 LABEL maintainer="roman.atachiants@grab.com"
 
 # add modules
