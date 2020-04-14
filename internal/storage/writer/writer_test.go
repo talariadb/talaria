@@ -20,3 +20,16 @@ func TestNew(t *testing.T) {
 
 	assert.NotNil(t, compact)
 }
+
+func TestHash(t *testing.T) {
+
+	row := map[string]interface{}{
+		"a": 1654,
+		"b": "hello world",
+		"c": true,
+	}
+
+	h1 := hashOfRow(row)
+	h2 := hashOfRow(row)
+	assert.Equal(t, h1, h2)
+}

@@ -2,6 +2,8 @@ package writer
 
 import (
 	"fmt"
+	"hash/maphash"
+	"sort"
 	"time"
 
 	"github.com/kelindar/talaria/internal/column"
@@ -21,6 +23,8 @@ import (
 	"github.com/kelindar/talaria/internal/storage/writer/s3"
 )
 
+var seed = maphash.MakeSeed()
+
 // New creates a compact store using the configuration provided
 func New(config *config.Compaction, monitor monitor.Monitor, store storage.Storage, loader *script.Loader) *compact.Storage {
 	writer, err := newWriter(config)
@@ -29,7 +33,10 @@ func New(config *config.Compaction, monitor monitor.Monitor, store storage.Stora
 	}
 
 	nameFunc := func(row map[string]interface{}) (s string, e error) {
-		return fmt.Sprintf("%s.orc", time.Now().UTC().Format("2006-01-02-15-04-05")), nil
+		return fmt.Sprintf("%s-%x.orc",
+			time.Now().UTC().Format("year=2006/month=01/day=02/15-04-05"),
+			hashOfRow(row),
+		), nil
 	}
 
 	// Configure the flush interval, default to 30s
@@ -68,4 +75,23 @@ func newWriter(config *config.Compaction) (flush.Writer, error) {
 	default:
 		return noop.New(), errors.New("compact: writer was not configured")
 	}
+}
+
+// hashOfRow computes a hash of the row, for the default filename
+func hashOfRow(row map[string]interface{}) uint64 {
+
+	// Sort the map keys
+	str := make([]string, 0, len(row))
+	for k, v := range row {
+		str = append(str, fmt.Sprintf("%s=%v", k, v))
+	}
+	sort.Strings(str)
+
+	// Compute the hash
+	var hash maphash.Hash
+	hash.SetSeed(seed)
+	for _, v := range str {
+		hash.WriteString(v)
+	}
+	return hash.Sum64()
 }
