@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	pb "github.com/grab/talaria/proto"
+	pb "github.com/kelindar/talaria/proto"
 	"github.com/stretchr/testify/assert"
 )
 

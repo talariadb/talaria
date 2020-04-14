@@ -9,7 +9,7 @@ import (
 	"fmt"
 	"time"
 
-	pb "github.com/grab/talaria/proto"
+	pb "github.com/kelindar/talaria/proto"
 	"github.com/myteksi/hystrix-go/hystrix"
 	"google.golang.org/grpc"
 )

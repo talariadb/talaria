@@ -10,14 +10,14 @@ import (
 	"time"
 
 	eorc "github.com/crphang/orc"
-	"github.com/grab/talaria/internal/column"
-	"github.com/grab/talaria/internal/encoding/block"
-	"github.com/grab/talaria/internal/encoding/key"
-	"github.com/grab/talaria/internal/encoding/orc"
-	"github.com/grab/talaria/internal/encoding/typeof"
-	"github.com/grab/talaria/internal/monitor"
-	"github.com/grab/talaria/internal/monitor/errors"
-	"github.com/grab/talaria/internal/storage"
+	"github.com/kelindar/talaria/internal/column"
+	"github.com/kelindar/talaria/internal/encoding/block"
+	"github.com/kelindar/talaria/internal/encoding/key"
+	"github.com/kelindar/talaria/internal/encoding/orc"
+	"github.com/kelindar/talaria/internal/encoding/typeof"
+	"github.com/kelindar/talaria/internal/monitor"
+	"github.com/kelindar/talaria/internal/monitor/errors"
+	"github.com/kelindar/talaria/internal/storage"
 )
 
 // Assert contract compliance

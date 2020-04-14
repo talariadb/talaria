@@ -6,7 +6,7 @@ package static
 import (
 	"reflect"
 
-	"github.com/grab/talaria/internal/config"
+	"github.com/kelindar/talaria/internal/config"
 )
 
 // Configurer

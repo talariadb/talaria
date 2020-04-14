@@ -10,7 +10,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/grab/talaria/internal/config"
+	"github.com/kelindar/talaria/internal/config"
 )
 
 var errConvert = errors.New("Unable to convert")

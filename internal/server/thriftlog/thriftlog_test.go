@@ -6,8 +6,8 @@ package thriftlog
 import (
 	"testing"
 
-	"github.com/grab/talaria/internal/monitor"
-	"github.com/grab/talaria/internal/presto"
+	"github.com/kelindar/talaria/internal/monitor"
+	"github.com/kelindar/talaria/internal/presto"
 	"github.com/stretchr/testify/assert"
 )
 

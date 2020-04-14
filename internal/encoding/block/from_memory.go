@@ -4,7 +4,7 @@
 package block
 
 import (
-	"github.com/grab/talaria/internal/column"
+	"github.com/kelindar/talaria/internal/column"
 	"github.com/kelindar/binary"
 	"github.com/kelindar/binary/nocopy"
 )

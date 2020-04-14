@@ -11,8 +11,8 @@ import (
 	"time"
 	"unsafe"
 
-	"github.com/grab/talaria/internal/encoding/typeof"
-	talaria "github.com/grab/talaria/proto"
+	"github.com/kelindar/talaria/internal/encoding/typeof"
+	talaria "github.com/kelindar/talaria/proto"
 )
 
 // Append adds a value to the block.

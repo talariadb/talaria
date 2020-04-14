@@ -12,8 +12,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grab/talaria/internal/encoding/key"
-	"github.com/grab/talaria/internal/monitor"
+	"github.com/kelindar/talaria/internal/encoding/key"
+	"github.com/kelindar/talaria/internal/monitor"
 	"github.com/stretchr/testify/assert"
 )
 

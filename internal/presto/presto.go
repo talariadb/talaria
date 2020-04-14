@@ -9,8 +9,8 @@ import (
 	"net"
 	"net/rpc"
 
-	"github.com/grab/talaria/internal/encoding/typeof"
-	talaria "github.com/grab/talaria/proto"
+	"github.com/kelindar/talaria/internal/encoding/typeof"
+	talaria "github.com/kelindar/talaria/proto"
 	"github.com/samuel/go-thrift/thrift"
 )
 

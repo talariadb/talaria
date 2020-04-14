@@ -6,7 +6,7 @@ package static
 import (
 	"testing"
 
-	"github.com/grab/talaria/internal/config"
+	"github.com/kelindar/talaria/internal/config"
 	"github.com/stretchr/testify/assert"
 )
 

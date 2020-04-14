@@ -6,8 +6,8 @@ package column
 import (
 	"testing"
 
-	"github.com/grab/talaria/internal/encoding/typeof"
-	"github.com/grab/talaria/internal/scripting"
+	"github.com/kelindar/talaria/internal/encoding/typeof"
+	"github.com/kelindar/talaria/internal/scripting"
 	"github.com/stretchr/testify/assert"
 )
 

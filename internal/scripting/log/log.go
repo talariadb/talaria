@@ -4,8 +4,8 @@
 package log
 
 import (
-	"github.com/grab/talaria/internal/monitor"
-	"github.com/grab/talaria/internal/monitor/errors"
+	"github.com/kelindar/talaria/internal/monitor"
+	"github.com/kelindar/talaria/internal/monitor/errors"
 	"github.com/kelindar/lua"
 )
 

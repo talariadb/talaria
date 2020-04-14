@@ -9,8 +9,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/grab/talaria/internal/monitor/errors"
-	"github.com/grab/talaria/internal/monitor/logging"
+	"github.com/kelindar/talaria/internal/monitor/errors"
+	"github.com/kelindar/talaria/internal/monitor/logging"
 )
 
 // StatsdClient ...

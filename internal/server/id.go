@@ -4,7 +4,7 @@
 package server
 
 import (
-	"github.com/grab/talaria/internal/presto"
+	"github.com/kelindar/talaria/internal/presto"
 	"github.com/kelindar/binary"
 )
 

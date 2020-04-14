@@ -7,9 +7,9 @@ import (
 	"io"
 	"time"
 
-	"github.com/grab/talaria/internal/encoding/block"
-	"github.com/grab/talaria/internal/encoding/key"
-	"github.com/grab/talaria/internal/encoding/typeof"
+	"github.com/kelindar/talaria/internal/encoding/block"
+	"github.com/kelindar/talaria/internal/encoding/key"
+	"github.com/kelindar/talaria/internal/encoding/typeof"
 	"github.com/hashicorp/go-multierror"
 )
 

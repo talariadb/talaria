@@ -6,7 +6,7 @@ package nodes_test
 import (
 	"testing"
 
-	"github.com/grab/talaria/internal/table/nodes"
+	"github.com/kelindar/talaria/internal/table/nodes"
 	"github.com/stretchr/testify/assert"
 )
 
