@@ -1,4 +1,4 @@
-FROM golang:alpine AS builder
+FROM debian:latest AS builder
 LABEL maintainer="roman.atachiants@gmail.com"
 
 # copy the binary
