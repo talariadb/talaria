@@ -100,6 +100,7 @@ func (t *Table) loadStaticSchema(uriOrSchema string) *typeof.Schema {
 
 	if _, err := url.Parse(uriOrSchema); err != nil {
 		if err := yaml.Unmarshal([]byte(uriOrSchema), &staticSchema); err != nil { // Assumes it is inline schema schema
+			t.monitor.Warning(errors.Internal("error parsing static schema", err))
 			return nil
 		}
 
@@ -111,6 +112,7 @@ func (t *Table) loadStaticSchema(uriOrSchema string) *typeof.Schema {
 	u := <-updates
 	// Check if given uri has error
 	if u.Err != nil {
+		t.monitor.Warning(errors.Internal("error reading from uri", u.Err))
 		return nil
 	}
 	// Check if given schema is malformed
@@ -122,12 +124,17 @@ func (t *Table) loadStaticSchema(uriOrSchema string) *typeof.Schema {
 	// Read the updates asynchronously
 	async.Invoke(context.Background(), func(ctx context.Context) (interface{}, error) {
 		for u := range updates {
-			if u.Err == nil {
-				staticSchema := &typeof.Schema{}
-				if err := yaml.Unmarshal(u.Data, staticSchema); err != nil {
-					t.staticSchema = staticSchema
-				}
+			if u.Err != nil {
+				t.monitor.Warning(errors.Internal("error reading from uri", u.Err))
+				continue
 			}
+			staticSchema := &typeof.Schema{}
+			err := yaml.Unmarshal(u.Data, staticSchema)
+			if err != nil {
+				t.monitor.Warning(errors.Internal("error parsing static schema", err))
+				continue
+			}
+			t.staticSchema = staticSchema
 		}
 		return nil, nil
 	})
