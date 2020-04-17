@@ -11,6 +11,7 @@ import (
 	"strings"
 
 	"github.com/kelindar/talaria/internal/config"
+	"gopkg.in/yaml.v2"
 )
 
 var errConvert = errors.New("Unable to convert")
@@ -21,6 +22,7 @@ type Configurer struct {
 	key string
 }
 
+// New creates a new configurer
 func New(key string) *Configurer {
 	return &Configurer{
 		key: key,
@@ -29,6 +31,10 @@ func New(key string) *Configurer {
 
 // Configure fetches the values of the env variable for file name and sets that in the config
 func (e *Configurer) Configure(c *config.Config) error {
+	if v, ok := os.LookupEnv(e.key); ok {
+		return yaml.Unmarshal([]byte(v), c)
+	}
+
 	populate(c, e.key)
 	return nil
 }
@@ -45,8 +51,14 @@ func populate(config interface{}, pre string) {
 	reflectType := reflect.TypeOf(config).Elem()
 	reflectValue := reflect.ValueOf(config).Elem()
 
+	println(pre, reflectType.String())
+
 	for i := 0; i < reflectType.NumField(); i++ {
 		field := reflectValue.Field(i)
+		name, tagged := reflectType.Field(i).Tag.Lookup("env")
+		if !tagged {
+			continue // Ignore untagged
+		}
 
 		switch field.Kind() {
 		case reflect.Interface, reflect.Struct:
@@ -62,30 +74,27 @@ func populate(config interface{}, pre string) {
 
 				// If pointer to interface or struct, the recursively populate the struct/interface
 				case reflect.Interface, reflect.Struct:
-					v := field.Elem().Addr()
-					tag, ok := reflectType.Field(i).Tag.Lookup("env")
-					if ok {
-						populate(v.Interface(), pre+"_"+tag)
-					}
+					populate(field.Elem().Addr().Interface(), pre+"_"+name)
+
 				// If pointer to primitive types then directly fill the values
 				case reflect.Int64, reflect.Int32, reflect.Int, reflect.Float32, reflect.Float64, reflect.Bool, reflect.String, reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
-					tag, ok := reflectType.Field(i).Tag.Lookup("env")
+					val, ok := os.LookupEnv(pre + "_" + name)
 					if ok {
-						val, ok := os.LookupEnv(pre + "_" + tag)
-						if ok {
-							vlc, err := convert(field.Elem(), val)
-							if err == nil {
-								field.Elem().Set(reflect.ValueOf(vlc))
-							}
+						vlc, err := convert(field.Elem(), val)
+						if err == nil {
+							field.Elem().Set(reflect.ValueOf(vlc))
 						}
 					}
 
 				}
+			} else if searchPrefix(pre + "_" + name) {
+				v := reflect.New(field.Type().Elem())
+				populate(v.Interface(), pre+"_"+name)
+				field.Set(v)
 			}
 
 		case reflect.Array, reflect.Slice, reflect.Map, reflect.Chan, reflect.Func:
-			// not supported
-			return
+			return // not supported
 
 		//For primitive types end the recursion and directly fill the values
 		default:
@@ -101,6 +110,16 @@ func populate(config interface{}, pre string) {
 			}
 		}
 	}
+}
+
+// searchPrefix searches the environment for a prefix
+func searchPrefix(prefix string) bool {
+	for _, v := range os.Environ() {
+		if strings.HasPrefix(v, prefix) {
+			return true
+		}
+	}
+	return false
 }
 
 // convert a string to a particular type.
