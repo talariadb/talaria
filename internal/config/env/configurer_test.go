@@ -12,8 +12,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-// BenchmarkEnv-12    	  100000	     15758 ns/op	    2896 B/op	      98 allocs/op
-func BenchmarkEnv(b *testing.B) {
+func TestConfigure(t *testing.T) {
 
 	c := &config.Config{}
 	st := static.New()
@@ -41,25 +40,75 @@ func BenchmarkEnv(b *testing.B) {
 	// statsd
 	os.Setenv("TALARIA_CONF_STATSD_HOST", "ab.com")
 
-	b.ReportAllocs()
-	for i := 0; i < b.N; i++ {
-		// populate the config with the env variable
-		e := New("TALARIA_CONF")
-		e.Configure(c)
+	// populate the config with the env variable
+	e := New("TALARIA_CONF")
+	e.Configure(c)
 
-		// asserts
-		assert.Equal(b, c.URI, "ab.com")
+	// asserts
+	assert.Equal(t, c.URI, "ab.com")
+	assert.Equal(t, c.Readers.Presto.Port, int32(123))
+	assert.Equal(t, c.Writers.GRPC.Port, int32(100))
+	assert.Equal(t, c.Writers.S3SQS.VisibilityTimeout, int64(10))
+	assert.Equal(t, c.Storage.Directory, "dir")
+	assert.Equal(t, c.Tables.Timeseries.Name, "timeseries_eventlog")
+	assert.Equal(t, c.Tables.Timeseries.TTL, int64(10))
+	assert.Equal(t, c.Statsd.Host, "ab.com")
+}
 
-		assert.Equal(b, c.Readers.Presto.Port, int32(123))
+func TestConfigure_Full(t *testing.T) {
 
-		assert.Equal(b, c.Writers.GRPC.Port, int32(100))
-		assert.Equal(b, *c.Writers.S3SQS.VisibilityTimeout, int64(10))
+	c := &config.Config{}
+	st := static.New()
+	st.Configure(c)
 
-		assert.Equal(b, c.Storage.Directory, "dir")
+	// Write the full config
+	os.Setenv("TALARIA_CONF", `mode: staging
+env: staging
+domain: "ab.com"
+readers:
+  presto:
+    schema: grab_x
+    port: 8042
+writers:
+  grpc:
+    port: 8085
+storage:
+  dir: "data/"
+  compact: 
+    interval: 300
+    file:
+      dir: "output/"
+tables:
+  timeseries:
+    name: eventlog
+    ttl: 3600
+    hashBy: event
+    sortBy: time
+    schema: |
+      event: string
+      time: int64
+      data: json
+  log:
+    name: logs
+  nodes:
+    name: nodes
+statsd:
+  host: "127.0.0.1"
+  port: 8126
+computed:
+  - name: "data"
+    type: json
+    func: |
+      local json = require("json")
+      function main(input)
+        return json.encode(input)
+      end
+`)
 
-		assert.Equal(b, c.Tables.Timeseries.Name, "timeseries_eventlog")
-		assert.Equal(b, c.Tables.Timeseries.TTL, int64(10))
+	// populate the config with the env variable
+	e := New("TALARIA_CONF")
+	e.Configure(c)
 
-		assert.Equal(b, c.Statsd.Host, "ab.com")
-	}
+	// asserts
+	assert.Equal(t, c.Storage.Compact.File.Directory, "output/")
 }
