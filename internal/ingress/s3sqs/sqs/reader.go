@@ -36,8 +36,8 @@ func NewReader(c *config.S3SQS, region string) (*Reader, error) {
 
 	consumer := sqs.New(sess)
 	visibilityTimeout := defaultVisibilityTimeout
-	if c.VisibilityTimeout != nil {
-		visibilityTimeout = time.Second * time.Duration(*c.VisibilityTimeout)
+	if c.VisibilityTimeout > 0 {
+		visibilityTimeout = time.Second * time.Duration(c.VisibilityTimeout)
 	}
 
 	return &Reader{
