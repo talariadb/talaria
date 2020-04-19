@@ -14,7 +14,7 @@ class Client:
         encoder = Encoder()
         encoded = encoder.encode(batch)
 
-        ingest_req = talaria_pb2.IngestRequest('batch'=encoded)
+        ingest_req = talaria_pb2.IngestRequest(batch=encoded)
         response = self.ingress(ingest_req)
 
         return response
