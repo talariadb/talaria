@@ -131,7 +131,7 @@ limit 1000
 
 ## Quick Start
 
-TODO
+The easiest way to get started would be using the provided [helm chart](https://github.com/crphang/charts/tree/master/talaria).
 
 ## Contributing
 
