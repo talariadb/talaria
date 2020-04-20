@@ -5,6 +5,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"os/signal"
 	"syscall"
@@ -18,7 +19,7 @@ import (
 	"github.com/kelindar/talaria/internal/monitor"
 	"github.com/kelindar/talaria/internal/monitor/logging"
 	"github.com/kelindar/talaria/internal/monitor/statsd"
-	"github.com/kelindar/talaria/internal/scripting"
+	script "github.com/kelindar/talaria/internal/scripting"
 	mlog "github.com/kelindar/talaria/internal/scripting/log"
 	mstats "github.com/kelindar/talaria/internal/scripting/stats"
 	"github.com/kelindar/talaria/internal/server"
@@ -71,6 +72,7 @@ func main() {
 		store = writer.New(conf.Storage.Compact, monitor, store, loader)
 	}
 
+	fmt.Printf("schema to load is %+v\n", conf.Tables.Timeseries.Schema)
 	// Start the new server
 	server := server.New(configure, monitor, loader,
 		timeseries.New(gossip, monitor, store, timeseries.Config{
