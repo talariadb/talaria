@@ -2,7 +2,7 @@ FROM debian:latest AS builder
 LABEL maintainer="roman.atachiants@gmail.com"
 
 # add ca certificated for http secured connection
-RUN apk --no-cache add ca-certificates gcompat libc6-compat
+RUN apt ca-certificates && rm -rf /var/cache/apk/*
 
 # copy the binary
 WORKDIR /root/  
