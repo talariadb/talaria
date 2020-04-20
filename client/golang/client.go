@@ -98,11 +98,46 @@ func (c *Client) IngestBatch(ctx context.Context, batch []Event) error {
 		},
 	}
 
-	err := hystrix.Do(commandName, func() error {
+	return hystrix.Do(commandName, func() error {
 		_, err := c.ingress.Ingest(ctx, req)
 		return err
 	}, nil)
-	return err
+}
+
+// IngestURL sends a request to Talaria to ingest a file from a specific URL.
+func (c *Client) IngestURL(ctx context.Context, url string) error {
+	return hystrix.Do(commandName, func() error {
+		_, err := c.ingress.Ingest(ctx, &pb.IngestRequest{
+			Data: &pb.IngestRequest_Url{
+				Url: url,
+			},
+		})
+		return err
+	}, nil)
+}
+
+// IngestCSV sends a set of comma-separated file to Talaria to ingest.
+func (c *Client) IngestCSV(ctx context.Context, data []byte) error {
+	return hystrix.Do(commandName, func() error {
+		_, err := c.ingress.Ingest(ctx, &pb.IngestRequest{
+			Data: &pb.IngestRequest_Csv{
+				Csv: data,
+			},
+		})
+		return err
+	}, nil)
+}
+
+// IngestORC sends an ORC-encoded file to Talaria to ingest.
+func (c *Client) IngestORC(ctx context.Context, data []byte) error {
+	return hystrix.Do(commandName, func() error {
+		_, err := c.ingress.Ingest(ctx, &pb.IngestRequest{
+			Data: &pb.IngestRequest_Orc{
+				Orc: data,
+			},
+		})
+		return err
+	}, nil)
 }
 
 // Close connection
