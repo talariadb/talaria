@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"strconv"
+	"strings"
 
 	orctype "github.com/crphang/orc"
 	"github.com/kelindar/talaria/internal/column"
@@ -80,7 +81,6 @@ func FromOrcBy(payload []byte, partitionBy string, filter *typeof.Schema, comput
 
 		// Append computed columns and fill nulls for the row
 		size += row.Transform(computed, filter).AppendTo(columns)
-
 		size += columns.FillNulls()
 		return false
 	}, cols...)
@@ -98,7 +98,7 @@ func FromOrcBy(payload []byte, partitionBy string, filter *typeof.Schema, comput
 // Find the partition index
 func findString(columns []string, partitionBy string) (int, bool) {
 	for i, k := range columns {
-		if k == partitionBy {
+		if strings.EqualFold(k, partitionBy) {
 			return i, true
 		}
 	}

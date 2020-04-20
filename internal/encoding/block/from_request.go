@@ -19,6 +19,10 @@ func FromRequestBy(request *talaria.IngestRequest, partitionBy string, filter *t
 		return FromBatchBy(data.Batch, partitionBy, filter, computed...)
 	case *talaria.IngestRequest_Orc:
 		return FromOrcBy(data.Orc, partitionBy, filter, computed...)
+	case *talaria.IngestRequest_Csv:
+		return FromCSVBy(data.Csv, partitionBy, filter, computed...)
+	case *talaria.IngestRequest_Url:
+		return FromURLBy(data.Url, partitionBy, filter, computed...)
 	case nil: // The field is not set.
 		return nil, nil
 	default:

@@ -13,8 +13,10 @@ service Ingress {
 // IngestRequest represents an ingestion request.
 message IngestRequest {
   oneof data {
-    Batch batch = 1; // Batch of events
-    bytes orc   = 2; // An orc file
+    Batch  batch = 1; // Batch of events
+    bytes  orc   = 2; // An orc file
+    bytes  csv   = 3; // CSV (comma-separated) file
+    string url   = 4; // A url pointing to a file (.orc, .csv)
   }
 }
 
