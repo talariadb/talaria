@@ -1,8 +1,8 @@
 FROM debian:latest AS builder
 LABEL maintainer="roman.atachiants@gmail.com"
 
-# add ca certificated for http secured connection
-RUN apt ca-certificates && rm -rf /var/cache/apk/*
+# add ca certificates for http secured connection
+RUN apt-get update && apt ca-certificates && rm -rf /var/cache/apk/*
 
 # copy the binary
 WORKDIR /root/  
