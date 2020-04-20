@@ -4,6 +4,7 @@
 package block
 
 import (
+	"path/filepath"
 	"testing"
 
 	"github.com/kelindar/talaria/internal/encoding/typeof"
@@ -11,8 +12,10 @@ import (
 )
 
 func TestFromURL(t *testing.T) {
+	p, err := filepath.Abs("../../../test/test4.csv")
+	assert.NoError(t, err)
 
-	b, err := FromURLBy("file:///../../../test/test4.csv", "raisedCurrency", &typeof.Schema{
+	b, err := FromURLBy("file:///"+p, "raisedCurrency", &typeof.Schema{
 		"raisedCurrency": typeof.String,
 		"raisedAmt":      typeof.Float64,
 	})
