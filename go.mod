@@ -29,7 +29,7 @@ require (
 	github.com/hashicorp/golang-lru v0.5.3 // indirect
 	github.com/hashicorp/memberlist v0.1.5
 	github.com/kelindar/binary v1.0.8
-	github.com/kelindar/loader v0.0.8
+	github.com/kelindar/loader v0.0.9
 	github.com/kelindar/lua v0.0.5
 	github.com/miekg/dns v1.1.22 // indirect
 	github.com/myteksi/hystrix-go v1.1.3
