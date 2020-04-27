@@ -3,7 +3,8 @@ module github.com/kelindar/talaria
 go 1.14
 
 require (
-	cloud.google.com/go v0.38.0
+	cloud.google.com/go/bigquery v1.4.0
+	cloud.google.com/go/storage v1.6.0
 	github.com/Azure/azure-sdk-for-go v41.2.0+incompatible
 	github.com/Azure/go-autorest/autorest v0.10.0 // indirect
 	github.com/Azure/go-autorest/autorest/to v0.3.0 // indirect
@@ -18,7 +19,6 @@ require (
 	github.com/emitter-io/address v1.0.0
 	github.com/gogo/protobuf v1.3.1
 	github.com/golang/snappy v0.0.1
-	github.com/google/btree v1.0.0 // indirect
 	github.com/gopherjs/gopherjs v0.0.0-20200209183636-89e6cbcd0b6d // indirect
 	github.com/grab/async v0.0.5
 	github.com/hako/durafmt v0.0.0-20191009132224-3f39dc1ed9f4
@@ -39,12 +39,8 @@ require (
 	github.com/stretchr/objx v0.2.0 // indirect
 	github.com/stretchr/testify v1.4.0
 	github.com/twmb/murmur3 v1.1.3
-	go.opencensus.io v0.22.3 // indirect
-	golang.org/x/net v0.0.0-20191206103017-1ddd1de85cb0
+	golang.org/x/net v0.0.0-20200222125558-5a598a2470a0
 	golang.org/x/sync v0.0.0-20190911185100-cd5d95a43a6e
-	golang.org/x/sys v0.0.0-20191204072324-ce4227a45e2e // indirect
-	google.golang.org/api v0.21.0 // indirect
-	google.golang.org/genproto v0.0.0-20191205163323-51378566eb59 // indirect
-	google.golang.org/grpc v1.27.0
+	google.golang.org/grpc v1.27.1
 	gopkg.in/yaml.v2 v2.2.4
 )
