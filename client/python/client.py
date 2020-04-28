@@ -7,7 +7,7 @@ from encoder import Encoder
 class Client:
 
     def __init__(self, address):
-        self.channel = grpc.insecure_channel(address) # TODO: Enable Options
+        self.channel = grpc.insecure_channel(address)  # TODO: Enable Options
         self.ingress = talaria_pb2_grpc.IngestStub(self.channel)
 
     def ingest_batch(self, batch):
