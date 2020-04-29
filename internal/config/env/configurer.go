@@ -51,8 +51,6 @@ func populate(config interface{}, pre string) {
 	reflectType := reflect.TypeOf(config).Elem()
 	reflectValue := reflect.ValueOf(config).Elem()
 
-	println(pre, reflectType.String())
-
 	for i := 0; i < reflectType.NumField(); i++ {
 		field := reflectValue.Field(i)
 		name, tagged := reflectType.Field(i).Tag.Lookup("env")

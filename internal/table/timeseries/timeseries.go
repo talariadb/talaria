@@ -13,6 +13,7 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/kelindar/loader"
 	"github.com/kelindar/talaria/internal/column"
 	"github.com/kelindar/talaria/internal/encoding/block"
 	"github.com/kelindar/talaria/internal/encoding/key"
@@ -22,7 +23,6 @@ import (
 	"github.com/kelindar/talaria/internal/presto"
 	"github.com/kelindar/talaria/internal/storage"
 	"github.com/kelindar/talaria/internal/table"
-	"github.com/kelindar/loader"
 )
 
 const (
@@ -40,16 +40,16 @@ type Membership interface {
 
 // Table represents a timeseries table.
 type Table struct {
-	name         string                // The name of the table
-	keyColumn    string                // The name of the key column
-	timeColumn   string                // The name of the time column
-	ttl          time.Duration         // The default TTL
-	store        storage.Storage       // The storage to use
-	schema       atomic.Value          // The latest schema
-	loader       *loader.Loader		   // The loader used to watch schema updates
-	cluster      Membership            // The membership list to use
-	monitor      monitor.Monitor       // The monitoring client
-	staticSchema *typeof.Schema 	   // The static schema of the timeseries table
+	name         string          // The name of the table
+	keyColumn    string          // The name of the key column
+	timeColumn   string          // The name of the time column
+	ttl          time.Duration   // The default TTL
+	store        storage.Storage // The storage to use
+	schema       atomic.Value    // The latest schema
+	loader       *loader.Loader  // The loader used to watch schema updates
+	cluster      Membership      // The membership list to use
+	monitor      monitor.Monitor // The monitoring client
+	staticSchema *typeof.Schema  // The static schema of the timeseries table
 }
 
 // Config represents the configuration of the storage
@@ -65,14 +65,14 @@ type Config struct {
 func New(cluster Membership, monitor monitor.Monitor, store storage.Storage, cfg Config) *Table {
 	// Load Schema From Config
 	t := &Table{
-		name:         cfg.Name,
-		store:        store,
-		keyColumn:    cfg.HashBy,
-		timeColumn:   cfg.SortBy,
-		ttl:          time.Duration(cfg.TTL) * time.Second,
-		cluster:      cluster,
-		monitor:      monitor,
-		loader: 	  loader.New(),
+		name:       cfg.Name,
+		store:      store,
+		keyColumn:  cfg.HashBy,
+		timeColumn: cfg.SortBy,
+		ttl:        time.Duration(cfg.TTL) * time.Second,
+		cluster:    cluster,
+		monitor:    monitor,
+		loader:     loader.New(),
 	}
 
 	t.staticSchema = t.loadStaticSchema(cfg.Schema)
@@ -110,11 +110,13 @@ func (t *Table) loadStaticSchema(uriOrSchema string) *typeof.Schema {
 	// Start watching on the URL
 	updates := t.loader.Watch(context.Background(), uriOrSchema, 5*time.Minute)
 	u := <-updates
+
 	// Check if given uri has error
 	if u.Err != nil {
 		t.monitor.Warning(errors.Internal("error reading from uri", u.Err))
 		return nil
 	}
+
 	// Check if given schema is malformed
 	err := yaml.Unmarshal(u.Data, &staticSchema)
 	if err != nil {

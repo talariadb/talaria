@@ -29,7 +29,7 @@ require (
 	github.com/hashicorp/golang-lru v0.5.3 // indirect
 	github.com/hashicorp/memberlist v0.1.5
 	github.com/kelindar/binary v1.0.8
-	github.com/kelindar/loader v0.0.9
+	github.com/kelindar/loader v0.0.10
 	github.com/kelindar/lua v0.0.5
 	github.com/miekg/dns v1.1.22 // indirect
 	github.com/myteksi/hystrix-go v1.1.3
@@ -39,7 +39,6 @@ require (
 	github.com/stretchr/objx v0.2.0 // indirect
 	github.com/stretchr/testify v1.4.0
 	github.com/twmb/murmur3 v1.1.3
-	golang.org/x/net v0.0.0-20200222125558-5a598a2470a0
 	golang.org/x/sync v0.0.0-20190911185100-cd5d95a43a6e
 	google.golang.org/grpc v1.27.1
 	gopkg.in/yaml.v2 v2.2.4
