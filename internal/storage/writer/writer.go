@@ -55,6 +55,7 @@ func New(config *config.Compaction, monitor monitor.Monitor, store storage.Stora
 		}
 	}
 
+	monitor.Info("setting up compaction writer %T to run every %.0fs...", writer, interval.Seconds())
 	flusher := flush.New(monitor, writer, nameFunc)
 	return compact.New(store, flusher, flusher, monitor, interval)
 }

@@ -63,7 +63,7 @@ func New(conf config.Func, monitor monitor.Monitor, loader *script.Loader, table
 			continue
 		}
 
-		monitor.Info("loaded computed column %v of type %v", c.Name, c.Type)
+		monitor.Info("server: loaded computed column %v of type %v", c.Name, c.Type)
 		server.computed = append(server.computed, col)
 	}
 
@@ -73,6 +73,7 @@ func New(conf config.Func, monitor monitor.Monitor, loader *script.Loader, table
 
 	// Build a registry of tables
 	for _, table := range tables {
+		monitor.Info("server: registered %s table...", table.Name())
 		server.tables[table.Name()] = table
 	}
 	return server
@@ -101,6 +102,7 @@ func (s *Server) Listen(ctx context.Context, prestoPort, grpcPort int32) error {
 
 	// Asynchronously start the gRPC listener
 	async.Invoke(ctx, func(ctx context.Context) (interface{}, error) {
+		s.monitor.Info("server: listening for grpc on :%d...", grpcPort)
 		lis, err := net.Listen("tcp", fmt.Sprintf(":%d", grpcPort))
 		defer lis.Close()
 		if err != nil {
@@ -114,6 +116,7 @@ func (s *Server) Listen(ctx context.Context, prestoPort, grpcPort int32) error {
 	})
 
 	// Serve presto and block
+	s.monitor.Info("server: listening for thrift on :%d...", grpcPort)
 	return presto.Serve(ctx, int32(prestoPort), &thriftlog.Service{
 		Service: s,
 		Monitor: s.monitor,
@@ -133,7 +136,7 @@ func (s *Server) pollFromSQS(conf *config.Config) (err error) {
 	}
 
 	// Start ingesting
-	s.monitor.Info("starting ingestion from S3/SQS")
+	s.monitor.Info("server: starting ingestion from S3/SQS...")
 	s.s3sqs.Range(func(v []byte) bool {
 		if _, err := s.Ingest(context.Background(), &talaria.IngestRequest{
 			Data: &talaria.IngestRequest_Orc{Orc: v},

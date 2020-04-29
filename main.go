@@ -66,6 +66,7 @@ func main() {
 	})
 
 	// Create a storage, if compact store is enabled then use the compact store
+	monitor.Info("server: opening data directory %s...", conf.Storage.Directory)
 	store := storage.Storage(disk.Open(conf.Storage.Directory, conf.Tables.Timeseries.Name, monitor))
 	if conf.Storage.Compact != nil {
 		store = writer.New(conf.Storage.Compact, monitor, store, loader)
@@ -92,10 +93,11 @@ func main() {
 	})
 
 	// Join the cluster
+	monitor.Info("server: joining cluster on %s...", conf.Domain)
 	gossip.JoinHostname(conf.Domain)
 
 	// Start listen
-	monitor.Info("starting talaria server")
+	monitor.Info("server: starting...")
 	monitor.Count1(logTag, "start")
 	if err := server.Listen(ctx, conf.Readers.Presto.Port, conf.Writers.GRPC.Port); err != nil {
 		panic(err)

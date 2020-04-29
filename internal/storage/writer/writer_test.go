@@ -5,6 +5,8 @@ import (
 
 	"github.com/kelindar/talaria/internal/config"
 	"github.com/kelindar/talaria/internal/monitor"
+	"github.com/kelindar/talaria/internal/monitor/logging"
+	"github.com/kelindar/talaria/internal/monitor/statsd"
 	"github.com/kelindar/talaria/internal/scripting"
 	"github.com/kelindar/talaria/internal/storage/disk"
 	"github.com/stretchr/testify/assert"
@@ -13,7 +15,7 @@ import (
 func TestNew(t *testing.T) {
 	cfg := &config.Compaction{}
 	compact := New(cfg,
-		monitor.NewNoop(),
+		monitor.New(logging.NewStandard(), statsd.NewNoop(), "x", "x"),
 		disk.New(monitor.NewNoop()),
 		script.NewLoader(nil),
 	)

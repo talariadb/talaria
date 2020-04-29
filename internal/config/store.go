@@ -4,12 +4,12 @@
 package config
 
 import (
+	"context"
 	"log"
 	"sync/atomic"
 	"time"
 
 	"github.com/grab/async"
-	"golang.org/x/net/context"
 )
 
 // store stores the config and reloads it after 5 seconds
