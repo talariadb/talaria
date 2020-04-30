@@ -66,7 +66,7 @@ func (r row) AppendTo(cols column.Columns) (size int) {
 }
 
 // Transform runs the computed columns and overwrites/appends them to the set.
-func (r row) Transform(computed []*column.Computed, filter *typeof.Schema) row {
+func (r row) Transform(computed []column.Computed, filter *typeof.Schema) row {
 
 	// Create a new output row and copy the column values from the input
 	schema := make(typeof.Schema, len(r.schema))

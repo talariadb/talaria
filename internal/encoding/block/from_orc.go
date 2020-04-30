@@ -17,7 +17,7 @@ import (
 
 // FromOrcBy decodes a set of blocks from an orc file and repartitions
 // it by the specified partition key.
-func FromOrcBy(payload []byte, partitionBy string, filter *typeof.Schema, computed ...*column.Computed) ([]Block, error) {
+func FromOrcBy(payload []byte, partitionBy string, filter *typeof.Schema, computed ...column.Computed) ([]Block, error) {
 	const max = 10000000 // 10MB
 
 	iter, err := orc.FromBuffer(payload)

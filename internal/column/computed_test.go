@@ -12,15 +12,45 @@ import (
 )
 
 func Test_Computed(t *testing.T) {
-
 	c := newDataColumn(t)
 	out, err := c.Value(map[string]interface{}{
 		"a": 1,
 		"b": "hello",
 	})
+
 	assert.NotNil(t, out)
 	assert.NoError(t, err)
 	assert.Equal(t, `{"a":1,"b":"hello"}`, out)
+}
+
+func Test_Identifier(t *testing.T) {
+	c, err := NewComputed("id", typeof.String, "make://identifier", nil)
+	assert.NoError(t, err)
+	out, err := c.Value(map[string]interface{}{
+		"a": 1,
+		"b": "hello",
+	})
+
+	assert.Equal(t, "id", c.Name())
+	assert.Equal(t, typeof.String, c.Type())
+	assert.NotNil(t, out)
+	assert.NoError(t, err)
+	assert.Equal(t, 32, len(out.(string)))
+}
+
+func Test_Timestamp(t *testing.T) {
+	c, err := NewComputed("ts", typeof.String, "make://timestamp", nil)
+	assert.NoError(t, err)
+	out, err := c.Value(map[string]interface{}{
+		"a": 1,
+		"b": "hello",
+	})
+
+	assert.Equal(t, "ts", c.Name())
+	assert.Equal(t, typeof.Int64, c.Type())
+	assert.NotNil(t, out)
+	assert.NoError(t, err)
+	assert.NotZero(t, out.(int64))
 }
 
 func Test_Download(t *testing.T) {
@@ -30,13 +60,13 @@ func Test_Download(t *testing.T) {
 		"a": 1,
 		"b": "hello",
 	})
+
 	assert.NotNil(t, out)
 	assert.NoError(t, err)
 	assert.Equal(t, `{"a":1,"b":"hello"}`, out)
-
 }
 
-func newDataColumn(t *testing.T) *Computed {
+func newDataColumn(t *testing.T) Computed {
 	l := script.NewLoader(nil)
 	c, err := NewComputed("data", typeof.JSON, `
 	local json = require("json")

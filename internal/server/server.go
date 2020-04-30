@@ -86,7 +86,7 @@ type Server struct {
 	monitor  monitor.Monitor        // The monitoring layer
 	cancel   context.CancelFunc     // The cancellation function for the server
 	tables   map[string]table.Table // The list of tables
-	computed []*column.Computed     // The set of computed columns
+	computed []column.Computed     // The set of computed columns
 	s3sqs    *s3sqs.Ingress         // The S3SQS Ingress (optional)
 }
 

@@ -13,7 +13,7 @@ import (
 )
 
 // FromCSVBy creates a block from a comma-separated file. It repartitions the batch by a given partition key at the same time.
-func FromCSVBy(input []byte, partitionBy string, filter *typeof.Schema, computed ...*column.Computed) ([]Block, error) {
+func FromCSVBy(input []byte, partitionBy string, filter *typeof.Schema, computed ...column.Computed) ([]Block, error) {
 	const max = 10000000 // 10MB
 
 	rdr := csv.NewReader(bytes.NewReader(input))
