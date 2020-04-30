@@ -15,8 +15,8 @@ import (
 )
 
 // FromURLBy creates a block from a remote url which should be loaded. It repartitions the batch by a given partition key at the same time.
-func FromURLBy(uri string, partitionBy string, filter *typeof.Schema, computed ...*column.Computed) ([]Block, error) {
-	var handler func([]byte, string, *typeof.Schema, ...*column.Computed) ([]Block, error)
+func FromURLBy(uri string, partitionBy string, filter *typeof.Schema, computed ...column.Computed) ([]Block, error) {
+	var handler func([]byte, string, *typeof.Schema, ...column.Computed) ([]Block, error)
 	switch strings.ToLower(filepath.Ext(uri)) {
 	case ".orc":
 		handler = FromOrcBy

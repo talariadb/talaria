@@ -13,7 +13,7 @@ import (
 
 // FromRequestBy creates a block from a talaria protobuf-encoded request. It
 // repartitions the batch by a given partition key at the same time.
-func FromRequestBy(request *talaria.IngestRequest, partitionBy string, filter *typeof.Schema, computed ...*column.Computed) ([]Block, error) {
+func FromRequestBy(request *talaria.IngestRequest, partitionBy string, filter *typeof.Schema, computed ...column.Computed) ([]Block, error) {
 	switch data := request.GetData().(type) {
 	case *talaria.IngestRequest_Batch:
 		return FromBatchBy(data.Batch, partitionBy, filter, computed...)

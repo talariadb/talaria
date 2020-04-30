@@ -73,10 +73,10 @@ func TestBlock_FromBatch(t *testing.T) {
 
 	// The schema to filter
 	filter := typeof.Schema{
-		"a":    typeof.Int64,
-		"b":    typeof.Timestamp,
-		"d":    typeof.String,
-		"data": typeof.JSON,
+		"a":       typeof.Int64,
+		"b":       typeof.Timestamp,
+		"d":       typeof.String,
+		"data":    typeof.JSON,
 		"another": typeof.Int64,
 	}
 
@@ -107,7 +107,7 @@ func TestBlock_FromBatch(t *testing.T) {
 	assert.Contains(t, string(row["data"].(json.RawMessage)), "event3")
 }
 
-func newDataColumn() (*column.Computed, error) {
+func newDataColumn() (column.Computed, error) {
 	return column.NewComputed("data", typeof.JSON, `
 	local json = require("json")
 
