@@ -1,4 +1,4 @@
-import talaria_pb2
+from . import talaria_pb2
 
 class Encoder:
 

@@ -1,4 +1,8 @@
 vendor/
+client/python/TalariaClient.egg-info/
+client/python/build/
+client/python/dist/
+__pycache__/
 data
 .idea/
 testdata-*

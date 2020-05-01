@@ -1,7 +1,7 @@
 import unittest
 
-import talaria_pb2
-from encoder import Encoder
+from . import talaria_pb2
+from .encoder import Encoder
 
 class TestEncoder(unittest.TestCase):
 

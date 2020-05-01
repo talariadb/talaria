@@ -1,7 +1,7 @@
 import grpc
-import talaria_pb2_grpc
-import talaria_pb2
-from encoder import Encoder
+from . import talaria_pb2_grpc
+from . import talaria_pb2
+from .encoder import Encoder
 
 # TODO: Add Type Hints
 class Client:
