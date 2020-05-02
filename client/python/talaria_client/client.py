@@ -15,6 +15,16 @@ class Client:
         encoded = encoder.encode(batch)
 
         ingest_req = talaria_pb2.IngestRequest(batch=encoded)
-        response = self.ingress.Ingest(ingest_req)
+        return self.ingress.Ingest(ingest_req)
 
-        return response
+    def ingest_url(self, url):
+        ingest_req = talaria_pb2.IngestRequest(url=url)
+        return self.ingress.Ingest(ingest_req)
+
+    def ingest_csv(self, csv_data):
+        ingest_req = talaria_pb2.IngestRequest(csv=csv_data)
+        return self.ingress.Ingest(ingest_req)
+
+    def ingest_orc(self, orc_data):
+        ingest_req = talaria_pb2.IngestRequest(orc=orc_data)
+        return self.ingress.Ingest(ingest_req)
