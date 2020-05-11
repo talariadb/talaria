@@ -47,7 +47,7 @@ func Test_Timestamp(t *testing.T) {
 	})
 
 	assert.Equal(t, "ts", c.Name())
-	assert.Equal(t, typeof.Int64, c.Type())
+	assert.Equal(t, typeof.Timestamp, c.Type())
 	assert.NotNil(t, out)
 	assert.NoError(t, err)
 	assert.NotZero(t, out.(int64))
