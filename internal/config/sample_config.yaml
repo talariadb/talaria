@@ -27,3 +27,5 @@ tables:
 statsd:
   host: "statsd-host"
   port: 8126
+k8s: # Optional value to set in k8s env. when server need liveliness & readiness probes
+  probePort: 8082

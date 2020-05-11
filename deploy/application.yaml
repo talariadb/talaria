@@ -50,6 +50,24 @@ spec:
           volumeMounts:
             - mountPath: /data
               name: data
+          readinessProbe:
+            httpGet:
+              scheme: HTTP
+              path: /healthz
+              httpHeaders:
+                - name: x-talaria-readiness
+                  value: healthz
+              port: 8082
+            initialDelaySeconds: 3
+          livenessProbe:
+            httpGet:
+              scheme: HTTP
+              path: /healthz
+              httpHeaders:
+                - name: x-envoy-livenessprobe
+                  value: healthz
+              port: 8082
+            initialDelaySeconds: 10
           resources:
             requests:
               memory: "1000Mi"
