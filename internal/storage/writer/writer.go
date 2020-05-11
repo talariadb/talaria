@@ -50,6 +50,11 @@ func New(config *config.Compaction, monitor monitor.Monitor, store storage.Stora
 		if fn, err := column.NewComputed("nameFunc", typeof.String, config.NameFunc, loader); err == nil {
 			nameFunc = func(row map[string]interface{}) (s string, e error) {
 				val, err := fn.Value(row)
+				if err != nil {
+					monitor.Error(err)
+					return "", err
+				}
+
 				return val.(string), err
 			}
 		}
