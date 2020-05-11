@@ -463,7 +463,7 @@ func (b *PrestoThriftVarchar) Range(from int, until int, f func(int, interface{}
 			continue
 		}
 
-		v := b.Bytes[offset:offset+size]
+		v := b.Bytes[offset : offset+size]
 		f(i, binaryToString(&v))
 		offset += size
 	}
@@ -584,7 +584,7 @@ func (b *PrestoThriftTimestamp) Append(v interface{}) int {
 	switch v := v.(type) {
 	case int64:
 		b.Nulls = append(b.Nulls, false)
-		b.Timestamps = append(b.Timestamps, v)
+		b.Timestamps = append(b.Timestamps, v*1000) // Always assume it's in UNIX seconds
 	case time.Time:
 		b.Nulls = append(b.Nulls, false)
 		b.Timestamps = append(b.Timestamps, v.UnixNano()/1000000) // UNIX time in millisecond
@@ -677,7 +677,7 @@ func (b *PrestoThriftTimestamp) Range(from int, until int, f func(int, interface
 			continue
 		}
 
-		f(i, b.Timestamps[i])
+		f(i, time.Unix(b.Timestamps[i]/1000, 0))
 	}
 }
 
@@ -805,7 +805,7 @@ func (b *PrestoThriftJson) Range(from int, until int, f func(int, interface{})) 
 			continue
 		}
 
-		v := b.Bytes[offset:offset+size]
+		v := b.Bytes[offset : offset+size]
 		f(i, binaryToString(&v))
 		offset += size
 	}
@@ -815,4 +815,3 @@ func (b *PrestoThriftJson) Range(from int, until int, f func(int, interface{})) 
 func binaryToString(b *[]byte) string {
 	return *(*string)(unsafe.Pointer(b))
 }
-
