@@ -590,7 +590,7 @@ func (b *PrestoThriftTimestamp) Append(v interface{}) int {
 		b.Timestamps = append(b.Timestamps, v.UnixNano()/1000000) // UNIX time in millisecond
 	default:
 		b.Nulls = append(b.Nulls, false)
-		b.Timestamps = append(b.Timestamps, reflect.ValueOf(v).Int())
+		b.Timestamps = append(b.Timestamps, reflect.ValueOf(v).Int()*1000)
 	}
 
 	return size
