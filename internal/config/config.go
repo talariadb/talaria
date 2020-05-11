@@ -26,7 +26,7 @@ type Config struct {
 }
 
 type K8s struct {
-	ProbePort int32 `json:"probePort" yaml:"probePort" env:"PROBEPORT"` // The port which is used for liveliness and readiness probes (default: 8080)
+	ProbePort int32 `json:"probePort" yaml:"probePort" env:"PROBEPORT"` // The port which is used for liveness and readiness probes (default: 8080)
 }
 
 // Tables is a list of table configs

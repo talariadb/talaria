@@ -100,7 +100,7 @@ func main() {
 	monitor.Info("server: joining cluster on %s...", conf.Domain)
 	gossip.JoinHostname(conf.Domain)
 
-	// run HTTP server for readiness and liveliness probes if k8s config is set
+	// run HTTP server for readiness and liveness probes if k8s config is set
 	if conf.K8s != nil {
 		startHTTPServerAsync(conf.K8s.ProbePort)
 	}
