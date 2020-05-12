@@ -176,7 +176,7 @@ func (c *timestamp) Name() string {
 
 // Type returns the type of the column
 func (c *timestamp) Type() typeof.Type {
-	return typeof.Int64
+	return typeof.Timestamp
 }
 
 // Value computes the column value for the row

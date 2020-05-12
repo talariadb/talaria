@@ -34,7 +34,7 @@ func New(config *config.Compaction, monitor monitor.Monitor, store storage.Stora
 
 	nameFunc := func(row map[string]interface{}) (s string, e error) {
 		return fmt.Sprintf("%s-%x.orc",
-			time.Now().UTC().Format("year=2006/month=01/day=02/15-04-05"),
+			time.Now().UTC().Format("year=2006/month=1/day=2/15-04-05"),
 			hashOfRow(row),
 		), nil
 	}
@@ -50,6 +50,11 @@ func New(config *config.Compaction, monitor monitor.Monitor, store storage.Stora
 		if fn, err := column.NewComputed("nameFunc", typeof.String, config.NameFunc, loader); err == nil {
 			nameFunc = func(row map[string]interface{}) (s string, e error) {
 				val, err := fn.Value(row)
+				if err != nil {
+					monitor.Error(err)
+					return "", err
+				}
+
 				return val.(string), err
 			}
 		}

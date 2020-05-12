@@ -37,9 +37,15 @@ func New(project, dataset, table string) (*Writer, error) {
 // Write writes the data to the sink.
 func (w *Writer) Write(key key.Key, val []byte) error {
 	source := bigquery.NewReaderSource(bytes.NewReader(val))
-	loader := w.table.LoaderFrom(source)
+	source.FileConfig = bigquery.FileConfig{
+		SourceFormat:        bigquery.DataFormat("ORC"),
+		AutoDetect:          false,
+		IgnoreUnknownValues: true,
+		MaxBadRecords:       0,
+	}
 
 	// Run the loader
+	loader := w.table.LoaderFrom(source)
 	ctx := context.Background()
 	job, err := loader.Run(ctx)
 	if err != nil {
