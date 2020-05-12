@@ -207,7 +207,8 @@ func TestNameFunc(t *testing.T) {
 
 		-- Convert the time to a lua date
 		local ts = row["col1"]
-		local dt = os.date('!*t', ts)
+		local tz = timezone()
+		local dt = os.date('*t', ts - tz)
 	
 		-- Format the filename
 		return string.format("year=%d/month=%d/day=%d/ns=%s/%d-%d-%d-%s.orc", 
@@ -219,6 +220,13 @@ func TestNameFunc(t *testing.T) {
 			dt.min,
 			dt.sec,
 			"127.0.0.1")
+	end
+
+	function timezone()
+		local utcdate   = os.date("!*t")
+		local localdate = os.date("*t")
+		localdate.isdst = false
+		return os.difftime(os.time(localdate), os.time(utcdate))
 	end
 	`, script.NewLoader(nil))
 
@@ -247,6 +255,6 @@ func TestNameFunc(t *testing.T) {
 	blocks, err := block.FromOrcBy(orcBuffer.Bytes(), "col0", nil)
 	fileName, _ := flusher.Merge(blocks, schema)
 
-	assert.Equal(t, "year=46970/month=3/day=29/ns=eventName/8-0-0-127.0.0.1.orc", string(fileName))
+	assert.Equal(t, "year=46970/month=3/day=29/ns=eventName/0-0-0-127.0.0.1.orc", string(fileName))
 
 }
