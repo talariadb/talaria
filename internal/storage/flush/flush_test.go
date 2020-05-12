@@ -207,7 +207,7 @@ func TestNameFunc(t *testing.T) {
 
 		-- Convert the time to a lua date
 		local ts = row["col1"]
-		local dt = os.date("*t", ts)
+		local dt = os.date('!*t', ts)
 	
 		-- Format the filename
 		return string.format("year=%d/month=%d/day=%d/ns=%s/%d-%d-%d-%s.orc", 
