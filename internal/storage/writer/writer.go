@@ -19,6 +19,7 @@ import (
 	"github.com/kelindar/talaria/internal/storage/writer/bigquery"
 	"github.com/kelindar/talaria/internal/storage/writer/file"
 	"github.com/kelindar/talaria/internal/storage/writer/gcs"
+	"github.com/kelindar/talaria/internal/storage/writer/multi"
 	"github.com/kelindar/talaria/internal/storage/writer/noop"
 	"github.com/kelindar/talaria/internal/storage/writer/s3"
 )
@@ -32,13 +33,6 @@ func New(config *config.Compaction, monitor monitor.Monitor, store storage.Stora
 		monitor.Error(err)
 	}
 
-	nameFunc := func(row map[string]interface{}) (s string, e error) {
-		return fmt.Sprintf("%s-%x.orc",
-			time.Now().UTC().Format("year=2006/month=1/day=2/15-04-05"),
-			hashOfRow(row),
-		), nil
-	}
-
 	// Configure the flush interval, default to 30s
 	interval := 30 * time.Second
 	if config.Interval > 0 {
@@ -46,6 +40,7 @@ func New(config *config.Compaction, monitor monitor.Monitor, store storage.Stora
 	}
 
 	// If name function was specified, use it
+	nameFunc := defaultNameFunc
 	if config.NameFunc != "" {
 		if fn, err := column.NewComputed("nameFunc", typeof.String, config.NameFunc, loader); err == nil {
 			nameFunc = func(row map[string]interface{}) (s string, e error) {
@@ -67,20 +62,68 @@ func New(config *config.Compaction, monitor monitor.Monitor, store storage.Stora
 
 // NewWriter creates a new writer from the configuration.
 func newWriter(config *config.Compaction) (flush.Writer, error) {
-	switch {
-	case config.S3 != nil:
-		return s3.New(config.S3.Bucket, config.S3.Prefix, config.S3.Region, config.S3.Endpoint, config.S3.SSE, config.S3.AccessKey, config.S3.SecretKey, config.S3.Concurrency)
-	case config.Azure != nil:
-		return azure.New(config.Azure.Container, config.Azure.Prefix)
-	case config.GCS != nil:
-		return gcs.New(config.GCS.Bucket, config.GCS.Prefix)
-	case config.BigQuery != nil:
-		return bigquery.New(config.BigQuery.Project, config.BigQuery.Dataset, config.BigQuery.Table)
-	case config.File != nil:
-		return file.New(config.File.Directory)
-	default:
+	var writers []multi.SubWriter
+
+	// Configure S3 writer if present
+	if config.S3 != nil {
+		w, err := s3.New(config.S3.Bucket, config.S3.Prefix, config.S3.Region, config.S3.Endpoint, config.S3.SSE, config.S3.AccessKey, config.S3.SecretKey, config.S3.Concurrency)
+		if err != nil {
+			return nil, err
+		}
+		writers = append(writers, w)
+	}
+
+	// Configure Azure writer if present
+	if config.Azure != nil {
+		w, err := azure.New(config.Azure.Container, config.Azure.Prefix)
+		if err != nil {
+			return nil, err
+		}
+		writers = append(writers, w)
+	}
+
+	// Configure GCS writer if present
+	if config.GCS != nil {
+		w, err := gcs.New(config.GCS.Bucket, config.GCS.Prefix)
+		if err != nil {
+			return nil, err
+		}
+		writers = append(writers, w)
+	}
+
+	// Configure BigQuery writer if present
+	if config.BigQuery != nil {
+		w, err := bigquery.New(config.BigQuery.Project, config.BigQuery.Dataset, config.BigQuery.Table)
+		if err != nil {
+			return nil, err
+		}
+		writers = append(writers, w)
+	}
+
+	// Configure File writer if present
+	if config.File != nil {
+		w, err := file.New(config.File.Directory)
+		if err != nil {
+			return nil, err
+		}
+		writers = append(writers, w)
+	}
+
+	// If no writers were configured, error out
+	if len(writers) == 0 {
 		return noop.New(), errors.New("compact: writer was not configured")
 	}
+
+	// Setup a multi-writer for all configured writers
+	return multi.New(writers...), nil
+}
+
+// defaultNameFunc represents a default name function
+func defaultNameFunc(row map[string]interface{}) (s string, e error) {
+	return fmt.Sprintf("%s-%x.orc",
+		time.Now().UTC().Format("year=2006/month=1/day=2/15-04-05"),
+		hashOfRow(row),
+	), nil
 }
 
 // hashOfRow computes a hash of the row, for the default filename
