@@ -225,7 +225,7 @@ func TestNameFunc(t *testing.T) {
 	function timezone()
 		local utcdate   = os.date("!*t")
 		local localdate = os.date("*t")
-		localdate.isdst = false
+		--localdate.isdst = false
 		return os.difftime(os.time(localdate), os.time(utcdate))
 	end
 	`, script.NewLoader(nil))
