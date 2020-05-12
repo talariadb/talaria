@@ -22,6 +22,11 @@ type Config struct {
 	Tables   Tables     `json:"tables" yaml:"tables" env:"TABLES"`
 	Statsd   *StatsD    `json:"statsd,omitempty" yaml:"statsd" env:"STATSD"`
 	Computed []Computed `json:"computed" yaml:"computed" env:"COMPUTED"`
+	K8s      *K8s       `json:"k8s,omitempty" yaml:"k8s" env:"K8S"`
+}
+
+type K8s struct {
+	ProbePort int32 `json:"probePort" yaml:"probePort" env:"PROBEPORT"` // The port which is used for liveness and readiness probes (default: 8080)
 }
 
 // Tables is a list of table configs

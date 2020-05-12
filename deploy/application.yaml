@@ -39,6 +39,9 @@ spec:
               protocol: TCP
             - containerPort: 7946
               protocol: UDP
+            - name: liveness-port
+              containerPort: 8082
+              hostPort: 8082
           imagePullPolicy: Always
           env:
             - name: TALARIA_CONF_URI
@@ -50,6 +53,24 @@ spec:
           volumeMounts:
             - mountPath: /data
               name: data
+          readinessProbe:
+            httpGet:
+              scheme: HTTP
+              path: /healthz
+              httpHeaders:
+                - name: x-talaria-readiness
+                  value: healthz
+              port: liveness-port
+            initialDelaySeconds: 3
+          livenessProbe:
+            httpGet:
+              scheme: HTTP
+              path: /healthz
+              httpHeaders:
+                - name: x-envoy-livenessprobe
+                  value: healthz
+              port: liveness-port
+            initialDelaySeconds: 10
           resources:
             requests:
               memory: "1000Mi"

@@ -5,10 +5,14 @@ package main
 
 import (
 	"context"
+	"fmt"
+	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
+
+	"github.com/gorilla/mux"
 
 	"github.com/kelindar/lua"
 	"github.com/kelindar/talaria/internal/config"
@@ -96,6 +100,11 @@ func main() {
 	monitor.Info("server: joining cluster on %s...", conf.Domain)
 	gossip.JoinHostname(conf.Domain)
 
+	// run HTTP server for readiness and liveness probes if k8s config is set
+	if conf.K8s != nil {
+		startHTTPServerAsync(conf.K8s.ProbePort)
+	}
+
 	// Start listen
 	monitor.Info("server: starting...")
 	monitor.Count1(logTag, "start")
@@ -111,6 +120,23 @@ func onSignal(callback func(sig os.Signal)) {
 	go func() {
 		for sig := range c {
 			callback(sig)
+		}
+	}()
+}
+
+func startHTTPServerAsync(portNum int32) {
+	go func() {
+		handler := mux.NewRouter()
+		handler.HandleFunc("/healthz", func(resp http.ResponseWriter, req *http.Request) {
+			_, _ = resp.Write([]byte(`talaria-health-check`))
+		}).Methods(http.MethodGet, http.MethodHead)
+
+		server := &http.Server{
+			Addr:    fmt.Sprintf(":%d", portNum),
+			Handler: handler,
+		}
+		if err := server.ListenAndServe(); err != nil {
+			panic(err)
 		}
 	}()
 }
