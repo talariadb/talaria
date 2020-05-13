@@ -24,6 +24,7 @@ import (
 	"github.com/kelindar/talaria/internal/monitor/statsd"
 	"github.com/kelindar/talaria/internal/scripting"
 	mlog "github.com/kelindar/talaria/internal/scripting/log"
+	mnet "github.com/kelindar/talaria/internal/scripting/net"
 	mstats "github.com/kelindar/talaria/internal/scripting/stats"
 	"github.com/kelindar/talaria/internal/server"
 	"github.com/kelindar/talaria/internal/server/cluster"
@@ -67,6 +68,7 @@ func main() {
 	loader := script.NewLoader([]lua.Module{
 		mlog.New(monitor),
 		mstats.New(monitor),
+		mnet.New(monitor),
 	})
 
 	// Create a storage, if compact store is enabled then use the compact store
