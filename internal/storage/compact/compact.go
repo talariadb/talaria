@@ -20,6 +20,8 @@ import (
 // Assert contract compliance
 var _ storage.Storage = new(Storage)
 
+const ctxTag = "compaction"
+
 // Storage represents compactor storage.
 type Storage struct {
 	compact async.Task       // The compaction worker
@@ -160,6 +162,7 @@ func (s *Storage) merge(keys []key.Key, blocks []block.Block, schema typeof.Sche
 		if err = s.buffer.Delete(keys...); err != nil {
 			s.monitor.Error(err)
 		}
+		s.monitor.Count(ctxTag, "deleteCount", int64(len(keys)))
 		return
 	})
 }
