@@ -29,6 +29,8 @@ type Storage struct {
 	dest    storage.Appender // The compaction destination
 }
 
+const ctxTag = "compaction"
+
 // New creates a new storage implementation.
 func New(buffer storage.Storage, dest storage.Appender, merger storage.Merger, monitor monitor.Monitor, interval time.Duration) *Storage {
 	s := &Storage{
@@ -58,6 +60,7 @@ func compactEvery(interval time.Duration, compact async.Work) async.Task {
 
 // Append adds an event into the buffer.
 func (s *Storage) Append(key key.Key, value []byte, ttl time.Duration) error {
+	s.monitor.Count1(ctxTag, "append")
 	return s.buffer.Append(key, value, ttl)
 }
 
@@ -160,6 +163,7 @@ func (s *Storage) merge(keys []key.Key, blocks []block.Block, schema typeof.Sche
 		if err = s.buffer.Delete(keys...); err != nil {
 			s.monitor.Error(err)
 		}
+		s.monitor.Count(ctxTag, "delete", int64(len(keys)))
 		return
 	})
 }
