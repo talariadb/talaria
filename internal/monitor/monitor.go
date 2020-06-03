@@ -5,6 +5,7 @@ package monitor
 
 import (
 	"fmt"
+	"log"
 	"runtime"
 	"strings"
 	"time"
@@ -83,7 +84,8 @@ func (c *clientImpl) Count1(contextTag, key string, tags ...string) {
 
 // Count increases or Decrease the value of something over time
 func (c *clientImpl) Count(contextTag, key string, amount int64, tags ...string) {
-	c.stats.Count(contextTag+"."+key, amount, c.enrichTags(tags), 1)
+	err := c.stats.Count(contextTag+"."+key, amount, c.enrichTags(tags), 1)
+	log.Printf("error in count is %+v\n", err)
 }
 
 // Debug writes out a warning message into the output logger.

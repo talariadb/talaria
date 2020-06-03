@@ -6,6 +6,7 @@ package main
 import (
 	"context"
 	"fmt"
+	lo "log"
 	"net/http"
 	"os"
 	"os/signal"
@@ -22,7 +23,7 @@ import (
 	"github.com/kelindar/talaria/internal/monitor"
 	"github.com/kelindar/talaria/internal/monitor/logging"
 	"github.com/kelindar/talaria/internal/monitor/statsd"
-	"github.com/kelindar/talaria/internal/scripting"
+	script "github.com/kelindar/talaria/internal/scripting"
 	mlog "github.com/kelindar/talaria/internal/scripting/log"
 	mnet "github.com/kelindar/talaria/internal/scripting/net"
 	mstats "github.com/kelindar/talaria/internal/scripting/stats"
@@ -51,6 +52,7 @@ func main() {
 	// Setup gossip
 	gossip := cluster.New(7946)
 
+	lo.Printf("statsd  host and port is %+v %+v\n", conf.Statsd.Host, conf.Statsd.Port)
 	// Create a log table and a simple stdout monitor
 	stats := statsd.New(conf.Statsd.Host, int(conf.Statsd.Port))
 	logTable := log.New(configure, gossip, monitor.New(
