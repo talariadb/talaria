@@ -90,6 +90,7 @@ func (s *Storage) Compact(ctx context.Context) (interface{}, error) {
 	queue := make(chan async.Task, concurrency)
 	wpool := async.Consume(context.Background(), concurrency, queue)
 
+	s.monitor.Count1(ctxTag, "compactCount")
 	// Iterate through all of the blocks in the storage
 	schema := make(typeof.Schema, 4)
 	if err := s.buffer.Range(key.First(), key.Last(), func(k, v []byte) bool {
@@ -140,6 +141,7 @@ func (s *Storage) merge(keys []key.Key, blocks []block.Block, schema typeof.Sche
 		if len(blocks) == 0 {
 			return
 		}
+		s.monitor.Count1(ctxTag, "mergeCount")
 		// Get the max expiration time for merging
 		now, max := time.Now().Unix(), int64(0)
 		for _, b := range blocks {
