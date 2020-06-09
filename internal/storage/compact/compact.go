@@ -153,6 +153,7 @@ func (s *Storage) merge(keys []key.Key, blocks []block.Block, schema typeof.Sche
 			// Append to the destination
 			ttl := time.Duration(max-now) * time.Second
 			if err = s.dest.Append(key, value, ttl); err != nil {
+				s.monitor.Count1(ctxTag, "error", "type:append")
 				s.monitor.Error(err)
 				return
 			}
@@ -160,9 +161,9 @@ func (s *Storage) merge(keys []key.Key, blocks []block.Block, schema typeof.Sche
 
 		//  Delete all of the keys that we have appended
 		if err = s.buffer.Delete(keys...); err != nil {
+			s.monitor.Count1(ctxTag, "error", "type:delete")
 			s.monitor.Error(err)
 		}
-		s.monitor.Count(ctxTag, "deleteCount", int64(len(keys)))
 		return
 	})
 }
