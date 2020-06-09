@@ -5,7 +5,6 @@ package flush
 
 import (
 	"bytes"
-	"compress/flate"
 	"io/ioutil"
 	"testing"
 
@@ -16,7 +15,7 @@ import (
 	"github.com/kelindar/talaria/internal/encoding/orc"
 	"github.com/kelindar/talaria/internal/encoding/typeof"
 	"github.com/kelindar/talaria/internal/monitor"
-	"github.com/kelindar/talaria/internal/scripting"
+	script "github.com/kelindar/talaria/internal/scripting"
 	"github.com/kelindar/talaria/internal/storage/writer/noop"
 	"github.com/stretchr/testify/assert"
 )
@@ -75,7 +74,7 @@ func TestMerge(t *testing.T) {
 	orcBuffer := &bytes.Buffer{}
 	writer, _ = eorc.NewWriter(orcBuffer,
 		eorc.SetSchema(orcSchema),
-		eorc.SetCompression(eorc.CompressionZlib{Level: flate.DefaultCompression}))
+		eorc.SetCompression(eorc.CompressionSnappy{}))
 	_ = writer.Write("eventName", 1, 1.0)
 	_ = writer.Write("eventName", 2, 2.0)
 	_ = writer.Close()
@@ -153,7 +152,7 @@ func TestMerge_DifferentSchema(t *testing.T) {
 	orcBuffer := &bytes.Buffer{}
 	writer, _ = eorc.NewWriter(orcBuffer,
 		eorc.SetSchema(orcSchema2),
-		eorc.SetCompression(eorc.CompressionZlib{Level: flate.DefaultCompression}))
+		eorc.SetCompression(eorc.CompressionSnappy{}))
 	_ = writer.Write("eventName", 1, 1.0, nil)
 	_ = writer.Write("eventName", 2, 2.0, "s")
 	_ = writer.Close()

@@ -86,9 +86,11 @@ func TestRange(t *testing.T) {
 		// Insert out of order
 		_ = store.Append(key.New("A", time.Unix(0, 0)), input, 60*time.Second)
 		_ = store.Append(key.New("A", time.Unix(1, 0)), input, 60*time.Second)
+		_ = store.Append(key.New("C", time.Unix(1, 0)), input, 60*time.Second)
 		_ = store.Append(key.New("B", time.Unix(0, 0)), input, 60*time.Second)
 		_ = store.Append(key.New("B", time.Unix(1, 0)), input, 60*time.Second)
 		_ = store.Append(key.New("B", time.Unix(2, 0)), input, 60*time.Second)
+		_ = store.Append(key.New("D", time.Unix(2, 0)), input, 60*time.Second)
 
 		// Iterate in order
 		var values [][]byte
@@ -99,14 +101,14 @@ func TestRange(t *testing.T) {
 
 		// Must be in order
 		assert.NoError(t, err)
-		assert.Equal(t, 5, len(values))
+		assert.Equal(t, 7, len(values))
 		for _, v := range values {
 			assert.EqualValues(t, input, v)
 		}
 
 		// Manually compact, the final count should be 2 (given we have 2 keys)
 		store.Compact(context.Background())
-		assert.Equal(t, int64(2), count)
+		assert.Equal(t, int64(4), count)
 	})
 }
 

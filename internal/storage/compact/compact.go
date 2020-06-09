@@ -115,9 +115,13 @@ func (s *Storage) Compact(ctx context.Context) (interface{}, error) {
 		queue <- s.merge(merged, blocks, schema)
 
 		// Reset both the schema and the set of blocks
-		schema = make(typeof.Schema, len(schema))
 		blocks = make([]block.Block, 0, 16)
 		merged = make([]key.Key, 0, 16)
+
+		// append the last value that didn't merge in previous merge
+		schema = input.Schema()
+		blocks = append(blocks, input)
+		merged = append(merged, key.Clone(k))
 		return false
 	}); err != nil {
 		return nil, err
