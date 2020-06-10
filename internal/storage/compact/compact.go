@@ -82,10 +82,6 @@ func (s *Storage) Delete(keys ...key.Key) error {
 
 // Compact runs the compaction on the storage
 func (s *Storage) Compact(ctx context.Context) (interface{}, error) {
-	return s.compactWithSync(ctx, false)
-}
-
-func (s *Storage) compactWithSync(ctx context.Context, sync bool) (interface{}, error) {
 	var hash uint32
 	var blocks []block.Block
 	var merged []key.Key
@@ -115,11 +111,8 @@ func (s *Storage) compactWithSync(ctx context.Context, sync bool) (interface{}, 
 			return false
 		}
 
-		task := s.merge(merged, blocks, schema)
-		queue <- task
-		if sync {
-			task.Outcome() // Wait
-		}
+		// Merge asynchronously and delete the keys on a successful merge
+		queue <- s.merge(merged, blocks, schema)
 
 		// Reset both the schema and the set of blocks
 		blocks = make([]block.Block, 0, 16)
@@ -136,11 +129,7 @@ func (s *Storage) compactWithSync(ctx context.Context, sync bool) (interface{}, 
 
 	// Merge one last time if we still have block
 	if len(blocks) > 0 {
-		task := s.merge(merged, blocks, schema)
-		queue <- task
-		if sync {
-			task.Outcome() // Wait
-		}
+		queue <- s.merge(merged, blocks, schema)
 	}
 
 	// Wait for the pool to be close
@@ -186,6 +175,6 @@ func (s *Storage) merge(keys []key.Key, blocks []block.Block, schema typeof.Sche
 // Close is used to gracefully close storage.
 func (s *Storage) Close() error {
 	s.compact.Cancel()
-	s.compactWithSync(context.Background(), true)
+	s.Compact(context.Background())
 	return storage.Close(s.buffer, s.dest)
 }
