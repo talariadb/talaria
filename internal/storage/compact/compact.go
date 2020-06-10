@@ -85,9 +85,36 @@ func (s *Storage) Compact(ctx context.Context) (interface{}, error) {
 	return s.compactWithSync(ctx, false)
 }
 
-func (s *Storage) mergeTask(keys []key.Key, blocks []block.Block, schema typeof.Schema) async.Task {
+func (s *Storage) merge(keys []key.Key, blocks []block.Block, schema typeof.Schema) async.Task {
 	return async.NewTask(func(ctx context.Context) (_ interface{}, err error) {
-		s.merge(keys, blocks, schema)
+
+		if len(blocks) == 0 {
+			return
+		}
+		// Get the max expiration time for merging
+		now, max := time.Now().Unix(), int64(0)
+		for _, b := range blocks {
+			if b.Expires > max {
+				max = b.Expires
+			}
+		}
+
+		// Merge all blocks together
+		if key, value := s.merger.Merge(blocks, schema); key != nil {
+			// Append to the destination
+			ttl := time.Duration(max-now) * time.Second
+			if err := s.dest.Append(key, value, ttl); err != nil {
+				s.monitor.Count1(ctxTag, "error", "type:append")
+				s.monitor.Error(err)
+				return
+			}
+		}
+
+		//  Delete all of the keys that we have appended
+		if err := s.buffer.Delete(keys...); err != nil {
+			s.monitor.Count1(ctxTag, "error", "type:delete")
+			s.monitor.Error(err)
+		}
 		return
 	})
 }
@@ -122,11 +149,10 @@ func (s *Storage) compactWithSync(ctx context.Context, sync bool) (interface{}, 
 			return false
 		}
 
-		if sync == true {
-			s.merge(merged, blocks, schema)
-		} else {
-			// Merge asynchronously and delete the keys on a successful merge
-			queue <- s.mergeTask(merged, blocks, schema)
+		task := s.merge(merged, blocks, schema)
+		queue <- task
+		if sync {
+			task.Outcome() // Wait
 		}
 
 		// Reset both the schema and the set of blocks
@@ -144,51 +170,16 @@ func (s *Storage) compactWithSync(ctx context.Context, sync bool) (interface{}, 
 
 	// Merge one last time if we still have block
 	if len(blocks) > 0 {
-		if sync == true {
-			s.merge(merged, blocks, schema)
-		} else {
-			// Merge asynchronously and delete the keys on a successful merge
-			queue <- s.mergeTask(merged, blocks, schema)
+		task := s.merge(merged, blocks, schema)
+		queue <- task
+		if sync {
+			task.Outcome() // Wait
 		}
 	}
 
 	// Wait for the pool to be close
 	close(queue)
 	return wpool.Outcome()
-}
-
-// merge adds an key-value pair to the underlying database
-func (s *Storage) merge(keys []key.Key, blocks []block.Block, schema typeof.Schema) {
-
-	if len(blocks) == 0 {
-		return
-	}
-	// Get the max expiration time for merging
-	now, max := time.Now().Unix(), int64(0)
-	for _, b := range blocks {
-		if b.Expires > max {
-			max = b.Expires
-		}
-	}
-
-	// Merge all blocks together
-	if key, value := s.merger.Merge(blocks, schema); key != nil {
-		// Append to the destination
-		ttl := time.Duration(max-now) * time.Second
-		if err := s.dest.Append(key, value, ttl); err != nil {
-			s.monitor.Count1(ctxTag, "error", "type:append")
-			s.monitor.Error(err)
-			return
-		}
-	}
-
-	//  Delete all of the keys that we have appended
-	if err := s.buffer.Delete(keys...); err != nil {
-		s.monitor.Count1(ctxTag, "error", "type:delete")
-		s.monitor.Error(err)
-	}
-	return
-
 }
 
 // Close is used to gracefully close storage.
