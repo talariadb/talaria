@@ -175,5 +175,6 @@ func (s *Storage) merge(keys []key.Key, blocks []block.Block, schema typeof.Sche
 // Close is used to gracefully close storage.
 func (s *Storage) Close() error {
 	s.compact.Cancel()
+	s.Compact(context.Background())
 	return storage.Close(s.buffer, s.dest)
 }
