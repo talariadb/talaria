@@ -168,6 +168,7 @@ func (s *Storage) merge(keys []key.Key, blocks []block.Block, schema typeof.Sche
 			s.monitor.Count1(ctxTag, "error", "type:delete")
 			s.monitor.Error(err)
 		}
+		s.monitor.Count(ctxTag, "deleteCount", int64(len(keys)))
 		return
 	})
 }
