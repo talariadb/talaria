@@ -83,6 +83,7 @@ func (s *Storage) Delete(keys ...key.Key) error {
 // Compact runs the compaction on the storage
 func (s *Storage) Compact(ctx context.Context) (interface{}, error) {
 	s.monitor.Info("compaction started")
+	st := time.Now()
 	var hash uint32
 	var blocks []block.Block
 	var merged []key.Key
@@ -135,7 +136,9 @@ func (s *Storage) Compact(ctx context.Context) (interface{}, error) {
 
 	// Wait for the pool to be close
 	close(queue)
-	return wpool.Outcome()
+	out, err := wpool.Outcome()
+	s.monitor.Histogram(ctxTag, "compactlatency", float64(time.Since(st)))
+	return out, err
 }
 
 // merge adds an key-value pair to the underlying database
