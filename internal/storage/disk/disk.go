@@ -73,13 +73,13 @@ func (s *Storage) Open(dir string) error {
 	opts := badger.DefaultOptions(dir)
 	opts.SyncWrites = false
 	// max size of lsm tree in bytes after which data is propagated to disk. default is 64 MB.
-	opts.MaxTableSize = 64 << 15
+	//opts.MaxTableSize = 64 << 15
 
 	// ValueLogMaxEntries sets the maximum number of entries a value log file can hold approximately.
 	// A actual size limit of a value log file is the minimum of ValueLogFileSize and
 	// ValueLogMaxEntries.
 	// Default is 1 Million
-	opts.ValueLogMaxEntries = 5000
+	//opts.ValueLogMaxEntries = 5000
 
 	// default is 20 MB
 	//opts.LevelOneSize = 1 << 16
