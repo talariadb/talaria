@@ -82,6 +82,7 @@ func (s *Storage) Delete(keys ...key.Key) error {
 
 // Compact runs the compaction on the storage
 func (s *Storage) Compact(ctx context.Context) (interface{}, error) {
+	s.monitor.Info("compaction started")
 	var hash uint32
 	var blocks []block.Block
 	var merged []key.Key
@@ -170,7 +171,7 @@ func (s *Storage) merge(keys []key.Key, blocks []block.Block, schema typeof.Sche
 			s.monitor.Count1(ctxTag, "error", "type:delete")
 			s.monitor.Error(err)
 		}
-		s.monitor.Histogram("mcd.grpcWrite", "latency", float64(time.Since(start)))
+		s.monitor.Histogram(ctxTag, "deletelatency", float64(time.Since(start)))
 		s.monitor.Count(ctxTag, "deleteCount", int64(len(keys)))
 		return
 	})
