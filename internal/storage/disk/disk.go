@@ -82,18 +82,18 @@ func (s *Storage) Open(dir string) error {
 	opts.ValueLogMaxEntries = 5000
 
 	// default is 20 MB
-	opts.LevelOneSize = 1 << 16
-
-	// LevelSizeMultiplier sets the ratio between the maximum sizes of contiguous levels in the LSM.
-	// Once a level grows to be larger than this ratio allowed, the compaction process will be
-	//  triggered.
-	// The default value of LevelSizeMultiplier is 10.
-	opts.LevelSizeMultiplier = 3
-
-	// Maximum number of levels of compaction allowed in the LSM.
+	//opts.LevelOneSize = 1 << 16
 	//
-	// The default value of MaxLevels is 7.
-	opts.MaxLevels = 25
+	//// LevelSizeMultiplier sets the ratio between the maximum sizes of contiguous levels in the LSM.
+	//// Once a level grows to be larger than this ratio allowed, the compaction process will be
+	////  triggered.
+	//// The default value of LevelSizeMultiplier is 10.
+	//opts.LevelSizeMultiplier = 3
+	//
+	//// Maximum number of levels of compaction allowed in the LSM.
+	////
+	//// The default value of MaxLevels is 7.
+	//opts.MaxLevels = 25
 
 	// Truncate indicates whether value log files should be truncated to delete corrupt data, if any.
 	// This option is ignored when ReadOnly is true.
