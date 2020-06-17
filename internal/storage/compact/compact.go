@@ -163,11 +163,13 @@ func (s *Storage) merge(keys []key.Key, blocks []block.Block, schema typeof.Sche
 			}
 		}
 
+		start := time.Now()
 		//  Delete all of the keys that we have appended
 		if err = s.buffer.Delete(keys...); err != nil {
 			s.monitor.Count1(ctxTag, "error", "type:delete")
 			s.monitor.Error(err)
 		}
+		s.monitor.Histogram(ctxTag, "deleteLatency", float64(time.Since(start)))
 		s.monitor.Count(ctxTag, "deleteCount", int64(len(keys)))
 		return
 	})
