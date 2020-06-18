@@ -101,6 +101,8 @@ func (s *Storage) Open(dir string) error {
 	// The default value of Truncate is false.
 	opts.Truncate = true
 
+	opts.ValueLogLoadingMode = 0
+
 	opts.Logger = &logger{s.monitor}
 
 	// Attempt to open the database
