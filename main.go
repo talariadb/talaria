@@ -12,12 +12,7 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/dgraph-io/badger/v2/y"
-
-	"github.com/grab/async"
-
 	"github.com/gorilla/mux"
-
 	"github.com/kelindar/lua"
 	"github.com/kelindar/talaria/internal/config"
 	"github.com/kelindar/talaria/internal/config/env"
@@ -95,26 +90,26 @@ func main() {
 		logTable,
 	)
 
-	t := async.Repeat(context.Background(), 1*time.Minute, func(c context.Context) (i interface{}, e error) {
-		monitor.Gauge("badger", "numreads", float64(y.NumReads.Value()))
-		monitor.Gauge("badger", "numwrites", float64(y.NumWrites.Value()))
-		monitor.Gauge("badger", "numbytesread", float64(y.NumBytesRead.Value()))
-		monitor.Gauge("badger", "numbyteswrite", float64(y.NumBytesWritten.Value()))
-		//monitor.Gauge("badger", "numlsmget", float64(y.NumLSMGets.Value()))
-		//monitor.Gauge("badger", "numwrites", float64(y.NumWrites.Value()))
-		monitor.Gauge("badger", "numgets", float64(y.NumGets.Value()))
-		monitor.Gauge("badger", "numputs", float64(y.NumPuts.Value()))
-		monitor.Gauge("badger", "numblockedputs", float64(y.NumBlockedPuts.Value()))
-		monitor.Gauge("badger", "nummemtablegets", float64(y.NumMemtableGets.Value()))
-		return nil, nil
-	})
+	//t := async.Repeat(context.Background(), 1*time.Minute, func(c context.Context) (i interface{}, e error) {
+	//	monitor.Gauge("badger", "numreads", float64(y.NumReads.Value()))
+	//	monitor.Gauge("badger", "numwrites", float64(y.NumWrites.Value()))
+	//	monitor.Gauge("badger", "numbytesread", float64(y.NumBytesRead.Value()))
+	//	monitor.Gauge("badger", "numbyteswrite", float64(y.NumBytesWritten.Value()))
+	//	//monitor.Gauge("badger", "numlsmget", float64(y.NumLSMGets.Value()))
+	//	//monitor.Gauge("badger", "numwrites", float64(y.NumWrites.Value()))
+	//	monitor.Gauge("badger", "numgets", float64(y.NumGets.Value()))
+	//	monitor.Gauge("badger", "numputs", float64(y.NumPuts.Value()))
+	//	monitor.Gauge("badger", "numblockedputs", float64(y.NumBlockedPuts.Value()))
+	//	monitor.Gauge("badger", "nummemtablegets", float64(y.NumMemtableGets.Value()))
+	//	return nil, nil
+	//})
 
 	// onSignal will be called when a OS-level signal is received.
 	onSignal(func(_ os.Signal) {
 		cancel()       // Cancel the context
 		gossip.Close() // Close the gossip layer
 		server.Close() // Close the server and database
-		t.Cancel()
+		//t.Cancel()
 	})
 
 	// Join the cluster
