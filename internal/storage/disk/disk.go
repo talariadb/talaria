@@ -105,6 +105,9 @@ func (s *Storage) Open(dir string) error {
 
 	opts.Logger = &logger{s.monitor}
 
+	// default is 0.01
+	opts.BloomFalsePositive = 0.5
+
 	// Attempt to open the database
 	db, err := badger.Open(opts)
 	if err != nil {
