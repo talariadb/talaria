@@ -236,7 +236,7 @@ func (s *Storage) Delete(keys ...key.Key) error {
 // GC runs the garbage collection on the storage
 func (s *Storage) GC(ctx context.Context) (interface{}, error) {
 	const tag = "GC"
-	const discardRatio = 0.5
+	const discardRatio = 0.3
 
 	if s.gc != nil && s.gc.State() == async.IsCancelled {
 		return nil, nil
