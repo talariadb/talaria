@@ -113,7 +113,7 @@ func (s *Storage) Open(dir string) error {
 
 	// Setup the database and start GC
 	s.db = db
-	s.gc = async.Repeat(context.Background(), 1*time.Minute, s.GC)
+	s.gc = async.Repeat(context.Background(), 10*time.Second, s.GC)
 	return nil
 }
 
@@ -236,7 +236,7 @@ func (s *Storage) Delete(keys ...key.Key) error {
 // GC runs the garbage collection on the storage
 func (s *Storage) GC(ctx context.Context) (interface{}, error) {
 	const tag = "GC"
-	const discardRatio = 0.3
+	const discardRatio = 0.5
 
 	if s.gc != nil && s.gc.State() == async.IsCancelled {
 		return nil, nil
