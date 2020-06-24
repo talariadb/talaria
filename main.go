@@ -7,7 +7,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	goLog "log"
+	"net/http/pprof"
 	"os"
 	"os/signal"
 	"syscall"
@@ -43,10 +43,6 @@ const (
 func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-
-	go func() {
-		goLog.Println(http.ListenAndServe("localhost:6060", nil))
-	}()
 
 	s3Configurer := s3.New(logging.NewStandard())
 	configure := config.Load(ctx, 60*time.Second, static.New(), env.New("TALARIA_CONF"), s3Configurer)
@@ -109,7 +105,7 @@ func main() {
 	//	return nil, nil
 	//})
 
-	// onSignal will be called when a OS-level signal is received.
+	// onSignal will be cHandleralled when a OS-level signal is received.
 	onSignal(func(_ os.Signal) {
 		cancel()       // Cancel the context
 		gossip.Close() // Close the gossip layer
@@ -126,7 +122,7 @@ func main() {
 		startHTTPServerAsync(conf.K8s.ProbePort)
 	}
 
-	// Start listen
+	// Start listenHandler
 	monitor.Info("server: starting...")
 	monitor.Count1(logTag, "start")
 	if err := server.Listen(ctx, conf.Readers.Presto.Port, conf.Writers.GRPC.Port); err != nil {
@@ -151,6 +147,16 @@ func startHTTPServerAsync(portNum int32) {
 		handler.HandleFunc("/healthz", func(resp http.ResponseWriter, req *http.Request) {
 			_, _ = resp.Write([]byte(`talaria-health-check`))
 		}).Methods(http.MethodGet, http.MethodHead)
+		handler.HandleFunc("/debug/pprof/", pprof.Index)
+		handler.HandleFunc("/debug/pprof/cmdline", pprof.Cmdline)
+		handler.HandleFunc("/debug/pprof/profile", pprof.Profile)
+		handler.HandleFunc("/debug/pprof/symbol", pprof.Symbol)
+
+		// Manually add support for paths linked to by index page at /debug/pprof/
+		handler.Handle("/debug/pprof/goroutine", pprof.Handler("goroutine"))
+		handler.Handle("/debug/pprof/heap", pprof.Handler("heap"))
+		handler.Handle("/debug/pprof/threadcreate", pprof.Handler("threadcreate"))
+		handler.Handle("/debug/pprof/block", pprof.Handler("block"))
 
 		server := &http.Server{
 			Addr:    fmt.Sprintf(":%d", portNum),
