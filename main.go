@@ -7,6 +7,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	goLog "log"
 	"os"
 	"os/signal"
 	"syscall"
@@ -42,6 +43,10 @@ const (
 func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
+
+	go func() {
+		goLog.Println(http.ListenAndServe("localhost:6060", nil))
+	}()
 
 	s3Configurer := s3.New(logging.NewStandard())
 	configure := config.Load(ctx, 60*time.Second, static.New(), env.New("TALARIA_CONF"), s3Configurer)
