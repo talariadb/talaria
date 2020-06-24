@@ -113,7 +113,7 @@ func (s *Storage) Open(dir string) error {
 
 	// Setup the database and start GC
 	s.db = db
-	s.gc = async.Repeat(context.Background(), 1*time.Minute, s.GC)
+	s.gc = async.Repeat(context.Background(), 10*time.Second, s.GC)
 	return nil
 }
 
