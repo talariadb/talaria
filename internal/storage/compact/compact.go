@@ -82,7 +82,7 @@ func (s *Storage) Delete(keys ...key.Key) error {
 
 // Compact runs the compaction on the storage
 func (s *Storage) Compact(ctx context.Context) (interface{}, error) {
-	st := time.Now()
+	//st := time.Now()
 	var hash uint32
 	var blocks []block.Block
 	var merged []key.Key
