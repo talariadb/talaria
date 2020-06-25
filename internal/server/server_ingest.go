@@ -40,6 +40,6 @@ func (s *Server) Ingest(ctx context.Context, request *talaria.IngestRequest) (*t
 		}
 	}
 
-	s.monitor.Count("server", "ingestCount", int64(len(blocks)))
+	//s.monitor.Count("server", "ingestCount", int64(len(blocks)))
 	return nil, nil
 }
