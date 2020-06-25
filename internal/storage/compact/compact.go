@@ -82,7 +82,7 @@ func (s *Storage) Delete(keys ...key.Key) error {
 
 // Compact runs the compaction on the storage
 func (s *Storage) Compact(ctx context.Context) (interface{}, error) {
-	//st := time.Now()
+	st := time.Now()
 	var hash uint32
 	var blocks []block.Block
 	var merged []key.Key
@@ -136,7 +136,7 @@ func (s *Storage) Compact(ctx context.Context) (interface{}, error) {
 	// Wait for the pool to be close
 	close(queue)
 	out, err := wpool.Outcome()
-	//s.monitor.Histogram(ctxTag, "compactlatency", float64(time.Since(st)))
+	s.monitor.Histogram(ctxTag, "compactlatency", float64(time.Since(st)))
 	return out, err
 }
 
@@ -166,15 +166,15 @@ func (s *Storage) merge(keys []key.Key, blocks []block.Block, schema typeof.Sche
 			}
 		}
 
-		//start := time.Now()
+		start := time.Now()
 		//  Delete all of the keys that we have appended
 		if err = s.buffer.Delete(keys...); err != nil {
 			s.monitor.Info("merge error  %s", err)
 			s.monitor.Count1(ctxTag, "error", "type:delete")
 			s.monitor.Error(err)
 		}
-		//s.monitor.Histogram(ctxTag, "deletelatency", float64(time.Since(start)))
-		//s.monitor.Count(ctxTag, "deleteCount", int64(len(keys)))
+		s.monitor.Histogram(ctxTag, "deletelatency", float64(time.Since(start)))
+		s.monitor.Count(ctxTag, "deleteCount", int64(len(keys)))
 		return
 	})
 }
