@@ -105,6 +105,8 @@ func (s *Storage) Open(dir string) error {
 
 	opts.Logger = &logger{s.monitor}
 
+	opts.InMemory = true
+
 	// default is 0.01
 	//opts.BloomFalsePositive = 0.5
 
