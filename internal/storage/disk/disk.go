@@ -70,7 +70,7 @@ func (s *Storage) Open(dir string) error {
 	}
 
 	// Create the options
-	opts := badger.DefaultOptions(dir)
+	opts := badger.DefaultOptions("")
 	opts.SyncWrites = false
 	// max size of lsm tree in bytes after which data is propagated to disk. default is 64 MB.
 	opts.MaxTableSize = 64 << 15
