@@ -70,30 +70,30 @@ func (s *Storage) Open(dir string) error {
 	}
 
 	// Create the options
-	opts := badger.DefaultOptions("")
+	opts := badger.DefaultOptions(dir)
 	opts.SyncWrites = false
 	// max size of lsm tree in bytes after which data is propagated to disk. default is 64 MB.
-	opts.MaxTableSize = 64 << 15
+	//opts.MaxTableSize = 64 << 15
 
 	// ValueLogMaxEntries sets the maximum number of entries a value log file can hold approximately.
 	// A actual size limit of a value log file is the minimum of ValueLogFileSize and
 	// ValueLogMaxEntries.
 	// Default is 1 Million
-	opts.ValueLogMaxEntries = 5000
+	//opts.ValueLogMaxEntries = 5000
 
 	// default is 20 MB
-	opts.LevelOneSize = 1 << 16
+	opts.LevelOneSize = 204800000
 
 	// LevelSizeMultiplier sets the ratio between the maximum sizes of contiguous levels in the LSM.
 	// Once a level grows to be larger than this ratio allowed, the compaction process will be
 	//  triggered.
 	// The default value of LevelSizeMultiplier is 10.
-	opts.LevelSizeMultiplier = 3
+	//opts.LevelSizeMultiplier = 3
 
 	// Maximum number of levels of compaction allowed in the LSM.
 	//
 	// The default value of MaxLevels is 7.
-	opts.MaxLevels = 25
+	opts.MaxLevels = 3
 
 	// Truncate indicates whether value log files should be truncated to delete corrupt data, if any.
 	// This option is ignored when ReadOnly is true.
@@ -105,7 +105,7 @@ func (s *Storage) Open(dir string) error {
 
 	opts.Logger = &logger{s.monitor}
 
-	opts.InMemory = true
+	//opts.InMemory = true
 
 	// default is 0.01
 	//opts.BloomFalsePositive = 0.5
