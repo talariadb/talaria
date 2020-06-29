@@ -23,6 +23,16 @@ type Config struct {
 	Statsd   *StatsD    `json:"statsd,omitempty" yaml:"statsd" env:"STATSD"`
 	Computed []Computed `json:"computed" yaml:"computed" env:"COMPUTED"`
 	K8s      *K8s       `json:"k8s,omitempty" yaml:"k8s" env:"K8S"`
+	Badger   Badger     `json:"badger,omitempty" yaml:"badger" env:"badger"`
+}
+
+type Badger struct {
+	SyncWrites          *bool   `json:"syncWrites" yaml:"syncWrites" env:"SYNCWRITES"`                            // Whether to sync writes to disk before ack. defaults to true
+	ValueLogMaxEntries  *uint32 `json:"valueLogMaxEntries" yaml:"valueLogMaxEntries" env:"VALUELOGMAXENTRIES"`    // maximum number of entries a value log file can hold approximately. defaults to 5000
+	MaxTableSize        *int64  `json:"maxTableSize" yaml:"maxTableSize" env:"MAXTABLESIZE"`                      // maximum size in bytes for each LSM table or file.
+	LevelOneSize        *int64  `json:"levelOneSize" yaml:"levelOneSize" env:"LEVELONESIZE"`                      // maximum total size in bytes for Level 1. defaults to 1 Million
+	LevelSizeMultiplier *int    `json:"levelSizeMultiplier" yaml:"levelSizeMultiplier" env:"LEVELSIZEMULTIPLIER"` // the ratio between the maximum sizes of contiguous levels in the LSM. defaults to 10
+	MaxLevels           *int    `json:"maxLevels" yaml:"maxLevels" env:"MAXLEVELS"`                               // maximum number of levels of compaction allowed in the LSM. defaults to 7
 }
 
 type K8s struct {

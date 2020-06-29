@@ -11,6 +11,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/kelindar/talaria/internal/config"
+
 	"github.com/kelindar/talaria/internal/encoding/block"
 	"github.com/kelindar/talaria/internal/encoding/key"
 	"github.com/kelindar/talaria/internal/encoding/typeof"
@@ -60,7 +62,7 @@ func runTest(t *testing.T, test func(store *disk.Storage)) {
 func run(f func(store *disk.Storage)) {
 	dir, _ := ioutil.TempDir("", "test")
 	store := disk.New(monitor.NewNoop())
-	_ = store.Open(dir)
+	_ = store.Open(dir, config.Badger{})
 
 	// Close once we're done and delete data
 	defer func() { _ = os.RemoveAll(dir) }()

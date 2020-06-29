@@ -73,7 +73,7 @@ func main() {
 
 	// Create a storage, if compact store is enabled then use the compact store
 	monitor.Info("server: opening data directory %s...", conf.Storage.Directory)
-	store := storage.Storage(disk.Open(conf.Storage.Directory, conf.Tables.Timeseries.Name, monitor))
+	store := storage.Storage(disk.Open(conf.Storage.Directory, conf.Tables.Timeseries.Name, monitor, conf.Badger))
 	if conf.Storage.Compact != nil {
 		store = writer.New(conf.Storage.Compact, monitor, store, loader)
 	}
@@ -91,26 +91,11 @@ func main() {
 		logTable,
 	)
 
-	//t := async.Repeat(context.Background(), 1*time.Minute, func(c context.Context) (i interface{}, e error) {
-	//	monitor.Gauge("badger", "numreads", float64(y.NumReads.Value()))
-	//	monitor.Gauge("badger", "numwrites", float64(y.NumWrites.Value()))
-	//	monitor.Gauge("badger", "numbytesread", float64(y.NumBytesRead.Value()))
-	//	monitor.Gauge("badger", "numbyteswrite", float64(y.NumBytesWritten.Value()))
-	//	//monitor.Gauge("badger", "numlsmget", float64(y.NumLSMGets.Value()))
-	//	//monitor.Gauge("badger", "numwrites", float64(y.NumWrites.Value()))
-	//	monitor.Gauge("badger", "numgets", float64(y.NumGets.Value()))
-	//	monitor.Gauge("badger", "numputs", float64(y.NumPuts.Value()))
-	//	monitor.Gauge("badger", "numblockedputs", float64(y.NumBlockedPuts.Value()))
-	//	monitor.Gauge("badger", "nummemtablegets", float64(y.NumMemtableGets.Value()))
-	//	return nil, nil
-	//})
-
 	// onSignal will be cHandleralled when a OS-level signal is received.
 	onSignal(func(_ os.Signal) {
 		cancel()       // Cancel the context
 		gossip.Close() // Close the gossip layer
 		server.Close() // Close the server and database
-		//t.Cancel()
 	})
 
 	// Join the cluster

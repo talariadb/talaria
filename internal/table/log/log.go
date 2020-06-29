@@ -31,7 +31,7 @@ type Table struct {
 
 // New creates a new table implementation.
 func New(cfg config.Func, cluster Membership, monitor monitor.Monitor) *Table {
-	store := disk.Open(cfg().Storage.Directory, cfg().Tables.Log.Name, monitor)
+	store := disk.Open(cfg().Storage.Directory, cfg().Tables.Log.Name, monitor, cfg().Badger)
 	base := timeseries.New(cluster, monitor, store, timeseries.Config{
 		Name:   cfg().Tables.Log.Name,
 		TTL:    cfg().Tables.Log.TTL,

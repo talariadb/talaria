@@ -12,6 +12,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/kelindar/talaria/internal/config"
+
 	"github.com/kelindar/talaria/internal/encoding/key"
 	"github.com/kelindar/talaria/internal/monitor"
 	"github.com/stretchr/testify/assert"
@@ -28,7 +30,7 @@ func runTest(t *testing.T, test func(store *Storage)) {
 func run(f func(store *Storage)) {
 	dir, _ := ioutil.TempDir("", "test")
 	store := New(monitor.NewNoop())
-	_ = store.Open(dir)
+	_ = store.Open(dir, config.Badger{})
 
 	// Close once we're done and delete data
 	defer func() { _ = os.RemoveAll(dir) }()
@@ -250,7 +252,7 @@ func populate(store *Storage) {
 
 func TestOpen(t *testing.T) {
 	assert.NotPanicsf(t, func() {
-		disk := Open(".", "test-table", monitor.NewNoop())
+		disk := Open(".", "test-table", monitor.NewNoop(), config.Badger{})
 		assert.NotNil(t, disk)
 		disk.Close()
 		os.RemoveAll("test-table")

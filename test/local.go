@@ -15,7 +15,7 @@ import (
 	"github.com/kelindar/talaria/internal/monitor"
 	"github.com/kelindar/talaria/internal/monitor/logging"
 	"github.com/kelindar/talaria/internal/monitor/statsd"
-	"github.com/kelindar/talaria/internal/scripting"
+	script "github.com/kelindar/talaria/internal/scripting"
 	"github.com/kelindar/talaria/internal/server"
 	"github.com/kelindar/talaria/internal/server/cluster"
 	"github.com/kelindar/talaria/internal/storage/disk"
@@ -65,7 +65,7 @@ func main() {
 	gossip := cluster.New(7946)
 	gossip.JoinHostname("localhost")
 
-	store := disk.Open(cfg().Storage.Directory, cfg().Tables.Timeseries.Name, monitor)
+	store := disk.Open(cfg().Storage.Directory, cfg().Tables.Timeseries.Name, monitor, config.Badger{})
 
 	// Start the server and open the database
 	eventlog := timeseries.New(gossip, monitor, store, timeseries.Config{

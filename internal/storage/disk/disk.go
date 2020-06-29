@@ -16,6 +16,7 @@ import (
 
 	"github.com/dgraph-io/badger/v2"
 	"github.com/grab/async"
+	"github.com/kelindar/talaria/internal/config"
 	"github.com/kelindar/talaria/internal/encoding/key"
 	"github.com/kelindar/talaria/internal/monitor"
 	"github.com/kelindar/talaria/internal/monitor/errors"
@@ -46,10 +47,10 @@ func New(m monitor.Monitor) *Storage {
 }
 
 // Open creates a disk storage and open the directory
-func Open(dir string, name string, monitor monitor.Monitor) *Storage {
+func Open(dir string, name string, monitor monitor.Monitor, options config.Badger) *Storage {
 	diskStorage := New(monitor)
 	tableDir := path.Join(dir, name)
-	err := diskStorage.Open(tableDir)
+	err := diskStorage.Open(tableDir, options)
 	if err != nil {
 		panic(err)
 	}
@@ -57,7 +58,7 @@ func Open(dir string, name string, monitor monitor.Monitor) *Storage {
 }
 
 // Open opens a directory.
-func (s *Storage) Open(dir string) error {
+func (s *Storage) Open(dir string, options config.Badger) error {
 
 	// Default to a /data directory
 	if dir == "" {
@@ -71,44 +72,52 @@ func (s *Storage) Open(dir string) error {
 
 	// Create the options
 	opts := badger.DefaultOptions(dir)
-	opts.SyncWrites = false
-	// max size of lsm tree in bytes after which data is propagated to disk. default is 64 MB.
-	//opts.MaxTableSize = 64 << 15
+	if options.SyncWrites != nil {
+		opts = opts.WithSyncWrites(*options.SyncWrites)
+	}
+
+	// max size of lsm tree in bytes after which data is propagated to disk.
+	// The default is 64 MB.
+	if options.MaxTableSize != nil {
+		opts = opts.WithMaxTableSize(*options.MaxTableSize)
+	}
 
 	// ValueLogMaxEntries sets the maximum number of entries a value log file can hold approximately.
 	// A actual size limit of a value log file is the minimum of ValueLogFileSize and
 	// ValueLogMaxEntries.
-	// Default is 1 Million
-	//opts.ValueLogMaxEntries = 5000
+	// The default value of ValueLogMaxEntries is 1 Million
+	if options.ValueLogMaxEntries != nil {
+		opts = opts.WithValueLogMaxEntries(*options.ValueLogMaxEntries)
+	}
 
-	// default is 20 MB
-	opts.LevelOneSize = 204800000
+	// LevelOneSize sets the maximum total size for Level 1.
+	// The default value of LevelOneSize is 20MB.
+	if options.LevelOneSize != nil {
+		opts = opts.WithLevelOneSize(*options.LevelOneSize)
+	}
+
+	// Maximum number of levels of compaction allowed in the LSM.
+	// The default value of MaxLevels is 7.
+	if options.MaxLevels != nil {
+		opts = opts.WithMaxLevels(*options.MaxLevels)
+	}
 
 	// LevelSizeMultiplier sets the ratio between the maximum sizes of contiguous levels in the LSM.
 	// Once a level grows to be larger than this ratio allowed, the compaction process will be
 	//  triggered.
 	// The default value of LevelSizeMultiplier is 10.
-	//opts.LevelSizeMultiplier = 3
+	if options.LevelSizeMultiplier != nil {
+		opts = opts.WithLevelSizeMultiplier(*options.LevelSizeMultiplier)
+	}
 
-	// Maximum number of levels of compaction allowed in the LSM.
-	//
-	// The default value of MaxLevels is 7.
-	opts.MaxLevels = 3
+	s.monitor.Info("disk options %s", options)
 
 	// Truncate indicates whether value log files should be truncated to delete corrupt data, if any.
 	// This option is ignored when ReadOnly is true.
-	//
 	// The default value of Truncate is false.
-	opts.Truncate = true
+	opts = opts.WithTruncate(true)
 
-	//opts.ValueLogLoadingMode = 0
-
-	opts.Logger = &logger{s.monitor}
-
-	//opts.InMemory = true
-
-	// default is 0.01
-	//opts.BloomFalsePositive = 0.5
+	opts = opts.WithLogger(&logger{s.monitor})
 
 	// Attempt to open the database
 	db, err := badger.Open(opts)

@@ -13,7 +13,7 @@ import (
 	"github.com/kelindar/talaria/internal/config"
 	"github.com/kelindar/talaria/internal/monitor"
 	"github.com/kelindar/talaria/internal/presto"
-	"github.com/kelindar/talaria/internal/scripting"
+	script "github.com/kelindar/talaria/internal/scripting"
 	"github.com/kelindar/talaria/internal/server"
 	"github.com/kelindar/talaria/internal/storage/disk"
 	"github.com/kelindar/talaria/internal/table/timeseries"
@@ -66,7 +66,7 @@ func BenchmarkQuery(b *testing.B) {
 		SortBy: cfg().Tables.Timeseries.SortBy,
 		Schema: "",
 	}
-	store := disk.Open(cfg().Storage.Directory, timeseriesCfg.Name, monitor)
+	store := disk.Open(cfg().Storage.Directory, timeseriesCfg.Name, monitor, cfg().Badger)
 
 	// Start the server and open the database
 	server := server.New(cfg, monitor, script.NewLoader(nil),
