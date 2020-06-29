@@ -116,7 +116,7 @@ func (s *Storage) Open(dir string, options config.Badger) error {
 	opts = opts.WithTruncate(true)
 
 	opts = opts.WithLogger(&logger{s.monitor})
-	s.monitor.Info("opening badger with options %+v", options)
+	s.monitor.Info("opening badger with options %+v", opts)
 
 	// Attempt to open the database
 	db, err := badger.Open(opts)
