@@ -252,7 +252,10 @@ func populate(store *Storage) {
 
 func TestOpen(t *testing.T) {
 	assert.NotPanicsf(t, func() {
-		disk := Open(".", "test-table", monitor.NewNoop(), config.Badger{})
+		syncWrites := false
+		disk := Open(".", "test-table", monitor.NewNoop(), config.Badger{
+			SyncWrites: &syncWrites,
+		})
 		assert.NotNil(t, disk)
 		disk.Close()
 		os.RemoveAll("test-table")
