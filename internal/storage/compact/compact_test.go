@@ -62,7 +62,10 @@ func runTest(t *testing.T, test func(store *disk.Storage)) {
 func run(f func(store *disk.Storage)) {
 	dir, _ := ioutil.TempDir("", "test")
 	store := disk.New(monitor.NewNoop())
-	_ = store.Open(dir, config.Badger{})
+	syncWrite := false
+	_ = store.Open(dir, config.Badger{
+		SyncWrites: &syncWrite,
+	})
 
 	// Close once we're done and delete data
 	defer func() { _ = os.RemoveAll(dir) }()
