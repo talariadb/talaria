@@ -110,14 +110,13 @@ func (s *Storage) Open(dir string, options config.Badger) error {
 		opts = opts.WithLevelSizeMultiplier(*options.LevelSizeMultiplier)
 	}
 
-	s.monitor.Info("disk options %s", options)
-
 	// Truncate indicates whether value log files should be truncated to delete corrupt data, if any.
 	// This option is ignored when ReadOnly is true.
 	// The default value of Truncate is false.
 	opts = opts.WithTruncate(true)
 
 	opts = opts.WithLogger(&logger{s.monitor})
+	s.monitor.Info("opening badger with options %+v", options)
 
 	// Attempt to open the database
 	db, err := badger.Open(opts)
