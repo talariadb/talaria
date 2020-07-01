@@ -91,7 +91,7 @@ func main() {
 		logTable,
 	)
 
-	// onSignal will be cHandleralled when a OS-level signal is received.
+	// onSignal will be called when a OS-level signal is received.
 	onSignal(func(_ os.Signal) {
 		cancel()       // Cancel the context
 		gossip.Close() // Close the gossip layer

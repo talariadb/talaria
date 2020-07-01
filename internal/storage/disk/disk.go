@@ -70,8 +70,16 @@ func (s *Storage) Open(dir string, options config.Badger) error {
 		return err
 	}
 
-	// Create the options
 	opts := badger.DefaultOptions(dir)
+
+	switch options.Default {
+	case config.BadgerStorage:
+		opts = opts.WithMaxLevels(64 << 15).WithValueLogMaxEntries(5000).WithLevelOneSize(1 << 16).WithLevelSizeMultiplier(3).WithMaxLevels(25).WithSyncWrites(false)
+	case config.BadgerIngestion:
+		opts = opts.WithLevelOneSize(204800000).WithMaxLevels(3).WithSyncWrites(false)
+	}
+
+	// Create the options
 	if options.SyncWrites != nil {
 		opts = opts.WithSyncWrites(*options.SyncWrites)
 	}
