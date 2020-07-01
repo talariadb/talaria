@@ -13,9 +13,9 @@ import (
 type BadgerDefault string
 
 const (
-	BadgerStorage       BadgerDefault = "BadgerStorage"
-	BadgerIngestion     BadgerDefault = "BadgerIngestion"
-	BadgerDefaultOption BadgerDefault = "BadgerDefault"
+	BadgerStorage       BadgerDefault = "storage"
+	BadgerIngestion     BadgerDefault = "ingestion"
+	BadgerDefaultOption BadgerDefault = "default"
 )
 
 // Config global
