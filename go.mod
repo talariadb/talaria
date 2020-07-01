@@ -16,14 +16,16 @@ require (
 	github.com/armon/go-metrics v0.3.3 // indirect
 	github.com/aws/aws-sdk-go v1.30.25
 	github.com/crphang/orc v0.0.3
-	github.com/dgraph-io/badger/v2 v2.0.3
+	github.com/dgraph-io/badger/v2 v2.0.1-rc1.0.20200626160443-3042e3776798
 	github.com/dgraph-io/ristretto v0.0.2 // indirect
 	github.com/dgryski/go-farm v0.0.0-20200201041132-a6ae2369ad13 // indirect
 	github.com/dnaeon/go-vcr v1.0.1 // indirect
 	github.com/emitter-io/address v1.0.0
 	github.com/gogo/protobuf v1.3.1
+	github.com/golang/groupcache v0.0.0-20200121045136-8c9f03a8e57e // indirect
 	github.com/golang/protobuf v1.4.1 // indirect
 	github.com/golang/snappy v0.0.1
+	github.com/google/btree v1.0.0 // indirect
 	github.com/gopherjs/gopherjs v0.0.0-20200209183636-89e6cbcd0b6d // indirect
 	github.com/gorilla/mux v1.7.4
 	github.com/grab/async v0.0.5
@@ -39,6 +41,8 @@ require (
 	github.com/kelindar/loader v0.0.10
 	github.com/kelindar/lua v0.0.6
 	github.com/miekg/dns v1.1.29 // indirect
+	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
+	github.com/modern-go/reflect2 v1.0.1 // indirect
 	github.com/myteksi/hystrix-go v1.1.3
 	github.com/samuel/go-thrift v0.0.0-20191111193933-5165175b40af
 	github.com/satori/go.uuid v1.2.0 // indirect

@@ -7,13 +7,13 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	_ "net/http/pprof"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
 
 	"github.com/gorilla/mux"
-
 	"github.com/kelindar/lua"
 	"github.com/kelindar/talaria/internal/config"
 	"github.com/kelindar/talaria/internal/config/env"
@@ -22,7 +22,7 @@ import (
 	"github.com/kelindar/talaria/internal/monitor"
 	"github.com/kelindar/talaria/internal/monitor/logging"
 	"github.com/kelindar/talaria/internal/monitor/statsd"
-	"github.com/kelindar/talaria/internal/scripting"
+	script "github.com/kelindar/talaria/internal/scripting"
 	mlog "github.com/kelindar/talaria/internal/scripting/log"
 	mnet "github.com/kelindar/talaria/internal/scripting/net"
 	mstats "github.com/kelindar/talaria/internal/scripting/stats"
@@ -73,7 +73,7 @@ func main() {
 
 	// Create a storage, if compact store is enabled then use the compact store
 	monitor.Info("server: opening data directory %s...", conf.Storage.Directory)
-	store := storage.Storage(disk.Open(conf.Storage.Directory, conf.Tables.Timeseries.Name, monitor))
+	store := storage.Storage(disk.Open(conf.Storage.Directory, conf.Tables.Timeseries.Name, monitor, conf.Badger))
 	if conf.Storage.Compact != nil {
 		store = writer.New(conf.Storage.Compact, monitor, store, loader)
 	}
@@ -107,7 +107,7 @@ func main() {
 		startHTTPServerAsync(conf.K8s.ProbePort)
 	}
 
-	// Start listen
+	// Start listenHandler
 	monitor.Info("server: starting...")
 	monitor.Count1(logTag, "start")
 	if err := server.Listen(ctx, conf.Readers.Presto.Port, conf.Writers.GRPC.Port); err != nil {
@@ -132,6 +132,7 @@ func startHTTPServerAsync(portNum int32) {
 		handler.HandleFunc("/healthz", func(resp http.ResponseWriter, req *http.Request) {
 			_, _ = resp.Write([]byte(`talaria-health-check`))
 		}).Methods(http.MethodGet, http.MethodHead)
+		handler.PathPrefix("/debug/pprof/").Handler(http.DefaultServeMux)
 
 		server := &http.Server{
 			Addr:    fmt.Sprintf(":%d", portNum),

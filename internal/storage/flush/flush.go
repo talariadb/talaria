@@ -5,6 +5,7 @@ package flush
 
 import (
 	"bytes"
+	"compress/flate"
 	"sync"
 	"time"
 
@@ -68,7 +69,7 @@ func (s *Storage) Merge(blocks []block.Block, schema typeof.Schema) ([]byte, []b
 	buffer := s.memoryPool.Get().(*bytes.Buffer)
 	writer, err := eorc.NewWriter(buffer,
 		eorc.SetSchema(orcSchema),
-		eorc.SetCompression(eorc.CompressionSnappy{}))
+		eorc.SetCompression(eorc.CompressionZlib{Level: flate.DefaultCompression}))
 
 	for _, blk := range blocks {
 		rows, err := blk.Select(blk.Schema())

@@ -5,6 +5,7 @@ package flush
 
 import (
 	"bytes"
+	"compress/flate"
 	"io/ioutil"
 	"testing"
 
@@ -74,7 +75,7 @@ func TestMerge(t *testing.T) {
 	orcBuffer := &bytes.Buffer{}
 	writer, _ = eorc.NewWriter(orcBuffer,
 		eorc.SetSchema(orcSchema),
-		eorc.SetCompression(eorc.CompressionSnappy{}))
+		eorc.SetCompression(eorc.CompressionZlib{Level: flate.DefaultCompression}))
 	_ = writer.Write("eventName", 1, 1.0)
 	_ = writer.Write("eventName", 2, 2.0)
 	_ = writer.Close()
@@ -152,7 +153,7 @@ func TestMerge_DifferentSchema(t *testing.T) {
 	orcBuffer := &bytes.Buffer{}
 	writer, _ = eorc.NewWriter(orcBuffer,
 		eorc.SetSchema(orcSchema2),
-		eorc.SetCompression(eorc.CompressionSnappy{}))
+		eorc.SetCompression(eorc.CompressionZlib{Level: flate.DefaultCompression}))
 	_ = writer.Write("eventName", 1, 1.0, nil)
 	_ = writer.Write("eventName", 2, 2.0, "s")
 	_ = writer.Close()

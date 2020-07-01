@@ -4,6 +4,10 @@
 package timeseries_test
 
 import (
+	"io/ioutil"
+	"os"
+	"testing"
+
 	"github.com/kelindar/talaria/internal/config"
 	"github.com/kelindar/talaria/internal/encoding/block"
 	"github.com/kelindar/talaria/internal/encoding/typeof"
@@ -12,9 +16,6 @@ import (
 	"github.com/kelindar/talaria/internal/storage/disk"
 	"github.com/kelindar/talaria/internal/table/timeseries"
 	"github.com/stretchr/testify/assert"
-	"io/ioutil"
-	"os"
-	"testing"
 )
 
 const testFile2 = "../../../test/test2.orc"
@@ -56,7 +57,7 @@ func TestTimeseries_DynamicSchema(t *testing.T) {
 	}
 
 	monitor := monitor2.NewNoop()
-	store := disk.Open(dir, timeseriesCfg.Name, monitor)
+	store := disk.Open(dir, timeseriesCfg.Name, monitor, config.Badger{})
 
 	// Start the server and open the database
 	eventlog := timeseries.New(new(noopMembership), monitor, store, timeseriesCfg)
@@ -147,7 +148,7 @@ int1: int64
 	}
 
 	monitor := monitor2.NewNoop()
-	store := disk.Open(dir, timeseriesCfg.Name, monitor)
+	store := disk.Open(dir, timeseriesCfg.Name, monitor, config.Badger{})
 
 	// Start the server and open the database
 	eventlog := timeseries.New(new(noopMembership), monitor, store, timeseriesCfg)
@@ -157,11 +158,10 @@ int1: int64
 	assert.Nil(t, err)
 	expectedSchema := typeof.Schema{
 		"string1": typeof.String,
-		"int1": typeof.Int64,
+		"int1":    typeof.Int64,
 	}
 	assert.Equal(t, expectedSchema, actualSchema)
 }
-
 
 func newSplitQuery(eventName, colName string) *presto.PrestoThriftTupleDomain {
 	return &presto.PrestoThriftTupleDomain{
