@@ -121,19 +121,25 @@ func (b *PrestoThriftInteger) Min() (int64, bool) {
 }
 
 // Range iterates over the column executing f on its elements
-func (b *PrestoThriftInteger) Range(from int, until int, f func(int, interface{})) {
+func (b *PrestoThriftInteger) Range(from int, until int, f func(int, interface{}) error) error {
 	for i := from; i < until; i++ {
 		if i >= len(b.Ints) {
 			break
 		}
 
 		if b.Nulls[i] {
-			f(i, nil)
+			if err := f(i, nil); err != nil {
+				return err
+			}
 			continue
 		}
 
-		f(i, b.Ints[i])
+		if err := f(i, b.Ints[i]); err != nil {
+			return err
+		}
 	}
+
+	return nil
 }
 
 // ------------------------------------------------------------------------------------------------------------
@@ -234,19 +240,25 @@ func (b *PrestoThriftBigint) Kind() typeof.Type {
 }
 
 // Range iterates over the column executing f on its elements
-func (b *PrestoThriftBigint) Range(from int, until int, f func(int, interface{})) {
+func (b *PrestoThriftBigint) Range(from int, until int, f func(int, interface{}) error) error {
 	for i := from; i < until; i++ {
 		if i >= len(b.Longs) {
 			break
 		}
 
 		if b.Nulls[i] {
-			f(i, nil)
+			if err := f(i, nil); err != nil {
+				return err
+			}
 			continue
 		}
 
-		f(i, b.Longs[i])
+		if err := f(i, b.Longs[i]); err !=nil {
+			return err
+		}
 	}
+
+	return nil
 }
 
 // ------------------------------------------------------------------------------------------------------------
@@ -335,19 +347,25 @@ func (b *PrestoThriftDouble) Min() (int64, bool) {
 }
 
 // Range iterates over the column executing f on its elements
-func (b *PrestoThriftDouble) Range(from int, until int, f func(int, interface{})) {
+func (b *PrestoThriftDouble) Range(from int, until int, f func(int, interface{}) error) error {
 	for i := from; i < until; i++ {
 		if i >= len(b.Doubles) {
 			break
 		}
 
 		if b.Nulls[i] {
-			f(i, nil)
+			if err := f(i, nil); err != nil {
+				return err
+			}
 			continue
 		}
 
-		f(i, b.Doubles[i])
+		if err := f(i, b.Doubles[i]); err != nil {
+			return err
+		}
 	}
+
+	return nil
 }
 
 // ------------------------------------------------------------------------------------------------------------
@@ -445,7 +463,7 @@ func (b *PrestoThriftVarchar) Min() (int64, bool) {
 }
 
 // Range iterates over the column executing f on its elements
-func (b *PrestoThriftVarchar) Range(from int, until int, f func(int, interface{})) {
+func (b *PrestoThriftVarchar) Range(from int, until int, f func(int, interface{}) error) error {
 	var offset int32
 	// Seek to current offset
 	for k := 0; k < from; k++ {
@@ -459,14 +477,20 @@ func (b *PrestoThriftVarchar) Range(from int, until int, f func(int, interface{}
 
 		size := b.Sizes[i]
 		if b.Nulls[i] {
-			f(i, nil)
+			if err := f(i, nil); err != nil {
+				return err
+			}
 			continue
 		}
 
 		v := b.Bytes[offset : offset+size]
-		f(i, binaryToString(&v))
+		if err := f(i, binaryToString(&v)); err != nil {
+			return err
+		}
 		offset += size
 	}
+
+	return nil
 }
 
 // ------------------------------------------------------------------------------------------------------------
@@ -555,19 +579,25 @@ func (b *PrestoThriftBoolean) Min() (int64, bool) {
 }
 
 // Range iterates over the column executing f on its elements
-func (b *PrestoThriftBoolean) Range(from int, until int, f func(int, interface{})) {
+func (b *PrestoThriftBoolean) Range(from int, until int, f func(int, interface{}) error) error {
 	for i := from; i < until; i++ {
 		if i >= len(b.Booleans) {
 			break
 		}
 
 		if b.Nulls[i] {
-			f(i, nil)
+			if err := f(i, nil); err != nil {
+				return err
+			}
 			continue
 		}
 
-		f(i, b.Booleans[i])
+		if err := f(i, b.Booleans[i]); err != nil {
+			return err
+		}
 	}
+
+	return nil
 }
 
 // ------------------------------------------------------------------------------------------------------------
@@ -666,19 +696,24 @@ func (b *PrestoThriftTimestamp) Min() (int64, bool) {
 }
 
 // Range iterates over the column executing f on its elements
-func (b *PrestoThriftTimestamp) Range(from int, until int, f func(int, interface{})) {
+func (b *PrestoThriftTimestamp) Range(from int, until int, f func(int, interface{}) error) error {
 	for i := from; i < until; i++ {
 		if i >= len(b.Timestamps) {
 			break
 		}
 
 		if b.Nulls[i] {
-			f(i, nil)
+			if err := f(i, nil); err != nil {
+				return err
+			}
 			continue
 		}
 
-		f(i, time.Unix(b.Timestamps[i]/1000, 0))
+		if err := f(i, time.Unix(b.Timestamps[i]/1000, 0)); err !=nil {
+			return err
+		}
 	}
+	return nil
 }
 
 // ------------------------------------------------------------------------------------------------------------
@@ -787,7 +822,7 @@ func (b *PrestoThriftJson) Min() (int64, bool) {
 }
 
 // Range iterates over the column executing f on its elements
-func (b *PrestoThriftJson) Range(from int, until int, f func(int, interface{})) {
+func (b *PrestoThriftJson) Range(from int, until int, f func(int, interface{}) error) error {
 	var offset int32
 	// Seek to current offset
 	for k := 0; k < from; k++ {
@@ -801,14 +836,20 @@ func (b *PrestoThriftJson) Range(from int, until int, f func(int, interface{})) 
 
 		size := b.Sizes[i]
 		if b.Nulls[i] {
-			f(i, nil)
+			if err := f(i, nil); err != nil {
+				return err
+			}
 			continue
 		}
 
 		v := b.Bytes[offset : offset+size]
-		f(i, binaryToString(&v))
+		if err := f(i, binaryToString(&v)); err != nil {
+			return err
+		}
 		offset += size
 	}
+
+	return nil
 }
 
 // Converts binary to string in a zero-alloc manner

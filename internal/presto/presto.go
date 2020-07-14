@@ -27,7 +27,7 @@ type Column interface {
 	Min() (int64, bool)
 	AsThrift() *PrestoThriftBlock
 	AsProto() *talaria.Column
-	Range(from int, until int, f func(int, interface{}))
+	Range(from int, until int, f func(int, interface{}) error) error
 }
 
 // Serve creates and serves thrift RPC for presto. Context is used for cancellation purposes.
