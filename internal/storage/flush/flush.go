@@ -106,7 +106,9 @@ func (s *Storage) Merge(blocks []block.Block, schema typeof.Schema) ([]byte, []b
 		return nil, nil
 	}
 
-	output := buffer.Bytes()
+	output := make([]byte, len(buffer.Bytes()))
+	copy(output, buffer.Bytes())
+
 	buffer.Reset()
 	s.memoryPool.Put(buffer)
 
