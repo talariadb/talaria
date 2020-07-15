@@ -25,6 +25,7 @@ func (s *Server) Ingest(ctx context.Context, request *talaria.IngestRequest) (*t
 	blocks, err := block.FromRequestBy(request, timeSeriesConf.HashBy, &schema, s.computed...)
 	if err != nil {
 		s.monitor.Count1(ctxTag, ingestErrorKey, "type:convert")
+		s.monitor.Error(errors.Internal("ingesting blocks error %s", err))
 		return nil, errors.Internal("unable to read the block", err)
 	}
 
@@ -33,13 +34,14 @@ func (s *Server) Ingest(ctx context.Context, request *talaria.IngestRequest) (*t
 		if appender, ok := t.(table.Appender); ok {
 			for _, block := range blocks {
 				if err := appender.Append(block); err != nil {
+					s.monitor.Error(errors.Internal("ingesting blocks append error %s", err))
 					s.monitor.Count1(ctxTag, ingestErrorKey, "type:append")
 					return nil, err
 				}
 			}
 		}
 	}
-
+	s.monitor.Info("ingesting blocks %s", len(blocks))
 	s.monitor.Count("server", "ingestCount", int64(len(blocks)))
 	return nil, nil
 }
