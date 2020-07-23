@@ -13,6 +13,7 @@ import (
 	"syscall"
 	"time"
 
+	eorc "github.com/crphang/orc"
 	"github.com/gorilla/mux"
 	"github.com/kelindar/lua"
 	"github.com/kelindar/talaria/internal/config"
@@ -41,6 +42,7 @@ const (
 )
 
 func main() {
+	eorc.DefaultCompressionChunkSize = 16 * eorc.DefaultCompressionChunkSize
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 

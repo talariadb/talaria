@@ -90,14 +90,20 @@ func (s *Storage) Merge(blocks []block.Block, schema typeof.Schema) ([]byte, []b
 
 		cols.FillNulls()
 
-		colIterator := []eorc.ColumnIterator{}
+		allCols := []column.Column{}
+
 		for _, colName := range schema.Columns() {
-			colIterator = append(colIterator, cols[colName])
+			allCols = append(allCols, cols[colName])
 		}
 
-		if err := writer.WriteColumns(colIterator); err != nil {
-			s.monitor.Error(errors.Internal("flush: error writing columns", err))
-			return nil, nil
+		for i := 0; i < allCols[0].Count(); i++ {
+			row := []interface{}{}
+			for j := 0; j < len(allCols); j++ {
+				row = append(row, allCols[j].At(i))
+			}
+			if err := writer.Write(row...); err != nil {
+				s.monitor.Error(errors.Internal("flush: error writing row", err))
+			}
 		}
 	}
 
