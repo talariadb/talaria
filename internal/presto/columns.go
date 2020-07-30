@@ -142,6 +142,14 @@ func (b *PrestoThriftInteger) Range(from int, until int, f func(int, interface{}
 	return nil
 }
 
+func (b *PrestoThriftInteger) At(index int) interface{} {
+	if index >= len(b.Ints) || b.Nulls[index] {
+		return nil
+	}
+
+	return b.Ints[index]
+}
+
 // ------------------------------------------------------------------------------------------------------------
 
 // Append adds a value to the block.
@@ -261,6 +269,14 @@ func (b *PrestoThriftBigint) Range(from int, until int, f func(int, interface{})
 	return nil
 }
 
+func (b *PrestoThriftBigint) At(index int) interface{} {
+	if index >= len(b.Longs) || b.Nulls[index] {
+		return nil
+	}
+
+	return b.Longs[index]
+}
+
 // ------------------------------------------------------------------------------------------------------------
 
 // Append adds a value to the block.
@@ -366,6 +382,14 @@ func (b *PrestoThriftDouble) Range(from int, until int, f func(int, interface{})
 	}
 
 	return nil
+}
+
+func (b *PrestoThriftDouble) At(index int) interface{} {
+	if index >= len(b.Doubles) || b.Nulls[index] {
+		return nil
+	}
+
+	return b.Doubles[index]
 }
 
 // ------------------------------------------------------------------------------------------------------------
@@ -493,6 +517,22 @@ func (b *PrestoThriftVarchar) Range(from int, until int, f func(int, interface{}
 	return nil
 }
 
+func (b *PrestoThriftVarchar) At(index int) interface{} {
+	if index >= len(b.Sizes) || b.Nulls[index] {
+		return nil
+	}
+
+	var offset int32
+	// Seek to current offset
+	for k := 0; k < index; k++ {
+		offset += b.Sizes[k]
+	}
+
+	size := b.Sizes[index]
+	v := b.Bytes[offset:offset+size]
+	return binaryToString(&v)
+}
+
 // ------------------------------------------------------------------------------------------------------------
 
 // Append adds a value to the block.
@@ -598,6 +638,14 @@ func (b *PrestoThriftBoolean) Range(from int, until int, f func(int, interface{}
 	}
 
 	return nil
+}
+
+func (b *PrestoThriftBoolean) At(index int) interface{} {
+	if index >= len(b.Booleans) || b.Nulls[index] {
+		return nil
+	}
+
+	return b.Booleans[index]
 }
 
 // ------------------------------------------------------------------------------------------------------------
@@ -714,6 +762,14 @@ func (b *PrestoThriftTimestamp) Range(from int, until int, f func(int, interface
 		}
 	}
 	return nil
+}
+
+func (b *PrestoThriftTimestamp) At(index int) interface{} {
+	if index >= len(b.Timestamps) || b.Nulls[index] {
+		return nil
+	}
+
+	return b.Timestamps[index]
 }
 
 // ------------------------------------------------------------------------------------------------------------
@@ -850,6 +906,22 @@ func (b *PrestoThriftJson) Range(from int, until int, f func(int, interface{}) e
 	}
 
 	return nil
+}
+
+func (b *PrestoThriftJson) At(index int) interface{} {
+	if index >= len(b.Sizes) || b.Nulls[index] {
+		return nil
+	}
+
+	var offset int32
+	// Seek to current offset
+	for k := 0; k < index; k++ {
+		offset += b.Sizes[k]
+	}
+
+	size := b.Sizes[index]
+	v := b.Bytes[offset:offset+size]
+	return binaryToString(&v)
 }
 
 // Converts binary to string in a zero-alloc manner
