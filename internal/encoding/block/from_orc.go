@@ -114,6 +114,8 @@ func convertToJSON(value interface{}) (string, bool) {
 			remap[fmt.Sprintf("%v", v.Key)] = v.Value
 		}
 		value = remap
+	case string:
+		return value.(string), true
 	case orctype.Struct:
 	case []interface{}:
 	case interface{}:
