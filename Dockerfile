@@ -1,5 +1,5 @@
 FROM golang:1.14 AS builder
-LABEL maintainer="roman.atachiants@google.com"
+LABEL maintainer="roman.atachiants@gmail.com"
 
 # Copy the directory into the container outside of the gopath
 RUN mkdir -p /go/src/github.com/kelindar/talaria/
