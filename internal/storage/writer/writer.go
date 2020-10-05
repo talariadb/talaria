@@ -11,7 +11,7 @@ import (
 	"github.com/kelindar/talaria/internal/encoding/typeof"
 	"github.com/kelindar/talaria/internal/monitor"
 	"github.com/kelindar/talaria/internal/monitor/errors"
-	"github.com/kelindar/talaria/internal/scripting"
+	script "github.com/kelindar/talaria/internal/scripting"
 	"github.com/kelindar/talaria/internal/storage"
 	"github.com/kelindar/talaria/internal/storage/compact"
 	"github.com/kelindar/talaria/internal/storage/flush"
@@ -22,6 +22,7 @@ import (
 	"github.com/kelindar/talaria/internal/storage/writer/multi"
 	"github.com/kelindar/talaria/internal/storage/writer/noop"
 	"github.com/kelindar/talaria/internal/storage/writer/s3"
+	"github.com/kelindar/talaria/internal/storage/writer/talaria"
 )
 
 var seed = maphash.MakeSeed()
@@ -103,6 +104,15 @@ func newWriter(config *config.Compaction) (flush.Writer, error) {
 	// Configure File writer if present
 	if config.File != nil {
 		w, err := file.New(config.File.Directory)
+		if err != nil {
+			return nil, err
+		}
+		writers = append(writers, w)
+	}
+
+	// Configure Talaria writer if present
+	if config.Talaria != nil {
+		w, err := talaria.New(config.Talaria.Endpoint)
 		if err != nil {
 			return nil, err
 		}

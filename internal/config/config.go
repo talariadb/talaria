@@ -137,6 +137,7 @@ type Compaction struct {
 	BigQuery *BigQuerySink `json:"bigquery" yaml:"bigquery" env:"BIGQUERY"` // The Big Query writer configuration
 	GCS      *GCSSink      `json:"gcs" yaml:"gcs" env:"GCS"`                // The Google Cloud Storage writer configuration
 	File     *FileSink     `json:"file" yaml:"file" env:"FILE"`             // The local file system writer configuration
+	Talaria  *TalariaSink  `json:"talaria" yaml:"talaria" env:"TALARIA"`    // The Talaria writer configuration
 }
 
 // S3Sink represents a sink for AWS S3 and compatible stores.
@@ -173,6 +174,11 @@ type GCSSink struct {
 // FileSink represents a sink to the local file system
 type FileSink struct {
 	Directory string `json:"dir" yaml:"dir" env:"DIR"`
+}
+
+// TalariaSink represents a sink to an instance of Talaria
+type TalariaSink struct {
+	Endpoint string `json:"endpoint" yaml:"endpoint" env:"ENDPOINT"` // The second Talaria endpoint
 }
 
 // Func represents a config function
