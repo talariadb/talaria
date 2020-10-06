@@ -10,6 +10,6 @@ storage:
     interval: 60                         # compact every 60 seconds
     nameFunc: "s3://bucket/namefunc.lua" # file name function
     talaria:                             # sink to Talaria
-      endpoint: "http://127.0.0.1"       # Talaria endpoint to write data to
+      endpoint: "127.0.0.1:8043"         # Talaria endpoint to write data to
 ...
 ```
