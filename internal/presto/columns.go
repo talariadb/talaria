@@ -261,7 +261,7 @@ func (b *PrestoThriftBigint) Range(from int, until int, f func(int, interface{})
 			continue
 		}
 
-		if err := f(i, b.Longs[i]); err !=nil {
+		if err := f(i, b.Longs[i]); err != nil {
 			return err
 		}
 	}
@@ -529,7 +529,7 @@ func (b *PrestoThriftVarchar) At(index int) interface{} {
 	}
 
 	size := b.Sizes[index]
-	v := b.Bytes[offset:offset+size]
+	v := b.Bytes[offset : offset+size]
 	return binaryToString(&v)
 }
 
@@ -757,7 +757,7 @@ func (b *PrestoThriftTimestamp) Range(from int, until int, f func(int, interface
 			continue
 		}
 
-		if err := f(i, time.Unix(b.Timestamps[i]/1000, 0)); err !=nil {
+		if err := f(i, time.Unix(b.Timestamps[i]/1000, 0)); err != nil {
 			return err
 		}
 	}
@@ -769,7 +769,7 @@ func (b *PrestoThriftTimestamp) At(index int) interface{} {
 		return nil
 	}
 
-	return b.Timestamps[index]
+	return time.Unix(b.Timestamps[index]/1000, 0)
 }
 
 // ------------------------------------------------------------------------------------------------------------
@@ -920,7 +920,7 @@ func (b *PrestoThriftJson) At(index int) interface{} {
 	}
 
 	size := b.Sizes[index]
-	v := b.Bytes[offset:offset+size]
+	v := b.Bytes[offset : offset+size]
 	return binaryToString(&v)
 }
 
