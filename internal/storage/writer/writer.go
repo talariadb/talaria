@@ -112,7 +112,7 @@ func newWriter(config *config.Compaction) (flush.Writer, error) {
 
 	// Configure Talaria writer if present
 	if config.Talaria != nil {
-		w, err := talaria.New(config.Talaria.Endpoint)
+		w, err := talaria.New(config.Talaria.Endpoint, config.Talaria.DialTimeout, config.Talaria.CircuitTimeout, config.Talaria.MaxConcurrent, config.Talaria.ErrorPercentThreshold, config.Talaria.NonBlocking)
 		if err != nil {
 			return nil, err
 		}
