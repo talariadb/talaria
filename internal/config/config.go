@@ -178,7 +178,12 @@ type FileSink struct {
 
 // TalariaSink represents a sink to an instance of Talaria
 type TalariaSink struct {
-	Endpoint string `json:"endpoint" yaml:"endpoint" env:"ENDPOINT"` // The second Talaria endpoint
+	Endpoint              string        `json:"endpoint" yaml:"endpoint" env:"ENDPOINT"`                                        // The second Talaria endpoint
+	DialTimeout           time.Duration `json:"dialTimeout" yaml:"dialTimeout" end:"DIALTIMEOUT"`                               // The timeout (in seconds) for dialing to the second Talaria
+	CircuitTimeout        time.Duration `json:"circuitTimeout" yaml:"circuitTimeout" env:"CIRCUITTIMEOUT"`                      // The timeout (in seconds) for requests to the second Talaria
+	MaxConcurrent         int           `json:"maxConcurrent" yaml:"maxConcurrent" env:"MAXCONCURRENT"`                         // The number of concurrent requests permissible
+	ErrorPercentThreshold int           `json:"errorPercentThreshold" yaml:"errorPercentThreshold" env:"ERRORPERCENTTHRESHOLD"` // The percentage of failed requests tolerated
+	NonBlocking           bool          `json:"nonBlocking" yaml:"nonBlocking" env:"NONBLOCKING"`                               // Whether client connection is blocking or non-blocking
 }
 
 // Func represents a config function
