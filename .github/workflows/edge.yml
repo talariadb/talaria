@@ -15,7 +15,10 @@ jobs:
           go-version: 1.14
         id: go
       - name: Login to DockerHub Registry
-        run: echo ${{ secrets.DOCKERHUB_PASSWORD }} | docker login -u ${{ secrets.DOCKERHUB_USERNAME }} --password-stdin
+        uses: docker/login-action@v1
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_PASSWORD }}
       - name: Check out code into the Go module directory
         uses: actions/checkout@v1
       - name: Build the Docker image
