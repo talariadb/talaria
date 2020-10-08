@@ -15,6 +15,5 @@ storage:
       circuitTimeout: 5                  # Timeout for requests to Talaria
       maxConcurrent: 10                  # Number of concurrent requests to Talaria
       errorPercentThreshold: 50          # Percentage of errors before no more requests are sent
-      nonBlocking: false                  # Whether to wait to establish a connection with Talaria
 ...
 ```
