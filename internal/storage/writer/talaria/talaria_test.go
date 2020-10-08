@@ -7,7 +7,7 @@ import (
 )
 
 func TestTalariaWriter(t *testing.T) {
-	c, err := New("www.talaria.net:8043", 5, 5, 10, 50, true)
+	c, err := New("www.talaria.net:8043", 5, 5, 10, 50, false)
 
 	// TODO: Impove test
 	assert.Nil(t, c)
