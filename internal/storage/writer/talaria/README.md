@@ -11,5 +11,10 @@ storage:
     nameFunc: "s3://bucket/namefunc.lua" # file name function
     talaria:                             # sink to Talaria
       endpoint: "127.0.0.1:8043"         # Talaria endpoint to write data to
+      dialTimeout: 5                     # Timeout for connecting to Talaria
+      circuitTimeout: 5                  # Timeout for requests to Talaria
+      maxConcurrent: 10                  # Number of concurrent requests to Talaria
+      errorPercentThreshold: 50          # Percentage of errors before no more requests are sent
+      nonBlocking: false                  # Whether to wait to establish a connection with Talaria
 ...
 ```

@@ -3,36 +3,69 @@ package talaria
 import (
 	"context"
 	"sync"
+	"time"
 
 	talaria "github.com/kelindar/talaria/client/golang"
+
 	"github.com/kelindar/talaria/internal/encoding/key"
 	"github.com/kelindar/talaria/internal/monitor/errors"
 )
 
+// GetClient will create a Talaria client
+func GetClient(endpoint string, dialTimeout time.Duration, circuitTimeout time.Duration, maxConcurrent int, errorThresholdPercent int, nonBlocking bool) (*talaria.Client, error) {
+
+	var client *talaria.Client
+	var err error
+
+	if nonBlocking {
+		client, err = talaria.Dial(endpoint, talaria.WithNetwork(dialTimeout), talaria.WithCircuit(circuitTimeout, maxConcurrent, errorThresholdPercent), talaria.WithNonBlock())
+	} else {
+		client, err = talaria.Dial(endpoint, talaria.WithNetwork(dialTimeout), talaria.WithCircuit(circuitTimeout, maxConcurrent, errorThresholdPercent))
+	}
+
+	if err != nil {
+		return nil, err
+	}
+	return client, nil
+}
+
 // Writer to write to TalariaDB
 type Writer struct {
-	lock     sync.Mutex
-	endpoint string
-	client   *talaria.Client
+	lock                  sync.Mutex
+	endpoint              string
+	dialTimeout           time.Duration
+	circuitTimeout        time.Duration
+	maxConcurrent         int
+	errorPercentThreshold int
+	nonBlocking           bool
+	client                *talaria.Client
 }
 
 // New initializes a new Talaria writer.
-func New(endpoint string) (*Writer, error) {
-	talaria, err := talaria.Dial(endpoint)
+func New(endpoint string, dialTimeout time.Duration, circuitTimeout time.Duration, maxConcurrent int, errorPercentThreshold int, nonBlocking bool) (*Writer, error) {
+
+	dialTimeout = dialTimeout * time.Second
+	circuitTimeout = circuitTimeout * time.Second
+
+	client, err := GetClient(endpoint, dialTimeout, circuitTimeout, maxConcurrent, errorPercentThreshold, nonBlocking)
 	if err != nil {
-		return nil, errors.Internal("talaria: unable to connect", err)
+		return nil, errors.Internal("talaria: unable to create a client", err)
 	}
 
 	return &Writer{
-		client:   talaria,
-		endpoint: endpoint,
+		client:                client,
+		endpoint:              endpoint,
+		dialTimeout:           dialTimeout,
+		circuitTimeout:        circuitTimeout,
+		maxConcurrent:         maxConcurrent,
+		errorPercentThreshold: errorPercentThreshold,
+		nonBlocking:           nonBlocking,
 	}, nil
 }
 
 // Write will write the ORC data to Talaria
 func (w *Writer) Write(key key.Key, val []byte) error {
-	err := w.tryConnect()
-	if err != nil {
+	if err := w.tryConnect(); err != nil {
 		return errors.Internal("talaria: unable to connect", err)
 	}
 
@@ -47,7 +80,7 @@ func (w *Writer) tryConnect() error {
 	w.lock.Lock()
 	defer w.lock.Unlock()
 	if w.client == nil {
-		client, err := talaria.Dial(w.endpoint)
+		client, err := GetClient(w.endpoint, w.dialTimeout, w.circuitTimeout, w.maxConcurrent, w.errorPercentThreshold, w.nonBlocking)
 		if err != nil {
 			return err
 		}
