@@ -2,7 +2,6 @@ package talaria
 
 import (
 	"context"
-	"log"
 	"sync"
 	"time"
 
@@ -42,7 +41,6 @@ func New(endpoint string, dialTimeout time.Duration, circuitTimeout time.Duratio
 
 	dialTimeout = dialTimeout * time.Second
 	circuitTimeout = circuitTimeout * time.Second
-	log.Println(endpoint, dialTimeout, circuitTimeout, maxConcurrent, errorPercentThreshold)
 	client, err := GetClient(endpoint, dialTimeout, circuitTimeout, maxConcurrent, errorPercentThreshold)
 	if err != nil {
 		return nil, errors.Internal("talaria: unable to create a client", err)
