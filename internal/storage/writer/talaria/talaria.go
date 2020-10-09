@@ -6,6 +6,8 @@ import (
 	"time"
 
 	talaria "github.com/kelindar/talaria/client/golang"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	"github.com/kelindar/talaria/internal/encoding/key"
 	"github.com/kelindar/talaria/internal/monitor/errors"
@@ -58,11 +60,28 @@ func New(endpoint string, dialTimeout time.Duration, circuitTimeout time.Duratio
 
 // Write will write the ORC data to Talaria
 func (w *Writer) Write(key key.Key, val []byte) error {
-	if err := w.tryConnect(); err != nil {
-		return errors.Internal("talaria: unable to connect", err)
+
+	// Just in case client is nil, should not happen
+	if w.client == nil {
+		if err := w.tryConnect(); err != nil {
+			return errors.Internal("talaria: client is nil, unable to connect", err)
+		}
 	}
 
+	// Check error status if it needs to redial
 	if err := w.client.IngestORC(context.Background(), val); err != nil {
+		errStatus, _ := status.FromError(err)
+		if codes.Unavailable == errStatus.Code() {
+			// Server unavailable, redial
+			if err := w.tryConnect(); err != nil {
+				return errors.Internal("talaria: unable to redial", err)
+			}
+
+			// Send again after redial
+			if err := w.client.IngestORC(context.Background(), val); err != nil {
+				return errors.Internal("talaria: unable to write after redial", err)
+			}
+		}
 		return errors.Internal("talaria: unable to write", err)
 	}
 	return nil
@@ -72,13 +91,12 @@ func (w *Writer) Write(key key.Key, val []byte) error {
 func (w *Writer) tryConnect() error {
 	w.lock.Lock()
 	defer w.lock.Unlock()
-	if w.client == nil {
-		client, err := GetClient(w.endpoint, w.dialTimeout, w.circuitTimeout, w.maxConcurrent, w.errorPercentThreshold)
-		if err != nil {
-			return err
-		}
-		w.client = client
+
+	client, err := GetClient(w.endpoint, w.dialTimeout, w.circuitTimeout, w.maxConcurrent, w.errorPercentThreshold)
+	if err != nil {
+		return err
 	}
+	w.client = client
 	return nil
 }
 
