@@ -6,11 +6,10 @@ import (
 	"time"
 
 	talaria "github.com/kelindar/talaria/client/golang"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
-
 	"github.com/kelindar/talaria/internal/encoding/key"
 	"github.com/kelindar/talaria/internal/monitor/errors"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 // GetClient will create a Talaria client
@@ -72,6 +71,10 @@ func (w *Writer) Write(key key.Key, val []byte) error {
 	if err := w.client.IngestORC(context.Background(), val); err != nil {
 		errStatus, _ := status.FromError(err)
 		if codes.Unavailable == errStatus.Code() {
+
+			// Close current connection if possible, else just create new client
+			_ = w.client.Close()
+
 			// Server unavailable, redial
 			if err := w.tryConnect(); err != nil {
 				return errors.Internal("talaria: unable to redial", err)
