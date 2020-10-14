@@ -8,17 +8,14 @@ import (
 	talaria "github.com/kelindar/talaria/client/golang"
 	"github.com/kelindar/talaria/internal/encoding/key"
 	"github.com/kelindar/talaria/internal/monitor/errors"
+	"github.com/myteksi/hystrix-go/hystrix"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
 
-// GetClient will create a Talaria client
-func GetClient(endpoint string, dialTimeout time.Duration, circuitTimeout time.Duration, maxConcurrent int, errorThresholdPercent int) (*talaria.Client, error) {
-
-	var client *talaria.Client
-	var err error
-
-	client, err = talaria.Dial(endpoint, talaria.WithNetwork(dialTimeout), talaria.WithCircuit(circuitTimeout, maxConcurrent, errorThresholdPercent))
+// getClient will create a Talaria client
+func getClient(endpoint string, options ...talaria.Option) (*talaria.Client, error) {
+	client, err := talaria.Dial(endpoint, options...)
 
 	if err != nil {
 		return nil, err
@@ -28,39 +25,53 @@ func GetClient(endpoint string, dialTimeout time.Duration, circuitTimeout time.D
 
 // Writer to write to TalariaDB
 type Writer struct {
-	lock                  sync.Mutex
-	endpoint              string
-	dialTimeout           time.Duration
-	circuitTimeout        time.Duration
-	maxConcurrent         int
-	errorPercentThreshold int
-	client                *talaria.Client
+	lock     sync.Mutex
+	endpoint string
+	client   *talaria.Client
+	options  []talaria.Option
 }
 
 // New initializes a new Talaria writer.
-func New(endpoint string, dialTimeout time.Duration, circuitTimeout time.Duration, maxConcurrent int, errorPercentThreshold int) (*Writer, error) {
+func New(endpoint string, circuitTimeout *time.Duration, maxConcurrent *int, errorPercentThreshold *int) (*Writer, error) {
 
-	dialTimeout = dialTimeout * time.Second
-	circuitTimeout = circuitTimeout * time.Second
-	client, err := GetClient(endpoint, dialTimeout, circuitTimeout, maxConcurrent, errorPercentThreshold)
+	var newTimeout = 5 * time.Second
+	var newMaxConcurrent = hystrix.DefaultMaxConcurrent
+	var newErrorPercentThreshold = hystrix.DefaultErrorPercentThreshold
+
+	// Set defaults for variables if there aren't any
+	if circuitTimeout != nil {
+		newTimeout = *circuitTimeout * time.Second
+	}
+
+	if maxConcurrent != nil {
+		newMaxConcurrent = *maxConcurrent
+	}
+
+	if errorPercentThreshold != nil {
+		newErrorPercentThreshold = *errorPercentThreshold
+	}
+
+	dialOptions := []talaria.Option{}
+	dialOptions = append(dialOptions, talaria.WithCircuit(newTimeout, newMaxConcurrent, newErrorPercentThreshold))
+
+	client, err := getClient(endpoint, dialOptions...)
+
+	// Return writer with nil client
 	if err != nil {
 		return nil, errors.Internal("talaria: unable to create a client", err)
 	}
 
 	return &Writer{
-		client:                client,
-		endpoint:              endpoint,
-		dialTimeout:           dialTimeout,
-		circuitTimeout:        circuitTimeout,
-		maxConcurrent:         maxConcurrent,
-		errorPercentThreshold: errorPercentThreshold,
+		client:   client,
+		endpoint: endpoint,
+		options:  dialOptions,
 	}, nil
 }
 
 // Write will write the ORC data to Talaria
 func (w *Writer) Write(key key.Key, val []byte) error {
 
-	// Just in case client is nil, should not happen
+	// Check if client is nil
 	if w.client == nil {
 		if err := w.tryConnect(); err != nil {
 			return errors.Internal("talaria: client is nil, unable to connect", err)
@@ -71,15 +82,10 @@ func (w *Writer) Write(key key.Key, val []byte) error {
 	if err := w.client.IngestORC(context.Background(), val); err != nil {
 		errStatus, _ := status.FromError(err)
 		if codes.Unavailable == errStatus.Code() {
-
-			// Close current connection if possible, else just create new client
-			_ = w.client.Close()
-
 			// Server unavailable, redial
 			if err := w.tryConnect(); err != nil {
 				return errors.Internal("talaria: unable to redial", err)
 			}
-
 			// Send again after redial
 			if err := w.client.IngestORC(context.Background(), val); err != nil {
 				return errors.Internal("talaria: unable to write after redial", err)
@@ -95,15 +101,10 @@ func (w *Writer) tryConnect() error {
 	w.lock.Lock()
 	defer w.lock.Unlock()
 
-	client, err := GetClient(w.endpoint, w.dialTimeout, w.circuitTimeout, w.maxConcurrent, w.errorPercentThreshold)
+	client, err := getClient(w.endpoint, w.options...)
 	if err != nil {
 		return err
 	}
 	w.client = client
 	return nil
-}
-
-// Close closes the writer.
-func (w *Writer) Close() error {
-	return w.client.Close()
 }

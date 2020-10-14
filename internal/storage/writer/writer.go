@@ -23,7 +23,6 @@ import (
 	"github.com/kelindar/talaria/internal/storage/writer/noop"
 	"github.com/kelindar/talaria/internal/storage/writer/s3"
 	"github.com/kelindar/talaria/internal/storage/writer/talaria"
-	"github.com/myteksi/hystrix-go/hystrix"
 )
 
 var seed = maphash.MakeSeed()
@@ -113,29 +112,7 @@ func newWriter(config *config.Compaction) (flush.Writer, error) {
 
 	// Configure Talaria writer if present
 	if config.Talaria != nil {
-		var defaultDialTimeout time.Duration = 5
-		var defaultCircuitTimeout time.Duration = 5
-		var defaultMaxConcurrent int = hystrix.DefaultMaxConcurrent
-		var defaultErrorPercentThreshold int = hystrix.DefaultErrorPercentThreshold
-
-		// Set defaults for variables if there aren't any
-		if config.Talaria.DialTimeout == nil {
-			config.Talaria.DialTimeout = &defaultDialTimeout
-		}
-
-		if config.Talaria.CircuitTimeout == nil {
-			config.Talaria.CircuitTimeout = &defaultCircuitTimeout
-		}
-
-		if config.Talaria.MaxConcurrent == nil {
-			config.Talaria.MaxConcurrent = &defaultMaxConcurrent
-		}
-
-		if config.Talaria.ErrorPercentThreshold == nil {
-			config.Talaria.ErrorPercentThreshold = &defaultErrorPercentThreshold
-		}
-
-		w, err := talaria.New(config.Talaria.Endpoint, *config.Talaria.DialTimeout, *config.Talaria.CircuitTimeout, *config.Talaria.MaxConcurrent, *config.Talaria.ErrorPercentThreshold)
+		w, err := talaria.New(config.Talaria.Endpoint, config.Talaria.CircuitTimeout, config.Talaria.MaxConcurrent, config.Talaria.ErrorPercentThreshold)
 		if err != nil {
 			return nil, err
 		}

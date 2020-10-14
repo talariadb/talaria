@@ -178,11 +178,10 @@ type FileSink struct {
 
 // TalariaSink represents a sink to an instance of Talaria
 type TalariaSink struct {
-	Endpoint              string         `json:"endpoint" yaml:"endpoint" env:"ENDPOINT"`                                        // The second Talaria endpoint
-	DialTimeout           *time.Duration `json:"dialTimeout" yaml:"dialTimeout" end:"DIALTIMEOUT"`                               // The timeout (in seconds) for dialing to the second Talaria
-	CircuitTimeout        *time.Duration `json:"circuitTimeout" yaml:"circuitTimeout" env:"CIRCUITTIMEOUT"`                      // The timeout (in seconds) for requests to the second Talaria
-	MaxConcurrent         *int           `json:"maxConcurrent" yaml:"maxConcurrent" env:"MAXCONCURRENT"`                         // The number of concurrent requests permissible
-	ErrorPercentThreshold *int           `json:"errorPercentThreshold" yaml:"errorPercentThreshold" env:"ERRORPERCENTTHRESHOLD"` // The percentage of failed requests tolerated
+	Endpoint              string         `json:"endpoint" yaml:"endpoint" env:"ENDPOINT"`                    // The second Talaria endpoint
+	CircuitTimeout        *time.Duration `json:"timeout" yaml:"timeout" env:"TIMEOUT"`                       // The timeout (in seconds) for requests to the second Talaria
+	MaxConcurrent         *int           `json:"concurrency" yaml:"concurrency" env:"CONCURRENCY"`           // The number of concurrent requests permissible
+	ErrorPercentThreshold *int           `json:"errorThreshold" yaml:"errorThreshold" env:"ERROR_THRESHOLD"` // The percentage of failed requests tolerated
 }
 
 // Func represents a config function
