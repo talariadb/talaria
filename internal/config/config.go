@@ -137,6 +137,7 @@ type Compaction struct {
 	BigQuery *BigQuerySink `json:"bigquery" yaml:"bigquery" env:"BIGQUERY"` // The Big Query writer configuration
 	GCS      *GCSSink      `json:"gcs" yaml:"gcs" env:"GCS"`                // The Google Cloud Storage writer configuration
 	File     *FileSink     `json:"file" yaml:"file" env:"FILE"`             // The local file system writer configuration
+	Talaria  *TalariaSink  `json:"talaria" yaml:"talaria" env:"TALARIA"`    // The Talaria writer configuration
 }
 
 // S3Sink represents a sink for AWS S3 and compatible stores.
@@ -173,6 +174,14 @@ type GCSSink struct {
 // FileSink represents a sink to the local file system
 type FileSink struct {
 	Directory string `json:"dir" yaml:"dir" env:"DIR"`
+}
+
+// TalariaSink represents a sink to an instance of Talaria
+type TalariaSink struct {
+	Endpoint              string         `json:"endpoint" yaml:"endpoint" env:"ENDPOINT"`                    // The second Talaria endpoint
+	CircuitTimeout        *time.Duration `json:"timeout" yaml:"timeout" env:"TIMEOUT"`                       // The timeout (in seconds) for requests to the second Talaria
+	MaxConcurrent         *int           `json:"concurrency" yaml:"concurrency" env:"CONCURRENCY"`           // The number of concurrent requests permissible
+	ErrorPercentThreshold *int           `json:"errorThreshold" yaml:"errorThreshold" env:"ERROR_THRESHOLD"` // The percentage of failed requests tolerated
 }
 
 // Func represents a config function
