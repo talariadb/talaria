@@ -27,18 +27,17 @@ const (
 
 // Config global
 type Config struct {
-<<<<<<< HEAD
-	URI      string     `json:"uri" yaml:"uri" env:"URI"`
-	Env      string     `json:"env" yaml:"env" env:"ENV"`             // The environment (eg: prd, stg)
-	AppName  string     `json:"appName" yaml:"appName" env:"APPNAME"` // app name used for monitoring
-	Domain   string     `json:"domain" yaml:"domain" env:"DOMAIN"`
-	Readers  Readers    `json:"readers" yaml:"readers" env:"READERS"`
-	Writers  Writers    `json:"writers" yaml:"writers" env:"WRITERS"`
-	Storage  Storage    `json:"storage" yaml:"storage" env:"STORAGE"`
-	Tables   Tables     `json:"tables" yaml:"tables"`
-	Statsd   *StatsD    `json:"statsd,omitempty" yaml:"statsd" env:"STATSD"`
-	Computed []Computed `json:"computed" yaml:"computed" env:"COMPUTED"`
-	K8s      *K8s       `json:"k8s,omitempty" yaml:"k8s" env:"K8S"`
+	URI       string      `json:"uri" yaml:"uri" env:"URI"`
+	Env       string      `json:"env" yaml:"env" env:"ENV"`             // The environment (eg: prd, stg)
+	AppName   string      `json:"appName" yaml:"appName" env:"APPNAME"` // app name used for monitoring
+	Domain    string      `json:"domain" yaml:"domain" env:"DOMAIN"`
+	Readers   Readers     `json:"readers" yaml:"readers" env:"READERS"`
+	Writers   Writers     `json:"writers" yaml:"writers" env:"WRITERS"`
+	Storage   Storage     `json:"storage" yaml:"storage" env:"STORAGE"`
+	Tables    Tables      `json:"tables" yaml:"tables"`
+	Statsd    *StatsD     `json:"statsd,omitempty" yaml:"statsd" env:"STATSD"`
+	Computed  []Computed  `json:"computed" yaml:"computed" env:"COMPUTED"`
+	K8s       *K8s        `json:"k8s,omitempty" yaml:"k8s" env:"K8S"`
 	Streaming []Streaming `json:"streaming" yaml:"streaming" env:"STREAMING"`
 }
 
@@ -80,6 +79,7 @@ type Badger struct {
 // Streaming is the location to write the data
 type Streaming struct {
 	PubSubStream *PubSubStream `json:"pubsub" yaml:"pubsub" env:"pubsub"`
+	RedisStream  *RedisStream  `json:"redis" yaml:"redis" env:"redis"`
 }
 
 // PubSubStream represents a stream to Google Pub/Sub
@@ -88,6 +88,12 @@ type PubSubStream struct {
 	Topic   string `json:"topic" yaml:"topic" env:"TOPIC"`
 	Filter  string `json:"filter" yaml:"filter" env:"FILTER"`
 	Encoder string `json:"encoder" yaml:"encoder" env:"ENCODER"`
+}
+
+// RedisStream represents a stream to Redis
+type RedisStream struct {
+	Project string `json:"project" yaml:"project" env:"PROJECT"`
+	Topic   string `json:"topic" yaml:"topic" env:"TOPIC"`
 }
 
 // Readers are ways to read the data

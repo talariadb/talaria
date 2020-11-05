@@ -4,6 +4,11 @@
 package env
 
 import (
+<<<<<<< HEAD
+=======
+	"fmt"
+	"io/ioutil"
+>>>>>>> Rename config to streams
 	"os"
 	"testing"
 
@@ -94,6 +99,9 @@ computed:
 	// populate the config with the env variable
 	e := New("TALARIA")
 	assert.NoError(t, e.Configure(c))
+
+	fmt.Println(c.Streams)
+	fmt.Println(len(c.Streams))
 
 	// asserts
 	assert.Len(t, c.Computed, 1)
