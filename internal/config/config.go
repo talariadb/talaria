@@ -27,6 +27,7 @@ const (
 
 // Config global
 type Config struct {
+<<<<<<< HEAD
 	URI      string     `json:"uri" yaml:"uri" env:"URI"`
 	Env      string     `json:"env" yaml:"env" env:"ENV"`             // The environment (eg: prd, stg)
 	AppName  string     `json:"appName" yaml:"appName" env:"APPNAME"` // app name used for monitoring
@@ -38,6 +39,7 @@ type Config struct {
 	Statsd   *StatsD    `json:"statsd,omitempty" yaml:"statsd" env:"STATSD"`
 	Computed []Computed `json:"computed" yaml:"computed" env:"COMPUTED"`
 	K8s      *K8s       `json:"k8s,omitempty" yaml:"k8s" env:"K8S"`
+	Streaming []Streaming `json:"streaming" yaml:"streaming" env:"STREAMING"`
 }
 
 // K8s represents a kubernetes-related configuration
@@ -73,6 +75,19 @@ type Badger struct {
 	LevelSizeMultiplier *int          `json:"levelSizeMultiplier" yaml:"levelSizeMultiplier" env:"LEVELSIZEMULTIPLIER"` // The ratio between the maximum sizes of contiguous levels in the LSM. defaults to 10
 	MaxLevels           *int          `json:"maxLevels" yaml:"maxLevels" env:"MAXLEVELS"`                               // Maximum number of levels of compaction allowed in the LSM. defaults to 7
 	Default             BadgerDefault `json:"default" yaml:"default" env:"DEFAULT"`                                     // default badger option to optimize for storage, ingestion or default that badger provides
+}
+
+// Streaming is the location to write the data
+type Streaming struct {
+	PubSubStream *PubSubStream `json:"pubsub" yaml:"pubsub" env:"pubsub"`
+}
+
+// PubSubStream represents a stream to Google Pub/Sub
+type PubSubStream struct {
+	Project string `json:"project" yaml:"project" env:"PROJECT"`
+	Topic   string `json:"topic" yaml:"topic" env:"TOPIC"`
+	Filter  string `json:"filter" yaml:"filter" env:"FILTER"`
+	Encoder string `json:"encoder" yaml:"encoder" env:"ENCODER"`
 }
 
 // Readers are ways to read the data
