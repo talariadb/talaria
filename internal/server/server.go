@@ -18,8 +18,9 @@ import (
 	"github.com/kelindar/talaria/internal/monitor"
 	"github.com/kelindar/talaria/internal/monitor/errors"
 	"github.com/kelindar/talaria/internal/presto"
-	"github.com/kelindar/talaria/internal/scripting"
+	script "github.com/kelindar/talaria/internal/scripting"
 	"github.com/kelindar/talaria/internal/server/thriftlog"
+	"github.com/kelindar/talaria/internal/storage/flush"
 	"github.com/kelindar/talaria/internal/table"
 	talaria "github.com/kelindar/talaria/proto"
 	"google.golang.org/grpc"
@@ -46,12 +47,13 @@ type Storage interface {
 // ------------------------------------------------------------------------------------------------------------
 
 // New creates a new talaria server.
-func New(conf config.Func, monitor monitor.Monitor, loader *script.Loader, tables ...table.Table) *Server {
+func New(conf config.Func, monitor monitor.Monitor, loader *script.Loader, streams flush.Streamer, tables ...table.Table) *Server {
 	const maxMessageSize = 32 * 1024 * 1024 // 32 MB
 	server := &Server{
 		server:  grpc.NewServer(grpc.MaxRecvMsgSize(maxMessageSize)),
 		conf:    conf,
 		monitor: monitor,
+		streams: streams,
 		tables:  make(map[string]table.Table),
 	}
 
@@ -85,8 +87,9 @@ type Server struct {
 	conf     config.Func            // The presto configuration
 	monitor  monitor.Monitor        // The monitoring layer
 	cancel   context.CancelFunc     // The cancellation function for the server
+	streams  flush.Streamer         // The streams to stream data to
 	tables   map[string]table.Table // The list of tables
-	computed []column.Computed     // The set of computed columns
+	computed []column.Computed      // The set of computed columns
 	s3sqs    *s3sqs.Ingress         // The S3SQS Ingress (optional)
 }
 

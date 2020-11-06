@@ -8,15 +8,16 @@ import (
 
 	"github.com/kelindar/talaria/internal/column"
 	"github.com/kelindar/talaria/internal/encoding/typeof"
+	"github.com/kelindar/talaria/internal/storage/flush"
 	talaria "github.com/kelindar/talaria/proto"
 )
 
 // FromRequestBy creates a block from a talaria protobuf-encoded request. It
 // repartitions the batch by a given partition key at the same time.
-func FromRequestBy(request *talaria.IngestRequest, partitionBy string, filter *typeof.Schema, computed ...column.Computed) ([]Block, error) {
+func FromRequestBy(request *talaria.IngestRequest, partitionBy string, filter *typeof.Schema, streams flush.Streamer, computed ...column.Computed) ([]Block, error) {
 	switch data := request.GetData().(type) {
 	case *talaria.IngestRequest_Batch:
-		return FromBatchBy(data.Batch, partitionBy, filter, computed...)
+		return FromBatchBy(data.Batch, partitionBy, filter, streams, computed...)
 	case *talaria.IngestRequest_Orc:
 		return FromOrcBy(data.Orc, partitionBy, filter, computed...)
 	case *talaria.IngestRequest_Csv:

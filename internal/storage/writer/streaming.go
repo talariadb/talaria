@@ -3,16 +3,19 @@ package streaming
 import (
 	"github.com/kelindar/talaria/internal/config"
 	"github.com/kelindar/talaria/internal/monitor"
-	"github.com/kelindar/talaria/internal/streaming/streams/pubsub"
+	"github.com/kelindar/talaria/internal/monitor/errors"
+	"github.com/kelindar/talaria/internal/storage/flush"
+	"github.com/kelindar/talaria/internal/storage/writer/pubsub"
+	"github.com/kelindar/talaria/internal/streaming/streams/noop"
 )
 
 // Streamer will stream data
 type Streamer interface {
-	Stream() error
+	Stream(map[string]interface{}) error
 }
 
 // New creates an array of streams using the configuration provided
-func New(configs []config.Streaming, monitor monitor.Monitor) Streamer {
+func New(configs []config.Streaming, monitor monitor.Monitor) flush.Streamer {
 	writer, err := newStreamer(configs)
 	if err != nil {
 		monitor.Error(err)
@@ -42,16 +45,25 @@ func New(configs []config.Streaming, monitor monitor.Monitor) Streamer {
 
 // newStreamer creates a new streamer from the configuration.
 // TODO: Return list of streams
-func newStreamer(configs []config.Streaming) (Streamer, error) {
+func newStreamer(configs []config.Streaming) (flush.Streamer, error) {
 
+	if len(configs) == 0 {
+		return noop.New(), errors.New("streaming: no stream was configured")
+	}
+
+	// Only allow one stream per array element
+	// Stream priority is enforced in the appearance order in if-else statements
 	for _, config := range configs {
-		// Configure PubSub stream if present
 		if config.PubSubStream != nil {
 			w, err := pubsub.New(config.PubSubStream.Project, config.PubSubStream.Topic, config.PubSubStream.Filter, config.PubSubStream.Encoder)
 			if err != nil {
 				return nil, err
 			}
 			return w, nil
+		} else if config.RedisStream != nil {
+			return nil, nil
+		} else {
+			return nil, errors.New("streaming: unable to set up stream")
 		}
 	}
 

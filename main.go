@@ -32,7 +32,11 @@ import (
 	"github.com/kelindar/talaria/internal/storage"
 	"github.com/kelindar/talaria/internal/storage/disk"
 	"github.com/kelindar/talaria/internal/storage/writer"
+<<<<<<< HEAD
 	"github.com/kelindar/talaria/internal/table"
+=======
+	"github.com/kelindar/talaria/internal/streaming"
+>>>>>>> Refactor stream to writer
 	"github.com/kelindar/talaria/internal/table/log"
 	"github.com/kelindar/talaria/internal/table/nodes"
 	"github.com/kelindar/talaria/internal/table/timeseries"
@@ -80,8 +84,11 @@ func main() {
 		tables = append(tables, openTable(name, conf.Storage, tableConf, gossip, monitor, loader))
 	}
 
+	// Returns noop streamer if array is empty
+	streams := streaming.New(conf.Streams, monitor)
+
 	// Start the new server
-	server := server.New(configure, monitor, loader, tables...)
+	server := server.New(configure, monitor, loader, streams, tables...)
 
 	// onSignal will be called when a OS-level signal is received.
 	onSignal(func(_ os.Signal) {

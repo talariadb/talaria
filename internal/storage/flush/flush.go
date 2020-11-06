@@ -29,6 +29,11 @@ type Writer interface {
 	Write(key key.Key, value []byte) error
 }
 
+// Streamer represents a stream
+type Streamer interface {
+	Stream() error
+}
+
 // Storage represents s3/flush storage.
 type Storage struct {
 	monitor      monitor.Monitor // The monitor client
