@@ -16,6 +16,7 @@ type Writer struct {
 	Writer  *encoder.Writer
 	context context.Context
 	buffer  chan *map[string]interface{}
+	sent    chan bool
 }
 
 // New creates a new writer
@@ -39,6 +40,7 @@ func New(project string, topic string, filter string, encoding string) (*Writer,
 		Writer:  encoderWriter,
 		context: ctx,
 		buffer:  make(chan *map[string]interface{}, 65000),
+		sent:    make(chan bool, 65000),
 	}
 	go w.process()
 
@@ -48,7 +50,14 @@ func New(project string, topic string, filter string, encoding string) (*Writer,
 // Stream publishes data into PubSub topics
 func (w *Writer) Stream(row *map[string]interface{}) error {
 	w.buffer <- row
-	return nil
+
+	for v := range w.sent {
+		if v {
+			return nil
+		}
+	}
+
+	return errors.New("pubsub: no signal received to signify data sent")
 }
 
 // process will read from buffer, encode the row, and publish to PubSub
@@ -70,6 +79,8 @@ func (w *Writer) process() error {
 				"origin": "talaria",
 			},
 		})
+
+		w.sent <- true
 
 		go func(res *pubsub.PublishResult) {
 			id, err := res.Get(ctx)

@@ -60,16 +60,13 @@ func FromBatchBy(batch *talaria.Batch, partitionBy string, filter *typeof.Schema
 		}
 
 		// Append computed columns and fill nulls for the row
-		row.Transform(computed, filter)
-		fmt.Println("------------------ROW VALUES----------------------")
-		fmt.Println(row.Values)
-		fmt.Println("--------------------------------------------------")
+		out := row.Transform(computed, filter)
 
 		// Stream row with computed columns
-		streams.Stream(&row.Values)
+		streams.Stream(&out.Values)
 
 		// Append to columnar data structure and fill nulls for row
-		row.AppendTo(columns)
+		out.AppendTo(columns)
 		columns.FillNulls()
 	}
 
