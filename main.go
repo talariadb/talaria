@@ -85,6 +85,7 @@ func main() {
 	}
 
 	// Returns noop streamer if array is empty
+	fmt.Println(conf.Streams)
 	streams := streaming.New(conf.Streams, monitor)
 
 	// Start the new server

@@ -1,7 +1,6 @@
 package noop
 
 import (
-	"github.com/kelindar/talaria/internal/encoding/block"
 	"github.com/kelindar/talaria/internal/encoding/key"
 )
 
@@ -19,6 +18,6 @@ func (w *Writer) Write(key key.Key, val []byte) error {
 }
 
 // Stream streams the data to the sink
-func (w *Writer) Stream(row *block.Row) error {
+func (w *Writer) Stream(row *map[string]interface{}) error {
 	return nil
 }

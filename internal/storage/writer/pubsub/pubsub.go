@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	"cloud.google.com/go/pubsub"
-	"github.com/kelindar/talaria/internal/encoding/block"
 	"github.com/kelindar/talaria/internal/monitor/errors"
 	"github.com/kelindar/talaria/internal/storage/writer/encoder"
 )
@@ -16,10 +15,10 @@ type Writer struct {
 	topic   *pubsub.Topic
 	Writer  *encoder.Writer
 	context context.Context
-	buffer  chan *block.Row
+	buffer  chan *map[string]interface{}
 }
 
-// New creates a new streamer
+// New creates a new writer
 func New(project string, topic string, filter string, encoding string) (*Writer, error) {
 	ctx := context.Background()
 	client, err := pubsub.NewClient(ctx, project)
@@ -34,34 +33,38 @@ func New(project string, topic string, filter string, encoding string) (*Writer,
 		return nil, err
 	}
 
-	return &Writer{
+	w := &Writer{
 		topic:   topicRef,
 		client:  client,
 		Writer:  encoderWriter,
 		context: ctx,
-		buffer:  make(chan *block.Row, 65000),
-	}, nil
+		buffer:  make(chan *map[string]interface{}, 65000),
+	}
+	go w.process()
+
+	return w, nil
 }
 
 // Stream publishes data into PubSub topics
-func (s *Writer) Stream(row *block.Row) {
-	s.buffer <- row
+func (w *Writer) Stream(row *map[string]interface{}) error {
+	w.buffer <- row
+	return nil
 }
 
-func (s *Writer) process() error {
-
+// process will read from buffer, encode the row, and publish to PubSub
+func (w *Writer) process() error {
 	errs := make(chan error, 1)
 	ctx := context.Background()
 
-	for row := range s.buffer {
+	for row := range w.buffer {
 
-		encodedRow, err := s.Writer.Encode(row)
+		encodedRow, err := w.Writer.Encode(row)
 
 		if err != nil {
 			return errors.Internal("pubsub: unable to encode row", err)
 		}
 
-		result := s.topic.Publish(ctx, &pubsub.Message{
+		result := w.topic.Publish(ctx, &pubsub.Message{
 			Data: encodedRow,
 			Attributes: map[string]string{
 				"origin": "talaria",
@@ -85,9 +88,10 @@ func (s *Writer) process() error {
 			continue
 		}
 	}
+	return nil
 }
 
 // Close closes the writer.
-func (s *Writer) Close() error {
-	return s.client.Close()
+func (w *Writer) Close() error {
+	return w.client.Close()
 }

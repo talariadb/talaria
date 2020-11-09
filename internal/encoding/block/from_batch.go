@@ -11,13 +11,13 @@ import (
 
 	"github.com/kelindar/talaria/internal/column"
 	"github.com/kelindar/talaria/internal/encoding/typeof"
-	"github.com/kelindar/talaria/internal/storage/flush"
+	"github.com/kelindar/talaria/internal/storage/stream"
 	talaria "github.com/kelindar/talaria/proto"
 )
 
 // FromBatchBy creates a block from a talaria protobuf-encoded batch. It
 // repartitions the batch by a given partition key at the same time.
-func FromBatchBy(batch *talaria.Batch, partitionBy string, filter *typeof.Schema, streams flush.Streamer, computed ...column.Computed) ([]Block, error) {
+func FromBatchBy(batch *talaria.Batch, partitionBy string, filter *typeof.Schema, streams stream.Streamer, computed ...column.Computed) ([]Block, error) {
 	if batch == nil || batch.Strings == nil || batch.Events == nil {
 		return nil, errEmptyBatch
 	}
@@ -61,9 +61,12 @@ func FromBatchBy(batch *talaria.Batch, partitionBy string, filter *typeof.Schema
 
 		// Append computed columns and fill nulls for the row
 		row.Transform(computed, filter)
+		fmt.Println("------------------ROW VALUES----------------------")
+		fmt.Println(row.Values)
+		fmt.Println("--------------------------------------------------")
 
 		// Stream row with computed columns
-		streams.Stream(&row)
+		streams.Stream(&row.Values)
 
 		// Append to columnar data structure and fill nulls for row
 		row.AppendTo(columns)

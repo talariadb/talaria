@@ -3,7 +3,6 @@ package encoder
 import (
 	"encoding/json"
 
-	"github.com/kelindar/talaria/internal/encoding/block"
 	"github.com/kelindar/talaria/internal/monitor/errors"
 )
 
@@ -11,24 +10,37 @@ import (
 type Writer struct {
 	filter  string
 	encoder string
+	marshal func(interface{}) ([]byte, error)
 }
 
 // New will generate a new encoder writer
 func New(filter string, encoder string) (*Writer, error) {
+
+	var marshal func(interface{}) ([]byte, error)
+
+	// Extensible to change marshalling function
+	switch encoder {
+	case "json":
+		marshal = json.Marshal
+	default:
+		marshal = json.Marshal
+	}
+
 	return &Writer{
 		filter:  filter,
 		encoder: encoder,
+		marshal: marshal,
 	}, nil
 }
 
 // Encode will encode a row to the format the user specifies
-func (w *Writer) Encode(row *block.Row) ([]byte, error) {
+func (w *Writer) Encode(row *map[string]interface{}) ([]byte, error) {
 
-	// Default JSON
-	// DOUBLE CHECK LATER to NOT do any copies when putting in a byte slice
-	jsonString, err := json.Marshal(row.Values)
+	// Double check later to NOT do any copies when putting in a byte slice
+	dataString, err := w.marshal(*row)
 	if err != nil {
-		return nil, errors.Internal("encoder: could not marshal to JSON", err)
+		errorMsg := "encoder: could not marshal to " + w.encoder + " "
+		return nil, errors.Internal(errorMsg, err)
 	}
-	return []byte(string(jsonString)), nil
+	return dataString, nil
 }

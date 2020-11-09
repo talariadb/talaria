@@ -7,7 +7,11 @@ import (
 )
 
 func TestStreamer(t *testing.T) {
-	c, _ := New("airasia-datasciencesandbox-poc", "talaria", "", "")
+	data := make(map[string]interface{}, 1)
 
-	assert.Nil(t, c.Stream())
+	data["test"] = "Hello Talaria"
+
+	c, _ := New("gcp-project", "talaria", "", "")
+
+	assert.Nil(t, c.Stream(&data))
 }

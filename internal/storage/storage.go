@@ -7,10 +7,10 @@ import (
 	"io"
 	"time"
 
+	"github.com/hashicorp/go-multierror"
 	"github.com/kelindar/talaria/internal/encoding/block"
 	"github.com/kelindar/talaria/internal/encoding/key"
 	"github.com/kelindar/talaria/internal/encoding/typeof"
-	"github.com/hashicorp/go-multierror"
 )
 
 // Storage represents a contract that supports both iteration and append.

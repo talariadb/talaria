@@ -9,7 +9,7 @@ import (
 
 	"github.com/kelindar/talaria/internal/column"
 	"github.com/kelindar/talaria/internal/encoding/typeof"
-	"github.com/kelindar/talaria/internal/scripting"
+	script "github.com/kelindar/talaria/internal/scripting"
 	talaria "github.com/kelindar/talaria/proto"
 	"github.com/stretchr/testify/assert"
 )
@@ -81,7 +81,7 @@ func TestBlock_FromBatch(t *testing.T) {
 	}
 
 	// Create blocks
-	blocks, err := FromBatchBy(testBatch, "d", &filter, dataColumn)
+	blocks, err := FromBatchBy(testBatch, "d", &filter, nil, dataColumn)
 	assert.NoError(t, err)
 	assert.Len(t, blocks, 3) // Number of partitions
 

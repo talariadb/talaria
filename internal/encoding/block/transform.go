@@ -13,25 +13,25 @@ import (
 )
 
 // Row represents a single row on which we can perform transformations
-type Row struct {
+type row struct {
 	Values map[string]interface{}
 	Schema typeof.Schema
 }
 
-// NewRow creates a new row with a Schema and a capacity
-func newRow(schema typeof.Schema, capacity int) Row {
+// NewRow creates a new row with a schema and a capacity
+func newRow(schema typeof.Schema, capacity int) row {
 	if schema == nil {
 		schema = make(typeof.Schema, capacity)
 	}
 
-	return Row{
+	return row{
 		Values: make(map[string]interface{}, capacity),
 		Schema: schema,
 	}
 }
 
 // Set sets the key/value pair
-func (r Row) Set(k string, v interface{}) {
+func (r row) Set(k string, v interface{}) {
 
 	// If there's no Schema defined, infer from the value itself
 	typ, ok := r.Schema[k]
@@ -58,7 +58,7 @@ func (r Row) Set(k string, v interface{}) {
 }
 
 // AppendTo appends the entire row to the column set
-func (r Row) AppendTo(cols column.Columns) (size int) {
+func (r row) AppendTo(cols column.Columns) (size int) {
 	for k, v := range r.Values {
 		size += cols.Append(k, v, r.Schema[k])
 	}
@@ -66,7 +66,7 @@ func (r Row) AppendTo(cols column.Columns) (size int) {
 }
 
 // Transform runs the computed Values and overwrites/appends them to the set.
-func (r Row) Transform(computed []column.Computed, filter *typeof.Schema) Row {
+func (r row) Transform(computed []column.Computed, filter *typeof.Schema) row {
 
 	// Create a new output row and copy the column values from the input
 	schema := make(typeof.Schema, len(r.Schema))

@@ -7,7 +7,12 @@ import (
 	"io/ioutil"
 	"testing"
 
+	"github.com/kelindar/talaria/internal/config"
 	"github.com/kelindar/talaria/internal/encoding/typeof"
+	"github.com/kelindar/talaria/internal/monitor"
+	"github.com/kelindar/talaria/internal/monitor/logging"
+	"github.com/kelindar/talaria/internal/monitor/statsd"
+	"github.com/kelindar/talaria/internal/streaming"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -101,11 +106,14 @@ func BenchmarkFrom(b *testing.B) {
 		}
 	})
 
+	emptyStreamConfig := make([]config.Streaming, 0)
+	emptyStreamer := streaming.New(emptyStreamConfig, monitor.New(logging.NewStandard(), statsd.NewNoop(), "x", "x"))
+
 	b.Run("batch", func(b *testing.B) {
 		b.ResetTimer()
 		b.ReportAllocs()
 		for n := 0; n < b.N; n++ {
-			_, err = FromBatchBy(testBatch, "d", nil)
+			_, err = FromBatchBy(testBatch, "d", nil, emptyStreamer)
 			noerror(err)
 		}
 	})
