@@ -27,8 +27,8 @@ func TestNodes(t *testing.T) {
 	defer table.Close()
 
 	// Get the schema
-	schema, err := table.Schema()
-	assert.NoError(t, err)
+	schema, static := table.Schema()
+	assert.True(t, static)
 	assert.Len(t, schema, 6)
 
 	// Get the splits

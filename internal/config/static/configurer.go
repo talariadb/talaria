@@ -9,10 +9,10 @@ import (
 	"github.com/kelindar/talaria/internal/config"
 )
 
-// Configurer
+// Configurer represents a static configurer
 type Configurer struct{}
 
-//
+// New creates a new static configurer
 func New() *Configurer {
 	return &Configurer{}
 }
@@ -24,29 +24,17 @@ func (e *Configurer) Configure(c *config.Config) error {
 	v := reflect.New(t)
 	reflect.ValueOf(c).Elem().Set(v.Elem())
 
-	// Put static values in the config
+	// Put default values in the config
+	c.AppName = "talaria"
 	c.Readers.Presto = &config.Presto{Port: 8042}
-
 	c.Writers.GRPC = &config.GRPC{Port: 8080}
+	c.Tables = make(map[string]config.Table, 1)
 
-	c.Tables.Timeseries = &config.Timeseries{
-		Name:   "eventlog",
-		TTL:    3600,
-		SortBy: "tsi",
-		HashBy: "event",
-	}
-	c.Tables.Log = &config.Log{
-		Name:   "log",
-		TTL:    24 * 3600, // 1 day
-		SortBy: "time",
-	}
-
+	// Default statsD agent
 	c.Statsd = &config.StatsD{
 		Host: "localhost",
 		Port: 8125,
 	}
-
-	c.AppName = "talaria"
 
 	return nil
 }

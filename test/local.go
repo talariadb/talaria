@@ -24,6 +24,8 @@ import (
 	talaria "github.com/kelindar/talaria/proto"
 )
 
+const tableName = "eventlog"
+
 type mockConfigurer struct {
 	dir string
 }
@@ -39,8 +41,8 @@ func (m *mockConfigurer) Configure(c *config.Config) error {
 		Port: 8043,
 	}
 
-	c.Tables.Timeseries = &config.Timeseries{
-		Name:   "eventlog",
+	c.Tables = make(map[string]config.Table, 1)
+	c.Tables[tableName] = config.Table{
 		TTL:    3600,
 		HashBy: "string1",
 		SortBy: "int1",
@@ -65,14 +67,13 @@ func main() {
 	gossip := cluster.New(7946)
 	gossip.JoinHostname("localhost")
 
-	store := disk.Open(cfg().Storage.Directory, cfg().Tables.Timeseries.Name, monitor, config.Badger{})
+	store := disk.Open(cfg().Storage.Directory, tableName, monitor, config.Badger{})
 
 	// Start the server and open the database
-	eventlog := timeseries.New(gossip, monitor, store, timeseries.Config{
-		Name:   cfg().Tables.Timeseries.Name,
-		TTL:    cfg().Tables.Timeseries.TTL,
-		HashBy: cfg().Tables.Timeseries.HashBy,
-		SortBy: cfg().Tables.Timeseries.SortBy,
+	eventlog := timeseries.New(tableName, gossip, monitor, store, &config.Table{
+		TTL:    cfg().Tables[tableName].TTL,
+		HashBy: cfg().Tables[tableName].HashBy,
+		SortBy: cfg().Tables[tableName].SortBy,
 		Schema: "",
 	})
 	server := server.New(cfg, monitor, script.NewLoader(nil),

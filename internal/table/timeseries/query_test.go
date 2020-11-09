@@ -32,24 +32,24 @@ func getColumn(column string) func() string {
 
 func TestParse(t *testing.T) {
 	domain := newSplitQuery("test")
-	table := &Table{keyColumn: "_col5", timeColumn: "NA"}
-	queries, err := parseThriftDomain(domain, table.keyColumn, table.timeColumn)
+	table := &Table{hashBy: "_col5", sortBy: "NA"}
+	queries, err := parseThriftDomain(domain, table.hashBy, table.sortBy)
 	assert.NoError(t, err)
 	assert.Len(t, queries, 1)
 }
 
 func TestParseWithoutKeyColumn(t *testing.T) {
 	domain := newSplitQuery("test")
-	table := &Table{keyColumn: "col6", timeColumn: "NA"}
-	queries, err := parseThriftDomain(domain, table.keyColumn, table.timeColumn)
+	table := &Table{hashBy: "col6", sortBy: "NA"}
+	queries, err := parseThriftDomain(domain, table.hashBy, table.sortBy)
 	assert.Error(t, err)
 	assert.Nil(t, queries)
 }
 
 func TestParseKeyColDisabled(t *testing.T) {
 	domain := newSplitQuery("test")
-	table := &Table{keyColumn: "", timeColumn: "NA"}
-	queries, err := parseThriftDomain(domain, table.keyColumn, table.timeColumn)
+	table := &Table{hashBy: "", sortBy: "NA"}
+	queries, err := parseThriftDomain(domain, table.hashBy, table.sortBy)
 	assert.Nil(t, err)
 	assert.Len(t, queries, 1)
 }

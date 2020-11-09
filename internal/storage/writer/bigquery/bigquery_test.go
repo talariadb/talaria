@@ -10,10 +10,8 @@ func TestWriter(t *testing.T) {
 
 	c, err := New("my-project-id", "mydataset", "mytable")
 
-	assert.Nil(t, c)
-	assert.Error(t, err)
+	assert.NotNil(t, c)
+	assert.NoError(t, err)
+	assert.Error(t, c.Write([]byte("abc"), []byte("hello")))
 
-	assert.Panics(t, func() {
-		c.Write([]byte("abc"), []byte("hello"))
-	})
 }

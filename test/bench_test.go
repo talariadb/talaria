@@ -37,8 +37,8 @@ func (m *benchMockConfigurer) Configure(c *config.Config) error {
 		Port: 9876,
 	}
 
-	c.Tables.Timeseries = &config.Timeseries{
-		Name:   "eventlog",
+	c.Tables = make(map[string]config.Table, 1)
+	c.Tables[tableName] = config.Table{
 		TTL:    3600,
 		HashBy: "_col5",
 		SortBy: "_col1",
@@ -59,19 +59,16 @@ func BenchmarkQuery(b *testing.B) {
 
 	// create monitor
 	monitor := monitor.NewNoop()
-	timeseriesCfg := timeseries.Config{
-		Name:   "eventlog",
-		TTL:    cfg().Tables.Timeseries.TTL,
-		HashBy: cfg().Tables.Timeseries.HashBy,
-		SortBy: cfg().Tables.Timeseries.SortBy,
-		Schema: "",
-	}
-	store := disk.Open(cfg().Storage.Directory, timeseriesCfg.Name, monitor, cfg().Badger)
+	store := disk.Open(cfg().Storage.Directory, tableName, monitor, cfg().Storage.Badger)
 
 	// Start the server and open the database
-	server := server.New(cfg, monitor, script.NewLoader(nil),
-		timeseries.New(new(noopMembership), monitor, store, timeseriesCfg),
-	)
+	eventlog := timeseries.New(tableName, new(noopMembership), monitor, store, &config.Table{
+		TTL:    cfg().Tables[tableName].TTL,
+		HashBy: cfg().Tables[tableName].HashBy,
+		SortBy: cfg().Tables[tableName].SortBy,
+		Schema: "",
+	})
+	server := server.New(cfg, monitor, script.NewLoader(nil), eventlog)
 	defer server.Close()
 
 	// Append some files
@@ -93,7 +90,7 @@ func BenchmarkQuery(b *testing.B) {
 	// Get a split ID for our query
 	batch, err := server.PrestoGetSplits(&presto.PrestoThriftSchemaTableName{
 		SchemaName: "talaria",
-		TableName:  "eventlog",
+		TableName:  tableName,
 	}, &presto.PrestoThriftNullableColumnSet{
 		Columns: nil,
 	}, newSplitQuery("Good"), 10000, nil)
@@ -110,7 +107,9 @@ func BenchmarkQuery(b *testing.B) {
 			token := new(presto.PrestoThriftNullableToken)
 
 		repeat:
-			result, _ := server.PrestoGetRows(split, []string{"_col5"}, 1*1024*1024, token)
+			result, err := server.PrestoGetRows(split, []string{"_col5"}, 1*1024*1024, token)
+			noerror(err)
+
 			if result.NextToken != nil {
 				token.Token = result.NextToken
 				goto repeat

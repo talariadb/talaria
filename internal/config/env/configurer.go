@@ -14,8 +14,10 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-var errConvert = errors.New("Unable to convert")
-var errNotSupported = errors.New("Doesn't support this type")
+var (
+	errConvert      = errors.New("env: unalble to convert the type")
+	errNotSupported = errors.New("env: unsupported type")
+)
 
 // Configurer to fetch env variable values
 type Configurer struct {
@@ -48,23 +50,19 @@ func (e *Configurer) Configure(c *config.Config) error {
 // }
 // to set the value of the port, set env variable KEY_PRESTO_PORT where key is the key used to initialize the env configurer
 func populate(config interface{}, pre string) {
-	reflectType := reflect.TypeOf(config).Elem()
-	reflectValue := reflect.ValueOf(config).Elem()
+	rt := reflect.TypeOf(config).Elem()
+	rv := reflect.ValueOf(config).Elem()
 
-	for i := 0; i < reflectType.NumField(); i++ {
-		field := reflectValue.Field(i)
-		name, tagged := reflectType.Field(i).Tag.Lookup("env")
+	for i := 0; i < rt.NumField(); i++ {
+		field := rv.Field(i)
+		name, tagged := rt.Field(i).Tag.Lookup("env")
 		if !tagged {
 			continue // Ignore untagged
 		}
 
 		switch field.Kind() {
 		case reflect.Interface, reflect.Struct:
-			a := field.Addr()
-			tag, ok := reflectType.Field(i).Tag.Lookup("env")
-			if ok {
-				populate(a.Interface(), pre+"_"+tag)
-			}
+			populate(field.Addr().Interface(), pre+"_"+name)
 
 		case reflect.Ptr:
 			if !field.IsNil() {
@@ -76,14 +74,11 @@ func populate(config interface{}, pre string) {
 
 				// If pointer to primitive types then directly fill the values
 				case reflect.Int64, reflect.Int32, reflect.Int, reflect.Float32, reflect.Float64, reflect.Bool, reflect.String, reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
-					val, ok := os.LookupEnv(pre + "_" + name)
-					if ok {
-						vlc, err := convert(field.Elem(), val)
-						if err == nil {
-							field.Elem().Set(reflect.ValueOf(vlc))
+					if v, ok := os.LookupEnv(pre + "_" + name); ok {
+						if value, err := convert(field.Elem(), v); err == nil {
+							field.Elem().Set(reflect.ValueOf(value))
 						}
 					}
-
 				}
 			} else if searchPrefix(pre + "_" + name) {
 				v := reflect.New(field.Type().Elem())
@@ -92,18 +87,13 @@ func populate(config interface{}, pre string) {
 			}
 
 		case reflect.Array, reflect.Slice, reflect.Map, reflect.Chan, reflect.Func:
-			return // not supported
+			continue // not supported
 
 		//For primitive types end the recursion and directly fill the values
 		default:
-			tag, ok := reflectType.Field(i).Tag.Lookup("env")
-			if ok {
-				val, ok := os.LookupEnv(pre + "_" + tag)
-				if ok {
-					vlc, err := convert(field, val)
-					if err == nil {
-						field.Set(reflect.ValueOf(vlc))
-					}
+			if v, ok := os.LookupEnv(pre + "_" + name); ok {
+				if value, err := convert(field, v); err == nil {
+					field.Set(reflect.ValueOf(value))
 				}
 			}
 		}
@@ -162,5 +152,4 @@ func convert(key reflect.Value, value string) (interface{}, error) {
 	}
 
 	return "", errNotSupported
-
 }

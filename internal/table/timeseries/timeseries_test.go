@@ -32,9 +32,7 @@ type mockConfigurer struct {
 }
 
 func (m *mockConfigurer) Configure(c *config.Config) error {
-
-	c.Tables.Timeseries = &config.Timeseries{
-		Name:   "eventlog",
+	c.Tables["eventlog"] = config.Table{
 		TTL:    3600,
 		HashBy: "string1",
 		SortBy: "int1",
@@ -48,28 +46,27 @@ func TestTimeseries_DynamicSchema(t *testing.T) {
 	dir, _ := ioutil.TempDir(".", "testdata-")
 	defer func() { _ = os.RemoveAll(dir) }()
 
-	timeseriesCfg := timeseries.Config{
+	const name = "eventlog"
+	tableConf := config.Table{
 		HashBy: "string1",
 		SortBy: "int1",
-		Schema: "", // For static schema
-		Name:   "eventlog",
 		TTL:    3600,
 	}
 
 	monitor := monitor2.NewNoop()
-	store := disk.Open(dir, timeseriesCfg.Name, monitor, config.Badger{})
+	store := disk.Open(dir, name, monitor, config.Badger{})
 
 	// Start the server and open the database
-	eventlog := timeseries.New(new(noopMembership), monitor, store, timeseriesCfg)
+	eventlog := timeseries.New(name, new(noopMembership), monitor, store, &tableConf)
 	assert.NotNil(t, eventlog)
-	assert.Equal(t, "eventlog", eventlog.Name())
+	assert.Equal(t, name, eventlog.Name())
 	defer eventlog.Close()
 
 	// Append some files
 	{
 		b, err := ioutil.ReadFile(testFile3)
 		assert.NoError(t, err)
-		blocks, err := block.FromOrcBy(b, timeseriesCfg.HashBy, nil)
+		blocks, err := block.FromOrcBy(b, tableConf.HashBy, nil)
 		assert.NoError(t, err)
 		for _, block := range blocks {
 			assert.NoError(t, eventlog.Append(block))
@@ -78,14 +75,14 @@ func TestTimeseries_DynamicSchema(t *testing.T) {
 
 	// Get the schema
 	{
-		schema, err := eventlog.Schema()
-		assert.NoError(t, err)
+		schema, isStatic := eventlog.Schema()
+		assert.False(t, isStatic)
 		assert.Len(t, schema, 2)
 	}
 
 	// Get the splits
 	{
-		splits, err := eventlog.GetSplits([]string{}, newSplitQuery("110010100101010010101000100001", timeseriesCfg.HashBy), 10000)
+		splits, err := eventlog.GetSplits([]string{}, newSplitQuery("110010100101010010101000100001", tableConf.HashBy), 10000)
 		assert.NoError(t, err)
 		assert.Len(t, splits, 1)
 		assert.Equal(t, "127.0.0.1", splits[0].Addrs[0])
@@ -102,7 +99,7 @@ func TestTimeseries_DynamicSchema(t *testing.T) {
 	{
 		b, err := ioutil.ReadFile(testFile2)
 		assert.NoError(t, err)
-		blocks, err := block.FromOrcBy(b, timeseriesCfg.HashBy, nil)
+		blocks, err := block.FromOrcBy(b, tableConf.HashBy, nil)
 		assert.NoError(t, err)
 		for _, block := range blocks {
 			assert.NoError(t, eventlog.Append(block))
@@ -111,14 +108,14 @@ func TestTimeseries_DynamicSchema(t *testing.T) {
 
 	// Get the schema
 	{
-		schema, err := eventlog.Schema()
-		assert.NoError(t, err)
+		schema, isStatic := eventlog.Schema()
+		assert.False(t, isStatic)
 		assert.Len(t, schema, 8)
 	}
 
 	// Get the splits
 	{
-		splits, err := eventlog.GetSplits([]string{}, newSplitQuery("110010100101010010101000100001", timeseriesCfg.HashBy), 10000)
+		splits, err := eventlog.GetSplits([]string{}, newSplitQuery("110010100101010010101000100001", tableConf.HashBy), 10000)
 		assert.NoError(t, err)
 		assert.Len(t, splits, 1)
 		assert.Equal(t, "127.0.0.1", splits[0].Addrs[0])
@@ -139,23 +136,23 @@ func TestTimeSeries_LoadStaticSchema(t *testing.T) {
 	staticSchema := `string1: string
 int1: int64
 `
-	timeseriesCfg := timeseries.Config{
+	const name = "eventlog"
+	tableConf := config.Table{
 		HashBy: "string1",
 		SortBy: "int1",
-		Schema: staticSchema, // For static schema
-		Name:   "eventlog",
+		Schema: staticSchema,
 		TTL:    3600,
 	}
 
 	monitor := monitor2.NewNoop()
-	store := disk.Open(dir, timeseriesCfg.Name, monitor, config.Badger{})
+	store := disk.Open(dir, name, monitor, config.Badger{})
 
 	// Start the server and open the database
-	eventlog := timeseries.New(new(noopMembership), monitor, store, timeseriesCfg)
+	eventlog := timeseries.New(name, new(noopMembership), monitor, store, &tableConf)
 	defer eventlog.Close()
 
-	actualSchema, err := eventlog.Schema()
-	assert.Nil(t, err)
+	actualSchema, isStatic := eventlog.Schema()
+	assert.True(t, isStatic)
 	expectedSchema := typeof.Schema{
 		"string1": typeof.String,
 		"int1":    typeof.Int64,

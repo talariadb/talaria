@@ -21,14 +21,17 @@ var (
 type Table interface {
 	io.Closer
 	Name() string
-	Schema() (typeof.Schema, error)
+	Schema() (typeof.Schema, bool)
 	GetSplits(desiredColumns []string, outputConstraint *presto.PrestoThriftTupleDomain, maxSplitCount int) ([]Split, error)
 	GetRows(splitID []byte, columns []string, maxBytes int64) (*PageResult, error)
+	HashBy() string
+	SortBy() string
 }
 
 // Appender represents an appender of data to the table.
 type Appender interface {
 	Append(block.Block) error
+	HashBy() string
 }
 
 // Split represents a split

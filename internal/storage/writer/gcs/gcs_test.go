@@ -10,10 +10,7 @@ func TestWriter(t *testing.T) {
 	c, err := New("test", "test")
 
 	// TODO: Impove test
-	assert.Nil(t, c)
-	assert.Error(t, err)
-
-	assert.Panics(t, func() {
-		c.Write([]byte("abc"), []byte("hello"))
-	})
+	assert.NotNil(t, c)
+	assert.NoError(t, err)
+	assert.Error(t, c.Write([]byte("abc"), []byte("hello")))
 }

@@ -15,17 +15,27 @@ writers:
     retries: 5
 storage:
   dir: "/data"
-tables:
-  timeseries:
-    name: eventlog
-    ttl: 3600
-    hashBy: event
-  log:
-    name: logs
-  nodes:
-    name: nodes
 statsd:
   host: "statsd-host"
   port: 8126
 k8s: # Optional value to set in k8s env. when server need liveness & readiness probes
   probePort: 8082
+tables:
+  events:
+    hashBy: "event"
+    sortBy: "ingested_at"
+    schema: "gcs://k8s-default-stg-configs/ingestor/schema1.yaml"
+    compact:
+      interval: 60
+      nameFunc: "gcs://k8s-online-stg-configs/ingestor/name.lua"
+      gcs:
+        bucket: "airasia-opdatalake-stg-datalake"
+        prefix: "sink/"
+      bigquery:
+        project: "airasia-opdatalake-stg"
+        dataset: "eventlog"
+        table: "events"
+  users:
+    hashBy: "user_id"
+    sortBy: "ingested_at"
+    schema: "gcs://k8s-default-stg-configs/ingestor/schema2.yaml"

@@ -14,8 +14,12 @@ import (
 	"github.com/kelindar/talaria/internal/monitor"
 	"github.com/kelindar/talaria/internal/monitor/logging"
 	"github.com/kelindar/talaria/internal/storage/disk"
+	"github.com/kelindar/talaria/internal/table"
 	"github.com/kelindar/talaria/internal/table/timeseries"
 )
+
+// Assert the contract
+var _ table.Table = new(Table)
 
 // Membership represents a contract required for recovering cluster information.
 type Membership interface {
@@ -31,11 +35,13 @@ type Table struct {
 
 // New creates a new table implementation.
 func New(cfg config.Func, cluster Membership, monitor monitor.Monitor) *Table {
-	store := disk.Open(cfg().Storage.Directory, cfg().Tables.Log.Name, monitor, cfg().Badger)
-	base := timeseries.New(cluster, monitor, store, timeseries.Config{
-		Name:   cfg().Tables.Log.Name,
-		TTL:    cfg().Tables.Log.TTL,
-		SortBy: cfg().Tables.Log.SortBy,
+	const name = "logs"
+
+	// Open a dedicated logs storage
+	store := disk.Open(cfg().Storage.Directory, name, monitor, cfg().Storage.Badger)
+	base := timeseries.New(name, cluster, monitor, store, &config.Table{
+		TTL:    24 * 3600, // 1 day
+		SortBy: "time",
 		HashBy: "",
 		Schema: "",
 	})
