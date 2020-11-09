@@ -36,7 +36,7 @@ func FromBatchBy(batch *talaria.Batch, partitionBy string, filter *typeof.Schema
 		// Get the partition value
 		partition, err := readPartition(event, batch.Strings, partitionKey)
 		if err != nil {
-			return nil, err
+			continue // Skip the record if it's missing or has an invalid partition
 		}
 
 		// Get the block for that partition

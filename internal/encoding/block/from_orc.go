@@ -30,7 +30,7 @@ func FromOrcBy(payload []byte, partitionBy string, filter *typeof.Schema, comput
 	cols := schema.Columns()
 	partitionIdx, ok := findString(cols, partitionBy)
 	if !ok {
-		return nil, errPartitionNotFound
+		return nil, nil // Skip the record if it's missing or has an invalid partition
 	}
 
 	// The resulting set of blocks, repartitioned and chunked
