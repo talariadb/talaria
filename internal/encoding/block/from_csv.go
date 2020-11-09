@@ -25,7 +25,7 @@ func FromCSVBy(input []byte, partitionBy string, filter *typeof.Schema, computed
 	// Find the partition index
 	partitionIdx, ok := findString(header, partitionBy)
 	if !ok {
-		return nil, nil // Skip the record if it's missing or has an invalid partition
+		return nil, nil // Skip the file if it has no partition column
 	}
 
 	// The resulting set of blocks, repartitioned and chunked
@@ -56,6 +56,11 @@ func FromCSVBy(input []byte, partitionBy string, filter *typeof.Schema, computed
 		partition, ok := convertToString(r[partitionIdx])
 		if !ok {
 			return nil, errPartitionNotFound
+		}
+
+		// Skip the record if the partition is actually empty
+		if partition == "" {
+			continue
 		}
 
 		// Get the block for that partition

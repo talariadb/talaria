@@ -34,3 +34,25 @@ func TestFromCSV(t *testing.T) {
 	assert.True(t, v["raisedAmt"].Size() > 0)
 	assert.Equal(t, typeof.Float64, v["raisedAmt"].Kind())
 }
+
+func TestFromCSV_EmptyPartition(t *testing.T) {
+	const testFile = "../../../test/test4.csv"
+
+	o, err := ioutil.ReadFile(testFile)
+	assert.NotEmpty(t, o)
+	assert.NoError(t, err)
+
+	b, err := FromCSVBy(o, "numEmps", &typeof.Schema{
+		"numEmps": typeof.String,
+		"company": typeof.String,
+	})
+	assert.NoError(t, err)
+	assert.Equal(t, 72, len(b))
+
+	for _, v := range b {
+		assert.NotEqual(t, "", string(v.Key))
+		col, err := v.Select(typeof.Schema{"company": typeof.String})
+		assert.NoError(t, err)
+		assert.NotEqual(t, "LifeLock", col.LastRow()["company"])
+	}
+}
