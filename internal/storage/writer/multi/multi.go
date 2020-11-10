@@ -1,6 +1,7 @@
 package multi
 
 import (
+	"github.com/kelindar/talaria/internal/encoding/block"
 	"github.com/kelindar/talaria/internal/encoding/key"
 )
 
@@ -11,7 +12,7 @@ type SubWriter interface {
 
 // streamer represents the sub-streamer
 type streamer interface {
-	Stream(row *map[string]interface{}) error
+	Stream(row block.Row) error
 }
 
 // Writer represents a writer that writes into multiple sub-writers.
@@ -47,7 +48,7 @@ func (w *Writer) Write(key key.Key, val []byte) error {
 }
 
 // Stream streams the data to the sink
-func (w *Writer) Stream(row *map[string]interface{}) error {
+func (w *Writer) Stream(row block.Row) error {
 	for _, w := range w.streamers {
 		if err := w.Stream(row); err != nil {
 			return err
