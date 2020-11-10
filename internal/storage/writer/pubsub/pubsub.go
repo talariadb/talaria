@@ -5,7 +5,10 @@ import (
 	"fmt"
 
 	"cloud.google.com/go/pubsub"
+	"github.com/kelindar/talaria/internal/encoding/block"
+	"github.com/kelindar/talaria/internal/encoding/key"
 	"github.com/kelindar/talaria/internal/monitor/errors"
+	script "github.com/kelindar/talaria/internal/scripting"
 	"github.com/kelindar/talaria/internal/storage/writer/encoder"
 )
 
@@ -15,12 +18,11 @@ type Writer struct {
 	topic   *pubsub.Topic
 	Writer  *encoder.Writer
 	context context.Context
-	buffer  chan *map[string]interface{}
-	sent    chan bool
+	buffer  chan []byte
 }
 
 // New creates a new writer
-func New(project string, topic string, filter string, encoding string) (*Writer, error) {
+func New(project, topic, filter, encoding string, loader *script.Loader) (*Writer, error) {
 	ctx := context.Background()
 	client, err := pubsub.NewClient(ctx, project)
 	if err != nil {
@@ -29,7 +31,7 @@ func New(project string, topic string, filter string, encoding string) (*Writer,
 
 	topicRef := client.Topic(topic)
 
-	encoderWriter, err := encoder.New(filter, encoding)
+	encoderWriter, err := encoder.New(filter, encoding, loader)
 	if err != nil {
 		return nil, err
 	}
@@ -39,25 +41,27 @@ func New(project string, topic string, filter string, encoding string) (*Writer,
 		client:  client,
 		Writer:  encoderWriter,
 		context: ctx,
-		buffer:  make(chan *map[string]interface{}, 65000),
-		sent:    make(chan bool, 65000),
+		buffer:  make(chan []byte, 65000),
 	}
 	go w.process()
 
 	return w, nil
 }
 
-// Stream publishes data into PubSub topics
-func (w *Writer) Stream(row *map[string]interface{}) error {
-	w.buffer <- row
+// Write writes the data to the sink.
+func (*Writer) Write(key.Key, []byte) error {
+	return nil // Noop
+}
 
-	for v := range w.sent {
-		if v {
-			return nil
-		}
+// Stream publishes data into PubSub topics
+func (w *Writer) Stream(row block.Row) error {
+	message, err := w.Writer.Encode(row)
+	if err != nil {
+		return err
 	}
 
-	return errors.New("pubsub: no signal received to signify data sent")
+	w.buffer <- message
+	return nil
 }
 
 // process will read from buffer, encode the row, and publish to PubSub
@@ -65,22 +69,13 @@ func (w *Writer) process() error {
 	errs := make(chan error, 1)
 	ctx := context.Background()
 
-	for row := range w.buffer {
-
-		encodedRow, err := w.Writer.Encode(row)
-
-		if err != nil {
-			return errors.Internal("pubsub: unable to encode row", err)
-		}
-
+	for message := range w.buffer {
 		result := w.topic.Publish(ctx, &pubsub.Message{
-			Data: encodedRow,
+			Data: message,
 			Attributes: map[string]string{
 				"origin": "talaria",
 			},
 		})
-
-		w.sent <- true
 
 		go func(res *pubsub.PublishResult) {
 			id, err := res.Get(ctx)

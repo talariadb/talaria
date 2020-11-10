@@ -12,9 +12,9 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestNew(t *testing.T) {
+func TestForCompaction(t *testing.T) {
 	cfg := &config.Compaction{}
-	compact := New(cfg,
+	compact := ForCompaction(cfg,
 		monitor.New(logging.NewStandard(), statsd.NewNoop(), "x", "x"),
 		disk.New(monitor.NewNoop()),
 		script.NewLoader(nil),

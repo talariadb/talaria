@@ -66,7 +66,8 @@ func TestTimeseries_DynamicSchema(t *testing.T) {
 	{
 		b, err := ioutil.ReadFile(testFile3)
 		assert.NoError(t, err)
-		blocks, err := block.FromOrcBy(b, tableConf.HashBy, nil)
+		apply := block.Transform(nil)
+		blocks, err := block.FromOrcBy(b, timeseriesCfg.HashBy, nil, apply)
 		assert.NoError(t, err)
 		for _, block := range blocks {
 			assert.NoError(t, eventlog.Append(block))
@@ -99,7 +100,8 @@ func TestTimeseries_DynamicSchema(t *testing.T) {
 	{
 		b, err := ioutil.ReadFile(testFile2)
 		assert.NoError(t, err)
-		blocks, err := block.FromOrcBy(b, tableConf.HashBy, nil)
+		apply := block.Transform(nil)
+		blocks, err := block.FromOrcBy(b, timeseriesCfg.HashBy, nil, apply)
 		assert.NoError(t, err)
 		for _, block := range blocks {
 			assert.NoError(t, eventlog.Append(block))

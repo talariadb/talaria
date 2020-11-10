@@ -3,15 +3,15 @@ package pubsub
 import (
 	"testing"
 
+	"github.com/kelindar/talaria/internal/encoding/block"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestStreamer(t *testing.T) {
-	data := make(map[string]interface{}, 1)
+	row := block.NewRow(nil, 0)
+	row.Set("test", "Hello Talaria")
 
-	data["test"] = "Hello Talaria"
+	c, _ := New("gcp-project", "talaria", "", "", nil)
 
-	c, _ := New("gcp-project", "talaria", "", "")
-
-	assert.Nil(t, c.Stream(&data))
+	assert.NoError(t, c.Stream(row))
 }

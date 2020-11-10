@@ -36,6 +36,11 @@ type Merger interface {
 	Merge([]block.Block, typeof.Schema) ([]byte, []byte)
 }
 
+// Streamer represents a contract that streams out a row of data.
+type Streamer interface {
+	Stream(block.Row) error
+}
+
 // Close attempts to close one or multiple storages
 func Close(objs ...interface{}) error {
 	var result error

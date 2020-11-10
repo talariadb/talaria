@@ -27,21 +27,20 @@ const (
 
 // Config global
 type Config struct {
-	URI       string      `json:"uri" yaml:"uri" env:"URI"`
-	Env       string      `json:"env" yaml:"env" env:"ENV"`             // The environment (eg: prd, stg)
-	AppName   string      `json:"appName" yaml:"appName" env:"APPNAME"` // app name used for monitoring
-	Domain    string      `json:"domain" yaml:"domain" env:"DOMAIN"`
-	Readers   Readers     `json:"readers" yaml:"readers" env:"READERS"`
-	Writers   Writers     `json:"writers" yaml:"writers" env:"WRITERS"`
-	Storage   Storage     `json:"storage" yaml:"storage" env:"STORAGE"`
-	Tables    Tables      `json:"tables" yaml:"tables"`
-	Statsd    *StatsD     `json:"statsd,omitempty" yaml:"statsd" env:"STATSD"`
-	Computed  []Computed  `json:"computed" yaml:"computed" env:"COMPUTED"`
-	K8s       *K8s        `json:"k8s,omitempty" yaml:"k8s" env:"K8S"`
-	Streaming []Streaming `json:"streaming" yaml:"streaming" env:"STREAMING"`
+	URI      string     `json:"uri" yaml:"uri" env:"URI"`
+	Env      string     `json:"env" yaml:"env" env:"ENV"`             // The environment (eg: prd, stg)
+	AppName  string     `json:"appName" yaml:"appName" env:"APPNAME"` // app name used for monitoring
+	Domain   string     `json:"domain" yaml:"domain" env:"DOMAIN"`
+	Readers  Readers    `json:"readers" yaml:"readers" env:"READERS"`
+	Writers  Writers    `json:"writers" yaml:"writers" env:"WRITERS"`
+	Storage  Storage    `json:"storage" yaml:"storage" env:"STORAGE"`
+	Tables   Tables     `json:"tables" yaml:"tables"`
+	Statsd   *StatsD    `json:"statsd,omitempty" yaml:"statsd" env:"STATSD"`
+	Computed []Computed `json:"computed" yaml:"computed" env:"COMPUTED"`
+	K8s      *K8s       `json:"k8s,omitempty" yaml:"k8s" env:"K8S"`
+	Streams  *Streams   `json:"streams" yaml:"streams" env:"STREAMS"`
 }
 
-// K8s represents a kubernetes-related configuration
 type K8s struct {
 	ProbePort int32 `json:"probePort" yaml:"probePort" env:"PROBEPORT"` // The port which is used for liveness and readiness probes (default: 8080)
 }
@@ -74,26 +73,6 @@ type Badger struct {
 	LevelSizeMultiplier *int          `json:"levelSizeMultiplier" yaml:"levelSizeMultiplier" env:"LEVELSIZEMULTIPLIER"` // The ratio between the maximum sizes of contiguous levels in the LSM. defaults to 10
 	MaxLevels           *int          `json:"maxLevels" yaml:"maxLevels" env:"MAXLEVELS"`                               // Maximum number of levels of compaction allowed in the LSM. defaults to 7
 	Default             BadgerDefault `json:"default" yaml:"default" env:"DEFAULT"`                                     // default badger option to optimize for storage, ingestion or default that badger provides
-}
-
-// Streaming is the location to write the data
-type Streaming struct {
-	PubSubStream *PubSubStream `json:"pubsub" yaml:"pubsub" env:"pubsub"`
-	RedisStream  *RedisStream  `json:"redis" yaml:"redis" env:"redis"`
-}
-
-// PubSubStream represents a stream to Google Pub/Sub
-type PubSubStream struct {
-	Project string `json:"project" yaml:"project" env:"PROJECT"`
-	Topic   string `json:"topic" yaml:"topic" env:"TOPIC"`
-	Filter  string `json:"filter" yaml:"filter" env:"FILTER"`
-	Encoder string `json:"encoder" yaml:"encoder" env:"ENCODER"`
-}
-
-// RedisStream represents a stream to Redis
-type RedisStream struct {
-	Project string `json:"project" yaml:"project" env:"PROJECT"`
-	Topic   string `json:"topic" yaml:"topic" env:"TOPIC"`
 }
 
 // Readers are ways to read the data
@@ -142,14 +121,31 @@ type Computed struct {
 
 // Compaction represents a configuration for compaction sinks
 type Compaction struct {
-	NameFunc string        `json:"nameFunc" yaml:"nameFunc" env:"NAMEFUNC"` // The lua script to compute file name given a row
-	Interval int           `json:"interval" yaml:"interval" env:"INTERVAL"` // The compaction interval, in seconds
-	S3       *S3Sink       `json:"s3" yaml:"s3" env:"S3"`                   // The S3 writer configuration
-	Azure    *AzureSink    `json:"azure" yaml:"azure" env:"AZURE"`          // The Azure writer configuration
-	BigQuery *BigQuerySink `json:"bigquery" yaml:"bigquery" env:"BIGQUERY"` // The Big Query writer configuration
-	GCS      *GCSSink      `json:"gcs" yaml:"gcs" env:"GCS"`                // The Google Cloud Storage writer configuration
-	File     *FileSink     `json:"file" yaml:"file" env:"FILE"`             // The local file system writer configuration
-	Talaria  *TalariaSink  `json:"talaria" yaml:"talaria" env:"TALARIA"`    // The Talaria writer configuration
+	Sinks
+	NameFunc string `json:"nameFunc" yaml:"nameFunc" env:"NAMEFUNC"` // The lua script to compute file name given a row
+	Interval int    `json:"interval" yaml:"interval" env:"INTERVAL"` // The compaction interval, in seconds
+}
+
+// Streams are lists of sinks to be streamed to
+type Streams struct {
+	S3       []*S3Sink       `json:"s3" yaml:"s3"`
+	Azure    []*AzureSink    `json:"azure" yaml:"azure"`
+	BigQuery []*BigQuerySink `json:"bigquery" yaml:"bigquery"`
+	GCS      []*GCSSink      `json:"gcs" yaml:"gcs" `
+	File     []*FileSink     `json:"file" yaml:"file" `
+	Talaria  []*TalariaSink  `json:"talaria" yaml:"talaria" `
+	PubSub   []*PubSubSink   `json:"pubsub" yaml:"pubsub" `
+}
+
+// Sinks represents a configuration for writer sinks
+type Sinks struct {
+	S3       *S3Sink       `json:"s3" yaml:"s3"`              // The S3 writer configuration
+	Azure    *AzureSink    `json:"azure" yaml:"azure"`        // The Azure writer configuration
+	BigQuery *BigQuerySink `json:"bigquery" yaml:"bigquery" ` // The Big Query writer configuration
+	GCS      *GCSSink      `json:"gcs" yaml:"gcs" `           // The Google Cloud Storage writer configuration
+	File     *FileSink     `json:"file" yaml:"file" `         // The local file system writer configuration
+	Talaria  *TalariaSink  `json:"talaria" yaml:"talaria" `   // The Talaria writer configuration
+	PubSub   *PubSubSink   `json:"pubsub" yaml:"pubsub" `     // The Google Pub/Sub writer configuration
 }
 
 // S3Sink represents a sink for AWS S3 and compatible stores.
@@ -186,6 +182,14 @@ type GCSSink struct {
 // FileSink represents a sink to the local file system
 type FileSink struct {
 	Directory string `json:"dir" yaml:"dir" env:"DIR"`
+}
+
+// PubSubSink represents a stream to Google Pub/Sub
+type PubSubSink struct {
+	Project string `json:"project" yaml:"project" env:"PROJECT"`
+	Topic   string `json:"topic" yaml:"topic" env:"TOPIC"`
+	Filter  string `json:"filter" yaml:"filter" env:"FILTER"`
+	Encoder string `json:"encoder" yaml:"encoder" env:"ENCODER"`
 }
 
 // TalariaSink represents a sink to an instance of Talaria

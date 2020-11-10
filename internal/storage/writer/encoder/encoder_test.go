@@ -11,7 +11,7 @@ func TestEncoder(t *testing.T) {
 
 	data["test"] = "Hello Talaria"
 
-	c, _ := New("", "")
+	c, _ := New("", "", nil)
 	dataString, err := c.Encode(&data)
 
 	assert.IsType(t, []byte{}, dataString)

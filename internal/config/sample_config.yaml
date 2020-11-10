@@ -39,9 +39,13 @@ tables:
     hashBy: "user_id"
     sortBy: "ingested_at"
     schema: "gcs://k8s-default-stg-configs/ingestor/schema2.yaml"
-streasm:
-  - pubsub:
-      project: my-gcp-project
+streams:
+  pubsub:
+    - project: my-gcp-project
       topic: my-topic
       filter: event.name
+      encoder: json
+    - project: my-gcp-project
+      topic: my-topic2
+      filter: event.name2
       encoder: json

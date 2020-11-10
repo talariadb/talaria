@@ -101,7 +101,10 @@ computed:
 	assert.NoError(t, e.Configure(c))
 
 	fmt.Println(c.Streams)
-	fmt.Println(len(c.Streams))
+	fmt.Println(c.Streams.BigQuery)
+	// fmt.Println(len(c.Streams))
+	// fmt.Println(c.Storage.Compact.Sinks)
+	// fmt.Println(c.Storage.Compact.BigQuery)
 
 	// asserts
 	assert.Len(t, c.Computed, 1)

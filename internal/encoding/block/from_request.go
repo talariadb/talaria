@@ -6,27 +6,36 @@ package block
 import (
 	"fmt"
 
-	"github.com/kelindar/talaria/internal/column"
 	"github.com/kelindar/talaria/internal/encoding/typeof"
-	"github.com/kelindar/talaria/internal/storage/stream"
 	talaria "github.com/kelindar/talaria/proto"
 )
 
 // FromRequestBy creates a block from a talaria protobuf-encoded request. It
 // repartitions the batch by a given partition key at the same time.
-func FromRequestBy(request *talaria.IngestRequest, partitionBy string, filter *typeof.Schema, streams stream.Streamer, computed ...column.Computed) ([]Block, error) {
+func FromRequestBy(request *talaria.IngestRequest, partitionBy string, filter *typeof.Schema, funcs ...applyFunc) ([]Block, error) {
+	apply := multiApply(funcs)
 	switch data := request.GetData().(type) {
 	case *talaria.IngestRequest_Batch:
-		return FromBatchBy(data.Batch, partitionBy, filter, streams, computed...)
+		return FromBatchBy(data.Batch, partitionBy, filter, apply)
 	case *talaria.IngestRequest_Orc:
-		return FromOrcBy(data.Orc, partitionBy, filter, computed...)
+		return FromOrcBy(data.Orc, partitionBy, filter, apply)
 	case *talaria.IngestRequest_Csv:
-		return FromCSVBy(data.Csv, partitionBy, filter, computed...)
+		return FromCSVBy(data.Csv, partitionBy, filter, apply)
 	case *talaria.IngestRequest_Url:
-		return FromURLBy(data.Url, partitionBy, filter, computed...)
+		return FromURLBy(data.Url, partitionBy, filter, apply)
 	case nil: // The field is not set.
 		return nil, nil
 	default:
 		return nil, fmt.Errorf("unsupported data type %T", data)
+	}
+}
+
+// NewApply creates an apply function from multiple apply functions
+func multiApply(funcs []applyFunc) applyFunc {
+	return func(r Row) Row {
+		for _, f := range funcs {
+			r = f(r)
+		}
+		return r
 	}
 }

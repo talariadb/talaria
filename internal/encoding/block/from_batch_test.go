@@ -81,7 +81,8 @@ func TestBlock_FromBatch(t *testing.T) {
 	}
 
 	// Create blocks
-	blocks, err := FromBatchBy(testBatch, "d", &filter, nil, dataColumn)
+	apply := Transform(&filter, dataColumn)
+	blocks, err := FromBatchBy(testBatch, "d", &filter, apply)
 	assert.NoError(t, err)
 	assert.Len(t, blocks, 3) // Number of partitions
 

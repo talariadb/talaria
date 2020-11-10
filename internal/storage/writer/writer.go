@@ -21,15 +21,26 @@ import (
 	"github.com/kelindar/talaria/internal/storage/writer/gcs"
 	"github.com/kelindar/talaria/internal/storage/writer/multi"
 	"github.com/kelindar/talaria/internal/storage/writer/noop"
+	"github.com/kelindar/talaria/internal/storage/writer/pubsub"
 	"github.com/kelindar/talaria/internal/storage/writer/s3"
 	"github.com/kelindar/talaria/internal/storage/writer/talaria"
 )
 
 var seed = maphash.MakeSeed()
 
-// New creates a compact store using the configuration provided
-func New(config *config.Compaction, monitor monitor.Monitor, store storage.Storage, loader *script.Loader) *compact.Storage {
-	writer, err := newWriter(config)
+// ForStreaming creates a streaming writer
+func ForStreaming(config *config.Streams, monitor monitor.Monitor, loader *script.Loader) (storage.Streamer, error) {
+	writer, err := newStreamer(config, loader)
+	if err != nil {
+		monitor.Error(err)
+	}
+
+	return writer.(storage.Streamer), nil
+}
+
+// ForCompaction creates a compaction writer
+func ForCompaction(config *config.Compaction, monitor monitor.Monitor, store storage.Storage, loader *script.Loader) *compact.Storage {
+	writer, err := newWriter(&config.Sinks, loader)
 	if err != nil {
 		monitor.Error(err)
 	}
@@ -62,8 +73,13 @@ func New(config *config.Compaction, monitor monitor.Monitor, store storage.Stora
 }
 
 // NewWriter creates a new writer from the configuration.
-func newWriter(config *config.Compaction) (flush.Writer, error) {
+func newWriter(config *config.Sinks, loader *script.Loader) (flush.Writer, error) {
 	var writers []multi.SubWriter
+
+	// If no writers were configured, error out
+	if len(writers) == 0 {
+		return noop.New(), errors.New("compact: writer was not configured")
+	}
 
 	// Configure S3 writer if present
 	if config.S3 != nil {
@@ -119,9 +135,110 @@ func newWriter(config *config.Compaction) (flush.Writer, error) {
 		writers = append(writers, w)
 	}
 
+	// Configure Google Pub/Sub writer if present
+	if config.PubSub != nil {
+		w, err := pubsub.New(config.PubSub.Project, config.PubSub.Topic, config.PubSub.Filter, config.PubSub.Encoder, loader)
+		if err != nil {
+			return nil, err
+		}
+		writers = append(writers, w)
+	}
+
+	// Setup a multi-writer for all configured writers
+	return multi.New(writers...), nil
+}
+
+// NewWriter creates a new writer from the configuration.
+func newStreamer(config *config.Streams, loader *script.Loader) (flush.Writer, error) {
+	var writers []multi.SubWriter
+
 	// If no writers were configured, error out
-	if len(writers) == 0 {
-		return noop.New(), errors.New("compact: writer was not configured")
+	if config == nil || ((len(config.S3) == 0) &&
+		(len(config.Azure) == 0) &&
+		(len(config.GCS) == 0) &&
+		(len(config.BigQuery) == 0) &&
+		(len(config.File) == 0) &&
+		(len(config.Talaria) == 0) &&
+		(len(config.PubSub) == 0)) {
+		return noop.New(), errors.New("stream: writer was not configured")
+	}
+
+	// Configure S3 writer if present
+	if len(config.S3) != 0 {
+		for _, conf := range config.S3 {
+			w, err := s3.New(conf.Bucket, conf.Prefix, conf.Region, conf.Endpoint, conf.SSE, conf.AccessKey, conf.SecretKey, conf.Concurrency)
+			if err != nil {
+				return nil, err
+			}
+			writers = append(writers, w)
+		}
+	}
+
+	// Configure Azure writer if present
+	if len(config.Azure) != 0 {
+		for _, conf := range config.Azure {
+			w, err := azure.New(conf.Container, conf.Prefix)
+			if err != nil {
+				return nil, err
+			}
+			writers = append(writers, w)
+		}
+	}
+
+	// Configure GCS writer if present
+	if len(config.GCS) != 0 {
+		for _, conf := range config.GCS {
+			w, err := gcs.New(conf.Bucket, conf.Prefix)
+			if err != nil {
+				return nil, err
+			}
+			writers = append(writers, w)
+		}
+	}
+
+	// Configure BigQuery writer if present
+	if len(config.BigQuery) != 0 {
+		for _, conf := range config.BigQuery {
+			w, err := bigquery.New(conf.Project, conf.Dataset, conf.Table)
+			if err != nil {
+				return nil, err
+			}
+			writers = append(writers, w)
+		}
+
+	}
+
+	// Configure File writer if present
+	if len(config.File) != 0 {
+		for _, conf := range config.File {
+			w, err := file.New(conf.Directory)
+			if err != nil {
+				return nil, err
+			}
+			writers = append(writers, w)
+		}
+	}
+
+	// Configure Talaria writer if present
+	if len(config.Talaria) != 0 {
+		for _, conf := range config.Talaria {
+			w, err := talaria.New(conf.Endpoint, conf.CircuitTimeout, conf.MaxConcurrent, conf.ErrorPercentThreshold)
+			if err != nil {
+				return nil, err
+			}
+			writers = append(writers, w)
+		}
+	}
+
+	// Configure Google Pub/Sub writer if present
+	if len(config.PubSub) != 0 {
+		for _, conf := range config.PubSub {
+			w, err := pubsub.New(conf.Project, conf.Topic, conf.Filter, conf.Encoder, loader)
+			if err != nil {
+				return nil, err
+			}
+			writers = append(writers, w)
+		}
 	}
 
 	// Setup a multi-writer for all configured writers

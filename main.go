@@ -33,10 +33,13 @@ import (
 	"github.com/kelindar/talaria/internal/storage/disk"
 	"github.com/kelindar/talaria/internal/storage/writer"
 <<<<<<< HEAD
+<<<<<<< HEAD
 	"github.com/kelindar/talaria/internal/table"
 =======
 	"github.com/kelindar/talaria/internal/streaming"
 >>>>>>> Refactor stream to writer
+=======
+>>>>>>> Huge refactor to reuse writer sinks
 	"github.com/kelindar/talaria/internal/table/log"
 	"github.com/kelindar/talaria/internal/table/nodes"
 	"github.com/kelindar/talaria/internal/table/timeseries"
@@ -86,7 +89,10 @@ func main() {
 
 	// Returns noop streamer if array is empty
 	fmt.Println(conf.Streams)
-	streams := streaming.New(conf.Streams, monitor)
+	streams, err := writer.ForStreaming(conf.Streams, monitor, loader)
+	if err != nil {
+		panic(err)
+	}
 
 	// Start the new server
 	server := server.New(configure, monitor, loader, streams, tables...)
