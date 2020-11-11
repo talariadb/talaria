@@ -43,9 +43,12 @@ streams:
   pubsub:
     - project: my-gcp-project
       topic: my-topic
-      filter: event.name
+      filter:
+        event: a.b
+        user_id: talaria_user
       encoder: json
     - project: my-gcp-project
       topic: my-topic2
-      filter: event.name2
+      filter: 
+        event: name2
       encoder: json

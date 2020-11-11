@@ -57,9 +57,6 @@ func newWithEncoder(name string, filter map[string]string, encoder Func) (*Write
 func (w *Writer) Encode(input interface{}) ([]byte, error) {
 
 	// TODO: make this work for block.Block and block.Row
-	// if b, ok := input.(block.Block); ok {
-	// 	continue
-	// }
 
 	// If it's a row, take the value map
 	if r, ok := input.(block.Row); ok {
@@ -69,6 +66,8 @@ func (w *Writer) Encode(input interface{}) ([]byte, error) {
 				if val, ok := r.Values[k]; ok {
 					if val == v {
 						continue
+					} else {
+						return nil, nil
 					}
 				} else {
 					return nil, nil
