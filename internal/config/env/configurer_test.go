@@ -96,6 +96,7 @@ streams:
       topic: my-topic
       filter:
         event: a.b
+        user_id: talaria_user
       encoder: json
     - project: my-gcp-project
       topic: my-topic2
@@ -112,5 +113,11 @@ streams:
 	assert.Len(t, c.Streams.PubSub, 2)
 	assert.Len(t, c.Computed, 1)
 	assert.Len(t, c.Tables, 1)
+
+	pubSubFilter := make(map[string]string, 2)
+	pubSubFilter["event"] = "a.b"
+	pubSubFilter["user_id"] = "talaria_user"
+
+	assert.Equal(t, c.Streams.PubSub[0].Filter, pubSubFilter)
 	assert.Equal(t, c.Tables["eventlog"].Compact.Sinks.File.Directory, "output/")
 }

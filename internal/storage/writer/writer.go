@@ -137,7 +137,7 @@ func newWriter(config *config.Sinks, loader *script.Loader) (flush.Writer, error
 
 	// Configure Google Pub/Sub writer if present
 	if config.PubSub != nil {
-		w, err := pubsub.New(config.PubSub.Project, config.PubSub.Topic, config.PubSub.Filter, config.PubSub.Encoder, loader)
+		w, err := pubsub.New(config.PubSub.Project, config.PubSub.Topic, config.PubSub.Encoder, config.PubSub.Filter, loader)
 		if err != nil {
 			return nil, err
 		}
@@ -233,7 +233,7 @@ func newStreamer(config *config.Streams, loader *script.Loader) (flush.Writer, e
 	// Configure Google Pub/Sub writer if present
 	if len(config.PubSub) != 0 {
 		for _, conf := range config.PubSub {
-			w, err := pubsub.New(conf.Project, conf.Topic, conf.Filter, conf.Encoder, loader)
+			w, err := pubsub.New(conf.Project, conf.Topic, conf.Encoder, conf.Filter, loader)
 			if err != nil {
 				return nil, err
 			}

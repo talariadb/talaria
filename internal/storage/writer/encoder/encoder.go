@@ -63,26 +63,20 @@ func (w *Writer) Encode(input interface{}) ([]byte, error) {
 
 	// If it's a row, take the value map
 	if r, ok := input.(block.Row); ok {
-		input = r.Values
-	}
-
-	// Check for key in high level, if not in high level check in context
-	if w.filter != nil {
-		for k, v := range w.filter {
-			if val, ok := input[k]; ok {
-				if val == v {
-					continue
+		// Check for key in high level
+		if w.filter != nil {
+			for k, v := range w.filter {
+				if val, ok := r.Values[k]; ok {
+					if val == v {
+						continue
+					}
+				} else {
+					return nil, nil
 				}
-			}
-			else if ctxVal, ctxValOk := input["ctx"][k]; ok {
-				if ctxVal == v {
-					continue
-				}
-			}
-			else {
-				return nil, nil
 			}
 		}
+
+		input = r.Values
 	}
 
 	// Double check to NOT do any copies when putting in a byte slice

@@ -100,13 +100,13 @@ func (w *Writer) process() error {
 				w.buffer <- message
 				return
 			}
-			log.info("Published message, msg ID:", id)
+			log.Print("pubsub: published message, msg ID:", id)
 		}(result, message)
 
 		select {
 		case err := <-errs:
 			encounteredError = true
-			log.Error("pubsub: unable to stream", err)
+			log.Print("pubsub: unable to stream", err)
 		default:
 			continue
 		}
