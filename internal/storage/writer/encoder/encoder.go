@@ -14,13 +14,13 @@ type Func func(interface{}) ([]byte, error)
 
 // Writer is to filter and encode row of events
 type Writer struct {
-	filter string
+	filter map[string]string
 	name   string
 	encode Func
 }
 
 // New creates a new encoder
-func New(filter, encoderFunc string, loader *script.Loader) (*Writer, error) {
+func New(filter map[string]string, encoderFunc string, loader *script.Loader) (*Writer, error) {
 	if encoderFunc == "" {
 		encoderFunc = "json"
 	}
@@ -40,7 +40,8 @@ func New(filter, encoderFunc string, loader *script.Loader) (*Writer, error) {
 }
 
 // newWithEncoder will generate a new encoder for a writer
-func newWithEncoder(name, filter string, encoder Func) (*Writer, error) {
+func newWithEncoder(name string, filter map[string]string, encoder Func) (*Writer, error) {
+
 	if encoder == nil {
 		encoder = Func(json.Marshal)
 	}
@@ -63,6 +64,25 @@ func (w *Writer) Encode(input interface{}) ([]byte, error) {
 	// If it's a row, take the value map
 	if r, ok := input.(block.Row); ok {
 		input = r.Values
+	}
+
+	// Check for key in high level, if not in high level check in context
+	if w.filter != nil {
+		for k, v := range w.filter {
+			if val, ok := input[k]; ok {
+				if val == v {
+					continue
+				}
+			}
+			else if ctxVal, ctxValOk := input["ctx"][k]; ok {
+				if ctxVal == v {
+					continue
+				}
+			}
+			else {
+				return nil, nil
+			}
+		}
 	}
 
 	// Double check to NOT do any copies when putting in a byte slice

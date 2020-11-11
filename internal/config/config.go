@@ -121,7 +121,7 @@ type Computed struct {
 
 // Compaction represents a configuration for compaction sinks
 type Compaction struct {
-	Sinks
+	Sinks    Sinks  `json:"sinks" yaml:"sinks" env:"SINKS"`
 	NameFunc string `json:"nameFunc" yaml:"nameFunc" env:"NAMEFUNC"` // The lua script to compute file name given a row
 	Interval int    `json:"interval" yaml:"interval" env:"INTERVAL"` // The compaction interval, in seconds
 }
@@ -186,10 +186,10 @@ type FileSink struct {
 
 // PubSubSink represents a stream to Google Pub/Sub
 type PubSubSink struct {
-	Project string `json:"project" yaml:"project" env:"PROJECT"`
-	Topic   string `json:"topic" yaml:"topic" env:"TOPIC"`
-	Filter  string `json:"filter" yaml:"filter" env:"FILTER"`
-	Encoder string `json:"encoder" yaml:"encoder" env:"ENCODER"`
+	Project string            `json:"project" yaml:"project" env:"PROJECT"`
+	Topic   string            `json:"topic" yaml:"topic" env:"TOPIC"`
+	Filter  map[string]string `json:"filter" yaml:"filter" env:"FILTER"`
+	Encoder string            `json:"encoder" yaml:"encoder" env:"ENCODER"`
 }
 
 // TalariaSink represents a sink to an instance of Talaria

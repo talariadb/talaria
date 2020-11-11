@@ -4,11 +4,6 @@
 package env
 
 import (
-<<<<<<< HEAD
-=======
-	"fmt"
-	"io/ioutil"
->>>>>>> Rename config to streams
 	"os"
 	"testing"
 
@@ -81,8 +76,9 @@ tables:
       data: json
     compact:
       interval: 300
-      file:
-        dir: "output/"
+      sinks:
+        file:
+          dir: "output/"
 statsd:
   host: "127.0.0.1"
   port: 8126
@@ -94,20 +90,27 @@ computed:
       function main(input)
         return json.encode(input)
       end
+streams:
+  pubsub:
+    - project: my-gcp-project
+      topic: my-topic
+      filter:
+        event: a.b
+      encoder: json
+    - project: my-gcp-project
+      topic: my-topic2
+      filter:
+        user_id: talaria_user
+      encoder: json
 `)
 
 	// populate the config with the env variable
 	e := New("TALARIA")
 	assert.NoError(t, e.Configure(c))
 
-	fmt.Println(c.Streams)
-	fmt.Println(c.Streams.BigQuery)
-	// fmt.Println(len(c.Streams))
-	// fmt.Println(c.Storage.Compact.Sinks)
-	// fmt.Println(c.Storage.Compact.BigQuery)
-
 	// asserts
+	assert.Len(t, c.Streams.PubSub, 2)
 	assert.Len(t, c.Computed, 1)
 	assert.Len(t, c.Tables, 1)
-	assert.Equal(t, c.Tables["eventlog"].Compact.File.Directory, "output/")
+	assert.Equal(t, c.Tables["eventlog"].Compact.Sinks.File.Directory, "output/")
 }

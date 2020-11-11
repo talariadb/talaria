@@ -88,7 +88,7 @@ func main() {
 	}
 
 	// Returns noop streamer if array is empty
-	fmt.Println(conf.Streams)
+	monitor.Info("server: configuring streams if any")
 	streams, err := writer.ForStreaming(conf.Streams, monitor, loader)
 	if err != nil {
 		panic(err)

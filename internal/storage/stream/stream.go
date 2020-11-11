@@ -14,7 +14,7 @@ func Publish(streamer storage.Streamer, monitor monitor.Monitor) applyFunc {
 	return func(r block.Row) (block.Row, error) {
 		err := streamer.Stream(r)
 		if err != nil {
-			monitor.Warning(err)
+			monitor.Error(err)
 			return r, err
 		}
 		return r, nil

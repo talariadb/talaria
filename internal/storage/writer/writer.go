@@ -148,7 +148,7 @@ func newWriter(config *config.Sinks, loader *script.Loader) (flush.Writer, error
 	return multi.New(writers...), nil
 }
 
-// NewWriter creates a new writer from the configuration.
+// newStreamer creates a new streamer from the configuration.
 func newStreamer(config *config.Streams, loader *script.Loader) (flush.Writer, error) {
 	var writers []multi.SubWriter
 

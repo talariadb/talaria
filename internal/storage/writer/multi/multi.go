@@ -50,6 +50,7 @@ func (w *Writer) Write(key key.Key, val []byte) error {
 // Stream streams the data to the sink
 func (w *Writer) Stream(row block.Row) error {
 	for _, w := range w.streamers {
+		// When a stream fails, the following streams will not be run
 		if err := w.Stream(row); err != nil {
 			return err
 		}

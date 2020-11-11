@@ -2,7 +2,8 @@ package pubsub
 
 import (
 	"context"
-	"fmt"
+	"log"
+	"time"
 
 	"cloud.google.com/go/pubsub"
 	"github.com/kelindar/talaria/internal/encoding/block"
@@ -22,7 +23,7 @@ type Writer struct {
 }
 
 // New creates a new writer
-func New(project, topic, filter, encoding string, loader *script.Loader) (*Writer, error) {
+func New(project, topic, encoding string, filter map[string]string, loader *script.Loader) (*Writer, error) {
 	ctx := context.Background()
 	client, err := pubsub.NewClient(ctx, project)
 	if err != nil {
@@ -43,6 +44,8 @@ func New(project, topic, filter, encoding string, loader *script.Loader) (*Write
 		context: ctx,
 		buffer:  make(chan []byte, 65000),
 	}
+
+	// Launch a goroutine that loops infinitely over buffer
 	go w.process()
 
 	return w, nil
@@ -60,6 +63,11 @@ func (w *Writer) Stream(row block.Row) error {
 		return err
 	}
 
+	// If message is filtered out, return nil
+	if message == nil {
+		return nil
+	}
+
 	w.buffer <- message
 	return nil
 }
@@ -68,8 +76,15 @@ func (w *Writer) Stream(row block.Row) error {
 func (w *Writer) process() error {
 	errs := make(chan error, 1)
 	ctx := context.Background()
+	encounteredError := false
 
 	for message := range w.buffer {
+
+		if encounteredError {
+			time.Sleep(15 * time.Second)
+			encounteredError = false
+		}
+
 		result := w.topic.Publish(ctx, &pubsub.Message{
 			Data: message,
 			Attributes: map[string]string{
@@ -77,19 +92,21 @@ func (w *Writer) process() error {
 			},
 		})
 
-		go func(res *pubsub.PublishResult) {
+		go func(res *pubsub.PublishResult, message []byte) {
 			id, err := res.Get(ctx)
 			if err != nil {
-				// When stream is down - Process messages or stop - config
+				// If stream hits error, send err to error channel and repopulate message in buffer
 				errs <- err
+				w.buffer <- message
 				return
 			}
-			fmt.Println("Published message, msg ID:", id)
-		}(result)
+			log.info("Published message, msg ID:", id)
+		}(result, message)
 
 		select {
 		case err := <-errs:
-			return errors.Internal("pubsub: unable to stream", err)
+			encounteredError = true
+			log.Error("pubsub: unable to stream", err)
 		default:
 			continue
 		}
