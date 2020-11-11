@@ -30,7 +30,7 @@ var seed = maphash.MakeSeed()
 
 // ForStreaming creates a streaming writer
 func ForStreaming(config *config.Streams, monitor monitor.Monitor, loader *script.Loader) (storage.Streamer, error) {
-	writer, err := newStreamer(config, loader)
+	writer, err := newStreamer(config, monitor, loader)
 	if err != nil {
 		monitor.Error(err)
 	}
@@ -137,7 +137,7 @@ func newWriter(config *config.Sinks, loader *script.Loader) (flush.Writer, error
 
 	// Configure Google Pub/Sub writer if present
 	if config.PubSub != nil {
-		w, err := pubsub.New(config.PubSub.Project, config.PubSub.Topic, config.PubSub.Encoder, config.PubSub.Filter, loader)
+		w, err := pubsub.New(config.PubSub.Project, config.PubSub.Topic, config.PubSub.Encoder, config.PubSub.Filter, loader, nil)
 		if err != nil {
 			return nil, err
 		}
@@ -149,7 +149,7 @@ func newWriter(config *config.Sinks, loader *script.Loader) (flush.Writer, error
 }
 
 // newStreamer creates a new streamer from the configuration.
-func newStreamer(config *config.Streams, loader *script.Loader) (flush.Writer, error) {
+func newStreamer(config *config.Streams, monitor monitor.Monitor, loader *script.Loader) (flush.Writer, error) {
 	var writers []multi.SubWriter
 
 	// If no writers were configured, error out
@@ -233,7 +233,7 @@ func newStreamer(config *config.Streams, loader *script.Loader) (flush.Writer, e
 	// Configure Google Pub/Sub writer if present
 	if len(config.PubSub) != 0 {
 		for _, conf := range config.PubSub {
-			w, err := pubsub.New(conf.Project, conf.Topic, conf.Encoder, conf.Filter, loader)
+			w, err := pubsub.New(conf.Project, conf.Topic, conf.Encoder, conf.Filter, loader, monitor)
 			if err != nil {
 				return nil, err
 			}

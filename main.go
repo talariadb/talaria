@@ -32,14 +32,7 @@ import (
 	"github.com/kelindar/talaria/internal/storage"
 	"github.com/kelindar/talaria/internal/storage/disk"
 	"github.com/kelindar/talaria/internal/storage/writer"
-<<<<<<< HEAD
-<<<<<<< HEAD
 	"github.com/kelindar/talaria/internal/table"
-=======
-	"github.com/kelindar/talaria/internal/streaming"
->>>>>>> Refactor stream to writer
-=======
->>>>>>> Huge refactor to reuse writer sinks
 	"github.com/kelindar/talaria/internal/table/log"
 	"github.com/kelindar/talaria/internal/table/nodes"
 	"github.com/kelindar/talaria/internal/table/timeseries"
@@ -128,7 +121,7 @@ func openTable(name string, storageConf config.Storage, tableConf config.Table, 
 	// Create a new storage layer and optional compaction
 	store := storage.Storage(disk.Open(storageConf.Directory, name, monitor, storageConf.Badger))
 	if tableConf.Compact != nil {
-		store = writer.New(tableConf.Compact, monitor, store, loader)
+		store = writer.ForCompaction(tableConf.Compact, monitor, store, loader)
 	}
 
 	return timeseries.New(name, cluster, monitor, store, &tableConf)

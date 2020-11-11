@@ -2,12 +2,12 @@ package pubsub
 
 import (
 	"context"
-	"log"
 	"time"
 
 	"cloud.google.com/go/pubsub"
 	"github.com/kelindar/talaria/internal/encoding/block"
 	"github.com/kelindar/talaria/internal/encoding/key"
+	"github.com/kelindar/talaria/internal/monitor"
 	"github.com/kelindar/talaria/internal/monitor/errors"
 	script "github.com/kelindar/talaria/internal/scripting"
 	"github.com/kelindar/talaria/internal/storage/writer/encoder"
@@ -18,12 +18,13 @@ type Writer struct {
 	client  *pubsub.Client
 	topic   *pubsub.Topic
 	Writer  *encoder.Writer
+	monitor monitor.Monitor
 	context context.Context
 	buffer  chan []byte
 }
 
 // New creates a new writer
-func New(project, topic, encoding string, filter map[string]string, loader *script.Loader) (*Writer, error) {
+func New(project, topic, encoding string, filter map[string]string, loader *script.Loader, monitor monitor.Monitor) (*Writer, error) {
 	ctx := context.Background()
 	client, err := pubsub.NewClient(ctx, project)
 	if err != nil {
@@ -41,6 +42,7 @@ func New(project, topic, encoding string, filter map[string]string, loader *scri
 		topic:   topicRef,
 		client:  client,
 		Writer:  encoderWriter,
+		monitor: monitor,
 		context: ctx,
 		buffer:  make(chan []byte, 65000),
 	}
@@ -52,7 +54,7 @@ func New(project, topic, encoding string, filter map[string]string, loader *scri
 }
 
 // Write writes the data to the sink.
-func (*Writer) Write(key.Key, []byte) error {
+func (w *Writer) Write(key.Key, []byte) error {
 	return nil // Noop
 }
 
@@ -87,26 +89,22 @@ func (w *Writer) process() error {
 
 		result := w.topic.Publish(ctx, &pubsub.Message{
 			Data: message,
-			Attributes: map[string]string{
-				"origin": "talaria",
-			},
 		})
 
 		go func(res *pubsub.PublishResult, message []byte) {
-			id, err := res.Get(ctx)
+			_, err := res.Get(ctx)
 			if err != nil {
 				// If stream hits error, send err to error channel and repopulate message in buffer
 				errs <- err
 				w.buffer <- message
 				return
 			}
-			log.Print("pubsub: published message, msg ID:", id)
 		}(result, message)
 
 		select {
 		case err := <-errs:
 			encounteredError = true
-			log.Print("pubsub: unable to stream", err)
+			w.monitor.Warning(errors.Internal("pubsub: unable to stream", err))
 		default:
 			continue
 		}
