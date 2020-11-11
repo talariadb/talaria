@@ -68,10 +68,7 @@ func (s *Server) PrestoGetTableMetadata(schemaTableName *presto.PrestoThriftSche
 	}
 
 	// Load the schema
-	schema, err := table.Schema()
-	if err != nil {
-		return nil, err
-	}
+	schema, _ := table.Schema()
 
 	// Convert to SQL types
 	var columns []*presto.PrestoThriftColumnMetadata

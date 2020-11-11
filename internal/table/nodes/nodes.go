@@ -9,11 +9,11 @@ import (
 	"time"
 
 	"github.com/emitter-io/address"
+	"github.com/hako/durafmt"
 	"github.com/kelindar/talaria/internal/column"
 	"github.com/kelindar/talaria/internal/encoding/typeof"
 	"github.com/kelindar/talaria/internal/presto"
 	"github.com/kelindar/talaria/internal/table"
-	"github.com/hako/durafmt"
 )
 
 // Assert the contract
@@ -53,7 +53,7 @@ func (t *Table) Name() string {
 }
 
 // Schema retrieves the metadata for the table
-func (t *Table) Schema() (typeof.Schema, error) {
+func (t *Table) Schema() (typeof.Schema, bool) {
 	return typeof.Schema{
 		"address": typeof.String,
 		"public":  typeof.String,
@@ -61,7 +61,17 @@ func (t *Table) Schema() (typeof.Schema, error) {
 		"started": typeof.Int64,
 		"uptime":  typeof.String,
 		"peers":   typeof.String,
-	}, nil
+	}, true
+}
+
+// HashBy returns the column by which the table should be hashed.
+func (t *Table) HashBy() string {
+	return ""
+}
+
+// SortBy returns the column by which the table should be sorted.
+func (t *Table) SortBy() string {
+	return "address"
 }
 
 // GetSplits retrieves the splits

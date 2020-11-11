@@ -7,9 +7,9 @@ import (
 	"context"
 	"sync"
 
+	"github.com/kelindar/loader"
 	"github.com/kelindar/talaria/internal/config"
 	"github.com/kelindar/talaria/internal/monitor/logging"
-	"github.com/kelindar/loader"
 	"gopkg.in/yaml.v2"
 )
 

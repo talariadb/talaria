@@ -6,15 +6,15 @@ package timeseries
 import (
 	"context"
 	"fmt"
-	"github.com/grab/async"
-	"gopkg.in/yaml.v2"
 	"io"
 	"net/url"
 	"sync/atomic"
 	"time"
 
+	"github.com/grab/async"
 	"github.com/kelindar/loader"
 	"github.com/kelindar/talaria/internal/column"
+	"github.com/kelindar/talaria/internal/config"
 	"github.com/kelindar/talaria/internal/encoding/block"
 	"github.com/kelindar/talaria/internal/encoding/key"
 	"github.com/kelindar/talaria/internal/encoding/typeof"
@@ -23,6 +23,7 @@ import (
 	"github.com/kelindar/talaria/internal/presto"
 	"github.com/kelindar/talaria/internal/storage"
 	"github.com/kelindar/talaria/internal/table"
+	"gopkg.in/yaml.v2"
 )
 
 const (
@@ -30,8 +31,9 @@ const (
 	errTag = "error"
 )
 
-// Assert the contract
+// Assert the contracts
 var _ table.Table = new(Table)
+var _ table.Appender = new(Table)
 
 // Membership represents a contract required for recovering cluster information.
 type Membership interface {
@@ -41,8 +43,8 @@ type Membership interface {
 // Table represents a timeseries table.
 type Table struct {
 	name         string          // The name of the table
-	keyColumn    string          // The name of the key column
-	timeColumn   string          // The name of the time column
+	hashBy       string          // The name of the key column
+	sortBy       string          // The name of the time column
 	ttl          time.Duration   // The default TTL
 	store        storage.Storage // The storage to use
 	schema       atomic.Value    // The latest schema
@@ -52,31 +54,20 @@ type Table struct {
 	staticSchema *typeof.Schema  // The static schema of the timeseries table
 }
 
-// Config represents the configuration of the storage
-type Config struct {
-	Name   string
-	TTL    int64
-	HashBy string
-	SortBy string
-	Schema string
-}
-
 // New creates a new table implementation.
-func New(cluster Membership, monitor monitor.Monitor, store storage.Storage, cfg Config) *Table {
-	// Load Schema From Config
+func New(name string, cluster Membership, monitor monitor.Monitor, store storage.Storage, cfg *config.Table) *Table {
 	t := &Table{
-		name:       cfg.Name,
-		store:      store,
-		keyColumn:  cfg.HashBy,
-		timeColumn: cfg.SortBy,
-		ttl:        time.Duration(cfg.TTL) * time.Second,
-		cluster:    cluster,
-		monitor:    monitor,
-		loader:     loader.New(),
+		name:    name,
+		store:   store,
+		hashBy:  cfg.HashBy,
+		sortBy:  cfg.SortBy,
+		ttl:     time.Duration(cfg.TTL) * time.Second,
+		cluster: cluster,
+		monitor: monitor,
+		loader:  loader.New(),
 	}
 
 	t.staticSchema = t.loadStaticSchema(cfg.Schema)
-
 	return t
 }
 
@@ -91,8 +82,18 @@ func (t *Table) Name() string {
 }
 
 // Schema retrieves the metadata for the table
-func (t *Table) Schema() (typeof.Schema, error) {
-	return t.getSchema(), nil
+func (t *Table) Schema() (typeof.Schema, bool) {
+	return t.getSchema(), t.staticSchema != nil
+}
+
+// HashBy returns the column by which the table should be hashed.
+func (t *Table) HashBy() string {
+	return t.hashBy
+}
+
+// SortBy returns the column by which the table should be sorted.
+func (t *Table) SortBy() string {
+	return t.sortBy
 }
 
 func (t *Table) loadStaticSchema(uriOrSchema string) *typeof.Schema {
@@ -148,7 +149,7 @@ func (t *Table) loadStaticSchema(uriOrSchema string) *typeof.Schema {
 func (t *Table) GetSplits(desiredColumns []string, outputConstraint *presto.PrestoThriftTupleDomain, maxSplitCount int) ([]table.Split, error) {
 
 	// Create a new query and validate it
-	queries, err := parseThriftDomain(outputConstraint, t.keyColumn, t.timeColumn)
+	queries, err := parseThriftDomain(outputConstraint, t.hashBy, t.sortBy)
 	if err != nil {
 		t.monitor.Count1(ctxTag, errTag, "tag:parse_domain")
 		return nil, err
@@ -254,7 +255,7 @@ func (t *Table) readDataFrame(schema typeof.Schema, buffer []byte, maxBytes int)
 func (t *Table) Append(block block.Block) error {
 
 	// Get the min timestamp of the block
-	ts, hasTs := block.Min(t.timeColumn)
+	ts, hasTs := block.Min(t.sortBy)
 	if !hasTs || ts < 0 {
 		ts = 0
 	}

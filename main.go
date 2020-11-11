@@ -32,6 +32,7 @@ import (
 	"github.com/kelindar/talaria/internal/storage"
 	"github.com/kelindar/talaria/internal/storage/disk"
 	"github.com/kelindar/talaria/internal/storage/writer"
+	"github.com/kelindar/talaria/internal/table"
 	"github.com/kelindar/talaria/internal/table/log"
 	"github.com/kelindar/talaria/internal/table/nodes"
 	"github.com/kelindar/talaria/internal/table/timeseries"
@@ -47,7 +48,7 @@ func main() {
 	defer cancel()
 
 	s3Configurer := s3.New(logging.NewStandard())
-	configure := config.Load(ctx, 60*time.Second, static.New(), env.New("TALARIA_CONF"), s3Configurer)
+	configure := config.Load(ctx, 60*time.Second, static.New(), env.New("TALARIA"), s3Configurer)
 	conf := configure()
 
 	// Setup gossip
@@ -73,25 +74,14 @@ func main() {
 		mnet.New(monitor),
 	})
 
-	// Create a storage, if compact store is enabled then use the compact store
-	monitor.Info("server: opening data directory %s...", conf.Storage.Directory)
-	store := storage.Storage(disk.Open(conf.Storage.Directory, conf.Tables.Timeseries.Name, monitor, conf.Badger))
-	if conf.Storage.Compact != nil {
-		store = writer.New(conf.Storage.Compact, monitor, store, loader)
+	// Open every table configured
+	tables := []table.Table{nodes.New(gossip), logTable}
+	for name, tableConf := range conf.Tables {
+		tables = append(tables, openTable(name, conf.Storage, tableConf, gossip, monitor, loader))
 	}
 
 	// Start the new server
-	server := server.New(configure, monitor, loader,
-		timeseries.New(gossip, monitor, store, timeseries.Config{
-			HashBy: conf.Tables.Timeseries.HashBy,
-			SortBy: conf.Tables.Timeseries.SortBy,
-			Name:   conf.Tables.Timeseries.Name,
-			TTL:    conf.Tables.Timeseries.TTL,
-			Schema: conf.Tables.Timeseries.Schema,
-		}),
-		nodes.New(gossip),
-		logTable,
-	)
+	server := server.New(configure, monitor, loader, tables...)
 
 	// onSignal will be called when a OS-level signal is received.
 	onSignal(func(_ os.Signal) {
@@ -115,6 +105,19 @@ func main() {
 	if err := server.Listen(ctx, conf.Readers.Presto.Port, conf.Writers.GRPC.Port); err != nil {
 		panic(err)
 	}
+}
+
+// openTable creates a new table with storage & optional compaction fully configured
+func openTable(name string, storageConf config.Storage, tableConf config.Table, cluster cluster.Membership, monitor monitor.Monitor, loader *script.Loader) table.Table {
+	monitor.Info("server: opening table %s...", name)
+
+	// Create a new storage layer and optional compaction
+	store := storage.Storage(disk.Open(storageConf.Directory, name, monitor, storageConf.Badger))
+	if tableConf.Compact != nil {
+		store = writer.New(tableConf.Compact, monitor, store, loader)
+	}
+
+	return timeseries.New(name, cluster, monitor, store, &tableConf)
 }
 
 // onSignal hooks a callback for a signal.

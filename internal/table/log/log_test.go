@@ -33,10 +33,6 @@ type mockConfigurer struct {
 
 func (m *mockConfigurer) Configure(c *config.Config) error {
 	c.Storage.Directory = m.dir
-	c.Tables.Log = &config.Log{
-		TTL:  60,
-		Name: "log",
-	}
 	return nil
 }
 
@@ -54,7 +50,7 @@ func TestLog(t *testing.T) {
 	monitor := monitor.NewNoop()
 	logs := New(cfg, new(noopMembership), monitor)
 	assert.NotNil(t, logs)
-	assert.Equal(t, "log", logs.Name())
+	assert.Equal(t, "logs", logs.Name())
 	defer logs.Close()
 
 	// Append some files
@@ -67,14 +63,14 @@ func TestLog(t *testing.T) {
 
 	// Get the schema
 	{
-		schema, err := logs.Schema()
-		assert.NoError(t, err)
+		schema, static := logs.Schema()
+		assert.False(t, static)
 		assert.Len(t, schema, 4)
 	}
 
 	// Get the splits
 	{
-		splits, err := logs.GetSplits([]string{}, newSplitQuery("log", "log"), 10000)
+		splits, err := logs.GetSplits([]string{}, newSplitQuery("logs", "logs"), 10000)
 		assert.NoError(t, err)
 		assert.Len(t, splits, 1)
 		assert.Equal(t, "127.0.0.1", splits[0].Addrs[0])

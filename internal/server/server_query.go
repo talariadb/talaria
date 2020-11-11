@@ -20,10 +20,7 @@ func (s *Server) Describe(ctx context.Context, _ *talaria.DescribeRequest) (*tal
 
 	tables := make([]*talaria.TableMeta, 0, len(s.tables))
 	for _, table := range s.tables {
-		schema, err := table.Schema()
-		if err != nil {
-			return nil, err
-		}
+		schema, _ := table.Schema()
 
 		// Populate the column metadata
 		var columns []*talaria.ColumnMeta
@@ -58,8 +55,7 @@ func (s *Server) GetSplits(ctx context.Context, request *talaria.GetSplitsReques
 	}
 
 	// Build the domain
-	hashKey, sortKey := s.conf().Tables.Timeseries.HashBy, s.conf().Tables.Timeseries.SortBy
-	domain, err := presto.NewDomain(hashKey, sortKey, request.Filters...)
+	domain, err := presto.NewDomain(table.HashBy(), table.SortBy(), request.Filters...)
 	if err != nil {
 		return nil, err
 	}

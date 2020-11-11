@@ -18,51 +18,42 @@ func TestConfigure(t *testing.T) {
 	st := static.New()
 	st.Configure(c)
 
-	// set the env variables
-
 	// direct string keys
-	os.Setenv("TALARIA_CONF_URI", "ab.com")
+	os.Setenv("TALARIA_URI", "ab.com")
 
 	// readers
-	os.Setenv("TALARIA_CONF_READERS_PRESTO_PORT", "123")
+	os.Setenv("TALARIA_READERS_PRESTO_PORT", "123")
 
 	// writers
-	os.Setenv("TALARIA_CONF_WRITERS_GRPC_PORT", "100")
-	os.Setenv("TALARIA_CONF_WRITERS_S3SQS_VISIBILITYTIMEOUT", "10")
+	os.Setenv("TALARIA_WRITERS_GRPC_PORT", "100")
+	os.Setenv("TALARIA_WRITERS_S3SQS_VISIBILITYTIMEOUT", "10")
 
 	// storage
-	os.Setenv("TALARIA_CONF_STORAGE_DIR", "dir")
-
-	// tables
-	os.Setenv("TALARIA_CONF_TABLES_TIMESERIES_NAME", "timeseries_eventlog")
-	os.Setenv("TALARIA_CONF_TABLES_TIMESERIES_TTL", "10")
+	os.Setenv("TALARIA_STORAGE_DIR", "dir")
 
 	// statsd
-	os.Setenv("TALARIA_CONF_STATSD_HOST", "ab.com")
+	os.Setenv("TALARIA_STATSD_HOST", "statsd")
 
 	// populate the config with the env variable
-	e := New("TALARIA_CONF")
-	e.Configure(c)
+	e := New("TALARIA")
+	assert.NoError(t, e.Configure(c))
 
 	// asserts
-	assert.Equal(t, c.URI, "ab.com")
-	assert.Equal(t, c.Readers.Presto.Port, int32(123))
-	assert.Equal(t, c.Writers.GRPC.Port, int32(100))
-	assert.Equal(t, c.Writers.S3SQS.VisibilityTimeout, int64(10))
-	assert.Equal(t, c.Storage.Directory, "dir")
-	assert.Equal(t, c.Tables.Timeseries.Name, "timeseries_eventlog")
-	assert.Equal(t, c.Tables.Timeseries.TTL, int64(10))
-	assert.Equal(t, c.Statsd.Host, "ab.com")
+	assert.Equal(t, "ab.com", c.URI)
+	assert.Equal(t, int32(123), c.Readers.Presto.Port)
+	assert.Equal(t, int32(100), c.Writers.GRPC.Port)
+	assert.Equal(t, int64(10), c.Writers.S3SQS.VisibilityTimeout)
+	assert.Equal(t, "dir", c.Storage.Directory)
+	assert.Equal(t, "statsd", c.Statsd.Host)
 }
 
 func TestConfigure_Full(t *testing.T) {
-
 	c := &config.Config{}
 	st := static.New()
 	st.Configure(c)
 
 	// Write the full config
-	os.Setenv("TALARIA_CONF", `mode: staging
+	os.Setenv("TALARIA", `mode: staging
 env: staging
 domain: "ab.com"
 readers:
@@ -74,13 +65,8 @@ writers:
     port: 8085
 storage:
   dir: "data/"
-  compact: 
-    interval: 300
-    file:
-      dir: "output/"
 tables:
-  timeseries:
-    name: eventlog
+  eventlog:
     ttl: 3600
     hashBy: event
     sortBy: time
@@ -88,10 +74,10 @@ tables:
       event: string
       time: int64
       data: json
-  log:
-    name: logs
-  nodes:
-    name: nodes
+    compact:
+      interval: 300
+      file:
+        dir: "output/"
 statsd:
   host: "127.0.0.1"
   port: 8126
@@ -106,9 +92,11 @@ computed:
 `)
 
 	// populate the config with the env variable
-	e := New("TALARIA_CONF")
-	e.Configure(c)
+	e := New("TALARIA")
+	assert.NoError(t, e.Configure(c))
 
 	// asserts
-	assert.Equal(t, c.Storage.Compact.File.Directory, "output/")
+	assert.Len(t, c.Computed, 1)
+	assert.Len(t, c.Tables, 1)
+	assert.Equal(t, c.Tables["eventlog"].Compact.File.Directory, "output/")
 }

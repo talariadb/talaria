@@ -5,8 +5,10 @@ package server
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/kelindar/talaria/internal/encoding/block"
+	"github.com/kelindar/talaria/internal/encoding/typeof"
 	"github.com/kelindar/talaria/internal/monitor/errors"
 	"github.com/kelindar/talaria/internal/table"
 	talaria "github.com/kelindar/talaria/proto"
@@ -18,28 +20,36 @@ const ingestErrorKey = "ingest.error"
 func (s *Server) Ingest(ctx context.Context, request *talaria.IngestRequest) (*talaria.IngestResponse, error) {
 	defer s.handlePanic()
 
-	// Read blocks and repartition by the specified key
-	timeSeriesConf := s.conf().Tables.Timeseries
-	timeSeriesTable := s.tables[timeSeriesConf.Name]
-	schema, _ := timeSeriesTable.Schema()
-	blocks, err := block.FromRequestBy(request, timeSeriesConf.HashBy, &schema, s.computed...)
-	if err != nil {
-		s.monitor.Count1(ctxTag, ingestErrorKey, "type:convert")
-		return nil, errors.Internal("unable to read the block", err)
-	}
-
 	// Iterate through all of the appenders and append the blocks to them
 	for _, t := range s.tables {
-		if appender, ok := t.(table.Appender); ok {
-			for _, block := range blocks {
-				if err := appender.Append(block); err != nil {
-					s.monitor.Count1(ctxTag, ingestErrorKey, "type:append")
-					return nil, err
-				}
+		appender, ok := t.(table.Appender)
+		if !ok {
+			continue
+		}
+
+		// Set the filter only if the schema is static
+		var filter *typeof.Schema
+		if schema, static := t.Schema(); static {
+			filter = &schema
+		}
+
+		// Partition the request for the table
+		blocks, err := block.FromRequestBy(request, appender.HashBy(), filter, s.computed...)
+		if err != nil {
+			s.monitor.Count1(ctxTag, ingestErrorKey, "type:convert")
+			return nil, errors.Internal("unable to read the block", err)
+		}
+
+		// Append all of the blocks
+		for _, block := range blocks {
+			if err := appender.Append(block); err != nil {
+				s.monitor.Count1(ctxTag, ingestErrorKey, "type:append")
+				return nil, err
 			}
 		}
+
+		s.monitor.Count("server", fmt.Sprintf("%s.ingest.count", t.Name()), int64(len(blocks)))
 	}
 
-	s.monitor.Count("server", "ingestCount", int64(len(blocks)))
 	return nil, nil
 }

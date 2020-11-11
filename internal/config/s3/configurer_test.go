@@ -19,9 +19,11 @@ func TestConfigure(t *testing.T) {
 	err := st.Configure(c)
 	assert.Nil(t, err)
 	c.URI = "s3://config.s3-ap-southeast-1.amazonaws.com/a/b/c/conf-server-conf-stg.json"
-	c.Tables.Timeseries.Name = "abc"
+	c.Tables["events"] = config.Table{
+		HashBy: "abc",
+	}
 
-	assert.Nil(t, c.Storage.Compact)
+	assert.Nil(t, c.Storage.MaxLevels)
 	assert.Nil(t, err)
 }
 
@@ -36,7 +38,9 @@ func TestUpdateAppName(t *testing.T) {
 	err := st.Configure(c)
 	assert.Nil(t, err)
 	c.URI = "s3://config.s3-ap-southeast-1.amazonaws.com/a/b/c/conf-server-conf-stg.json"
-	c.Tables.Timeseries.Name = "abc"
+	c.Tables["events"] = config.Table{
+		HashBy: "abc",
+	}
 
 	var down downloadMock = func(ctx context.Context, uri string) ([]byte, error) {
 		return []byte("appName: talaria-processor"), nil

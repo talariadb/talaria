@@ -10,8 +10,15 @@ import (
 	"github.com/kelindar/talaria/internal/encoding/typeof"
 )
 
+// Configurer is an interface for any component which will provide the config.
+type Configurer interface {
+	Configure(*Config) error
+}
+
+// BadgerDefault represents a default way of configuring badger
 type BadgerDefault string
 
+// Various Badger options
 const (
 	BadgerStorage       BadgerDefault = "storage"
 	BadgerIngestion     BadgerDefault = "ingestion"
@@ -27,14 +34,36 @@ type Config struct {
 	Readers  Readers    `json:"readers" yaml:"readers" env:"READERS"`
 	Writers  Writers    `json:"writers" yaml:"writers" env:"WRITERS"`
 	Storage  Storage    `json:"storage" yaml:"storage" env:"STORAGE"`
-	Tables   Tables     `json:"tables" yaml:"tables" env:"TABLES"`
+	Tables   Tables     `json:"tables" yaml:"tables"`
 	Statsd   *StatsD    `json:"statsd,omitempty" yaml:"statsd" env:"STATSD"`
 	Computed []Computed `json:"computed" yaml:"computed" env:"COMPUTED"`
 	K8s      *K8s       `json:"k8s,omitempty" yaml:"k8s" env:"K8S"`
-	Badger   Badger     `json:"badger,omitempty" yaml:"badger" env:"BADGER"`
 }
 
-// This configuration is related to the badger K-V store that we use underlying.
+// K8s represents a kubernetes-related configuration
+type K8s struct {
+	ProbePort int32 `json:"probePort" yaml:"probePort" env:"PROBEPORT"` // The port which is used for liveness and readiness probes (default: 8080)
+}
+
+// Tables is a list of table configs
+type Tables map[string]Table
+
+// Table is the config for the timeseries table
+type Table struct {
+	TTL     int64       `json:"ttl,omitempty" yaml:"ttl" env:"TTL"`          // The ttl (in seconds) for the storage, defaults to 1 hour.
+	HashBy  string      `json:"hashBy,omitempty" yaml:"hashBy" env:"HASHBY"` // The column to use as key (metric), defaults to 'event'.
+	SortBy  string      `json:"sortBy,omitempty" yaml:"sortBy" env:"SORTBY"` // The column to use as time, defaults to 'tsi'.
+	Schema  string      `json:"schema" yaml:"schema" env:"SCHEMA"`           // The schema of the table
+	Compact *Compaction `json:"compact" yaml:"compact" env:"COMPACT"`
+}
+
+// Storage is the location to write the data
+type Storage struct {
+	Badger
+	Directory string `json:"dir" yaml:"dir" env:"DIR"`
+}
+
+// Badger configures badger K-V store that we use underlying.
 // This will help to tune the options to optimize for various uses cases like bigger files, point query or range queries.
 type Badger struct {
 	SyncWrites          *bool         `json:"syncWrites" yaml:"syncWrites" env:"SYNCWRITES"`                            // Whether to sync writes to disk before ack. defaults to true
@@ -44,44 +73,6 @@ type Badger struct {
 	LevelSizeMultiplier *int          `json:"levelSizeMultiplier" yaml:"levelSizeMultiplier" env:"LEVELSIZEMULTIPLIER"` // The ratio between the maximum sizes of contiguous levels in the LSM. defaults to 10
 	MaxLevels           *int          `json:"maxLevels" yaml:"maxLevels" env:"MAXLEVELS"`                               // Maximum number of levels of compaction allowed in the LSM. defaults to 7
 	Default             BadgerDefault `json:"default" yaml:"default" env:"DEFAULT"`                                     // default badger option to optimize for storage, ingestion or default that badger provides
-}
-
-type K8s struct {
-	ProbePort int32 `json:"probePort" yaml:"probePort" env:"PROBEPORT"` // The port which is used for liveness and readiness probes (default: 8080)
-}
-
-// Tables is a list of table configs
-type Tables struct {
-	Timeseries *Timeseries `json:"timeseries,omitempty" yaml:"timeseries"  env:"TIMESERIES"`
-	Log        *Log        `json:"log,omitempty" yaml:"log" env:"LOG"`
-	Nodes      *Nodes      `json:"nodes,omitempty" yaml:"nodes" env:"NODES"`
-}
-
-// Timeseries is the config for the timeseries table
-type Timeseries struct {
-	Name   string `json:"name" yaml:"name" env:"NAME"`                 // The name of the table
-	TTL    int64  `json:"ttl,omitempty" yaml:"ttl" env:"TTL"`          // The ttl (in seconds) for the storage, defaults to 1 hour.
-	HashBy string `json:"hashBy,omitempty" yaml:"hashBy" env:"HASHBY"` // The column to use as key (metric), defaults to 'event'.
-	SortBy string `json:"sortBy,omitempty" yaml:"sortBy" env:"SORTBY"` // The column to use as time, defaults to 'tsi'.
-	Schema string `json:"schema" yaml:"schema" env:"SCHEMA"`           // The schema of the table
-}
-
-// Log is the config for log table
-type Log struct {
-	Name   string `json:"name" yaml:"name" env:"NAME"`                 // The name of the table
-	TTL    int64  `json:"ttl,omitempty" yaml:"ttl" env:"TTL"`          // The ttl (in seconds) for the storage, defaults to 1 hour.
-	SortBy string `json:"sortBy,omitempty" yaml:"sortBy" env:"SORTBY"` // The column to use as time, defaults to 'time'.
-}
-
-// Nodes ...
-type Nodes struct {
-	Name string `json:"name" yaml:"name" env:"NAME"` // The name of the table
-}
-
-// Storage is the location to write the data
-type Storage struct {
-	Directory string      `json:"dir" yaml:"dir" env:"DIR"`
-	Compact   *Compaction `json:"compact" yaml:"compact" env:"COMPACT"`
 }
 
 // Readers are ways to read the data
