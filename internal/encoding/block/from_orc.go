@@ -85,7 +85,7 @@ func FromOrcBy(payload []byte, partitionBy string, filter *typeof.Schema, apply 
 		}
 
 		// Append computed columns and fill nulls for the row
-		out := apply(row)
+		out, _ := apply(row)
 		size += out.AppendTo(columns)
 		size += columns.FillNulls()
 		return false

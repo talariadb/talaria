@@ -77,7 +77,7 @@ func FromCSVBy(input []byte, partitionBy string, filter *typeof.Schema, apply ap
 		}
 
 		// Append computed columns and fill nulls for the row
-		out := apply(row)
+		out, _ := apply(row)
 		size += out.AppendTo(columns)
 		size += columns.FillNulls()
 	}

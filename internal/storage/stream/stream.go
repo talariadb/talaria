@@ -2,16 +2,21 @@ package stream
 
 import (
 	"github.com/kelindar/talaria/internal/encoding/block"
+	"github.com/kelindar/talaria/internal/monitor"
 	"github.com/kelindar/talaria/internal/storage"
 )
 
 // applyFunc applies a transformation on a row and returns a new row
-type applyFunc = func(block.Row) block.Row
+type applyFunc = func(block.Row) (block.Row, error)
 
-func Publish(streamer storage.Streamer) applyFunc {
-	return func(r block.Row) block.Row {
-		streamer.Stream(r)
-		// TODO: log the error
-		return r
+// Publish will publish the row to the topic
+func Publish(streamer storage.Streamer, monitor monitor.Monitor) applyFunc {
+	return func(r block.Row) (block.Row, error) {
+		err := streamer.Stream(r)
+		if err != nil {
+			monitor.Warning(err)
+			return r, err
+		}
+		return r, nil
 	}
 }

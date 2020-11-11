@@ -10,7 +10,7 @@ import (
 
 // Transform runs the computed Values and overwrites/appends them to the set.
 func Transform(filter *typeof.Schema, computed ...column.Computed) applyFunc {
-	return func(r Row) Row {
+	return func(r Row) (Row, error) {
 		// Create a new output row and copy the column values from the input
 		schema := make(typeof.Schema, len(r.Schema))
 		out := NewRow(schema, len(r.Values)+len(computed))
@@ -39,6 +39,6 @@ func Transform(filter *typeof.Schema, computed ...column.Computed) applyFunc {
 			out.Values[c.Name()] = v
 		}
 
-		return out
+		return out, nil
 	}
 }

@@ -13,7 +13,7 @@ import (
 )
 
 // applyFunc applies a transformation on a row and returns a new row
-type applyFunc = func(Row) Row
+type applyFunc = func(Row) (Row, error)
 
 // Row represents a single row on which we can perform transformations
 type Row struct {
