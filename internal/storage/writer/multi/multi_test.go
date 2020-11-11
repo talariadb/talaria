@@ -15,13 +15,16 @@ func (w MockWriter) Write(key key.Key, val []byte) error {
 }
 
 type MockWriterFull struct {
+	Count int
 }
 
-func (w MockWriterFull) Write(key key.Key, val []byte) error {
+func (w *MockWriterFull) Write(key key.Key, val []byte) error {
+	w.Count++
 	return nil
 }
 
-func (w MockWriterFull) Stream(block.Row) error {
+func (w *MockWriterFull) Stream(block.Row) error {
+	w.Count++
 	return nil
 }
 
@@ -36,8 +39,13 @@ func TestMulti(t *testing.T) {
 	assert.NoError(t, multiWriter.Write(nil, nil))
 	assert.Equal(t, 3, count)
 
-	multiWriter2 := New(MockWriterFull{}, MockWriterFull{})
+	mock1 := MockWriterFull{Count: 0}
+	mock2 := MockWriterFull{Count: 5}
+
+	multiWriter2 := New(&mock1, &mock2)
 	res := multiWriter2.Stream(block.Row{})
 
 	assert.NoError(t, res)
+	assert.Equal(t, 1, mock1.Count)
+	assert.Equal(t, 6, mock2.Count)
 }
