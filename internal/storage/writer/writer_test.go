@@ -23,6 +23,17 @@ func TestForCompaction(t *testing.T) {
 	assert.NotNil(t, compact)
 }
 
+func TestForStreaming(t *testing.T) {
+	cfg := &config.Streams{}
+	compact, err := ForStreaming(cfg,
+		monitor.New(logging.NewStandard(), statsd.NewNoop(), "x", "x"),
+		script.NewLoader(nil),
+	)
+
+	assert.Nil(t, err)
+	assert.NotNil(t, compact)
+}
+
 func TestHash(t *testing.T) {
 
 	row := map[string]interface{}{

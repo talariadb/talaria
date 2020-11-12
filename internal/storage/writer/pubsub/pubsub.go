@@ -83,7 +83,8 @@ func (w *Writer) process() error {
 	for message := range w.buffer {
 
 		if encounteredError {
-			time.Sleep(15 * time.Second)
+			// Sleep for 10 seconds before retrying publish
+			time.Sleep(10 * time.Second)
 			encounteredError = false
 		}
 

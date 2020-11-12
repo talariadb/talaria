@@ -28,13 +28,14 @@ tables:
     compact:
       interval: 60
       nameFunc: "gcs://k8s-online-stg-configs/ingestor/name.lua"
-      gcs:
-        bucket: "airasia-opdatalake-stg-datalake"
-        prefix: "sink/"
-      bigquery:
-        project: "airasia-opdatalake-stg"
-        dataset: "eventlog"
-        table: "events"
+      sinks:
+        gcs:
+          bucket: "airasia-opdatalake-stg-datalake"
+          prefix: "sink/"
+        bigquery:
+          project: "airasia-opdatalake-stg"
+          dataset: "eventlog"
+          table: "events"
   users:
     hashBy: "user_id"
     sortBy: "ingested_at"

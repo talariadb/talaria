@@ -33,12 +33,15 @@ func FromRequestBy(request *talaria.IngestRequest, partitionBy string, filter *t
 // multiApply creates an apply function from multiple apply functions
 func multiApply(funcs []applyFunc) applyFunc {
 	return func(r Row) (Row, error) {
+		var err error
+		output := r
+
 		for _, f := range funcs {
-			r, err := f(r)
+			output, err = f(output)
 			if err != nil {
-				return r, err
+				return output, err
 			}
 		}
-		return r, nil
+		return output, nil
 	}
 }
