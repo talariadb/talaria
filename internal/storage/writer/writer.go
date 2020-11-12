@@ -29,7 +29,7 @@ import (
 var seed = maphash.MakeSeed()
 
 // ForStreaming creates a streaming writer
-func ForStreaming(config *config.Streams, monitor monitor.Monitor, loader *script.Loader) (storage.Streamer, error) {
+func ForStreaming(config config.Streams, monitor monitor.Monitor, loader *script.Loader) (storage.Streamer, error) {
 	writer, err := newStreamer(config, monitor, loader)
 	if err != nil {
 		monitor.Error(err)
@@ -40,7 +40,7 @@ func ForStreaming(config *config.Streams, monitor monitor.Monitor, loader *scrip
 
 // ForCompaction creates a compaction writer
 func ForCompaction(config *config.Compaction, monitor monitor.Monitor, store storage.Storage, loader *script.Loader) *compact.Storage {
-	writer, err := newWriter(&config.Sinks, loader)
+	writer, err := newWriter(config.Sinks, loader)
 	if err != nil {
 		monitor.Error(err)
 	}
@@ -73,7 +73,7 @@ func ForCompaction(config *config.Compaction, monitor monitor.Monitor, store sto
 }
 
 // NewWriter creates a new writer from the configuration.
-func newWriter(config *config.Sinks, loader *script.Loader) (flush.Writer, error) {
+func newWriter(config config.Sinks, loader *script.Loader) (flush.Writer, error) {
 	var writers []multi.SubWriter
 
 	// Configure S3 writer if present
@@ -149,96 +149,20 @@ func newWriter(config *config.Sinks, loader *script.Loader) (flush.Writer, error
 }
 
 // newStreamer creates a new streamer from the configuration.
-func newStreamer(config *config.Streams, monitor monitor.Monitor, loader *script.Loader) (flush.Writer, error) {
+func newStreamer(config config.Streams, monitor monitor.Monitor, loader *script.Loader) (flush.Writer, error) {
 	var writers []multi.SubWriter
 
 	// If no writers were configured, error out
-	if config == nil || ((len(config.S3) == 0) &&
-		(len(config.Azure) == 0) &&
-		(len(config.GCS) == 0) &&
-		(len(config.BigQuery) == 0) &&
-		(len(config.File) == 0) &&
-		(len(config.Talaria) == 0) &&
-		(len(config.PubSub) == 0)) {
+	if len(config) == 0 {
 		return noop.New(), errors.New("stream: writer was not configured")
 	}
 
-	// Configure S3 writer if present
-	if len(config.S3) != 0 {
-		for _, conf := range config.S3 {
-			w, err := s3.New(conf.Bucket, conf.Prefix, conf.Region, conf.Endpoint, conf.SSE, conf.AccessKey, conf.SecretKey, conf.Concurrency)
-			if err != nil {
-				return nil, err
-			}
-			writers = append(writers, w)
+	for _, v := range config {
+		w, err := newWriter(v, loader)
+		if err != nil {
+			return noop.New(), err
 		}
-	}
-
-	// Configure Azure writer if present
-	if len(config.Azure) != 0 {
-		for _, conf := range config.Azure {
-			w, err := azure.New(conf.Container, conf.Prefix)
-			if err != nil {
-				return nil, err
-			}
-			writers = append(writers, w)
-		}
-	}
-
-	// Configure GCS writer if present
-	if len(config.GCS) != 0 {
-		for _, conf := range config.GCS {
-			w, err := gcs.New(conf.Bucket, conf.Prefix)
-			if err != nil {
-				return nil, err
-			}
-			writers = append(writers, w)
-		}
-	}
-
-	// Configure BigQuery writer if present
-	if len(config.BigQuery) != 0 {
-		for _, conf := range config.BigQuery {
-			w, err := bigquery.New(conf.Project, conf.Dataset, conf.Table)
-			if err != nil {
-				return nil, err
-			}
-			writers = append(writers, w)
-		}
-
-	}
-
-	// Configure File writer if present
-	if len(config.File) != 0 {
-		for _, conf := range config.File {
-			w, err := file.New(conf.Directory)
-			if err != nil {
-				return nil, err
-			}
-			writers = append(writers, w)
-		}
-	}
-
-	// Configure Talaria writer if present
-	if len(config.Talaria) != 0 {
-		for _, conf := range config.Talaria {
-			w, err := talaria.New(conf.Endpoint, conf.CircuitTimeout, conf.MaxConcurrent, conf.ErrorPercentThreshold)
-			if err != nil {
-				return nil, err
-			}
-			writers = append(writers, w)
-		}
-	}
-
-	// Configure Google Pub/Sub writer if present
-	if len(config.PubSub) != 0 {
-		for _, conf := range config.PubSub {
-			w, err := pubsub.New(conf.Project, conf.Topic, conf.Encoder, conf.Filter, loader, monitor)
-			if err != nil {
-				return nil, err
-			}
-			writers = append(writers, w)
-		}
+		writers = append(writers, w)
 	}
 
 	// Setup a multi-writer for all configured writers

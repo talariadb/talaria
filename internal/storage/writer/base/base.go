@@ -1,9 +1,12 @@
-package encoder
+package base
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
+	"time"
 
+	"github.com/kelindar/lua"
 	"github.com/kelindar/talaria/internal/encoding/block"
 	"github.com/kelindar/talaria/internal/monitor/errors"
 	script "github.com/kelindar/talaria/internal/scripting"
@@ -14,13 +17,13 @@ type Func func(interface{}) ([]byte, error)
 
 // Writer is to filter and encode row of events
 type Writer struct {
-	filter map[string]string
+	filter *lua.Script
 	name   string
 	encode Func
 }
 
 // New creates a new encoder
-func New(filter map[string]string, encoderFunc string, loader *script.Loader) (*Writer, error) {
+func New(filter, encoderFunc string, loader *script.Loader) (*Writer, error) {
 	if encoderFunc == "" {
 		encoderFunc = "json"
 	}
@@ -34,13 +37,22 @@ func New(filter map[string]string, encoderFunc string, loader *script.Loader) (*
 		return nil, errors.Newf("encoder: unsupported encoder '%s'", encoderFunc)
 	}
 
-	// TODO: load a LUA-based encoder
+	// If no filter was specified, create a base writer without a filter
+	if filter == "" {
+		return newWithEncoder(encoderFunc, nil, encoder)
+	}
 
-	return newWithEncoder(encoderFunc, filter, encoder)
+	// Load the filter script if required
+	script, err := loader.Load(filter, filter)
+	if err != nil {
+		return nil, err
+	}
+
+	return newWithEncoder(encoderFunc, script, encoder)
 }
 
 // newWithEncoder will generate a new encoder for a writer
-func newWithEncoder(name string, filter map[string]string, encoder Func) (*Writer, error) {
+func newWithEncoder(name string, filter *lua.Script, encoder Func) (*Writer, error) {
 
 	if encoder == nil {
 		encoder = Func(json.Marshal)
@@ -60,22 +72,9 @@ func (w *Writer) Encode(input interface{}) ([]byte, error) {
 
 	// If it's a row, take the value map
 	if r, ok := input.(block.Row); ok {
-		// Check for key in high level
-		if w.filter != nil {
-			for k, v := range w.filter {
-				if val, ok := r.Values[k]; ok {
-					if val == v {
-						continue
-					} else {
-						return nil, nil
-					}
-				} else {
-					return nil, nil
-				}
-			}
+		if w.applyFilter(&r) {
+			input = r.Values
 		}
-
-		input = r.Values
 	}
 
 	// Double check to NOT do any copies when putting in a byte slice
@@ -84,4 +83,21 @@ func (w *Writer) Encode(input interface{}) ([]byte, error) {
 		return nil, errors.Internal(fmt.Sprintf("encoder: could not marshal to %s", w.name), err)
 	}
 	return dataString, nil
+}
+
+// applyFilter filters out a row if needed
+func (w *Writer) applyFilter(row *block.Row) bool {
+	if w.filter == nil {
+		return true
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
+	defer cancel()
+
+	// Runs the lua script
+	out, err := w.filter.Run(ctx, row.Values)
+	if err != nil || !out.(lua.Bool) {
+		return false
+	}
+	return true
 }

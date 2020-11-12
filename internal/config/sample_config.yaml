@@ -28,28 +28,24 @@ tables:
     compact:
       interval: 60
       nameFunc: "gcs://k8s-online-stg-configs/ingestor/name.lua"
-      sinks:
-        gcs:
-          bucket: "airasia-opdatalake-stg-datalake"
-          prefix: "sink/"
-        bigquery:
-          project: "airasia-opdatalake-stg"
-          dataset: "eventlog"
-          table: "events"
+      gcs:
+        bucket: "airasia-opdatalake-stg-datalake"
+        prefix: "sink/"
+      bigquery:
+        project: "airasia-opdatalake-stg"
+        dataset: "eventlog"
+        table: "events"
   users:
     hashBy: "user_id"
     sortBy: "ingested_at"
     schema: "gcs://k8s-default-stg-configs/ingestor/schema2.yaml"
 streams:
-  pubsub:
-    - project: my-gcp-project
+  - pubsub:
+      project: my-gcp-project
       topic: my-topic
-      filter:
-        event: a.b
-        user_id: talaria_user
+      filter: "gcs://my-bucket/my-function.lua"
       encoder: json
-    - project: my-gcp-project
+  - pubsub:
+      project: my-gcp-project
       topic: my-topic2
-      filter: 
-        event: name2
       encoder: json

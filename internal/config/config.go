@@ -38,7 +38,7 @@ type Config struct {
 	Statsd   *StatsD    `json:"statsd,omitempty" yaml:"statsd" env:"STATSD"`
 	Computed []Computed `json:"computed" yaml:"computed" env:"COMPUTED"`
 	K8s      *K8s       `json:"k8s,omitempty" yaml:"k8s" env:"K8S"`
-	Streams  *Streams   `json:"streams" yaml:"streams" env:"STREAMS"`
+	Streams  Streams    `json:"streams" yaml:"streams" env:"STREAMS"`
 }
 
 type K8s struct {
@@ -121,21 +121,13 @@ type Computed struct {
 
 // Compaction represents a configuration for compaction sinks
 type Compaction struct {
-	Sinks    Sinks  `json:"sinks" yaml:"sinks" env:"SINKS"`
+	Sinks    `yaml:",inline"`
 	NameFunc string `json:"nameFunc" yaml:"nameFunc" env:"NAMEFUNC"` // The lua script to compute file name given a row
 	Interval int    `json:"interval" yaml:"interval" env:"INTERVAL"` // The compaction interval, in seconds
 }
 
 // Streams are lists of sinks to be streamed to
-type Streams struct {
-	S3       []*S3Sink       `json:"s3" yaml:"s3"`
-	Azure    []*AzureSink    `json:"azure" yaml:"azure"`
-	BigQuery []*BigQuerySink `json:"bigquery" yaml:"bigquery"`
-	GCS      []*GCSSink      `json:"gcs" yaml:"gcs" `
-	File     []*FileSink     `json:"file" yaml:"file" `
-	Talaria  []*TalariaSink  `json:"talaria" yaml:"talaria" `
-	PubSub   []*PubSubSink   `json:"pubsub" yaml:"pubsub" `
-}
+type Streams []Sinks
 
 // Sinks represents a configuration for writer sinks
 type Sinks struct {
@@ -186,10 +178,10 @@ type FileSink struct {
 
 // PubSubSink represents a stream to Google Pub/Sub
 type PubSubSink struct {
-	Project string            `json:"project" yaml:"project" env:"PROJECT"`
-	Topic   string            `json:"topic" yaml:"topic" env:"TOPIC"`
-	Filter  map[string]string `json:"filter" yaml:"filter" env:"FILTER"`
-	Encoder string            `json:"encoder" yaml:"encoder" env:"ENCODER"`
+	Project string `json:"project" yaml:"project" env:"PROJECT"`
+	Topic   string `json:"topic" yaml:"topic" env:"TOPIC"`
+	Filter  string `json:"filter" yaml:"filter" env:"FILTER"`
+	Encoder string `json:"encoder" yaml:"encoder" env:"ENCODER"`
 }
 
 // TalariaSink represents a sink to an instance of Talaria

@@ -76,9 +76,8 @@ tables:
       data: json
     compact:
       interval: 300
-      sinks:
-        file:
-          dir: "output/"
+      file:
+        dir: "output/"
 statsd:
   host: "127.0.0.1"
   port: 8126
@@ -91,17 +90,14 @@ computed:
         return json.encode(input)
       end
 streams:
-  pubsub:
-    - project: my-gcp-project
+  - pubsub:
+      project: my-gcp-project
       topic: my-topic
-      filter:
-        event: a.b
-        user_id: talaria_user
+      filter: "gcs://my-bucket/my-function.lua"
       encoder: json
-    - project: my-gcp-project
+  - pubsub:
+      project: my-gcp-project
       topic: my-topic2
-      filter:
-        user_id: talaria_user
       encoder: json
 `)
 
@@ -110,14 +106,10 @@ streams:
 	assert.NoError(t, e.Configure(c))
 
 	// asserts
-	assert.Len(t, c.Streams.PubSub, 2)
+	assert.Len(t, c.Streams, 2)
 	assert.Len(t, c.Computed, 1)
 	assert.Len(t, c.Tables, 1)
 
-	pubSubFilter := make(map[string]string, 2)
-	pubSubFilter["event"] = "a.b"
-	pubSubFilter["user_id"] = "talaria_user"
-
-	assert.Equal(t, c.Streams.PubSub[0].Filter, pubSubFilter)
-	assert.Equal(t, c.Tables["eventlog"].Compact.Sinks.File.Directory, "output/")
+	assert.Equal(t, "my-gcp-project", c.Streams[0].PubSub.Project)
+	assert.Equal(t, "output/", c.Tables["eventlog"].Compact.File.Directory)
 }

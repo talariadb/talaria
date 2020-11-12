@@ -10,21 +10,22 @@ import (
 	"github.com/kelindar/talaria/internal/monitor"
 	"github.com/kelindar/talaria/internal/monitor/errors"
 	script "github.com/kelindar/talaria/internal/scripting"
-	"github.com/kelindar/talaria/internal/storage/writer/encoder"
+	"github.com/kelindar/talaria/internal/storage/writer/base"
 )
 
 // Writer to write and streaming to PubSub
 type Writer struct {
 	client  *pubsub.Client
 	topic   *pubsub.Topic
-	Writer  *encoder.Writer
+	Writer  *base.Writer
 	monitor monitor.Monitor
 	context context.Context
 	buffer  chan []byte
+	errs    chan error
 }
 
 // New creates a new writer
-func New(project, topic, encoding string, filter map[string]string, loader *script.Loader, monitor monitor.Monitor) (*Writer, error) {
+func New(project, topic, encoding, filter string, loader *script.Loader, monitor monitor.Monitor) (*Writer, error) {
 	ctx := context.Background()
 	client, err := pubsub.NewClient(ctx, project)
 	if err != nil {
@@ -33,7 +34,7 @@ func New(project, topic, encoding string, filter map[string]string, loader *scri
 
 	topicRef := client.Topic(topic)
 
-	encoderWriter, err := encoder.New(filter, encoding, loader)
+	encoderWriter, err := base.New(filter, encoding, loader)
 	if err != nil {
 		return nil, err
 	}
@@ -45,6 +46,7 @@ func New(project, topic, encoding string, filter map[string]string, loader *scri
 		monitor: monitor,
 		context: ctx,
 		buffer:  make(chan []byte, 65000),
+		errs:    make(chan error, 1),
 	}
 
 	// Launch a goroutine that loops infinitely over buffer
@@ -70,47 +72,46 @@ func (w *Writer) Stream(row block.Row) error {
 		return nil
 	}
 
-	w.buffer <- message
+	select {
+	case w.buffer <- message:
+	default:
+		w.monitor.Warning(errors.Internal("pubsub: buffer is full", err))
+	}
 	return nil
 }
 
 // process will read from buffer, encode the row, and publish to PubSub
 func (w *Writer) process() error {
-	errs := make(chan error, 1)
+
 	ctx := context.Background()
-	encounteredError := false
 
 	for message := range w.buffer {
-
-		if encounteredError {
-			// Sleep for 10 seconds before retrying publish
+		select {
+		case err := <-w.errs:
+			w.monitor.Warning(errors.Internal("pubsub: unable to stream, sleeping for 10 seconds before retrying", err))
 			time.Sleep(10 * time.Second)
-			encounteredError = false
+		default:
 		}
 
 		result := w.topic.Publish(ctx, &pubsub.Message{
 			Data: message,
 		})
 
-		go func(res *pubsub.PublishResult, message []byte) {
-			_, err := res.Get(ctx)
-			if err != nil {
-				// If stream hits error, send err to error channel and repopulate message in buffer
-				errs <- err
-				w.buffer <- message
-				return
-			}
-		}(result, message)
-
-		select {
-		case err := <-errs:
-			encounteredError = true
-			w.monitor.Warning(errors.Internal("pubsub: unable to stream", err))
-		default:
-			continue
-		}
+		go w.processResult(result, message)
 	}
 	return nil
+}
+
+func (w *Writer) processResult(res *pubsub.PublishResult, message []byte) {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	// If stream hits error, send err to error channel and repopulate message in buffer
+	if _, err := res.Get(ctx); err != nil {
+		w.errs <- err
+		w.buffer <- message
+		return
+	}
 }
 
 // Close closes the writer.

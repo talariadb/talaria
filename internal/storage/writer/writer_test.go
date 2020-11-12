@@ -24,7 +24,7 @@ func TestForCompaction(t *testing.T) {
 }
 
 func TestForStreaming(t *testing.T) {
-	cfg := &config.Streams{}
+	cfg := config.Streams{}
 	compact, err := ForStreaming(cfg,
 		monitor.New(logging.NewStandard(), statsd.NewNoop(), "x", "x"),
 		script.NewLoader(nil),
