@@ -3,15 +3,19 @@ package pubsub
 import (
 	"testing"
 
-	"github.com/kelindar/talaria/internal/encoding/block"
 	"github.com/stretchr/testify/assert"
+	"google.golang.org/api/option"
+	"google.golang.org/grpc"
 )
 
-func TestStreamer(t *testing.T) {
-	row := block.NewRow(nil, 0)
-	row.Set("test", "Hello Talaria")
+func TestNew(t *testing.T) {
+	conn, err := grpc.Dial("", grpc.WithInsecure())
+	assert.NoError(t, err)
 
-	c, _ := New("gcp-project", "talaria", "", "", nil, nil)
+	c, err := New("gcp-project", "talaria", "", "", nil, nil, option.WithGRPCConn(conn))
 
-	assert.NoError(t, c.Stream(row))
+	assert.Nil(t, c)
+	assert.Error(t, err)
+
+	// TODO: Test streaming function
 }

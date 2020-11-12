@@ -11,6 +11,7 @@ import (
 	"github.com/kelindar/talaria/internal/monitor/errors"
 	script "github.com/kelindar/talaria/internal/scripting"
 	"github.com/kelindar/talaria/internal/storage/writer/base"
+	"google.golang.org/api/option"
 )
 
 // Writer to write and streaming to PubSub
@@ -25,9 +26,11 @@ type Writer struct {
 }
 
 // New creates a new writer
-func New(project, topic, encoding, filter string, loader *script.Loader, monitor monitor.Monitor) (*Writer, error) {
+func New(project, topic, encoding, filter string, loader *script.Loader, monitor monitor.Monitor, opts ...option.ClientOption) (*Writer, error) {
 	ctx := context.Background()
-	client, err := pubsub.NewClient(ctx, project)
+
+	client, err := pubsub.NewClient(ctx, project, opts...)
+
 	if err != nil {
 		return nil, errors.Newf("pubsub: %v", err)
 	}
