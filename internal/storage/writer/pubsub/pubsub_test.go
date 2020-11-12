@@ -14,8 +14,8 @@ func TestNew(t *testing.T) {
 
 	c, err := New("gcp-project", "talaria", "", "", nil, nil, option.WithGRPCConn(conn))
 
-	assert.Nil(t, c)
-	assert.Error(t, err)
+	assert.IsType(t, &Writer{}, c)
+	assert.NoError(t, err)
 
 	// TODO: Test streaming function
 }
