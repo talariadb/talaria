@@ -201,6 +201,10 @@ func (t *Table) GetRows(splitID []byte, requestedColumns []string, maxBytes int6
 
 		// Read the data frame from the specified offset
 		frame, readError := t.readDataFrame(localSchema, value, bytesLeft)
+		if frame.Size() == 0 {
+			t.monitor.Debug("skipping an empty frame")
+			return false // Ignore
+		}
 
 		// Set the next token if we don't have enough to process
 		if readError == io.ErrShortBuffer {
