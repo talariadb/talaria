@@ -83,6 +83,10 @@ func FromOrc(desc *orc.TypeDescription) (Type, bool) {
 
 // FromType gets the type from a reflect.Type
 func FromType(rt reflect.Type) (Type, bool) {
+	if rt == nil {
+		return Unsupported, false
+	}
+
 	switch rt.Name() {
 	case "int32":
 		return Int32, true

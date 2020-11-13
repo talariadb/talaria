@@ -53,7 +53,11 @@ func TestFromType(t *testing.T) {
 		assert.Equal(t, Unsupported, typ)
 		assert.False(t, ok)
 	}
-
+	{
+		typ, ok := FromType(reflect.TypeOf(nil))
+		assert.Equal(t, Unsupported, typ)
+		assert.False(t, ok)
+	}
 }
 
 func TestReflect(t *testing.T) {
