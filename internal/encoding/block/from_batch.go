@@ -16,7 +16,7 @@ import (
 
 // FromBatchBy creates a block from a talaria protobuf-encoded batch. It
 // repartitions the batch by a given partition key at the same time.
-func FromBatchBy(batch *talaria.Batch, partitionBy string, filter *typeof.Schema, computed ...column.Computed) ([]Block, error) {
+func FromBatchBy(batch *talaria.Batch, partitionBy string, filter *typeof.Schema, apply applyFunc) ([]Block, error) {
 	if batch == nil || batch.Strings == nil || batch.Events == nil {
 		return nil, errEmptyBatch
 	}
@@ -47,7 +47,7 @@ func FromBatchBy(batch *talaria.Batch, partitionBy string, filter *typeof.Schema
 		}
 
 		// Prepare a row for transformation
-		row := newRow(filter.Clone(), len(event.Value))
+		row := NewRow(filter.Clone(), len(event.Value))
 		for k, v := range event.Value {
 			columnName := stringAt(batch.Strings, k)
 			columnValue, err := readValue(batch.Strings, v)
@@ -59,7 +59,11 @@ func FromBatchBy(batch *talaria.Batch, partitionBy string, filter *typeof.Schema
 		}
 
 		// Append computed columns and fill nulls for the row
-		row.Transform(computed, filter).AppendTo(columns)
+		// Error can only be from encoding the row, error is logged in Publish() so we can ignore the error here and continue to convert row to columns
+		out, _ := apply(row)
+
+		// Append to columnar data structure and fill nulls for row
+		out.AppendTo(columns)
 		columns.FillNulls()
 	}
 

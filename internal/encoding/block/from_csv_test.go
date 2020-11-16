@@ -18,10 +18,16 @@ func TestFromCSV(t *testing.T) {
 	assert.NotEmpty(t, o)
 	assert.NoError(t, err)
 
+	schema := &typeof.Schema{
+		"raisedCurrency": typeof.String,
+		"raisedAmt":      typeof.Float64,
+	}
+	apply := Transform(schema)
+
 	b, err := FromCSVBy(o, "raisedCurrency", &typeof.Schema{
 		"raisedCurrency": typeof.String,
 		"raisedAmt":      typeof.Float64,
-	})
+	}, apply)
 	assert.NoError(t, err)
 	assert.Equal(t, 3, len(b))
 
@@ -42,10 +48,16 @@ func TestFromCSV_EmptyPartition(t *testing.T) {
 	assert.NotEmpty(t, o)
 	assert.NoError(t, err)
 
+	schema := &typeof.Schema{
+		"raisedCurrency": typeof.String,
+		"raisedAmt":      typeof.Float64,
+	}
+	apply := Transform(schema)
+
 	b, err := FromCSVBy(o, "numEmps", &typeof.Schema{
 		"numEmps": typeof.String,
 		"company": typeof.String,
-	})
+	}, apply)
 	assert.NoError(t, err)
 	assert.Equal(t, 72, len(b))
 

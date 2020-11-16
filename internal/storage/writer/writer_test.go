@@ -12,14 +12,25 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestNew(t *testing.T) {
+func TestForCompaction(t *testing.T) {
 	cfg := &config.Compaction{}
-	compact := New(cfg,
+	compact := ForCompaction(cfg,
 		monitor.New(logging.NewStandard(), statsd.NewNoop(), "x", "x"),
 		disk.New(monitor.NewNoop()),
 		script.NewLoader(nil),
 	)
 
+	assert.NotNil(t, compact)
+}
+
+func TestForStreaming(t *testing.T) {
+	cfg := config.Streams{}
+	compact, err := ForStreaming(cfg,
+		monitor.New(logging.NewStandard(), statsd.NewNoop(), "x", "x"),
+		script.NewLoader(nil),
+	)
+
+	assert.Nil(t, err)
 	assert.NotNil(t, compact)
 }
 

@@ -60,8 +60,10 @@ func TestMerge(t *testing.T) {
 	_ = writer.Write("eventName", 2, 2.0)
 	_ = writer.Close()
 
-	block1, err := block.FromOrcBy(orcBuffer1.Bytes(), "col0", nil)
-	block2, err := block.FromOrcBy(orcBuffer2.Bytes(), "col0", nil)
+	apply := block.Transform(nil)
+
+	block1, err := block.FromOrcBy(orcBuffer1.Bytes(), "col0", nil, apply)
+	block2, err := block.FromOrcBy(orcBuffer2.Bytes(), "col0", nil, apply)
 
 	mergedBlocks := []block.Block{}
 	for _, blk := range block1 {
@@ -138,8 +140,10 @@ func TestMerge_DifferentSchema(t *testing.T) {
 	_ = writer.Write("eventName", 2, 2.0, "s")
 	_ = writer.Close()
 
-	block1, err := block.FromOrcBy(orcBuffer1.Bytes(), "col0", nil)
-	block2, err := block.FromOrcBy(orcBuffer2.Bytes(), "col0", nil)
+	apply := block.Transform(nil)
+
+	block1, err := block.FromOrcBy(orcBuffer1.Bytes(), "col0", nil, apply)
+	block2, err := block.FromOrcBy(orcBuffer2.Bytes(), "col0", nil, apply)
 
 	mergedBlocks := []block.Block{}
 	for _, blk := range block1 {
@@ -252,7 +256,9 @@ func TestNameFunc(t *testing.T) {
 	_ = writer.Write("eventName", 1, 1.0)
 	_ = writer.Close()
 
-	blocks, err := block.FromOrcBy(orcBuffer.Bytes(), "col0", nil)
+	apply := block.Transform(nil)
+
+	blocks, err := block.FromOrcBy(orcBuffer.Bytes(), "col0", nil, apply)
 	fileName, _ := flusher.Merge(blocks, schema)
 
 	assert.Equal(t, "year=46970/month=3/day=29/ns=eventName/0-0-0-127.0.0.1.orc", string(fileName))

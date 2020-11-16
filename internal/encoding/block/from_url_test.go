@@ -15,10 +15,12 @@ func TestFromURL(t *testing.T) {
 	p, err := filepath.Abs("../../../test/test4.csv")
 	assert.NoError(t, err)
 
-	b, err := FromURLBy("file:///"+p, "raisedCurrency", &typeof.Schema{
+	schema := &typeof.Schema{
 		"raisedCurrency": typeof.String,
 		"raisedAmt":      typeof.Float64,
-	})
+	}
+	apply := Transform(schema)
+	b, err := FromURLBy("file:///"+p, "raisedCurrency", schema, apply)
 	assert.NoError(t, err)
 	assert.Equal(t, 3, len(b))
 

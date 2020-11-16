@@ -80,8 +80,15 @@ func main() {
 		tables = append(tables, openTable(name, conf.Storage, tableConf, gossip, monitor, loader))
 	}
 
+	// Returns noop streamer if array is empty
+	monitor.Info("server: configuring streams if any")
+	streams, err := writer.ForStreaming(conf.Streams, monitor, loader)
+	if err != nil {
+		panic(err)
+	}
+
 	// Start the new server
-	server := server.New(configure, monitor, loader, tables...)
+	server := server.New(configure, monitor, loader, streams, tables...)
 
 	// onSignal will be called when a OS-level signal is received.
 	onSignal(func(_ os.Signal) {
@@ -114,7 +121,7 @@ func openTable(name string, storageConf config.Storage, tableConf config.Table, 
 	// Create a new storage layer and optional compaction
 	store := storage.Storage(disk.Open(storageConf.Directory, name, monitor, storageConf.Badger))
 	if tableConf.Compact != nil {
-		store = writer.New(tableConf.Compact, monitor, store, loader)
+		store = writer.ForCompaction(tableConf.Compact, monitor, store, loader)
 	}
 
 	return timeseries.New(name, cluster, monitor, store, &tableConf)

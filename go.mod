@@ -5,6 +5,7 @@ go 1.14
 require (
 	cloud.google.com/go v0.57.0 // indirect
 	cloud.google.com/go/bigquery v1.7.0
+	cloud.google.com/go/pubsub v1.3.1
 	cloud.google.com/go/storage v1.7.0
 	github.com/Azure/azure-sdk-for-go v42.1.0+incompatible
 	github.com/Azure/go-autorest/autorest v0.10.1 // indirect
@@ -22,9 +23,7 @@ require (
 	github.com/dnaeon/go-vcr v1.0.1 // indirect
 	github.com/emitter-io/address v1.0.0
 	github.com/gogo/protobuf v1.3.1
-	github.com/golang/groupcache v0.0.0-20200121045136-8c9f03a8e57e // indirect
 	github.com/golang/snappy v0.0.1
-	github.com/google/btree v1.0.0 // indirect
 	github.com/gopherjs/gopherjs v0.0.0-20200209183636-89e6cbcd0b6d // indirect
 	github.com/gorilla/mux v1.7.4
 	github.com/grab/async v0.0.5
@@ -36,12 +35,10 @@ require (
 	github.com/hashicorp/golang-lru v0.5.4 // indirect
 	github.com/hashicorp/memberlist v0.2.2
 	github.com/imroc/req v0.3.0 // indirect
-	github.com/kelindar/binary v1.0.8
-	github.com/kelindar/loader v0.0.10
-	github.com/kelindar/lua v0.0.6
+	github.com/kelindar/binary v1.0.9
+	github.com/kelindar/loader v0.0.11
+	github.com/kelindar/lua v0.0.7
 	github.com/miekg/dns v1.1.29 // indirect
-	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
-	github.com/modern-go/reflect2 v1.0.1 // indirect
 	github.com/myteksi/hystrix-go v1.1.3
 	github.com/samuel/go-thrift v0.0.0-20191111193933-5165175b40af
 	github.com/satori/go.uuid v1.2.0 // indirect
@@ -56,7 +53,7 @@ require (
 	golang.org/x/sync v0.0.0-20200317015054-43a5402ce75a
 	golang.org/x/time v0.0.0-20200416051211-89c76fbcd5d1 // indirect
 	golang.org/x/tools v0.0.0-20200512001501-aaeff5de670a // indirect
-	google.golang.org/api v0.24.0 // indirect
+	google.golang.org/api v0.24.0
 	google.golang.org/genproto v0.0.0-20200511104702-f5ebc3bea380 // indirect
 	google.golang.org/grpc v1.31.0
 	gopkg.in/yaml.v2 v2.2.8
