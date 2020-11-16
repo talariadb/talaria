@@ -11,6 +11,7 @@ import (
 
 	pb "github.com/kelindar/talaria/proto"
 	"github.com/myteksi/hystrix-go/hystrix"
+	"github.com/sercand/kuberesolver/v3"
 	"google.golang.org/grpc"
 )
 
@@ -23,6 +24,10 @@ var (
 	// ErrUnableToConnect is error when client is unable connect to rpc server
 	ErrUnableToConnect = errors.New("unable to connect Talaria server")
 )
+
+func init() {
+	kuberesolver.RegisterInCluster()
+}
 
 // Client represents a client for Talaria.
 type Client struct {
