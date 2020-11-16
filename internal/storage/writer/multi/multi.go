@@ -13,6 +13,7 @@ type SubWriter interface {
 // streamer represents the sub-streamer
 type streamer interface {
 	Stream(row block.Row) error
+	startProcess()
 }
 
 // Writer represents a writer that writes into multiple sub-writers.
@@ -27,6 +28,7 @@ func New(writers ...SubWriter) *Writer {
 	for _, v := range writers {
 		if streamer, ok := v.(streamer); ok {
 			streamers = append(streamers, streamer)
+			go streamer.startProcess()
 		}
 	}
 
@@ -45,6 +47,15 @@ func (w *Writer) Write(key key.Key, val []byte) error {
 	}
 
 	return nil
+}
+
+// StartProcess launches a goroutine to start the infinite loop for streaming
+func (w *Writer) startProcess() {
+	for _, w := range w.streamers {
+		go w.startProcess()
+	}
+
+	return
 }
 
 // Stream streams the data to the sink

@@ -28,18 +28,29 @@ type Writer struct {
 // New creates a new writer
 func New(project, topic, encoding, filter string, loader *script.Loader, monitor monitor.Monitor, opts ...option.ClientOption) (*Writer, error) {
 	ctx := context.Background()
-
 	client, err := pubsub.NewClient(ctx, project, opts...)
 
 	if err != nil {
 		return nil, errors.Newf("pubsub: %v", err)
 	}
 
-	topicRef := client.Topic(topic)
-
+	// Load encoder
 	encoderWriter, err := base.New(filter, encoding, loader)
 	if err != nil {
 		return nil, err
+	}
+
+	// Check if topic exists
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	topicRef := client.Topic(topic)
+	ok, err := topicRef.Exists(ctx)
+
+	if err != nil {
+		return nil, errors.Newf("pubsub: %v", err)
+	}
+	if !ok {
+		return nil, errors.New("pubsub: topic does not exist")
 	}
 
 	w := &Writer{
@@ -52,15 +63,17 @@ func New(project, topic, encoding, filter string, loader *script.Loader, monitor
 		errs:    make(chan error, 1),
 	}
 
-	// Launch a goroutine that loops infinitely over buffer
-	go w.process()
-
 	return w, nil
 }
 
 // Write writes the data to the sink.
 func (w *Writer) Write(key.Key, []byte) error {
 	return nil // Noop
+}
+
+// StartProcess will launch a goroutine that loops infinitely over buffer
+func (w *Writer) startProcess() {
+	go w.process()
 }
 
 // Stream publishes data into PubSub topics
@@ -105,6 +118,7 @@ func (w *Writer) process() error {
 	return nil
 }
 
+// processResult will process the result from publish to check if there are errors
 func (w *Writer) processResult(res *pubsub.PublishResult, message []byte) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()

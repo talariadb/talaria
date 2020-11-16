@@ -53,8 +53,8 @@ func New(conf config.Func, monitor monitor.Monitor, loader *script.Loader, strea
 		server:  grpc.NewServer(grpc.MaxRecvMsgSize(maxMessageSize)),
 		conf:    conf,
 		monitor: monitor,
-		tables:  make(map[string]table.Table),
 		streams: streams,
+		tables:  make(map[string]table.Table),
 	}
 
 	// Load computed columns
