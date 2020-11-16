@@ -16,9 +16,15 @@ func TestSchemaString(t *testing.T) {
 		"c": JSON,
 	}
 
+	// Contains
 	assert.True(t, s.Contains("b", String))
 	assert.False(t, s.Contains("b", Int32))
 	assert.False(t, s.Contains("x", String))
+	assert.False(t, s.Contains("b", JSON))
+
+	// HasConvertible
+	assert.True(t, s.HasConvertible("b", JSON))
+
 	assert.Equal(t, 3, len(s.Columns()))
 	assert.Equal(t, `[{"column":"a","type":"INTEGER"},{"column":"b","type":"VARCHAR"},{"column":"c","type":"JSON"}]`, s.String())
 }

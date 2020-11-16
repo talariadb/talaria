@@ -112,7 +112,6 @@ func findString(columns []string, partitionBy string) (int, bool) {
 
 // convertToJSON converts an ORC map/list/struct to JSON
 func convertToJSON(value interface{}) (string, bool) {
-	fmt.Printf("JSON: %T\n", value)
 	switch vt := value.(type) {
 	case []orctype.MapEntry:
 		remap := make(map[string]interface{}, len(vt))

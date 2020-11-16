@@ -91,6 +91,17 @@ func (s Schema) Contains(key string, typ Type) bool {
 	return ok && t == typ
 }
 
+// HasConvertible checks if the schema contains a specific key or can be converted to
+func (s Schema) HasConvertible(key string, typ Type) bool {
+	t, ok := s[key]
+	if ok && t == typ {
+		return true
+	}
+
+	_, ok = convertible[typ][t]
+	return ok
+}
+
 // Clone clones the schema
 func (s *Schema) Clone() (c Schema) {
 	if s == nil {
