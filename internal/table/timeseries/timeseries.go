@@ -209,6 +209,11 @@ func (t *Table) GetRows(splitID []byte, requestedColumns []string, maxBytes int6
 			return true
 		}
 
+		// Skip empty frames, should not happen most of the time
+		if frame.Size() == 0 {
+			return false // Ignore
+		}
+
 		// Append each column to the map (we'll merge later)
 		for _, columnName := range requestedColumns {
 			f := frame[columnName]

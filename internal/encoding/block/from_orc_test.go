@@ -4,6 +4,7 @@
 package block
 
 import (
+	"encoding/json"
 	"io/ioutil"
 	"testing"
 
@@ -38,4 +39,24 @@ func TestFromOrc_LargeFile(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, 56, len(b))
 	assert.Equal(t, 9, len(b[0].Schema()))
+}
+
+func TestFromOrc_JSON(t *testing.T) {
+	o, err := ioutil.ReadFile("../../../test/test5.orc")
+	assert.NotEmpty(t, o)
+	assert.NoError(t, err)
+
+	b, err := FromOrcBy(o, "event", &typeof.Schema{
+		"ctx": typeof.JSON,
+	})
+	assert.NoError(t, err)
+	assert.Equal(t, 1, len(b))
+
+	cols, err := b[0].Select(typeof.Schema{
+		"ctx": typeof.JSON,
+	})
+	ctx := cols["ctx"]
+	assert.NoError(t, err)
+	assert.Equal(t, 3, ctx.Count())
+	assert.NotEmpty(t, string(ctx.Last().(json.RawMessage)))
 }
