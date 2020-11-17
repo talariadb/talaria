@@ -1,6 +1,8 @@
 package multi
 
 import (
+	"context"
+
 	"github.com/kelindar/talaria/internal/encoding/block"
 	"github.com/kelindar/talaria/internal/encoding/key"
 )
@@ -13,7 +15,7 @@ type SubWriter interface {
 // streamer represents the sub-streamer
 type streamer interface {
 	Stream(row block.Row) error
-	startProcess()
+	Run(ctx context.Context)
 }
 
 // Writer represents a writer that writes into multiple sub-writers.
@@ -28,7 +30,6 @@ func New(writers ...SubWriter) *Writer {
 	for _, v := range writers {
 		if streamer, ok := v.(streamer); ok {
 			streamers = append(streamers, streamer)
-			go streamer.startProcess()
 		}
 	}
 
@@ -49,12 +50,11 @@ func (w *Writer) Write(key key.Key, val []byte) error {
 	return nil
 }
 
-// StartProcess launches a goroutine to start the infinite loop for streaming
-func (w *Writer) startProcess() {
+// Run launches a goroutine to start the infinite loop for streaming
+func (w *Writer) Run(ctx context.Context) {
 	for _, w := range w.streamers {
-		go w.startProcess()
+		w.Run(ctx)
 	}
-
 	return
 }
 

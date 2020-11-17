@@ -16,7 +16,7 @@ import (
 	"google.golang.org/api/option"
 )
 
-// Writer to write and streaming to PubSub
+// Writer to write and stream to PubSub
 type Writer struct {
 	*base.Writer
 	client  *pubsub.Client
@@ -74,7 +74,7 @@ func (w *Writer) Write(key.Key, []byte) error {
 	return nil // Noop
 }
 
-// Stream publishes data into PubSub topics
+// Stream encodes data and pushes it into buffer
 func (w *Writer) Stream(row block.Row) error {
 	message, err := w.Writer.Encode(row)
 	if err != nil {
@@ -94,20 +94,18 @@ func (w *Writer) Stream(row block.Row) error {
 	return nil
 }
 
-// process will read from buffer, encode the row, and publish to PubSub
+// process will read from buffer and publish to PubSub
 func (w *Writer) process(parent context.Context) error {
 	async.Consume(parent, runtime.NumCPU()*8, w.queue)
 	for message := range w.buffer {
 		select {
-
-		// returns error if the parent context gets cancelled. Done() returns an empty struct
+		// Returns error if the parent context gets cancelled. Done() returns an empty struct
 		case <-parent.Done():
 			return parent.Err()
-
 		default:
 		}
 
-		// asynchronously processing the message
+		// Asynchronously adds a task to publish to Pub/Sub and check its response
 		encoded := message
 		w.queue <- async.NewTask(func(ctx context.Context) (interface{}, error) {
 			result := w.topic.Publish(ctx, &pubsub.Message{
@@ -125,7 +123,7 @@ func (w *Writer) processResult(res *pubsub.PublishResult, message []byte) error 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	// If stream hits error, send err to error channel and repopulate message in buffer
+	// If stream hits error, repopulate message in buffer and return error
 	if _, err := res.Get(ctx); err != nil {
 		w.buffer <- message
 		return err
@@ -133,7 +131,7 @@ func (w *Writer) processResult(res *pubsub.PublishResult, message []byte) error 
 	return nil
 }
 
-// Close closes the writer.
+// Close closes the Pub/Sub client
 func (w *Writer) Close() error {
 	return w.client.Close()
 }

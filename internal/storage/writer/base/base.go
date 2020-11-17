@@ -56,7 +56,6 @@ func New(filter, encoderFunc string, loader *script.Loader) (*Writer, error) {
 
 // newWithEncoder will generate a new encoder for a writer
 func newWithEncoder(name string, filter *lua.Script, encoder Func) (*Writer, error) {
-
 	if encoder == nil {
 		encoder = Func(json.Marshal)
 	}
@@ -89,7 +88,6 @@ func (w *Writer) Close() error {
 
 // Encode will encode a row to the format the user specifies
 func (w *Writer) Encode(input interface{}) ([]byte, error) {
-
 	// TODO: make this work for block.Block and block.Row
 
 	// If it's a row, take the value map

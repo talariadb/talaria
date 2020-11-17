@@ -1,6 +1,7 @@
 package writer
 
 import (
+	"context"
 	"fmt"
 	"hash/maphash"
 	"sort"
@@ -152,7 +153,7 @@ func newWriter(config config.Sinks, loader *script.Loader) (flush.Writer, error)
 func newStreamer(config config.Streams, monitor monitor.Monitor, loader *script.Loader) (flush.Writer, error) {
 	var writers []multi.SubWriter
 
-	// If no writers were configured, error out
+	// If no streams were configured, error out
 	if len(config) == 0 {
 		return noop.New(), errors.New("stream: writer was not configured")
 	}
@@ -166,7 +167,9 @@ func newStreamer(config config.Streams, monitor monitor.Monitor, loader *script.
 	}
 
 	// Setup a multi-writer for all configured writers
-	return multi.New(writers...), nil
+	multiWriters := multi.New(writers...)
+	multiWriters.Run(context.Background())
+	return multiWriters, nil
 }
 
 // defaultNameFunc represents a default name function

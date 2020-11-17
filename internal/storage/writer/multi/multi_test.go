@@ -1,6 +1,7 @@
 package multi
 
 import (
+	"context"
 	"testing"
 
 	"github.com/kelindar/talaria/internal/encoding/block"
@@ -26,6 +27,10 @@ func (w *MockWriterFull) Write(key key.Key, val []byte) error {
 func (w *MockWriterFull) Stream(block.Row) error {
 	w.Count++
 	return nil
+}
+
+func (w *MockWriterFull) Run(ctx context.Context) {
+	return
 }
 
 func TestMulti(t *testing.T) {
