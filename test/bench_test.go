@@ -16,6 +16,7 @@ import (
 	script "github.com/kelindar/talaria/internal/scripting"
 	"github.com/kelindar/talaria/internal/server"
 	"github.com/kelindar/talaria/internal/storage/disk"
+	"github.com/kelindar/talaria/internal/storage/writer"
 	"github.com/kelindar/talaria/internal/table/timeseries"
 	talaria "github.com/kelindar/talaria/proto"
 )
@@ -68,7 +69,9 @@ func BenchmarkQuery(b *testing.B) {
 		SortBy: cfg().Tables[tableName].SortBy,
 		Schema: "",
 	})
-	server := server.New(cfg, monitor, script.NewLoader(nil), eventlog)
+
+	streams, _ := writer.ForStreaming(nil, monitor, script.NewLoader(nil))
+	server := server.New(cfg, monitor, script.NewLoader(nil), streams, eventlog)
 	defer server.Close()
 
 	// Append some files

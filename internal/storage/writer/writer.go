@@ -1,6 +1,7 @@
 package writer
 
 import (
+	"context"
 	"fmt"
 	"hash/maphash"
 	"sort"
@@ -21,15 +22,26 @@ import (
 	"github.com/kelindar/talaria/internal/storage/writer/gcs"
 	"github.com/kelindar/talaria/internal/storage/writer/multi"
 	"github.com/kelindar/talaria/internal/storage/writer/noop"
+	"github.com/kelindar/talaria/internal/storage/writer/pubsub"
 	"github.com/kelindar/talaria/internal/storage/writer/s3"
 	"github.com/kelindar/talaria/internal/storage/writer/talaria"
 )
 
 var seed = maphash.MakeSeed()
 
-// New creates a compact store using the configuration provided
-func New(config *config.Compaction, monitor monitor.Monitor, store storage.Storage, loader *script.Loader) *compact.Storage {
-	writer, err := newWriter(config)
+// ForStreaming creates a streaming writer
+func ForStreaming(config config.Streams, monitor monitor.Monitor, loader *script.Loader) (storage.Streamer, error) {
+	writer, err := newStreamer(config, monitor, loader)
+	if err != nil {
+		monitor.Error(err)
+	}
+
+	return writer.(storage.Streamer), nil
+}
+
+// ForCompaction creates a compaction writer
+func ForCompaction(config *config.Compaction, monitor monitor.Monitor, store storage.Storage, loader *script.Loader) *compact.Storage {
+	writer, err := newWriter(config.Sinks, loader)
 	if err != nil {
 		monitor.Error(err)
 	}
@@ -62,7 +74,7 @@ func New(config *config.Compaction, monitor monitor.Monitor, store storage.Stora
 }
 
 // NewWriter creates a new writer from the configuration.
-func newWriter(config *config.Compaction) (flush.Writer, error) {
+func newWriter(config config.Sinks, loader *script.Loader) (flush.Writer, error) {
 	var writers []multi.SubWriter
 
 	// Configure S3 writer if present
@@ -119,6 +131,15 @@ func newWriter(config *config.Compaction) (flush.Writer, error) {
 		writers = append(writers, w)
 	}
 
+	// Configure Google Pub/Sub writer if present
+	if config.PubSub != nil {
+		w, err := pubsub.New(config.PubSub.Project, config.PubSub.Topic, config.PubSub.Encoder, config.PubSub.Filter, loader, nil)
+		if err != nil {
+			return nil, err
+		}
+		writers = append(writers, w)
+	}
+
 	// If no writers were configured, error out
 	if len(writers) == 0 {
 		return noop.New(), errors.New("compact: writer was not configured")
@@ -126,6 +147,29 @@ func newWriter(config *config.Compaction) (flush.Writer, error) {
 
 	// Setup a multi-writer for all configured writers
 	return multi.New(writers...), nil
+}
+
+// newStreamer creates a new streamer from the configuration.
+func newStreamer(config config.Streams, monitor monitor.Monitor, loader *script.Loader) (flush.Writer, error) {
+	var writers []multi.SubWriter
+
+	// If no streams were configured, error out
+	if len(config) == 0 {
+		return noop.New(), errors.New("stream: writer was not configured")
+	}
+
+	for _, v := range config {
+		w, err := newWriter(v, loader)
+		if err != nil {
+			return noop.New(), err
+		}
+		writers = append(writers, w)
+	}
+
+	// Setup a multi-writer for all configured writers
+	multiWriters := multi.New(writers...)
+	multiWriters.Run(context.Background())
+	return multiWriters, nil
 }
 
 // defaultNameFunc represents a default name function

@@ -13,7 +13,7 @@ import (
 )
 
 // FromCSVBy creates a block from a comma-separated file. It repartitions the batch by a given partition key at the same time.
-func FromCSVBy(input []byte, partitionBy string, filter *typeof.Schema, computed ...column.Computed) ([]Block, error) {
+func FromCSVBy(input []byte, partitionBy string, filter *typeof.Schema, apply applyFunc) ([]Block, error) {
 	const max = 10000000 // 10MB
 
 	rdr := csv.NewReader(bytes.NewReader(input))
@@ -71,13 +71,14 @@ func FromCSVBy(input []byte, partitionBy string, filter *typeof.Schema, computed
 		}
 
 		// Prepare a row for transformation
-		row := newRow(filter.Clone(), len(r))
+		row := NewRow(filter.Clone(), len(r))
 		for i, v := range r {
 			row.Set(header[i], v)
 		}
 
 		// Append computed columns and fill nulls for the row
-		size += row.Transform(computed, filter).AppendTo(columns)
+		out, _ := apply(row)
+		size += out.AppendTo(columns)
 		size += columns.FillNulls()
 	}
 

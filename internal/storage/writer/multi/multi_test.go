@@ -1,8 +1,10 @@
 package multi
 
 import (
+	"context"
 	"testing"
 
+	"github.com/kelindar/talaria/internal/encoding/block"
 	"github.com/kelindar/talaria/internal/encoding/key"
 	"github.com/stretchr/testify/assert"
 )
@@ -11,6 +13,24 @@ type MockWriter func(key key.Key, val []byte) error
 
 func (w MockWriter) Write(key key.Key, val []byte) error {
 	return w(key, val)
+}
+
+type MockWriterFull struct {
+	Count int
+}
+
+func (w *MockWriterFull) Write(key key.Key, val []byte) error {
+	w.Count++
+	return nil
+}
+
+func (w *MockWriterFull) Stream(block.Row) error {
+	w.Count++
+	return nil
+}
+
+func (w *MockWriterFull) Run(ctx context.Context) {
+	return
 }
 
 func TestMulti(t *testing.T) {
@@ -23,4 +43,14 @@ func TestMulti(t *testing.T) {
 	multiWriter := New(sub, sub, sub)
 	assert.NoError(t, multiWriter.Write(nil, nil))
 	assert.Equal(t, 3, count)
+
+	mock1 := MockWriterFull{Count: 0}
+	mock2 := MockWriterFull{Count: 5}
+
+	multiWriter2 := New(&mock1, &mock2)
+	res := multiWriter2.Stream(block.Row{})
+
+	assert.NoError(t, res)
+	assert.Equal(t, 1, mock1.Count)
+	assert.Equal(t, 6, mock2.Count)
 }

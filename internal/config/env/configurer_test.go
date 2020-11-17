@@ -89,6 +89,16 @@ computed:
       function main(input)
         return json.encode(input)
       end
+streams:
+  - pubsub:
+      project: my-gcp-project
+      topic: my-topic
+      filter: "gcs://my-bucket/my-function.lua"
+      encoder: json
+  - pubsub:
+      project: my-gcp-project
+      topic: my-topic2
+      encoder: json
 `)
 
 	// populate the config with the env variable
@@ -96,7 +106,10 @@ computed:
 	assert.NoError(t, e.Configure(c))
 
 	// asserts
+	assert.Len(t, c.Streams, 2)
 	assert.Len(t, c.Computed, 1)
 	assert.Len(t, c.Tables, 1)
-	assert.Equal(t, c.Tables["eventlog"].Compact.File.Directory, "output/")
+
+	assert.Equal(t, "my-gcp-project", c.Streams[0].PubSub.Project)
+	assert.Equal(t, "output/", c.Tables["eventlog"].Compact.File.Directory)
 }

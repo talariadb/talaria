@@ -20,7 +20,8 @@ func TestFromOrc_Nested(t *testing.T) {
 	assert.NotEmpty(t, o)
 	assert.NoError(t, err)
 
-	b, err := FromOrcBy(o, "string1", nil)
+	apply := Transform(nil)
+	b, err := FromOrcBy(o, "string1", nil, apply)
 	assert.NoError(t, err)
 	assert.Equal(t, 2, len(b))
 
@@ -35,7 +36,8 @@ func TestFromOrc_LargeFile(t *testing.T) {
 	assert.NotEmpty(t, o)
 	assert.NoError(t, err)
 
-	b, err := FromOrcBy(o, "_col5", nil)
+	apply := Transform(nil)
+	b, err := FromOrcBy(o, "_col5", nil, apply)
 	assert.NoError(t, err)
 	assert.Equal(t, 56, len(b))
 	assert.Equal(t, 9, len(b[0].Schema()))
@@ -46,9 +48,12 @@ func TestFromOrc_JSON(t *testing.T) {
 	assert.NotEmpty(t, o)
 	assert.NoError(t, err)
 
-	b, err := FromOrcBy(o, "event", &typeof.Schema{
+	apply := Transform(&typeof.Schema{
 		"ctx": typeof.JSON,
 	})
+	b, err := FromOrcBy(o, "event", &typeof.Schema{
+		"ctx": typeof.JSON,
+	}, apply)
 	assert.NoError(t, err)
 	assert.Equal(t, 1, len(b))
 

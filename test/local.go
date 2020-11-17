@@ -19,6 +19,7 @@ import (
 	"github.com/kelindar/talaria/internal/server"
 	"github.com/kelindar/talaria/internal/server/cluster"
 	"github.com/kelindar/talaria/internal/storage/disk"
+	"github.com/kelindar/talaria/internal/storage/writer"
 	"github.com/kelindar/talaria/internal/table/nodes"
 	"github.com/kelindar/talaria/internal/table/timeseries"
 	talaria "github.com/kelindar/talaria/proto"
@@ -76,7 +77,9 @@ func main() {
 		SortBy: cfg().Tables[tableName].SortBy,
 		Schema: "",
 	})
-	server := server.New(cfg, monitor, script.NewLoader(nil),
+
+	streams, _ := writer.ForStreaming(nil, monitor, script.NewLoader(nil))
+	server := server.New(cfg, monitor, script.NewLoader(nil), streams,
 		eventlog,
 		nodes.New(gossip),
 	)
