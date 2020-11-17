@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/grab/async"
 	"github.com/kelindar/lua"
 	"github.com/kelindar/talaria/internal/encoding/block"
 	"github.com/kelindar/talaria/internal/monitor/errors"
@@ -17,9 +18,11 @@ type Func func(interface{}) ([]byte, error)
 
 // Writer is to filter and encode row of events
 type Writer struct {
-	filter *lua.Script
-	name   string
-	encode Func
+	task    async.Task
+	Process func(context.Context) error
+	filter  *lua.Script
+	name    string
+	encode  Func
 }
 
 // New creates a new encoder
@@ -63,6 +66,24 @@ func newWithEncoder(name string, filter *lua.Script, encoder Func) (*Writer, err
 		filter: filter,
 		encode: encoder,
 	}, nil
+}
+
+// Run task to process work using async invoke
+func (w *Writer) Run(ctx context.Context) {
+	if w.Process == nil {
+		return
+	}
+	w.task = async.Invoke(ctx, func(innerctx context.Context) (interface{}, error) {
+		return nil, w.Process(innerctx)
+	})
+}
+
+// Close invoked task
+func (w *Writer) Close() error {
+	if w.task != nil {
+		w.task.Cancel()
+	}
+	return nil
 }
 
 // Encode will encode a row to the format the user specifies

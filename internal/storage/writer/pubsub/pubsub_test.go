@@ -58,19 +58,21 @@ func TestNew(t *testing.T) {
 	assert.NoError(t, err)
 
 	//process() should display error message but continues on
-	c.startProcess()
+	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
+	defer cancel()
+	c.Run(ctx)
+
+	time.Sleep(10 * time.Millisecond)
+	_, err = c.task.Outcome()
 
 	// Give some time for process to run in the background goroutine
-	time.Sleep(3 * time.Second)
-	assert.Empty(t, c.errs)
 	assert.Empty(t, c.buffer)
 
 	// Close connection for failure
 	c.Close()
 	err = c.Stream(row)
+	assert.NoError(t, err)
 
-	// Need to sleep 6 secs to wait for context deadline exceeded (5 secs)
-	time.Sleep(6 * time.Second)
 }
 
 func TestFullMessageBuffer(t *testing.T) {
@@ -95,9 +97,9 @@ func TestFullMessageBuffer(t *testing.T) {
 	err = c.Stream(row)
 	assert.NoError(t, err)
 
-	// Full buffer should display error message but continue on
+	// Full buffer raises an error
 	err = c.Stream(row)
-	assert.NoError(t, err)
+	assert.Error(t, err)
 }
 
 func TestWrite(t *testing.T) {
