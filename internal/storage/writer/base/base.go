@@ -69,13 +69,14 @@ func newWithEncoder(name string, filter *lua.Script, encoder Func) (*Writer, err
 }
 
 // Run task to process work using async invoke
-func (w *Writer) Run(ctx context.Context) {
+func (w *Writer) Run(ctx context.Context) async.Task {
 	if w.Process == nil {
-		return
+		return nil
 	}
 	w.task = async.Invoke(ctx, func(innerctx context.Context) (interface{}, error) {
 		return nil, w.Process(innerctx)
 	})
+	return w.task
 }
 
 // Close invoked task
