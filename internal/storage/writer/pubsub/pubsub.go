@@ -2,9 +2,11 @@ package pubsub
 
 import (
 	"context"
+	"runtime"
 	"time"
 
 	"cloud.google.com/go/pubsub"
+	"github.com/grab/async"
 	"github.com/kelindar/talaria/internal/encoding/block"
 	"github.com/kelindar/talaria/internal/encoding/key"
 	"github.com/kelindar/talaria/internal/monitor"
@@ -16,13 +18,14 @@ import (
 
 // Writer to write and streaming to PubSub
 type Writer struct {
+	*base.Writer
 	client  *pubsub.Client
 	topic   *pubsub.Topic
-	Writer  *base.Writer
 	monitor monitor.Monitor
 	context context.Context
 	buffer  chan []byte
-	errs    chan error
+	queue   chan async.Task
+	task    async.Task
 }
 
 // New creates a new writer
@@ -60,8 +63,9 @@ func New(project, topic, encoding, filter string, loader *script.Loader, monitor
 		monitor: monitor,
 		context: ctx,
 		buffer:  make(chan []byte, 65000),
-		errs:    make(chan error, 1),
+		queue:   make(chan async.Task),
 	}
+	w.Process = w.process
 
 	return w, nil
 }
@@ -69,11 +73,6 @@ func New(project, topic, encoding, filter string, loader *script.Loader, monitor
 // Write writes the data to the sink.
 func (w *Writer) Write(key.Key, []byte) error {
 	return nil // Noop
-}
-
-// StartProcess will launch a goroutine that loops infinitely over buffer
-func (w *Writer) startProcess() {
-	go w.process()
 }
 
 // Stream publishes data into PubSub topics
@@ -91,44 +90,47 @@ func (w *Writer) Stream(row block.Row) error {
 	select {
 	case w.buffer <- message:
 	default:
-		w.monitor.Warning(errors.Internal("pubsub: buffer is full", err))
+		return errors.New("pubsub: buffer is full")
 	}
 	return nil
 }
 
 // process will read from buffer, encode the row, and publish to PubSub
-func (w *Writer) process() error {
-
-	ctx := context.Background()
-
+func (w *Writer) process(parent context.Context) error {
+	w.task = async.Consume(parent, runtime.NumCPU()*8, w.queue)
 	for message := range w.buffer {
 		select {
-		case err := <-w.errs:
-			w.monitor.Warning(errors.Internal("pubsub: unable to stream, sleeping for 10 seconds before retrying", err))
-			time.Sleep(10 * time.Second)
+
+		// returns error if the parent context gets cancelled. Done() returns an empty struct
+		case <-parent.Done():
+			return parent.Err()
+
 		default:
 		}
 
-		result := w.topic.Publish(ctx, &pubsub.Message{
-			Data: message,
+		// asynchronously processing the message
+		w.queue <- async.NewTask(func(ctx context.Context) (interface{}, error) {
+			result := w.topic.Publish(ctx, &pubsub.Message{
+				Data: message,
+			})
+			return nil, w.processResult(result, message)
 		})
 
-		go w.processResult(result, message)
 	}
 	return nil
 }
 
 // processResult will process the result from publish to check if there are errors
-func (w *Writer) processResult(res *pubsub.PublishResult, message []byte) {
+func (w *Writer) processResult(res *pubsub.PublishResult, message []byte) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
 	// If stream hits error, send err to error channel and repopulate message in buffer
 	if _, err := res.Get(ctx); err != nil {
-		w.errs <- err
 		w.buffer <- message
-		return
+		return err
 	}
+	return nil
 }
 
 // Close closes the writer.

@@ -1,8 +1,11 @@
 package base
 
 import (
+	"context"
 	"testing"
+	"time"
 
+	"github.com/grab/async"
 	"github.com/kelindar/talaria/internal/encoding/block"
 	script "github.com/kelindar/talaria/internal/scripting"
 	"github.com/stretchr/testify/assert"
@@ -27,6 +30,32 @@ end
 
 	assert.Equal(t, `{"age":30,"test":"Hello Talaria"}`, string(dataString))
 	assert.NoError(t, err)
+}
+
+func TestRun(t *testing.T) {
+	ctx := context.Background()
+	loader := script.NewLoader(nil)
+	w, _ := New("", "json", loader)
+	w.Process = func(context.Context) error {
+		return nil
+	}
+	w.Run(ctx)
+	_, err := w.task.Outcome()
+	assert.NoError(t, err)
+}
+
+func TestCancel(t *testing.T) {
+	ctx := context.Background()
+	loader := script.NewLoader(nil)
+	w, _ := New("", "json", loader)
+	w.Process = func(context.Context) error {
+		time.Sleep(1 * time.Second)
+		return nil
+	}
+	w.Run(ctx)
+	w.Close()
+	state := w.task.State()
+	assert.Equal(t, async.IsCancelled, state)
 }
 
 func TestEmptyFilter(t *testing.T) {
