@@ -25,7 +25,6 @@ type Writer struct {
 	context context.Context
 	buffer  chan []byte
 	queue   chan async.Task
-	task    async.Task
 }
 
 // New creates a new writer
@@ -97,7 +96,7 @@ func (w *Writer) Stream(row block.Row) error {
 
 // process will read from buffer, encode the row, and publish to PubSub
 func (w *Writer) process(parent context.Context) error {
-	w.task = async.Consume(parent, runtime.NumCPU()*8, w.queue)
+	async.Consume(parent, runtime.NumCPU()*8, w.queue)
 	for message := range w.buffer {
 		select {
 
@@ -109,11 +108,12 @@ func (w *Writer) process(parent context.Context) error {
 		}
 
 		// asynchronously processing the message
+		encoded := message
 		w.queue <- async.NewTask(func(ctx context.Context) (interface{}, error) {
 			result := w.topic.Publish(ctx, &pubsub.Message{
 				Data: message,
 			})
-			return nil, w.processResult(result, message)
+			return nil, w.processResult(result, encoded)
 		})
 
 	}
