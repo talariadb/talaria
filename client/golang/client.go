@@ -6,7 +6,6 @@ package client
 import (
 	"context"
 	"errors"
-	"fmt"
 	"time"
 
 	pb "github.com/kelindar/talaria/proto"
@@ -70,7 +69,11 @@ func (c *Client) connect() error {
 	timeoutCtx, cancel := context.WithTimeout(context.Background(), c.netconf.DialTimeout)
 	defer cancel()
 
-	dialOptions := []grpc.DialOption{}
+	var dialOptions []grpc.DialOption
+	if c.netconf.LoadBalancer != "" {
+		dialOptions = append(dialOptions, grpc.WithBalancerName(c.netconf.LoadBalancer))
+	}
+
 	if !c.netconf.NonBlocking {
 		dialOptions = append(dialOptions, grpc.WithBlock())
 	}
@@ -83,7 +86,6 @@ func (c *Client) connect() error {
 
 	conn, err := grpc.DialContext(timeoutCtx, c.netconf.Address, dialOptions...)
 	if err != nil {
-		fmt.Println("err", err)
 		return ErrUnableToConnect
 	}
 	c.ingress = pb.NewIngressClient(conn)
