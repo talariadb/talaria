@@ -5,13 +5,17 @@ import (
 	"time"
 
 	"github.com/myteksi/hystrix-go/hystrix"
-
 	"github.com/stretchr/testify/assert"
 )
 
 func TestWithNetwork(t *testing.T) {
 	client, _ := Dial("invalid", WithNonBlock(), WithNetwork(10*time.Second))
 	assert.Equal(t, 10*time.Second, client.netconf.DialTimeout)
+}
+
+func TestWithLoadBalancer(t *testing.T) {
+	client, _ := Dial("invalid", WithNonBlock(), WithLoadBalancer("round_robin"))
+	assert.Equal(t, "round_robin", client.netconf.LoadBalancer)
 }
 
 func TestWithCircuit(t *testing.T) {
