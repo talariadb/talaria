@@ -10,10 +10,14 @@ import (
 	"github.com/kelindar/talaria/internal/encoding/block"
 	"github.com/kelindar/talaria/internal/encoding/typeof"
 	"github.com/kelindar/talaria/internal/monitor/errors"
+	"github.com/kelindar/talaria/internal/storage"
 	"github.com/kelindar/talaria/internal/storage/stream"
 	"github.com/kelindar/talaria/internal/table"
 	talaria "github.com/kelindar/talaria/proto"
 )
+
+// applyFunc applies a transformation on a row and returns a new row
+type applyFunc = func(block.Row) (block.Row, error)
 
 const ingestErrorKey = "ingest.error"
 
@@ -34,8 +38,16 @@ func (s *Server) Ingest(ctx context.Context, request *talaria.IngestRequest) (*t
 			filter = &schema
 		}
 
+		// Functions to be applied
+		funcs := []applyFunc{block.Transform(filter, s.computed...)}
+
+		// If table supports streaming, add publishing function
+		if streamer, ok := t.(storage.Streamer); ok {
+			funcs = append(funcs, stream.Publish(streamer, s.monitor))
+		}
+
 		// Partition the request for the table
-		blocks, err := block.FromRequestBy(request, appender.HashBy(), filter, block.Transform(filter, s.computed...), stream.Publish(s.streams, s.monitor))
+		blocks, err := block.FromRequestBy(request, appender.HashBy(), filter, funcs...)
 		if err != nil {
 			s.monitor.Count1(ctxTag, ingestErrorKey, "type:convert")
 			return nil, errors.Internal("unable to read the block", err)

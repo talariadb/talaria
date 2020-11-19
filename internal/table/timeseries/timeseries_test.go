@@ -14,6 +14,7 @@ import (
 	monitor2 "github.com/kelindar/talaria/internal/monitor"
 	"github.com/kelindar/talaria/internal/presto"
 	"github.com/kelindar/talaria/internal/storage/disk"
+	"github.com/kelindar/talaria/internal/storage/writer"
 	"github.com/kelindar/talaria/internal/table/timeseries"
 	"github.com/stretchr/testify/assert"
 )
@@ -55,9 +56,10 @@ func TestTimeseries_DynamicSchema(t *testing.T) {
 
 	monitor := monitor2.NewNoop()
 	store := disk.Open(dir, name, monitor, config.Badger{})
+	streams, _ := writer.ForStreaming(config.Streams{}, monitor, nil)
 
 	// Start the server and open the database
-	eventlog := timeseries.New(name, new(noopMembership), monitor, store, &tableConf)
+	eventlog := timeseries.New(name, new(noopMembership), monitor, store, &tableConf, streams)
 	assert.NotNil(t, eventlog)
 	assert.Equal(t, name, eventlog.Name())
 	defer eventlog.Close()
@@ -148,9 +150,10 @@ int1: int64
 
 	monitor := monitor2.NewNoop()
 	store := disk.Open(dir, name, monitor, config.Badger{})
+	streams, _ := writer.ForStreaming(config.Streams{}, monitor, nil)
 
 	// Start the server and open the database
-	eventlog := timeseries.New(name, new(noopMembership), monitor, store, &tableConf)
+	eventlog := timeseries.New(name, new(noopMembership), monitor, store, &tableConf, streams)
 	defer eventlog.Close()
 
 	actualSchema, isStatic := eventlog.Schema()

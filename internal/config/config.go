@@ -38,7 +38,6 @@ type Config struct {
 	Statsd   *StatsD    `json:"statsd,omitempty" yaml:"statsd" env:"STATSD"`
 	Computed []Computed `json:"computed" yaml:"computed" env:"COMPUTED"`
 	K8s      *K8s       `json:"k8s,omitempty" yaml:"k8s" env:"K8S"`
-	Streams  Streams    `json:"streams" yaml:"streams" env:"STREAMS"`
 }
 
 type K8s struct {
@@ -54,7 +53,8 @@ type Table struct {
 	HashBy  string      `json:"hashBy,omitempty" yaml:"hashBy" env:"HASHBY"` // The column to use as key (metric), defaults to 'event'.
 	SortBy  string      `json:"sortBy,omitempty" yaml:"sortBy" env:"SORTBY"` // The column to use as time, defaults to 'tsi'.
 	Schema  string      `json:"schema" yaml:"schema" env:"SCHEMA"`           // The schema of the table
-	Compact *Compaction `json:"compact" yaml:"compact" env:"COMPACT"`
+	Compact *Compaction `json:"compact" yaml:"compact" env:"COMPACT"`        // The compaction configuration for the table
+	Streams Streams     `json:"streams" yaml:"streams" env:"STREAMS"`        // The streams to stream data to for data in this table
 }
 
 // Storage is the location to write the data

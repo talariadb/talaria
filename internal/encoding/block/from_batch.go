@@ -58,7 +58,7 @@ func FromBatchBy(batch *talaria.Batch, partitionBy string, filter *typeof.Schema
 			row.Set(columnName, columnValue)
 		}
 
-		// Append computed columns and fill nulls for the row
+		// Append computed columns
 		// Error can only be from encoding the row, error is logged in Publish() so we can ignore the error here and continue to convert row to columns
 		out, _ := apply(row)
 

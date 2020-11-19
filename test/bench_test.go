@@ -61,6 +61,7 @@ func BenchmarkQuery(b *testing.B) {
 	// create monitor
 	monitor := monitor.NewNoop()
 	store := disk.Open(cfg().Storage.Directory, tableName, monitor, cfg().Storage.Badger)
+	streams, _ := writer.ForStreaming(config.Streams{}, monitor, script.NewLoader(nil))
 
 	// Start the server and open the database
 	eventlog := timeseries.New(tableName, new(noopMembership), monitor, store, &config.Table{
@@ -68,10 +69,9 @@ func BenchmarkQuery(b *testing.B) {
 		HashBy: cfg().Tables[tableName].HashBy,
 		SortBy: cfg().Tables[tableName].SortBy,
 		Schema: "",
-	})
+	}, streams)
 
-	streams, _ := writer.ForStreaming(nil, monitor, script.NewLoader(nil))
-	server := server.New(cfg, monitor, script.NewLoader(nil), streams, eventlog)
+	server := server.New(cfg, monitor, script.NewLoader(nil), eventlog)
 	defer server.Close()
 
 	// Append some files

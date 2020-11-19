@@ -42,20 +42,21 @@ type Membership interface {
 
 // Table represents a timeseries table.
 type Table struct {
-	name         string          // The name of the table
-	hashBy       string          // The name of the key column
-	sortBy       string          // The name of the time column
-	ttl          time.Duration   // The default TTL
-	store        storage.Storage // The storage to use
-	schema       atomic.Value    // The latest schema
-	loader       *loader.Loader  // The loader used to watch schema updates
-	cluster      Membership      // The membership list to use
-	monitor      monitor.Monitor // The monitoring client
-	staticSchema *typeof.Schema  // The static schema of the timeseries table
+	name         string           // The name of the table
+	hashBy       string           // The name of the key column
+	sortBy       string           // The name of the time column
+	ttl          time.Duration    // The default TTL
+	store        storage.Storage  // The storage to use
+	schema       atomic.Value     // The latest schema
+	loader       *loader.Loader   // The loader used to watch schema updates
+	cluster      Membership       // The membership list to use
+	monitor      monitor.Monitor  // The monitoring client
+	staticSchema *typeof.Schema   // The static schema of the timeseries table
+	stream       storage.Streamer // The streams that a table has
 }
 
 // New creates a new table implementation.
-func New(name string, cluster Membership, monitor monitor.Monitor, store storage.Storage, cfg *config.Table) *Table {
+func New(name string, cluster Membership, monitor monitor.Monitor, store storage.Storage, cfg *config.Table, stream storage.Streamer) *Table {
 	t := &Table{
 		name:    name,
 		store:   store,
@@ -65,6 +66,7 @@ func New(name string, cluster Membership, monitor monitor.Monitor, store storage
 		cluster: cluster,
 		monitor: monitor,
 		loader:  loader.New(),
+		stream:  stream,
 	}
 
 	t.staticSchema = t.loadStaticSchema(cfg.Schema)
@@ -94,6 +96,11 @@ func (t *Table) HashBy() string {
 // SortBy returns the column by which the table should be sorted.
 func (t *Table) SortBy() string {
 	return t.sortBy
+}
+
+// Stream will stream the row and return errors if any
+func (t *Table) Stream(row block.Row) error {
+	return t.stream.Stream(row)
 }
 
 func (t *Table) loadStaticSchema(uriOrSchema string) *typeof.Schema {
