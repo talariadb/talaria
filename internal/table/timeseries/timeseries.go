@@ -52,11 +52,11 @@ type Table struct {
 	cluster      Membership       // The membership list to use
 	monitor      monitor.Monitor  // The monitoring client
 	staticSchema *typeof.Schema   // The static schema of the timeseries table
-	streams      storage.Streamer // The streams that a table has
+	stream       storage.Streamer // The streams that a table has
 }
 
 // New creates a new table implementation.
-func New(name string, cluster Membership, monitor monitor.Monitor, store storage.Storage, cfg *config.Table, streams storage.Streamer) *Table {
+func New(name string, cluster Membership, monitor monitor.Monitor, store storage.Storage, cfg *config.Table, stream storage.Streamer) *Table {
 	t := &Table{
 		name:    name,
 		store:   store,
@@ -66,7 +66,7 @@ func New(name string, cluster Membership, monitor monitor.Monitor, store storage
 		cluster: cluster,
 		monitor: monitor,
 		loader:  loader.New(),
-		streams: streams,
+		stream:  stream,
 	}
 
 	t.staticSchema = t.loadStaticSchema(cfg.Schema)
@@ -98,9 +98,9 @@ func (t *Table) SortBy() string {
 	return t.sortBy
 }
 
-// GetStreams will return the streamers for the table
-func (t *Table) GetStreams() storage.Streamer {
-	return t.streams
+// Stream will stream the row and return errors if any
+func (t *Table) Stream(row block.Row) error {
+	return t.stream.Stream(row)
 }
 
 func (t *Table) loadStaticSchema(uriOrSchema string) *typeof.Schema {

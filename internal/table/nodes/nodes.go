@@ -11,12 +11,8 @@ import (
 	"github.com/emitter-io/address"
 	"github.com/hako/durafmt"
 	"github.com/kelindar/talaria/internal/column"
-	"github.com/kelindar/talaria/internal/config"
 	"github.com/kelindar/talaria/internal/encoding/typeof"
-	"github.com/kelindar/talaria/internal/monitor"
 	"github.com/kelindar/talaria/internal/presto"
-	"github.com/kelindar/talaria/internal/storage"
-	"github.com/kelindar/talaria/internal/storage/writer"
 	"github.com/kelindar/talaria/internal/table"
 )
 
@@ -34,20 +30,15 @@ type Membership interface {
 
 // Table represents a nodes table.
 type Table struct {
-	cluster   Membership       // The membership list to use
-	startedAt time.Time        // The time when the node was started
-	streams   storage.Streamer // The streamer for this table
+	cluster   Membership // The membership list to use
+	startedAt time.Time  // The time when the node was started
 }
 
 // New creates a new table implementation.
 func New(cluster Membership) *Table {
-	// Create a noop streamer
-	streams, _ := writer.ForStreaming(config.Streams{}, monitor.NewNoop(), nil)
-
 	return &Table{
 		cluster:   cluster,
 		startedAt: time.Now(),
-		streams:   streams,
 	}
 }
 
@@ -81,11 +72,6 @@ func (t *Table) HashBy() string {
 // SortBy returns the column by which the table should be sorted.
 func (t *Table) SortBy() string {
 	return "address"
-}
-
-// GetStreams will return noop streamer for nodes
-func (t *Table) GetStreams() storage.Streamer {
-	return t.streams
 }
 
 // GetSplits retrieves the splits

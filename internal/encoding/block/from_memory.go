@@ -4,9 +4,9 @@
 package block
 
 import (
-	"github.com/kelindar/talaria/internal/column"
 	"github.com/kelindar/binary"
 	"github.com/kelindar/binary/nocopy"
+	"github.com/kelindar/talaria/internal/column"
 )
 
 // FromBuffer unmarshals a block from a in-memory buffer.
