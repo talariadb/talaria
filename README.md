@@ -46,7 +46,7 @@ If your organisation needs a reliable and scalable data ingestion platform, you 
 
 ![alt text](.github/images/ingest.png)
 
-In order to setup Talaria as an ingestion platform, you will need to enable `compaction` in the configuration, something along these lines:
+In order to setup Talaria as an ingestion platform, you will need specify a table, in this case "eventlog", and enable `compaction` in the configuration, something along these lines:
 
 ```yaml
 mode: staging
@@ -54,12 +54,14 @@ env: staging
 domain: "talaria-headless.default.svc.cluster.local"
 storage:
   dir: "/data"
-  compact:                               # enable compaction
-    interval: 60                         # compact every 60 seconds
-    nameFunc: "s3://bucket/namefunc.lua" # file name function
-    s3:                                  # sink to Amazon S3
-      region: "ap-southeast-1"
-      bucket: "bucket"
+tables:
+  eventlog:
+    compact:                               # enable compaction
+      interval: 60                         # compact every 60 seconds
+      nameFunc: "s3://bucket/namefunc.lua" # file name function
+      s3:                                  # sink to Amazon S3
+        region: "ap-southeast-1"
+        bucket: "bucket"
 ...
 ```
 
@@ -79,6 +81,7 @@ Below is a list of currently supported sinks and their example configurations:
 - [Microsoft Azure Blob Storage](https://azure.microsoft.com/en-us/services/storage/blobs/) using [azure sink](./internal/storage/writer/azure).
 - [Minio](https://min.io/) using [s3 sink](./internal/storage/writer/s3), a custom endpoint and us-east-1 region.
 - [Google Big Query](https://cloud.google.com/bigquery/) using [bigquery sink](./internal/storage/writer/bigquery).
+- Talaria itself using [talaria sink](./internal/storage/writer/talaria).
 
 ## Hot Data Query with Talaria
 
@@ -107,9 +110,8 @@ readers:
 storage:
   dir: "/data"
 tables:
-  timeseries:
-    name: eventlog
-    ttl: 3600
+  eventlog:
+    ttl: 3600         # data is persisted for 1 hour
     hashBy: event
     sortBy: time
 ...
