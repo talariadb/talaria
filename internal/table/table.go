@@ -10,6 +10,7 @@ import (
 	"github.com/kelindar/talaria/internal/encoding/block"
 	"github.com/kelindar/talaria/internal/encoding/typeof"
 	"github.com/kelindar/talaria/internal/presto"
+	"github.com/kelindar/talaria/internal/storage"
 )
 
 // Errors commonly occuring in tables
@@ -26,6 +27,7 @@ type Table interface {
 	GetRows(splitID []byte, columns []string, maxBytes int64) (*PageResult, error)
 	HashBy() string
 	SortBy() string
+	GetStreams() storage.Streamer
 }
 
 // Appender represents an appender of data to the table.

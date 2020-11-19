@@ -35,7 +35,7 @@ func (s *Server) Ingest(ctx context.Context, request *talaria.IngestRequest) (*t
 		}
 
 		// Partition the request for the table
-		blocks, err := block.FromRequestBy(request, appender.HashBy(), filter, block.Transform(filter, s.computed...), stream.Publish(t.Streams, s.monitor))
+		blocks, err := block.FromRequestBy(request, appender.HashBy(), filter, block.Transform(filter, s.computed...), stream.Publish(t.GetStreams(), s.monitor))
 		if err != nil {
 			s.monitor.Count1(ctxTag, ingestErrorKey, "type:convert")
 			return nil, errors.Internal("unable to read the block", err)

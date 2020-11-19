@@ -14,6 +14,7 @@ import (
 	"github.com/kelindar/talaria/internal/monitor"
 	"github.com/kelindar/talaria/internal/monitor/logging"
 	"github.com/kelindar/talaria/internal/storage/disk"
+	"github.com/kelindar/talaria/internal/storage/writer"
 	"github.com/kelindar/talaria/internal/table"
 	"github.com/kelindar/talaria/internal/table/timeseries"
 )
@@ -39,12 +40,16 @@ func New(cfg config.Func, cluster Membership, monitor monitor.Monitor) *Table {
 
 	// Open a dedicated logs storage
 	store := disk.Open(cfg().Storage.Directory, name, monitor, cfg().Storage.Badger)
+
+	// Create a noop streamer
+	streams, _ := writer.ForStreaming(config.Streams{}, monitor, nil)
+
 	base := timeseries.New(name, cluster, monitor, store, &config.Table{
 		TTL:    24 * 3600, // 1 day
 		SortBy: "time",
 		HashBy: "",
 		Schema: "",
-	})
+	}, streams)
 	return &Table{
 		Table:   *base,
 		cluster: cluster,
