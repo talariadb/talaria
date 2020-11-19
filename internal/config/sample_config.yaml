@@ -35,17 +35,17 @@ tables:
         project: "airasia-opdatalake-stg"
         dataset: "eventlog"
         table: "events"
+    streams:
+      - pubsub:
+          project: my-gcp-project
+          topic: my-topic
+          filter: "gcs://my-bucket/my-function.lua"
+          encoder: json
+      - pubsub:
+          project: my-gcp-project
+          topic: my-topic2
+          encoder: json
   users:
     hashBy: "user_id"
     sortBy: "ingested_at"
     schema: "gcs://k8s-default-stg-configs/ingestor/schema2.yaml"
-streams:
-  - pubsub:
-      project: my-gcp-project
-      topic: my-topic
-      filter: "gcs://my-bucket/my-function.lua"
-      encoder: json
-  - pubsub:
-      project: my-gcp-project
-      topic: my-topic2
-      encoder: json
