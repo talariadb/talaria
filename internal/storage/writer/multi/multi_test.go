@@ -49,6 +49,7 @@ func TestMulti(t *testing.T) {
 	mock2 := MockWriterFull{Count: 5}
 
 	multiWriter2 := New(&mock1, &mock2)
+	multiWriter2.Run(context.Background())
 	res := multiWriter2.Stream(block.Row{})
 
 	assert.NoError(t, res)
