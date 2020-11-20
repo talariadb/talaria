@@ -51,7 +51,7 @@ func (w *Writer) Write(key key.Key, val []byte) error {
 	return nil
 }
 
-// Run launches a goroutine to start the infinite loop for streaming
+// Run launches the asynchronous infinite loop for streamers to start streaming data
 func (w *Writer) Run(ctx context.Context) (async.Task, error) {
 	for _, w := range w.streamers {
 		_, err := w.Run(ctx)
