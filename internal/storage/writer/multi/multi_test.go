@@ -4,6 +4,7 @@ import (
 	"context"
 	"testing"
 
+	"github.com/grab/async"
 	"github.com/kelindar/talaria/internal/encoding/block"
 	"github.com/kelindar/talaria/internal/encoding/key"
 	"github.com/stretchr/testify/assert"
@@ -29,8 +30,8 @@ func (w *MockWriterFull) Stream(block.Row) error {
 	return nil
 }
 
-func (w *MockWriterFull) Run(ctx context.Context) {
-	return
+func (w *MockWriterFull) Run(ctx context.Context) (async.Task, error) {
+	return nil, nil
 }
 
 func TestMulti(t *testing.T) {
@@ -48,6 +49,7 @@ func TestMulti(t *testing.T) {
 	mock2 := MockWriterFull{Count: 5}
 
 	multiWriter2 := New(&mock1, &mock2)
+	multiWriter2.Run(context.Background())
 	res := multiWriter2.Stream(block.Row{})
 
 	assert.NoError(t, res)

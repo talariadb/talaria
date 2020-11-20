@@ -168,8 +168,8 @@ func newStreamer(config config.Streams, monitor monitor.Monitor, loader *script.
 
 	// Setup a multi-writer for all configured writers
 	multiWriters := multi.New(writers...)
-	multiWriters.Run(context.Background())
-	return multiWriters, nil
+	_, err := multiWriters.Run(context.Background())
+	return multiWriters, err
 }
 
 // defaultNameFunc represents a default name function

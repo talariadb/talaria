@@ -3,6 +3,7 @@ package multi
 import (
 	"context"
 
+	"github.com/grab/async"
 	"github.com/kelindar/talaria/internal/encoding/block"
 	"github.com/kelindar/talaria/internal/encoding/key"
 )
@@ -15,7 +16,7 @@ type SubWriter interface {
 // streamer represents the sub-streamer
 type streamer interface {
 	Stream(row block.Row) error
-	Run(ctx context.Context)
+	Run(ctx context.Context) (async.Task, error)
 }
 
 // Writer represents a writer that writes into multiple sub-writers.
@@ -50,12 +51,15 @@ func (w *Writer) Write(key key.Key, val []byte) error {
 	return nil
 }
 
-// Run launches a goroutine to start the infinite loop for streaming
-func (w *Writer) Run(ctx context.Context) {
+// Run launches the asynchronous infinite loop for streamers to start streaming data
+func (w *Writer) Run(ctx context.Context) (async.Task, error) {
 	for _, w := range w.streamers {
-		w.Run(ctx)
+		_, err := w.Run(ctx)
+		if err != nil {
+			return nil, err
+		}
 	}
-	return
+	return nil, nil
 }
 
 // Stream streams the data to the sink
