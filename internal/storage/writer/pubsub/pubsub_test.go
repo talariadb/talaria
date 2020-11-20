@@ -60,7 +60,8 @@ func TestNew(t *testing.T) {
 	//process() should display error message but continues on
 	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
 	defer cancel()
-	c.Run(ctx).Outcome()
+	task, _ := c.Run(ctx)
+	task.Outcome()
 
 	// Give some time for process to run in the background goroutine
 	assert.Empty(t, c.buffer)
