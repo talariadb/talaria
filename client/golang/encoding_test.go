@@ -43,12 +43,26 @@ func TestEncoder(t *testing.T) {
 			"color": "yellow",
 			"topic": "movie",
 		},
+		{
+			"event": "xyz",
+			"nested": map[string]interface{}{
+				"level0": 0,
+				"level1": map[string]interface{}{
+					"test": 1,
+					"level2": []int{
+						1,
+						2,
+						3,
+					},
+				},
+			},
+		},
 	}
 
 	encoder := newEncoder()
 	res := encoder.Encode(testEvents)
-	assert.Len(t, res.Events, 7)
-	assert.Len(t, res.Strings, 13)
+	assert.Len(t, res.Events, 8)
+	assert.Len(t, res.Strings, 15)
 	assert.Equal(t, &pb.Event{Value: map[uint32]*pb.Value{1: {Value: &pb.Value_String_{String_: 2}}}}, res.Events[0])
 	assert.Equal(t, &pb.Event{Value: map[uint32]*pb.Value{3: {Value: &pb.Value_Int64{Int64: 123}}}}, res.Events[1])
 	assert.Equal(t, &pb.Event{Value: map[uint32]*pb.Value{4: {Value: &pb.Value_Bool{Bool: true}}}}, res.Events[2])
