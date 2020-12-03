@@ -92,7 +92,7 @@ func (w *Writer) Encode(input interface{}) ([]byte, error) {
 
 	// If it's a row, take the value map
 	if r, ok := input.(block.Row); ok {
-		if w.ApplyFilter(&r) {
+		if w.applyFilter(&r) {
 			input = r.Values
 		} else {
 			return nil, nil
@@ -107,7 +107,7 @@ func (w *Writer) Encode(input interface{}) ([]byte, error) {
 }
 
 // ApplyFilter filters out a row if needed
-func (w *Writer) ApplyFilter(row *block.Row) bool {
+func (w *Writer) applyFilter(row *block.Row) bool {
 	if w.filter == nil {
 		return true
 	}
