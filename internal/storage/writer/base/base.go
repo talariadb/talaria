@@ -99,14 +99,14 @@ func (w *Writer) Encode(input interface{}) ([]byte, error) {
 		}
 	}
 
-	dataString, err := w.encode(input)
+	encodedData, err := w.encode(input)
 	if err != nil {
 		return nil, errors.Internal(fmt.Sprintf("encoder: could not marshal to %s", w.name), err)
 	}
-	return dataString, nil
+	return encodedData, nil
 }
 
-// ApplyFilter filters out a row if needed
+// applyFilter filters out a row if needed
 func (w *Writer) applyFilter(row *block.Row) bool {
 	if w.filter == nil {
 		return true
