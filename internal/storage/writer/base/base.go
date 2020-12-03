@@ -92,12 +92,13 @@ func (w *Writer) Encode(input interface{}) ([]byte, error) {
 
 	// If it's a row, take the value map
 	if r, ok := input.(block.Row); ok {
-		if w.applyFilter(&r) {
+		if w.ApplyFilter(&r) {
 			input = r.Values
+		} else {
+			return nil, nil
 		}
 	}
 
-	// Double check to NOT do any copies when putting in a byte slice
 	dataString, err := w.encode(input)
 	if err != nil {
 		return nil, errors.Internal(fmt.Sprintf("encoder: could not marshal to %s", w.name), err)
@@ -105,8 +106,8 @@ func (w *Writer) Encode(input interface{}) ([]byte, error) {
 	return dataString, nil
 }
 
-// applyFilter filters out a row if needed
-func (w *Writer) applyFilter(row *block.Row) bool {
+// ApplyFilter filters out a row if needed
+func (w *Writer) ApplyFilter(row *block.Row) bool {
 	if w.filter == nil {
 		return true
 	}
