@@ -94,15 +94,16 @@ func (w *Writer) Encode(input interface{}) ([]byte, error) {
 	if r, ok := input.(block.Row); ok {
 		if w.applyFilter(&r) {
 			input = r.Values
+		} else {
+			return nil, nil
 		}
 	}
 
-	// Double check to NOT do any copies when putting in a byte slice
-	dataString, err := w.encode(input)
+	encodedData, err := w.encode(input)
 	if err != nil {
 		return nil, errors.Internal(fmt.Sprintf("encoder: could not marshal to %s", w.name), err)
 	}
-	return dataString, nil
+	return encodedData, nil
 }
 
 // applyFilter filters out a row if needed
