@@ -116,6 +116,13 @@ func (e *encoder) encodeValue(v interface{}) (*pb.Value, error) {
 	case json.RawMessage:
 		valueRef := e.updateDict(string(val))
 		return &pb.Value{Value: &pb.Value_Json{Json: valueRef}}, nil
+	case map[string]interface{}: // If a map is provided, it is converted to json string before encoding.
+		b, err := json.Marshal(val)
+		if err != nil {
+			return nil, err
+		}
+		valueRef := e.updateDict(string(b))
+		return &pb.Value{Value: &pb.Value_Json{Json: valueRef}}, nil
 	case nil: // The field is not set.
 		return nil, nil
 	default:
