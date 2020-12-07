@@ -69,4 +69,5 @@ func TestEncoder(t *testing.T) {
 	assert.Equal(t, &pb.Event{Value: map[uint32]*pb.Value{5: {Value: &pb.Value_Time{Time: testTime.Unix()}}}}, res.Events[3])
 	assert.Equal(t, &pb.Event{Value: map[uint32]*pb.Value{6: {Value: &pb.Value_Json{Json: 7}}}}, res.Events[4])
 	assert.Equal(t, &pb.Event{Value: map[uint32]*pb.Value{6: {Value: &pb.Value_String_{String_: 8}}}}, res.Events[5])
+	assert.Equal(t, &pb.Event{Value: map[uint32]*pb.Value{1: {Value: &pb.Value_String_{String_: 9}}, 14: {Value: &pb.Value_Json{Json: 15}}}}, res.Events[7])
 }
