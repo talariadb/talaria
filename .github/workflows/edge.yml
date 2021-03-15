@@ -24,6 +24,6 @@ jobs:
       - name: Build the Docker image
         run: |
           go build .
-          docker build . --file Dockerfile --tag kelindar/talaria:edge
+          docker build . --file Dockerfile --tag janqw/talaria:edge
       - name: Push the Docker image
-        run: docker push kelindar/talaria:edge
+        run: docker push janqw/talaria:edge
