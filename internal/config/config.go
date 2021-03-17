@@ -59,7 +59,7 @@ type Table struct {
 
 // Storage is the location to write the data
 type Storage struct {
-	Badger
+	Badger `yaml:",inline"`
 	Directory string `json:"dir" yaml:"dir" env:"DIR"`
 }
 
