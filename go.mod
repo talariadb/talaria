@@ -22,6 +22,7 @@ require (
 	github.com/dgryski/go-farm v0.0.0-20200201041132-a6ae2369ad13 // indirect
 	github.com/dnaeon/go-vcr v1.0.1 // indirect
 	github.com/emitter-io/address v1.0.0
+	github.com/fraugster/parquet-go v0.3.0
 	github.com/gogo/protobuf v1.3.1
 	github.com/golang/snappy v0.0.1
 	github.com/gopherjs/gopherjs v0.0.0-20200209183636-89e6cbcd0b6d // indirect

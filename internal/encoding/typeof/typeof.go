@@ -6,6 +6,7 @@ package typeof
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/fraugster/parquet-go/parquet"
 	"reflect"
 	"strings"
 	"time"
@@ -65,6 +66,7 @@ var supported = map[string]Type{
 	"BOOLEAN":   Bool,
 	"INT":       Int32,
 	"LONG":      Int64,
+	"INT64":      Int64,
 	"DOUBLE":    Float64,
 	"STRING":    String,
 	"TIMESTAMP": Timestamp,
@@ -77,6 +79,13 @@ var supported = map[string]Type{
 // FromOrc maps the orc type description to our type.
 func FromOrc(desc *orc.TypeDescription) (Type, bool) {
 	kind := desc.Type().GetKind().String()
+	t, ok := supported[kind]
+	return t, ok
+}
+
+// FromParquet maps the parquet type description to our type.
+func FromParquet(desc *parquet.Type) (Type, bool) {
+	kind := desc.String()
 	t, ok := supported[kind]
 	return t, ok
 }
