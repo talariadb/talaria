@@ -66,6 +66,7 @@ var supported = map[string]Type{
 	"BOOLEAN":   Bool,
 	"INT":       Int32,
 	"LONG":      Int64,
+	"INT32":      Int32,
 	"INT64":      Int64,
 	"DOUBLE":    Float64,
 	"STRING":    String,

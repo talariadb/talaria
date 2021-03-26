@@ -14,7 +14,7 @@ const testFile = "../../../test/test2.parquet"
 
 const column = "foo"
 
-func TestWriteThenReadFile(t *testing.T) {
+func TestReadFile(t *testing.T) {
 	testFunc := func() {
 		i, err := FromFile(testFile)
 		defer func() { _ = i.Close() }()
@@ -32,7 +32,7 @@ func TestWriteThenReadFile(t *testing.T) {
 		{
 			kind, ok := schema["bar"]
 			assert.True(t, ok)
-			assert.Equal(t, "float64", kind.String())
+			assert.Equal(t, "int32", kind.String())
 		}
 
 		count := 0
@@ -45,7 +45,7 @@ func TestWriteThenReadFile(t *testing.T) {
 	}
 
 	// Enable when you want to create a Parquet file for the test
-	//initFunc(t, goparquet.WithCompressionCodec(parquet.CompressionCodec_SNAPPY), goparquet.WithCreator("talaria-parquet-unittest"))
+	initFunc(t, goparquet.WithCompressionCodec(parquet.CompressionCodec_SNAPPY), goparquet.WithCreator("talaria-parquet-unittest"))
 
 	testFunc()
 }
@@ -62,7 +62,7 @@ func initFunc(t *testing.T, opts ...goparquet.FileWriterOption) {
 	fooStore, err := goparquet.NewInt64Store(parquet.Encoding_PLAIN, true, &goparquet.ColumnParameters{})
 	require.NoError(t, err, "failed to create fooStore")
 
-	barStore, err := goparquet.NewDoubleStore(parquet.Encoding_PLAIN, true, &goparquet.ColumnParameters{})
+	barStore, err := goparquet.NewInt32Store(parquet.Encoding_PLAIN, true, &goparquet.ColumnParameters{})
 	require.NoError(t, err, "failed to create barStore")
 
 	require.NoError(t, w.AddColumn("foo", goparquet.NewDataColumn(fooStore, parquet.FieldRepetitionType_REQUIRED)))
@@ -78,7 +78,7 @@ func initFunc(t *testing.T, opts ...goparquet.FileWriterOption) {
 			require.NoError(t, w.FlushRowGroup(), "%d. AddData failed", idx)
 		}
 
-		require.NoError(t, w.AddData(map[string]interface{}{"foo": int64(idx), "bar": float64(idx)}), "%d. AddData failed", idx)
+		require.NoError(t, w.AddData(map[string]interface{}{"foo": int64(idx), "bar": int32(idx)}), "%d. AddData failed", idx)
 	}
 
 	assert.NoError(t, w.Close(), "Close failed")
