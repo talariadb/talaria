@@ -7,6 +7,7 @@ import (
 	"github.com/kelindar/talaria/internal/monitor/errors"
 	"io"
 	"os"
+	"sort"
 )
 
 var errNoWriter = errors.New("unable to create Parquet writer")
@@ -78,7 +79,20 @@ func (i *iterator) Range(f func(int, []interface{}) bool, columns ...string) (in
 
 		var arr []interface{}
 
-		for _, v := range row {
+		// We need to ensure that the row has columns ordered by name since that is how columns are generated
+		// in the upstream schema
+		keys := make([]string, len(row))
+		i := 0
+		for k := range row {
+			keys[i] = k
+			i++
+		}
+		sort.Strings(keys)
+
+		for k := range keys {
+			k := keys[k]
+			v := row[k]
+
 			arr = append(arr, v)
 		}
 

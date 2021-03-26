@@ -4,7 +4,6 @@ package talaria;
 // ---------------------------------------------------------------------------
 //                              Ingress Service
 // ---------------------------------------------------------------------------
-
 // Ingress represents a Talaria ingress frontend.
 service Ingress {
   rpc Ingest(IngestRequest) returns (IngestResponse) {}

@@ -80,6 +80,7 @@ func FromParquetBy(payload []byte, partitionBy string, filter *typeof.Schema, ap
 
 		// Append computed columns and fill nulls for the row
 		out, _ := apply(row)
+
 		size += out.AppendTo(columns)
 		size += columns.FillNulls()
 		return false
