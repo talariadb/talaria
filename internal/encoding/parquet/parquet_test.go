@@ -45,7 +45,7 @@ func TestReadFile(t *testing.T) {
 	}
 
 	// Enable when you want to create a Parquet file for the test
-	initFunc(t, goparquet.WithCompressionCodec(parquet.CompressionCodec_SNAPPY), goparquet.WithCreator("talaria-parquet-unittest"))
+	//initFunc(t, goparquet.WithCompressionCodec(parquet.CompressionCodec_SNAPPY), goparquet.WithCreator("talaria-parquet-unittest"))
 
 	testFunc()
 }

@@ -17,6 +17,7 @@ message IngestRequest {
     bytes  orc   = 2; // An orc file
     bytes  csv   = 3; // CSV (comma-separated) file
     string url   = 4; // A url pointing to a file (.orc, .csv)
+    bytes parquet = 5; // A parquet file
   }
 }
 
