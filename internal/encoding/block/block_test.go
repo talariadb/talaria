@@ -88,6 +88,33 @@ func BenchmarkBlockRead(b *testing.B) {
 	})
 }
 
+// BenchmarkBlockReadForParquet/read-12         	  469470	      2482 ns/op	    1665 B/op	      16 allocs/op
+func BenchmarkBlockReadForParquet(b *testing.B) {
+	o, err := ioutil.ReadFile(testFileForParquet)
+	noerror(err)
+
+	apply := Transform(nil)
+	blk, err := FromParquetBy(o, "foo", nil, apply)
+	noerror(err)
+
+	// 122MB uncompressed
+	// 13MB snappy compressed
+	buf, err := blk[0].Encode()
+	noerror(err)
+
+	columns := typeof.Schema{
+		"foo": typeof.String,
+	}
+
+	b.Run("read", func(b *testing.B) {
+		b.ResetTimer()
+		b.ReportAllocs()
+		for n := 0; n < b.N; n++ {
+			_, _ = Read(buf, columns)
+		}
+	})
+}
+
 // BenchmarkFrom/orc-8         	    3434	    309327 ns/op	  789779 B/op	    1906 allocs/op
 // BenchmarkFrom/batch-8       	   50971	     22366 ns/op	   19824 B/op	     206 allocs/op
 func BenchmarkFrom(b *testing.B) {
@@ -113,6 +140,19 @@ func BenchmarkFrom(b *testing.B) {
 		}
 	})
 
+	b.Run("parquet", func(b *testing.B) {
+		o, err := ioutil.ReadFile(testFileForParquet)
+		noerror(err)
+
+		apply := Transform(nil)
+
+		b.ResetTimer()
+		b.ReportAllocs()
+		for n := 0; n < b.N; n++ {
+			_, err = FromParquetBy(o, "bar", nil, apply)
+			noerror(err)
+		}
+	})
 }
 
 func noerror(err error) {
