@@ -63,18 +63,18 @@ type Type byte
 	17: "CHAR",
 */
 var supported = map[string]Type{
-	"BOOLEAN":   Bool,
-	"INT":       Int32,
-	"LONG":      Int64,
-	"INT32":      Int32,
-	"INT64":      Int64,
-	"DOUBLE":    Float64,
-	"STRING":    String,
-	"TIMESTAMP": Timestamp,
-	"VARCHAR":   String,
-	"LIST":      JSON,
-	"MAP":       JSON,
-	"STRUCT":    JSON,
+	"BOOLEAN":   Bool, //ORC, Parquet
+	"INT":       Int32, // ORC
+	"LONG":      Int64, // ORC, PARQUET
+	"INT32":      Int32, // PARQUET
+	"INT64":      Int64, // PARQUET
+	"DOUBLE":    Float64, // ORC, PARQUET
+	"STRING":    String, // ORC, PARQUET
+	"TIMESTAMP": Timestamp, // ORC, PARQUET
+	"VARCHAR":   String, // ORC
+	"LIST":      JSON, // ORC, PARQUET
+	"MAP":       JSON, // ORC
+	"STRUCT":    JSON, // ORC
 }
 
 // FromOrc maps the orc type description to our type.

@@ -4,7 +4,6 @@ import (
 	"github.com/kelindar/talaria/internal/column"
 	"github.com/kelindar/talaria/internal/encoding/parquet"
 	"github.com/kelindar/talaria/internal/encoding/typeof"
-	"strconv"
 )
 
 // FromParquetBy decodes a set of blocks from a Parquet file and repartitions
@@ -43,7 +42,7 @@ func FromParquetBy(payload []byte, partitionBy string, filter *typeof.Schema, ap
 		}
 
 		// Get the partition value, must be a string
-		partition, ok := convertToStringForParquet(r[partitionIdx])
+		partition, ok := convertToString(r[partitionIdx])
 		if !ok {
 			return true
 		}
@@ -92,17 +91,4 @@ func FromParquetBy(payload []byte, partitionBy string, filter *typeof.Schema, ap
 
 	blocks = append(blocks, last...)
 	return blocks, nil
-}
-
-// convertToStringForParquet converts value to string because currently all the keys in Badger are stored in the form of string before hashing to the byte array
-func convertToStringForParquet(value interface{}) (string, bool) {
-	v, ok := value.(string)
-	if ok {
-		return v, true
-	}
-	valueInt, ok := value.(int64)
-	if ok {
-		return strconv.FormatInt(valueInt, 10), true
-	}
-	return "", false
 }
