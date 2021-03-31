@@ -142,6 +142,7 @@ We are open to contributions, feel free to submit a pull request and we'll revie
 * [Yichao Wang](https://www.linkedin.com/in/wangyichao/)
 * [Chun Rong Phang](https://www.linkedin.com/in/phang-chun-rong-6232ab78/)
 * [Ankit Kumar Sinha](https://www.linkedin.com/in/ankit-kumar-sinha-805359b6/)
+* [Atri Sharma] (https://www.linkedin.com/in/atrisharma/)
 
 ## License
 
