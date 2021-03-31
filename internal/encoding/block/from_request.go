@@ -23,6 +23,8 @@ func FromRequestBy(request *talaria.IngestRequest, partitionBy string, filter *t
 		return FromCSVBy(data.Csv, partitionBy, filter, apply)
 	case *talaria.IngestRequest_Url:
 		return FromURLBy(data.Url, partitionBy, filter, apply)
+	case *talaria.IngestRequest_Parquet:
+		return FromParquetBy(data.Parquet, partitionBy, filter, apply)
 	case nil: // The field is not set.
 		return nil, nil
 	default:

@@ -21,6 +21,8 @@ func FromURLBy(uri string, partitionBy string, filter *typeof.Schema, apply appl
 		handler = FromOrcBy
 	case ".csv":
 		handler = FromCSVBy
+	case ".parquet":
+		handler = FromParquetBy
 	default:
 		return nil, errors.Newf("block: unsupported file extension %s", filepath.Ext(uri))
 	}
