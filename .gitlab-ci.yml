@@ -1,0 +1,89 @@
+image:
+  name: golang:1.14
+  entrypoint:
+    - '/usr/bin/env'
+    - 'PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin'
+variables:
+  GO111MODULE: 'on'
+  GOOS: 'linux'
+  GOARCH: 'amd64'
+  DOCKER_REGISTRY: 683171044260.dkr.ecr.ap-southeast-1.amazonaws.com
+  AWS_DEFAULT_REGION: ap-southeast-1
+  DOCKER_HOST: tcp://docker:2375
+  DOCKER_DRIVER: overlay2
+  DOCKER_TLS_CERTDIR: ""
+
+stages:
+  - build_binary
+  - build_docker
+
+# This builds and tests the binary prior to building an image.
+build_binary:
+  stage: build_binary
+  image: golang:1.14
+  before_script:
+    - cd $GOPATH/src
+    - mkdir -p github.com/grab
+    - cd github.com/grab
+    - ln -s $CI_PROJECT_DIR
+    - cd $CI_PROJECT_NAME
+  script:
+    - go test ./...
+    - go build .
+  artifacts:
+    untracked: true
+    paths:
+      - talaria
+  only:
+    refs:
+      - merge_requests
+      - master
+
+# This builds a docker for the merge request. The docker image can be fetched under 'talaria:testing' tag.
+build_docker_mr:
+  stage: build_docker
+  image: docker:stable
+  dependencies: 
+    - build_binary
+  services:
+    - docker:dind
+  tags:
+    - docker
+  before_script:
+    - apk add --no-cache curl jq python3 py3-pip
+    - pip install awscli
+    - aws ecr get-login-password | docker login --username AWS --password-stdin $DOCKER_REGISTRY
+    - aws --version
+    - docker info
+    - docker --version
+  script:
+    - docker build . --build-arg GO_BINARY=talaria -t="$DOCKER_REGISTRY/talaria:testing"
+    - docker push $DOCKER_REGISTRY/talaria:testing
+  only:
+    refs:
+      - merge_requests
+
+# This builds the final docker image that can be deployed. It creates 'talaria:latest' and 'talaria:$COMMIT' tags.
+build_docker:
+  stage: build_docker
+  image: docker:stable
+  dependencies: 
+    - build_binary
+  services:
+    - docker:dind
+  tags:
+    - docker
+  before_script:
+    - apk add --no-cache curl jq python3 py3-pip
+    - pip install awscli
+    - aws ecr get-login-password | docker login --username AWS --password-stdin $DOCKER_REGISTRY
+    - aws --version
+    - docker info
+    - docker --version  
+  script:
+    - docker build . --build-arg GO_BINARY=talaria  -t="$DOCKER_REGISTRY/talaria:$CI_COMMIT_SHORT_SHA" -t="$DOCKER_REGISTRY/talaria:latest"
+    - docker push $DOCKER_REGISTRY/talaria:$CI_COMMIT_SHORT_SHA
+    - docker push $DOCKER_REGISTRY/talaria:latest
+  only:
+    refs:
+      - master
