@@ -2,8 +2,12 @@ package azure
 
 import (
 	"os"
+	"strings"
 	"testing"
 
+	"github.com/kelindar/talaria/internal/monitor"
+	"github.com/kelindar/talaria/internal/monitor/logging"
+	"github.com/kelindar/talaria/internal/monitor/statsd"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -19,4 +23,16 @@ func TestWriter(t *testing.T) {
 		err := c.Write([]byte("abc"), []byte("hello"))
 		assert.NotNil(t, err)
 	})
+}
+
+func TestMultiAccountWriter(t *testing.T) {
+	os.Setenv("AZURE_TENANT_ID", "xyz")
+	os.Setenv("AZURE_CLIENT_ID", "xyz")
+	os.Setenv("AZURE_CLIENT_SECRET", "xyz")
+
+	c, err := NewMultiAccountWriter(monitor.New(logging.NewStandard(), statsd.NewNoop(), "x", "x"),
+		"container", "x", []string{"x-0"})
+
+	assert.Nil(t, c)
+	assert.True(t, strings.Contains(err.Error(), "azure: unable to get azure storage credential"))
 }

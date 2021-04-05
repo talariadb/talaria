@@ -8,8 +8,10 @@ require (
 	cloud.google.com/go/pubsub v1.3.1
 	cloud.google.com/go/storage v1.7.0
 	github.com/Azure/azure-sdk-for-go v42.1.0+incompatible
-	github.com/Azure/go-autorest/autorest v0.10.1 // indirect
-	github.com/Azure/go-autorest/autorest/adal v0.8.3 // indirect
+	github.com/Azure/azure-storage-blob-go v0.13.0
+	github.com/Azure/go-autorest/autorest v0.11.17
+	github.com/Azure/go-autorest/autorest/adal v0.9.11
+	github.com/Azure/go-autorest/autorest/azure/auth v0.5.7
 	github.com/Azure/go-autorest/autorest/to v0.3.0 // indirect
 	github.com/DataDog/datadog-go v3.7.1+incompatible
 	github.com/DataDog/zstd v1.4.5 // indirect
@@ -55,6 +57,5 @@ require (
 	google.golang.org/api v0.24.0
 	google.golang.org/genproto v0.0.0-20210325224202-eed09b1b5210 // indirect
 	google.golang.org/grpc v1.36.1
-	google.golang.org/grpc/cmd/protoc-gen-go-grpc v1.1.0 // indirect
 	gopkg.in/yaml.v2 v2.2.8
 )
