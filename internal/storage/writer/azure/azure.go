@@ -1,7 +1,6 @@
 package azure
 
 import (
-	"bytes"
 	"context"
 	"fmt"
 	"math/rand"
@@ -169,22 +168,11 @@ func (m *MultiAccountWriter) Write(key key.Key, val []byte) error {
 		return err
 	}
 
-	appendBlobURL := containerURL.NewAppendBlobURL(path.Join(m.prefix, string(key)))
-	_, err = appendBlobURL.Create(ctx,
-		azblob.BlobHTTPHeaders{},
-		azblob.Metadata{},
-		azblob.BlobAccessConditions{},
-		nil,
-		azblob.ClientProvidedKeyOptions{})
-	if err != nil {
-		return errors.Internal("azure: unable to create put blob", err)
+	blockBlobURL := containerURL.NewBlockBlobURL(path.Join(m.prefix, string(key)))
+	options := azblob.UploadToBlockBlobOptions{
+		Parallelism: 5,
 	}
-
-	_, err = appendBlobURL.AppendBlock(ctx,
-		bytes.NewReader(val),
-		azblob.AppendBlobAccessConditions{},
-		nil,
-		azblob.ClientProvidedKeyOptions{})
+	_, err = azblob.UploadBufferToBlockBlob(ctx, val, blockBlobURL, options)
 	if err != nil {
 		return errors.Internal("azure: unable to write", err)
 	}
