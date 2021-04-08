@@ -79,7 +79,7 @@ func newWriter(config config.Sinks, monitor monitor.Monitor, loader *script.Load
 
 	// Configure S3 writer if present
 	if config.S3 != nil {
-		w, err := s3.New(config.S3.Bucket, config.S3.Prefix, config.S3.Region, config.S3.Endpoint, config.S3.SSE, config.S3.AccessKey, config.S3.SecretKey, config.S3.Concurrency)
+		w, err := s3.New(monitor, config.S3.Bucket, config.S3.Prefix, config.S3.Region, config.S3.Endpoint, config.S3.SSE, config.S3.AccessKey, config.S3.SecretKey, config.S3.Concurrency)
 		if err != nil {
 			return nil, err
 		}

@@ -8,6 +8,7 @@ import (
 	"path"
 	"runtime"
 	"strings"
+	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"
@@ -15,8 +16,11 @@ import (
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	"github.com/kelindar/talaria/internal/encoding/key"
+	"github.com/kelindar/talaria/internal/monitor"
 	"github.com/kelindar/talaria/internal/monitor/errors"
 )
+
+const ctxTag = "s3"
 
 // Uploader uploads to underlying backend
 //go:generate mockery -name=S3Uploader -case underscore -testonly -inpkg
@@ -26,6 +30,7 @@ type Uploader interface {
 
 // Writer represents a writer for Amazon S3 and compatible storages.
 type Writer struct {
+	monitor  monitor.Monitor
 	uploader Uploader
 	bucket   string
 	prefix   string
@@ -33,7 +38,7 @@ type Writer struct {
 }
 
 // New initializes a new S3 writer.
-func New(bucket, prefix, region, endpoint, sse, access, secret string, concurrency int) (*Writer, error) {
+func New(monitor monitor.Monitor, bucket, prefix, region, endpoint, sse, access, secret string, concurrency int) (*Writer, error) {
 	if concurrency == 0 {
 		concurrency = runtime.NumCPU()
 	}
@@ -52,6 +57,7 @@ func New(bucket, prefix, region, endpoint, sse, access, secret string, concurren
 
 	client := s3.New(session.New(), config)
 	return &Writer{
+		monitor: monitor,
 		uploader: s3manager.NewUploaderWithClient(client, func(u *s3manager.Uploader) {
 			u.Concurrency = concurrency
 		}),
@@ -63,6 +69,7 @@ func New(bucket, prefix, region, endpoint, sse, access, secret string, concurren
 
 // Write writes creates object of S3 bucket prefix key in S3Writer bucket with value val
 func (w *Writer) Write(key key.Key, val []byte) error {
+	start := time.Now()
 	uploadInput := &s3manager.UploadInput{
 		Bucket: aws.String(w.bucket),
 		Body:   bytes.NewBuffer(val),
@@ -78,6 +85,7 @@ func (w *Writer) Write(key key.Key, val []byte) error {
 	if _, err := w.uploader.Upload(uploadInput); err != nil {
 		return errors.Internal("s3: unable to write", err)
 	}
+	w.monitor.Histogram(ctxTag, "writelatency", float64(time.Since(start)))
 	return nil
 }
 
