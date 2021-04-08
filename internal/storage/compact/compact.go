@@ -158,12 +158,14 @@ func (s *Storage) merge(keys []key.Key, blocks []block.Block, schema typeof.Sche
 		// Merge all blocks together
 		if key, value := s.merger.Merge(blocks, schema); key != nil {
 			// Append to the destination
+			start := time.Now()
 			ttl := time.Duration(max-now) * time.Second
 			if err = s.dest.Append(key, value, ttl); err != nil {
 				s.monitor.Count1(ctxTag, "error", "type:append")
 				s.monitor.Error(err)
 				return
 			}
+			s.monitor.Histogram(ctxTag, "appendlatency", float64(time.Since(start)))
 		}
 
 		start := time.Now()

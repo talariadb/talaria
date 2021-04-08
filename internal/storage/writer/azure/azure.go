@@ -73,6 +73,7 @@ func (w *Writer) Write(key key.Key, val []byte) error {
 }
 
 const (
+	ctxTag             = "azure"
 	tokenRefreshBuffer = 2 * time.Minute
 	blobServiceURL     = "https://%s.blob.core.windows.net"
 	defaultResourceID  = "https://storage.azure.com/"
@@ -162,6 +163,7 @@ func GetAzureStorageCredentials(monitor monitor.Monitor) (azblob.Credential, err
 
 // Write writes the data to a randomly selected storage account sink.
 func (m *MultiAccountWriter) Write(key key.Key, val []byte) error {
+	start := time.Now()
 	ctx := context.Background()
 	containerURL, err := m.getContainerURL()
 	if err != nil {
@@ -173,6 +175,7 @@ func (m *MultiAccountWriter) Write(key key.Key, val []byte) error {
 		Parallelism: 5,
 	}
 	_, err = azblob.UploadBufferToBlockBlob(ctx, val, blockBlobURL, options)
+	m.monitor.Histogram(ctxTag, "writelatency", float64(time.Since(start)))
 	if err != nil {
 		return errors.Internal("azure: unable to write", err)
 	}
