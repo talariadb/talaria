@@ -42,20 +42,13 @@ func New(writers ...SubWriter) *Writer {
 
 // Write writes the data to the sink.
 func (w *Writer) Write(key key.Key, val []byte) error {
-	ctx := context.Background()
-	var tasks []async.Task
 	for _, w := range w.writers {
-		task := async.NewTask(func(ctx context.Context) (interface{}, error) {
-			if err := w.Write(key, val); err != nil {
-				return nil, err
-			}
-			return nil, nil
-		})
-		tasks = append(tasks, task)
+		if err := w.Write(key, val); err != nil {
+			return err
+		}
 	}
-	all := async.ForkJoin(ctx, tasks)
-	_, err := all.Outcome()
-	return err
+
+	return nil
 }
 
 // Run launches the asynchronous infinite loop for streamers to start streaming data
