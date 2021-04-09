@@ -156,7 +156,8 @@ type S3Sink struct {
 type AzureSink struct {
 	Container       string   `json:"container" yaml:"container" env:"CONTAINER"`                   // The container name
 	Prefix          string   `json:"prefix" yaml:"prefix" env:"PREFIX"`                            // The prefix to add
-	StorageAccounts []string `json:"storageAccounts" yaml:"storageAccounts" env:"STORAGEACCOUNTS"` // The list of storage accountsa
+	BlobServiceURL  string   `json:"blobServiceURL" yaml:"blobServiceURL" env:"BLOBSERVICEURL"`    // The blob service URL
+	StorageAccounts []string `json:"storageAccounts" yaml:"storageAccounts" env:"STORAGEACCOUNTS"` // The list of storage accounts
 }
 
 // BigQuerySink represents a sink to Google Big Query

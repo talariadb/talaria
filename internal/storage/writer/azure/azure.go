@@ -73,25 +73,29 @@ func (w *Writer) Write(key key.Key, val []byte) error {
 }
 
 const (
-	ctxTag             = "azure"
-	tokenRefreshBuffer = 2 * time.Minute
-	blobServiceURL     = "https://%s.blob.core.windows.net"
-	defaultResourceID  = "https://storage.azure.com/"
+	ctxTag                = "azure"
+	tokenRefreshBuffer    = 2 * time.Minute
+	defaultBlobServiceURL = "https://%s.blob.core.windows.net"
+	defaultResourceID     = "https://storage.azure.com/"
 )
 
 // MultiAccountWriter represents a writer for Microsoft Azure with multiple storage accounts.
 type MultiAccountWriter struct {
-	monitor       monitor.Monitor
-	prefix        string
-	containerURLs []azblob.ContainerURL
+	monitor        monitor.Monitor
+	blobServiceURL string
+	prefix         string
+	containerURLs  []azblob.ContainerURL
 }
 
 // NewMultiAccountWriter creates a new MultiAccountWriter.
-func NewMultiAccountWriter(monitor monitor.Monitor, container, prefix string, storageAccount []string) (*MultiAccountWriter, error) {
+func NewMultiAccountWriter(monitor monitor.Monitor, blobServiceURL, container, prefix string, storageAccount []string) (*MultiAccountWriter, error) {
 	if _, present := os.LookupEnv("AZURE_AD_RESOURCE"); !present {
 		if err := os.Setenv("AZURE_AD_RESOURCE", defaultResourceID); err != nil {
 			return nil, errors.New("azure: unable to set default AZURE_AD_RESOURCE environment variable")
 		}
+	}
+	if blobServiceURL == "" {
+		blobServiceURL = defaultBlobServiceURL
 	}
 
 	credential, err := GetAzureStorageCredentials(monitor)

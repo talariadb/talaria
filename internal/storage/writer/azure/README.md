@@ -23,6 +23,7 @@ tables:
       azure:                               # sink to use
         container: "container-id-1"        # the container ID
         prefix: ""                         # (optional) prefix to add
+        defaultBlobServiceURL: ""          # (optional) if not set, use default
         storageAccounts:                   # (optional) if not set, use single storage writer
           - "storage-account-id-0"
           - "storage-account-id-1"
