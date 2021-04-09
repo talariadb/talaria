@@ -72,7 +72,7 @@ func (w *Writer) Write(key key.Key, val []byte) error {
 	start := time.Now()
 	uploadInput := &s3manager.UploadInput{
 		Bucket: aws.String(w.bucket),
-		Body:   bytes.NewBuffer(val),
+		Body:   bytes.NewReader(val),
 		Key:    aws.String(path.Join(w.prefix, string(key))),
 	}
 
