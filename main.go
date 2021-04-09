@@ -114,7 +114,11 @@ func openTable(name string, storageConf config.Storage, tableConf config.Table, 
 	// Create a new storage layer and optional compaction
 	store := storage.Storage(disk.Open(storageConf.Directory, name, monitor, storageConf.Badger))
 	if tableConf.Compact != nil {
-		store = writer.ForCompaction(tableConf.Compact, monitor, store, loader)
+		var err error
+		store, err = writer.ForCompaction(tableConf.Compact, monitor, store, loader)
+		if err != nil {
+			panic(err)
+		}
 	}
 
 	// Returns noop streamer if array is empty

@@ -4,124 +4,72 @@
 package flush
 
 import (
-	"bytes"
-	"compress/flate"
-	"sync"
-	"time"
-
-	eorc "github.com/crphang/orc"
-	"github.com/kelindar/talaria/internal/column"
 	"github.com/kelindar/talaria/internal/encoding/block"
 	"github.com/kelindar/talaria/internal/encoding/key"
-	"github.com/kelindar/talaria/internal/encoding/orc"
+	"github.com/kelindar/talaria/internal/encoding/merge"
 	"github.com/kelindar/talaria/internal/encoding/typeof"
 	"github.com/kelindar/talaria/internal/monitor"
-	"github.com/kelindar/talaria/internal/monitor/errors"
 	"github.com/kelindar/talaria/internal/storage"
 )
-
-// Assert contract compliance
-var _ storage.Appender = new(Storage)
-var _ storage.Merger = new(Storage)
 
 // Writer represents a sink for the flusher.
 type Writer interface {
 	Write(key key.Key, value []byte) error
 }
 
-// Storage represents s3/flush storage.
-type Storage struct {
+// Flusher represents a flusher/merger.
+type Flusher struct {
 	monitor      monitor.Monitor // The monitor client
-	writer       Writer
-	memoryPool   *sync.Pool
+	writer       Writer          // The underlying block writer
+	merge        merge.Func      // The function used to merge blocks
 	fileNameFunc func(map[string]interface{}) (string, error)
+	streamer     storage.Streamer // The underlying row writer
 }
 
-// New creates a new storage implementation.
-func New(monitor monitor.Monitor, writer Writer, fileNameFunc func(map[string]interface{}) (string, error)) *Storage {
-	memoryPool := &sync.Pool{
-		New: func() interface{} {
-			return bytes.NewBuffer(make([]byte, 0, 16*1<<20))
-		},
+// ForCompaction creates a new storage implementation.
+func ForCompaction(monitor monitor.Monitor, writer Writer, encoder string, fileNameFunc func(map[string]interface{}) (string, error)) (*Flusher, error) {
+	mergeFn, err := merge.New(encoder)
+	if err != nil {
+		return nil, err
 	}
 
-	return &Storage{
+	return &Flusher{
 		monitor:      monitor,
 		writer:       writer,
-		memoryPool:   memoryPool,
+		merge:        mergeFn,
 		fileNameFunc: fileNameFunc,
+	}, nil
+}
+
+// TODO: ForStreaming
+
+// WriteBlock writes a one or multiple blocks to the underlying writer.
+func (s *Flusher) WriteBlock(blocks []block.Block, schema typeof.Schema) error {
+	if s.writer == nil || len(blocks) == 0 {
+		return nil
 	}
-}
 
-// Append flushes the merged blocks to S3
-func (s *Storage) Append(key key.Key, value []byte, ttl time.Duration) error {
-	return s.writer.Write(key, value)
-}
-
-// Merge merges multiple blocks together and outputs a key and merged orc data
-func (s *Storage) Merge(blocks []block.Block, schema typeof.Schema) ([]byte, []byte) {
-	orcSchema, err := orc.SchemaFor(schema)
+	// Merge the blocks based on the specified merging function
+	buffer, err := s.merge(blocks, schema)
 	if err != nil {
-		s.monitor.Error(errors.Internal("flush: error generating orc schema", err))
-		return nil, nil
+		return err
 	}
 
-	buffer := s.memoryPool.Get().(*bytes.Buffer)
-	writer, err := eorc.NewWriter(buffer,
-		eorc.SetSchema(orcSchema),
-		eorc.SetCompression(eorc.CompressionZlib{Level: flate.DefaultCompression}))
-
-	for _, blk := range blocks {
-		rows, err := blk.Select(blk.Schema())
-		if err != nil {
-			continue
-		}
-
-		// Fetch columns that is required by the static schema
-		cols := make(column.Columns, 16)
-		for name, typ := range schema {
-			col, ok := rows[name]
-			if !ok || col.Kind() != typ {
-				col = column.NewColumn(typ)
-			}
-
-			cols[name] = col
-		}
-
-		cols.FillNulls()
-
-		allCols := []column.Column{}
-
-		for _, colName := range schema.Columns() {
-			allCols = append(allCols, cols[colName])
-		}
-
-		for i := 0; i < allCols[0].Count(); i++ {
-			row := []interface{}{}
-			for j := 0; j < len(allCols); j++ {
-				row = append(row, allCols[j].At(i))
-			}
-			if err := writer.Write(row...); err != nil {
-				s.monitor.Error(errors.Internal("flush: error writing row", err))
-			}
-		}
-	}
-
-	if err := writer.Close(); err != nil {
-		s.monitor.Error(errors.Internal("flush: error closing writer", err))
-		return nil, nil
-	}
-
-	output := make([]byte, len(buffer.Bytes()))
-	copy(output, buffer.Bytes())
-
-	buffer.Reset()
-	s.memoryPool.Put(buffer)
-
-	return s.generateFileName(blocks[0]), output
+	// Generate the file name and write the data to the underlying writer
+	return s.writer.Write(s.generateFileName(blocks[0]), buffer)
 }
 
-func (s *Storage) generateFileName(b block.Block) []byte {
+// WriteRow writes a single row to the underlying writer (i.e. streamer).
+func (s *Flusher) WriteRow(r block.Row) error {
+	if s.streamer == nil {
+		return nil
+	}
+
+	// Stream the row
+	return s.streamer.Stream(r)
+}
+
+func (s *Flusher) generateFileName(b block.Block) []byte {
 	row, err := b.LastRow()
 	if err != nil {
 		return []byte{}
@@ -136,6 +84,6 @@ func (s *Storage) generateFileName(b block.Block) []byte {
 }
 
 // Close is used to gracefully close storage.
-func (s *Storage) Close() error {
+func (s *Flusher) Close() error {
 	return nil
 }

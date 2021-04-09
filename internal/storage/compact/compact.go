@@ -22,20 +22,23 @@ var _ storage.Storage = new(Storage)
 
 const ctxTag = "compaction"
 
+// BlockWriter represents a block writer that can be used to encode and write blocks
+type BlockWriter interface {
+	WriteBlock([]block.Block, typeof.Schema) error
+}
+
 // Storage represents compactor storage.
 type Storage struct {
-	compact async.Task       // The compaction worker
-	monitor monitor.Monitor  // The monitor client
-	merger  storage.Merger   // The merging (join) function
-	buffer  storage.Storage  // The storage to use for buffering
-	dest    storage.Appender // The compaction destination
+	compact async.Task      // The compaction worker
+	monitor monitor.Monitor // The monitor client
+	buffer  storage.Storage // The storage to use for buffering
+	dest    BlockWriter     // The compaction destination
 }
 
 // New creates a new storage implementation.
-func New(buffer storage.Storage, dest storage.Appender, merger storage.Merger, monitor monitor.Monitor, interval time.Duration) *Storage {
+func New(buffer storage.Storage, dest BlockWriter, monitor monitor.Monitor, interval time.Duration) *Storage {
 	s := &Storage{
 		monitor: monitor,
-		merger:  merger,
 		buffer:  buffer,
 		dest:    dest,
 	}
@@ -143,27 +146,24 @@ func (s *Storage) Compact(ctx context.Context) (interface{}, error) {
 // merge adds an key-value pair to the underlying database
 func (s *Storage) merge(keys []key.Key, blocks []block.Block, schema typeof.Schema) async.Task {
 	return async.NewTask(func(ctx context.Context) (_ interface{}, err error) {
-
 		if len(blocks) == 0 {
 			return
 		}
+
 		// Get the max expiration time for merging
-		now, max := time.Now().Unix(), int64(0)
+		max := int64(0)
 		for _, b := range blocks {
 			if b.Expires > max {
 				max = b.Expires
 			}
 		}
 
-		// Merge all blocks together
-		if key, value := s.merger.Merge(blocks, schema); key != nil {
-			// Append to the destination
-			ttl := time.Duration(max-now) * time.Second
-			if err = s.dest.Append(key, value, ttl); err != nil {
-				s.monitor.Count1(ctxTag, "error", "type:append")
-				s.monitor.Error(err)
-				return
-			}
+		// Merge all blocks together and write it through
+		// TODO: add ttl := time.Duration(max-now) * time.Second
+		if err = s.dest.WriteBlock(blocks, schema); err != nil {
+			s.monitor.Count1(ctxTag, "error", "type:append")
+			s.monitor.Error(err)
+			return
 		}
 
 		start := time.Now()

@@ -37,18 +37,11 @@ var input = []byte{
 	0x0, 0x0, 0x2e, 0xc0, 0xe, 0x34, 0x1, 0x0, 0x4, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x1, 0x0, 0x11, 0x40, 0x1, 0x0, 0x4, 0x0, 0x0, 0x0, 0x0,
 	0x0, 0x0, 0x0, 0x2, 0x0, 0x0, 0x0, 0x2, 0x68, 0x69, 0x0}
 
-// Merger mock
-type merger func([]block.Block, typeof.Schema) ([]byte, []byte)
+// blockWriter mock
+type blockWriter func([]block.Block, typeof.Schema) error
 
-func (m merger) Merge(blocks []block.Block, schema typeof.Schema) ([]byte, []byte) {
-	return m(blocks, schema)
-}
-
-// Appender mock
-type appender func(key key.Key, value []byte, ttl time.Duration) error
-
-func (m appender) Append(key key.Key, value []byte, ttl time.Duration) error {
-	return m(key, value, ttl)
+func (w blockWriter) WriteBlock(blocks []block.Block, schema typeof.Schema) error {
+	return w(blocks, schema)
 }
 
 // Opens a new disk storage and runs a a test on it.
@@ -77,16 +70,12 @@ func run(f func(store *disk.Storage)) {
 func TestRange(t *testing.T) {
 	runTest(t, func(buffer *disk.Storage) {
 		var count int64
-		var dest appender = func(key key.Key, value []byte, ttl time.Duration) error {
+		var dest blockWriter = func(blocks []block.Block, schema typeof.Schema) error {
 			atomic.AddInt64(&count, 1)
 			return nil
 		}
 
-		var join merger = func([]block.Block, typeof.Schema) ([]byte, []byte) {
-			return asBytes("1"), asBytes("A")
-		}
-
-		store := New(buffer, dest, join, monitor.NewNoop(), 100*time.Millisecond)
+		store := New(buffer, dest, monitor.NewNoop(), 100*time.Millisecond)
 
 		// Insert out of order
 		_ = store.Append(key.New("A", time.Unix(0, 0)), input, 60*time.Second)
@@ -115,8 +104,4 @@ func TestRange(t *testing.T) {
 		store.Compact(context.Background())
 		assert.Equal(t, int64(4), count)
 	})
-}
-
-func asBytes(s string) []byte {
-	return []byte(s)
 }
