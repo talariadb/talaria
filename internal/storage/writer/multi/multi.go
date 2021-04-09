@@ -44,9 +44,14 @@ func New(writers ...SubWriter) *Writer {
 // Write writes the data to the sink.
 func (w *Writer) Write(key key.Key, val []byte) error {
 	eg := new(errgroup.Group)
-	for _, w := range w.writers {
+	for _, sw := range w.writers {
+		var cval = make([]byte, len(val))
+		_ = copy(cval, val)
 		eg.Go(func() error {
-			return w.Write(key, val)
+			if err := sw.Write(key, cval); err != nil {
+				return err
+			}
+			return nil
 		})
 	}
 	// Wait blocks until all finished, and returns the first non-nil error (if any) from them
