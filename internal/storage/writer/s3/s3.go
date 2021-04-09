@@ -83,6 +83,7 @@ func (w *Writer) Write(key key.Key, val []byte) error {
 
 	// Upload to S3
 	if _, err := w.uploader.Upload(uploadInput); err != nil {
+		w.monitor.Count1(ctxTag, "writeerror")
 		return errors.Internal("s3: unable to write", err)
 	}
 	w.monitor.Histogram(ctxTag, "writelatency", float64(time.Since(start)))

@@ -175,10 +175,11 @@ func (m *MultiAccountWriter) Write(key key.Key, val []byte) error {
 		Parallelism: 5,
 	}
 	_, err = azblob.UploadBufferToBlockBlob(ctx, val, blockBlobURL, options)
-	m.monitor.Histogram(ctxTag, "writelatency", float64(time.Since(start)))
 	if err != nil {
+		m.monitor.Count1(ctxTag, "writeerror")
 		return errors.Internal("azure: unable to write", err)
 	}
+	m.monitor.Histogram(ctxTag, "writelatency", float64(time.Since(start)))
 	return nil
 }
 
