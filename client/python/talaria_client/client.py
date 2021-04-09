@@ -28,3 +28,7 @@ class Client:
     def ingest_orc(self, orc_data):
         ingest_req = talaria_pb2.IngestRequest(orc=orc_data)
         return self.ingress.Ingest(ingest_req)
+
+    def ingest_parquet(self, parquet_data):
+        ingest_req = talaria_pb2.IngestRequest(parquet=parquet_data)
+        return self.ingress.Ingest(ingest_req)
