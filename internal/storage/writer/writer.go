@@ -77,18 +77,18 @@ func ForCompaction(config *config.Compaction, monitor monitor.Monitor, store sto
 func newWriter(config config.Sinks, monitor monitor.Monitor, loader *script.Loader) (flush.Writer, error) {
 	var writers []multi.SubWriter
 
-	// Configure Azure MultiAccount writer if present
-	if config.Azure != nil && len(config.Azure.StorageAccounts) > 0 {
-		w, err := azure.NewMultiAccountWriter(monitor, config.Azure.BlobServiceURL, config.Azure.Container, config.Azure.Prefix, config.Azure.StorageAccounts)
+	// Configure S3 writer if present
+	if config.S3 != nil {
+		w, err := s3.New(monitor, config.S3.Bucket, config.S3.Prefix, config.S3.Region, config.S3.Endpoint, config.S3.SSE, config.S3.AccessKey, config.S3.SecretKey, config.S3.Concurrency)
 		if err != nil {
 			return nil, err
 		}
 		writers = append(writers, w)
 	}
 
-	// Configure S3 writer if present
-	if config.S3 != nil {
-		w, err := s3.New(monitor, config.S3.Bucket, config.S3.Prefix, config.S3.Region, config.S3.Endpoint, config.S3.SSE, config.S3.AccessKey, config.S3.SecretKey, config.S3.Concurrency)
+	// Configure Azure MultiAccount writer if present
+	if config.Azure != nil && len(config.Azure.StorageAccounts) > 0 {
+		w, err := azure.NewMultiAccountWriter(monitor, config.Azure.BlobServiceURL, config.Azure.Container, config.Azure.Prefix, config.Azure.StorageAccounts, config.Azure.Parallelism, config.Azure.BlockSize)
 		if err != nil {
 			return nil, err
 		}

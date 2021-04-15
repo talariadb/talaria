@@ -85,10 +85,11 @@ type MultiAccountWriter struct {
 	blobServiceURL string
 	prefix         string
 	containerURLs  []azblob.ContainerURL
+	options        azblob.UploadToBlockBlobOptions
 }
 
 // NewMultiAccountWriter creates a new MultiAccountWriter.
-func NewMultiAccountWriter(monitor monitor.Monitor, blobServiceURL, container, prefix string, storageAccount []string) (*MultiAccountWriter, error) {
+func NewMultiAccountWriter(monitor monitor.Monitor, blobServiceURL, container, prefix string, storageAccount []string, parallelism uint16, blockSize int64) (*MultiAccountWriter, error) {
 	if _, present := os.LookupEnv("AZURE_AD_RESOURCE"); !present {
 		if err := os.Setenv("AZURE_AD_RESOURCE", defaultResourceID); err != nil {
 			return nil, errors.New("azure: unable to set default AZURE_AD_RESOURCE environment variable")
@@ -118,6 +119,10 @@ func NewMultiAccountWriter(monitor monitor.Monitor, blobServiceURL, container, p
 		monitor:       monitor,
 		prefix:        prefix,
 		containerURLs: containerURLs,
+		options: azblob.UploadToBlockBlobOptions{
+			Parallelism: parallelism,
+			BlockSize:   blockSize,
+		},
 	}, nil
 }
 
@@ -174,13 +179,13 @@ func (m *MultiAccountWriter) Write(key key.Key, val []byte) error {
 		return err
 	}
 
-	blockBlobURL := containerURL.NewBlockBlobURL(path.Join(m.prefix, string(key)))
-	options := azblob.UploadToBlockBlobOptions{
-		Parallelism: 5,
-	}
-	_, err = azblob.UploadBufferToBlockBlob(ctx, val, blockBlobURL, options)
+	blobName := path.Join(m.prefix, string(key))
+	blockBlobURL := containerURL.NewBlockBlobURL(blobName)
+
+	_, err = azblob.UploadBufferToBlockBlob(ctx, val, blockBlobURL, m.options)
 	if err != nil {
 		m.monitor.Count1(ctxTag, "writeerror")
+		m.monitor.Info("failed_azure_write: %s", blobName)
 		return errors.Internal("azure: unable to write", err)
 	}
 	m.monitor.Histogram(ctxTag, "writelatency", float64(time.Since(start)))
