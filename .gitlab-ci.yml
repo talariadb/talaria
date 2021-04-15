@@ -51,7 +51,7 @@ build_docker_mr:
     - docker
   before_script:
     - apk add --no-cache curl jq python3 py3-pip
-    - pip install awscli==1.19.48
+    - pip install awscli==1.18.117
     - aws ecr get-login-password | docker login --username AWS --password-stdin $DOCKER_REGISTRY
     - aws --version
     - docker info
@@ -75,7 +75,7 @@ build_docker:
     - docker
   before_script:
     - apk add --no-cache curl jq python3 py3-pip
-    - pip install awscli==1.19.48
+    - pip install awscli==1.18.117
     - aws ecr get-login-password | docker login --username AWS --password-stdin $DOCKER_REGISTRY
     - aws --version
     - docker info
