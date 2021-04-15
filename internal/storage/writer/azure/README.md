@@ -23,6 +23,8 @@ tables:
       azure:                               # sink to use
         container: "container-id-1"        # the container ID
         prefix: ""                         # (optional) prefix to add
+        parallelism: 0                     # (optional) default to 5
+        blockSize: 5242880                 # (optional) if not set, use default
         defaultBlobServiceURL: ""          # (optional) if not set, use default
         storageAccounts:                   # (optional) if not set, use single storage writer
           - "storage-account-id-0"
