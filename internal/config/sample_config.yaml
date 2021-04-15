@@ -27,6 +27,7 @@ tables:
     schema: "gcs://k8s-default-stg-configs/ingestor/schema1.yaml"
     compact:
       interval: 60
+      encoder: orc
       nameFunc: "gcs://k8s-online-stg-configs/ingestor/name.lua"
       gcs:
         bucket: "airasia-opdatalake-stg-datalake"
