@@ -153,13 +153,17 @@ type S3Sink struct {
 	Concurrency int    `json:"concurrency" yaml:"concurrency" env:"CONCURRENCY"` // The S3 upload concurrency
 }
 
-// AzureSink reprents a sink to Azure
+// AzureSink represents a sink to Azure
 type AzureSink struct {
-	Container string `json:"container" yaml:"container" env:"CONTAINER"` // The container name
-	Prefix    string `json:"prefix" yaml:"prefix" env:"PREFIX"`          // The prefix to add
+	Container       string   `json:"container" yaml:"container" env:"CONTAINER"`                   // The container name
+	Prefix          string   `json:"prefix" yaml:"prefix" env:"PREFIX"`                            // The prefix to add
+	Parallelism     uint16   `json:"parallelism" yaml:"parallelism" env:"PARALLELISM"`             // The BlockBlob upload parallelism
+	BlockSize       int64    `json:"blockSize" yaml:"blockSize" env:"BLOCKSIZE"`                   // The Block Size for upload
+	BlobServiceURL  string   `json:"blobServiceURL" yaml:"blobServiceURL" env:"BLOBSERVICEURL"`    // The blob service URL
+	StorageAccounts []string `json:"storageAccounts" yaml:"storageAccounts" env:"STORAGEACCOUNTS"` // The list of storage accounts
 }
 
-// BigQuerySink reprents a sink to Google Big Query
+// BigQuerySink represents a sink to Google Big Query
 type BigQuerySink struct {
 	Project string `json:"project" yaml:"project" env:"PROJECT"` // The project ID
 	Dataset string `json:"dataset" yaml:"dataset" env:"DATASET"` // The dataset ID
