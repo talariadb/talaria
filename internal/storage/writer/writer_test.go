@@ -13,13 +13,20 @@ import (
 )
 
 func TestForCompaction(t *testing.T) {
-	cfg := &config.Compaction{}
-	compact := ForCompaction(cfg,
+	cfg := &config.Compaction{
+		Sinks: config.Sinks{
+			File: &config.FileSink{
+				Directory: "./",
+			},
+		},
+	}
+
+	compact, err := ForCompaction(cfg,
 		monitor.New(logging.NewStandard(), statsd.NewNoop(), "x", "x"),
 		disk.New(monitor.NewNoop()),
 		script.NewLoader(nil),
 	)
-
+	assert.NoError(t, err)
 	assert.NotNil(t, compact)
 }
 

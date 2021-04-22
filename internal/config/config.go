@@ -122,6 +122,7 @@ type Computed struct {
 // Compaction represents a configuration for compaction sinks
 type Compaction struct {
 	Sinks    `yaml:",inline"`
+	Encoder  string `json:"encoder" yaml:"encoder"`                  // The default encoder for the compaction
 	NameFunc string `json:"nameFunc" yaml:"nameFunc" env:"NAMEFUNC"` // The lua script to compute file name given a row
 	Interval int    `json:"interval" yaml:"interval" env:"INTERVAL"` // The compaction interval, in seconds
 }

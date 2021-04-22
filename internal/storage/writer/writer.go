@@ -40,10 +40,10 @@ func ForStreaming(config config.Streams, monitor monitor.Monitor, loader *script
 }
 
 // ForCompaction creates a compaction writer
-func ForCompaction(config *config.Compaction, monitor monitor.Monitor, store storage.Storage, loader *script.Loader) *compact.Storage {
+func ForCompaction(config *config.Compaction, monitor monitor.Monitor, store storage.Storage, loader *script.Loader) (*compact.Storage, error) {
 	writer, err := newWriter(config.Sinks, loader)
 	if err != nil {
-		monitor.Error(err)
+		return nil, err
 	}
 
 	// Configure the flush interval, default to 30s
@@ -68,9 +68,16 @@ func ForCompaction(config *config.Compaction, monitor monitor.Monitor, store sto
 		}
 	}
 
+	// Crate the flusher
 	monitor.Info("server: setting up compaction %T to run every %.0fs...", writer, interval.Seconds())
-	flusher := flush.New(monitor, writer, nameFunc)
-	return compact.New(store, flusher, flusher, monitor, interval)
+
+	// TODO: once we have everything working, consider making the flusher per writer (requires changing all writers)
+	flusher, err := flush.ForCompaction(monitor, writer, config.Encoder, nameFunc)
+	if err != nil {
+		return nil, err
+	}
+
+	return compact.New(store, flusher, monitor, interval), nil
 }
 
 // NewWriter creates a new writer from the configuration.
