@@ -18,6 +18,8 @@ func New(mergeFunc string) (Func, error) {
 	switch strings.ToLower(mergeFunc) {
 	case "orc":
 		return ToOrc, nil
+	case "parquet":
+		return ToParquet, nil
 	case "": // Default to "orc" so we don't break existing configs
 		return ToOrc, nil
 	}

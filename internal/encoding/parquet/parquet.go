@@ -3,6 +3,7 @@ package parquet
 import (
 	"bytes"
 	goparquet "github.com/fraugster/parquet-go"
+	"github.com/fraugster/parquet-go/parquet"
 	"github.com/kelindar/talaria/internal/encoding/typeof"
 	"github.com/kelindar/talaria/internal/monitor/errors"
 	"io"
@@ -111,11 +112,40 @@ func (i *iterator) Schema() typeof.Schema {
 	for _, c := range schema.Columns() {
 		t := c.Type()
 
-		if t, supported := typeof.FromParquet(t); supported {
-			result[c.Name()] = t
+		if t == nil {
+			p := getSchemaLogicalType(c.Element().GetLogicalType())
+
+			if t, supported := typeof.FromParquet(&p); supported {
+				result[c.Name()] = t
+			}
+		} else {
+			if t, supported := typeof.FromParquet(t); supported {
+				result[c.Name()] = t
+			}
 		}
 	}
 	return result
+}
+
+func getSchemaLogicalType(t *parquet.LogicalType) parquet.Type {
+	switch {
+	case t.IsSetSTRING():
+		return parquet.Type_BYTE_ARRAY
+	case t.IsSetJSON():
+		return parquet.Type_FIXED_LEN_BYTE_ARRAY
+	case t.IsSetDECIMAL():
+		return parquet.Type_FLOAT
+	case t.IsSetINTEGER():
+		if t.INTEGER.GetBitWidth() == 32 {
+			return parquet.Type_INT32
+		} else if t.INTEGER.GetBitWidth() == 64 {
+			return parquet.Type_INT64
+		} else {
+			panic("Unknown integer width")
+		}
+	default:
+		return parquet.SchemaElement_Type_DEFAULT
+	}
 }
 
 // Close closes the iterator.

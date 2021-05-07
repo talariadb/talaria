@@ -1,6 +1,7 @@
 package block
 
 import (
+	"fmt"
 	"github.com/kelindar/talaria/internal/column"
 	"github.com/kelindar/talaria/internal/encoding/parquet"
 	"github.com/kelindar/talaria/internal/encoding/typeof"
@@ -65,11 +66,17 @@ func FromParquetBy(payload []byte, partitionBy string, filter *typeof.Schema, ap
 			columnName := cols[i]
 			columnType := schema[columnName]
 
+			fieldHandler, _ := getReverseHandler(columnType.String())
+
 			// Encode to JSON
 			if columnType == typeof.JSON {
 				if encoded, ok := convertToJSON(v); ok {
 					v = encoded
 				}
+			}
+
+			if fieldHandler != nil {
+				v, _ = fieldHandler(v)
 			}
 
 			row.Set(columnName, v)
@@ -91,4 +98,50 @@ func FromParquetBy(payload []byte, partitionBy string, filter *typeof.Schema, ap
 
 	blocks = append(blocks, last...)
 	return blocks, nil
+}
+
+type fieldHandler func(interface{}) (interface{}, error)
+
+func getReverseHandler(typ string) (fieldHandler func(interface{}) (interface{}, error), err error) {
+
+	switch typ {
+	case "string":
+		fieldHandler = stringHandler
+	}
+
+	return fieldHandler, nil
+}
+
+// Transform runs the computed Values and overwrites/appends them to the set.
+func ApplyCastHandlers(r Row, fieldHandlers []fieldHandler) Row {
+	// Create a new output row and copy the column values from the input
+	schema := make(typeof.Schema, len(r.Schema))
+	out := NewRow(schema, len(r.Values))
+
+	i := 0
+	for k, v := range r.Values {
+		handler := fieldHandlers[i]
+
+		if handler != nil {
+			out.Values[k], _ = handler(v)
+		}
+		out.Schema[k] = r.Schema[k]
+	}
+
+	return out
+}
+
+func stringHandler(s interface{}) (interface{}, error) {
+
+	switch s.(type) {
+	case []byte:
+		buf, ok := s.([]byte)
+		if !ok {
+			return nil, fmt.Errorf("Failed to get bytes from the interface")
+		}
+
+		return string(buf), nil
+	}
+
+	return nil, nil
 }

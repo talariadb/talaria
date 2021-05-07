@@ -1,0 +1,295 @@
+package merge
+
+import (
+	"encoding/json"
+	"fmt"
+	goparquet "github.com/fraugster/parquet-go"
+	"github.com/fraugster/parquet-go/parquet"
+	"github.com/fraugster/parquet-go/parquetschema"
+	"github.com/kelindar/talaria/internal/column"
+	"github.com/kelindar/talaria/internal/encoding/block"
+	"github.com/kelindar/talaria/internal/encoding/typeof"
+	"github.com/kelindar/talaria/internal/monitor/errors"
+	"strconv"
+)
+
+// ToParquet merges multiple blocks together and outputs a key and merged Parquet data
+func ToParquet(blocks []block.Block, schema typeof.Schema) ([]byte, error) {
+	parquetSchema, fieldHandlers, err := deriveSchema(schema)
+
+	if err != nil {
+		return nil, errors.Internal("merge: error generating parquet schema", err)
+	}
+
+	// Acquire a buffer to be used during the merging process
+	buffer := acquire()
+	defer release(buffer)
+
+	writer := goparquet.NewFileWriter(buffer,
+		goparquet.WithCompressionCodec(parquet.CompressionCodec_SNAPPY),
+		goparquet.WithSchemaDefinition(parquetSchema),
+		goparquet.WithCreator("write-lowlevel"),
+	)
+
+	for _, blk := range blocks {
+		rows, err := blk.Select(blk.Schema())
+		if err != nil {
+			continue
+		}
+
+		// Fetch columns that is required by the static schema
+		cols := make(column.Columns, 16)
+		for name, typ := range schema {
+			col, ok := rows[name]
+			if !ok || col.Kind() != typ {
+				col = column.NewColumn(typ)
+			}
+
+			cols[name] = col
+		}
+
+		cols.FillNulls()
+
+		allCols := []column.Column{}
+		for _, colName := range schema.Columns() {
+			allCols = append(allCols, cols[colName])
+		}
+
+		for i := 0; i < allCols[0].Count(); i++ {
+			data := make(map[string]interface{})
+
+			j := 0
+			for _, colName := range schema.Columns() {
+				localCol := allCols[j]
+				fieldHandler := fieldHandlers[j]
+				finalData := localCol.At(i)
+
+				if finalData != nil && fieldHandler != nil {
+					finalData, _ = fieldHandler(localCol.At(i))
+				}
+
+				data[colName] = finalData
+
+				j++
+			}
+
+			if err := writer.AddData(data); err != nil {
+				return nil, errors.Internal("flush: error writing row", err)
+				// TODO: should we ignore or continue?
+			}
+		}
+	}
+
+	if err := writer.Close(); err != nil {
+		return nil, errors.Internal("flush: error closing writer", err)
+	}
+
+	// Always return a cloned buffer since we're reusing the working one
+	return clone(buffer), nil
+}
+
+type fieldHandler func(interface{}) (interface{}, error)
+
+func deriveSchema(inputSchema typeof.Schema) (schema *parquetschema.SchemaDefinition, fieldHandlers []fieldHandler, err error) {
+	schema = &parquetschema.SchemaDefinition{
+		RootColumn: &parquetschema.ColumnDefinition{
+			SchemaElement: &parquet.SchemaElement{
+				Name: "msg",
+			},
+		},
+	}
+
+	fieldHandlers = make([]fieldHandler, 0)
+
+	for _, field := range inputSchema.Columns() {
+		typ := inputSchema[field]
+
+		col, fieldHandler, err := createColumn(field, typ.String())
+		if err != nil {
+			return nil, nil, fmt.Errorf("couldn't create column for field %s: %v", field, err)
+		}
+
+		fieldHandlers = append(fieldHandlers, fieldHandler)
+		schema.RootColumn.Children = append(schema.RootColumn.Children, col)
+	}
+
+	if err := schema.Validate(); err != nil {
+		return schema, nil, fmt.Errorf("validation of generated schema failed: %w", err)
+	}
+
+	return schema, fieldHandlers, nil
+}
+
+func createColumn(field, typ string) (col *parquetschema.ColumnDefinition, fieldHandler func(interface{}) (interface{}, error), err error) {
+	col = &parquetschema.ColumnDefinition{
+		SchemaElement: &parquet.SchemaElement{},
+	}
+	col.SchemaElement.RepetitionType = parquet.FieldRepetitionTypePtr(parquet.FieldRepetitionType_OPTIONAL)
+	col.SchemaElement.Name = field
+
+	switch typ {
+	case "string":
+		col.SchemaElement.Type = parquet.TypePtr(parquet.Type_BYTE_ARRAY)
+		col.SchemaElement.LogicalType = parquet.NewLogicalType()
+		col.SchemaElement.LogicalType.STRING = &parquet.StringType{}
+		col.SchemaElement.ConvertedType = parquet.ConvertedTypePtr(parquet.ConvertedType_UTF8)
+		fieldHandler = byteArrayHandler
+	case "byte_array":
+		col.SchemaElement.Type = parquet.TypePtr(parquet.Type_BYTE_ARRAY)
+		fieldHandler = byteArrayHandler
+	case "boolean":
+		col.SchemaElement.Type = parquet.TypePtr(parquet.Type_BOOLEAN)
+		fieldHandler = booleanHandler
+	case "int8":
+		col.SchemaElement.Type = parquet.TypePtr(parquet.Type_INT32)
+		col.SchemaElement.LogicalType = parquet.NewLogicalType()
+		col.SchemaElement.LogicalType.INTEGER = &parquet.IntType{BitWidth: 8, IsSigned: true}
+		col.SchemaElement.ConvertedType = parquet.ConvertedTypePtr(parquet.ConvertedType_INT_8)
+		fieldHandler = intHandler(8)
+	case "uint8":
+		col.SchemaElement.Type = parquet.TypePtr(parquet.Type_INT32)
+		col.SchemaElement.LogicalType = parquet.NewLogicalType()
+		col.SchemaElement.LogicalType.INTEGER = &parquet.IntType{BitWidth: 8, IsSigned: false}
+		col.SchemaElement.ConvertedType = parquet.ConvertedTypePtr(parquet.ConvertedType_UINT_8)
+		fieldHandler = uintHandler(8)
+	case "int16":
+		col.SchemaElement.Type = parquet.TypePtr(parquet.Type_INT32)
+		col.SchemaElement.LogicalType = parquet.NewLogicalType()
+		col.SchemaElement.LogicalType.INTEGER = &parquet.IntType{BitWidth: 16, IsSigned: true}
+		col.SchemaElement.ConvertedType = parquet.ConvertedTypePtr(parquet.ConvertedType_INT_16)
+		fieldHandler = intHandler(16)
+	case "uint16":
+		col.SchemaElement.Type = parquet.TypePtr(parquet.Type_INT32)
+		col.SchemaElement.LogicalType = parquet.NewLogicalType()
+		col.SchemaElement.LogicalType.INTEGER = &parquet.IntType{BitWidth: 16, IsSigned: false}
+		col.SchemaElement.ConvertedType = parquet.ConvertedTypePtr(parquet.ConvertedType_UINT_16)
+		fieldHandler = uintHandler(16)
+	case "int32":
+		col.SchemaElement.Type = parquet.TypePtr(parquet.Type_INT32)
+		col.SchemaElement.LogicalType = parquet.NewLogicalType()
+		col.SchemaElement.LogicalType.INTEGER = &parquet.IntType{BitWidth: 32, IsSigned: true}
+		col.SchemaElement.ConvertedType = parquet.ConvertedTypePtr(parquet.ConvertedType_INT_32)
+		fieldHandler = intHandler(32)
+	case "uint32":
+		col.SchemaElement.Type = parquet.TypePtr(parquet.Type_INT32)
+		col.SchemaElement.LogicalType = parquet.NewLogicalType()
+		col.SchemaElement.LogicalType.INTEGER = &parquet.IntType{BitWidth: 32, IsSigned: false}
+		col.SchemaElement.ConvertedType = parquet.ConvertedTypePtr(parquet.ConvertedType_UINT_32)
+		fieldHandler = uintHandler(32)
+	case "int64":
+		col.SchemaElement.Type = parquet.TypePtr(parquet.Type_INT64)
+		col.SchemaElement.LogicalType = parquet.NewLogicalType()
+		col.SchemaElement.LogicalType.INTEGER = &parquet.IntType{BitWidth: 64, IsSigned: true}
+		col.SchemaElement.ConvertedType = parquet.ConvertedTypePtr(parquet.ConvertedType_INT_64)
+		fieldHandler = intHandler(64)
+	case "uint64":
+		col.SchemaElement.Type = parquet.TypePtr(parquet.Type_INT64)
+		col.SchemaElement.LogicalType = parquet.NewLogicalType()
+		col.SchemaElement.LogicalType.INTEGER = &parquet.IntType{BitWidth: 64, IsSigned: false}
+		col.SchemaElement.ConvertedType = parquet.ConvertedTypePtr(parquet.ConvertedType_UINT_64)
+		fieldHandler = uintHandler(64)
+	case "float64":
+		col.SchemaElement.Type = parquet.TypePtr(parquet.Type_FLOAT)
+		fieldHandler = floatHandler
+	case "double":
+		col.SchemaElement.Type = parquet.TypePtr(parquet.Type_DOUBLE)
+		fieldHandler = doubleHandler
+	case "int":
+		col.SchemaElement.Type = parquet.TypePtr(parquet.Type_INT64)
+		col.SchemaElement.LogicalType = parquet.NewLogicalType()
+		col.SchemaElement.LogicalType.INTEGER = &parquet.IntType{BitWidth: 64, IsSigned: true}
+		col.SchemaElement.ConvertedType = parquet.ConvertedTypePtr(parquet.ConvertedType_INT_64)
+		fieldHandler = intHandler(64)
+	case "json":
+		col.SchemaElement.Type = parquet.TypePtr(parquet.Type_BYTE_ARRAY)
+		col.SchemaElement.LogicalType = parquet.NewLogicalType()
+		col.SchemaElement.LogicalType.JSON = &parquet.JsonType{}
+		col.SchemaElement.ConvertedType = parquet.ConvertedTypePtr(parquet.ConvertedType_JSON)
+		fieldHandler = jsonHandler
+	default:
+		return nil, nil, fmt.Errorf("unsupported type %q", typ)
+	}
+
+	fieldHandler = optionalHandler(fieldHandler)
+
+	return col, fieldHandler, nil
+}
+
+func byteArrayHandler(s interface{}) (interface{}, error) {
+	localString := fmt.Sprintf("%v", s)
+
+	return []byte(localString), nil
+}
+
+func booleanHandler(s interface{}) (interface{}, error) {
+	localString := fmt.Sprintf("%v", s)
+
+	return strconv.ParseBool(localString)
+}
+
+func uintHandler(bitSize int) func(interface{}) (interface{}, error) {
+	return func(s interface{}) (interface{}, error) {
+		localString := fmt.Sprintf("%v", s)
+		i, err := strconv.ParseUint(localString, 10, bitSize)
+		if err != nil {
+			return nil, err
+		}
+		switch bitSize {
+		case 8, 16, 32:
+			return uint32(i), nil
+		case 64:
+			return i, nil
+		default:
+			return nil, fmt.Errorf("invalid bit size %d", bitSize)
+		}
+	}
+}
+
+func intHandler(bitSize int) func(interface{}) (interface{}, error) {
+	return func(s interface{}) (interface{}, error) {
+		localString := fmt.Sprintf("%v", s)
+		i, err := strconv.ParseInt(localString, 10, bitSize)
+		if err != nil {
+			return nil, err
+		}
+		switch bitSize {
+		case 8, 16, 32:
+			return int32(i), nil
+		case 64:
+			return i, nil
+		default:
+			return nil, fmt.Errorf("invalid bit size %d", bitSize)
+		}
+	}
+}
+
+func floatHandler(s interface{}) (interface{}, error) {
+	localString := fmt.Sprintf("%v", s)
+	f, err := strconv.ParseFloat(localString, 32)
+	return float32(f), err
+}
+
+func doubleHandler(s interface{}) (interface{}, error) {
+	localString := fmt.Sprintf("%v", s)
+	f, err := strconv.ParseFloat(localString, 64)
+	return f, err
+}
+
+func jsonHandler(s interface{}) (interface{}, error) {
+	localString := fmt.Sprintf("%v", s)
+	data := []byte(localString)
+	var obj interface{}
+	if err := json.Unmarshal(data, &obj); err != nil {
+		return nil, err
+	}
+	return data, nil
+}
+
+func optionalHandler(next fieldHandler) fieldHandler {
+	return func(s interface{}) (interface{}, error) {
+		if s == "" {
+			return nil, nil
+		}
+		return next(s)
+	}
+}

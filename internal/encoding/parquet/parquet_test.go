@@ -21,7 +21,7 @@ func TestReadFile(t *testing.T) {
 		assert.NoError(t, err)
 
 		schema := i.Schema()
-		assert.Equal(t, 2, len(schema))
+		assert.Equal(t, 5, len(schema))
 
 		{
 			kind, ok := schema[column]
@@ -33,6 +33,24 @@ func TestReadFile(t *testing.T) {
 			kind, ok := schema["bar"]
 			assert.True(t, ok)
 			assert.Equal(t, "int32", kind.String())
+		}
+
+		{
+			kind, ok := schema["foofoo"]
+			assert.True(t, ok)
+			assert.Equal(t, "string", kind.String())
+		}
+
+		{
+			kind, ok := schema["barbar"]
+			assert.True(t, ok)
+			assert.Equal(t, "float64", kind.String())
+		}
+
+		{
+			kind, ok := schema["fooBar"]
+			assert.True(t, ok)
+			assert.Equal(t, "float64", kind.String())
 		}
 
 		count := 0
@@ -65,8 +83,20 @@ func initFunc(t *testing.T, opts ...goparquet.FileWriterOption) {
 	barStore, err := goparquet.NewInt32Store(parquet.Encoding_PLAIN, true, &goparquet.ColumnParameters{})
 	require.NoError(t, err, "failed to create barStore")
 
+	foofooStore, err := goparquet.NewByteArrayStore(parquet.Encoding_PLAIN, true, &goparquet.ColumnParameters{})
+	require.NoError(t, err, "failed to create foofooStore")
+
+	barbarStore, err := goparquet.NewFloatStore(parquet.Encoding_PLAIN, true, &goparquet.ColumnParameters{})
+	require.NoError(t, err, "failed to create barbarStore")
+
+	fooBarStore, err := goparquet.NewDoubleStore(parquet.Encoding_PLAIN, true, &goparquet.ColumnParameters{})
+	require.NoError(t, err, "failed to create fooBarStore")
+
 	require.NoError(t, w.AddColumn("foo", goparquet.NewDataColumn(fooStore, parquet.FieldRepetitionType_REQUIRED)))
 	require.NoError(t, w.AddColumn("bar", goparquet.NewDataColumn(barStore, parquet.FieldRepetitionType_OPTIONAL)))
+	require.NoError(t, w.AddColumn("foofoo", goparquet.NewDataColumn(foofooStore, parquet.FieldRepetitionType_OPTIONAL)))
+	require.NoError(t, w.AddColumn("barbar", goparquet.NewDataColumn(barbarStore, parquet.FieldRepetitionType_OPTIONAL)))
+	require.NoError(t, w.AddColumn("fooBar", goparquet.NewDataColumn(fooBarStore, parquet.FieldRepetitionType_OPTIONAL)))
 
 	const (
 		numRecords = 10000
@@ -78,7 +108,8 @@ func initFunc(t *testing.T, opts ...goparquet.FileWriterOption) {
 			require.NoError(t, w.FlushRowGroup(), "%d. AddData failed", idx)
 		}
 
-		require.NoError(t, w.AddData(map[string]interface{}{"foo": int64(idx), "bar": int32(idx)}), "%d. AddData failed", idx)
+		require.NoError(t, w.AddData(map[string]interface{}{"foo": int64(idx), "bar": int32(idx), "foofoo":[]byte("foo"), "barbar":float32(idx),
+			"fooBar":float64(idx)}), "%d. AddData failed", idx)
 	}
 
 	assert.NoError(t, w.Close(), "Close failed")

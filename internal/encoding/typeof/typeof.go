@@ -68,8 +68,10 @@ var supported = map[string]Type{
 	"LONG":      Int64, // ORC, PARQUET
 	"INT32":      Int32, // PARQUET
 	"INT64":      Int64, // PARQUET
+	"FLOAT":     Float64, // PARQUET
 	"DOUBLE":    Float64, // ORC, PARQUET
 	"STRING":    String, // ORC, PARQUET
+	"BYTE_ARRAY": String, // PARQUET
 	"TIMESTAMP": Timestamp, // ORC, PARQUET
 	"VARCHAR":   String, // ORC
 	"LIST":      JSON, // ORC, PARQUET

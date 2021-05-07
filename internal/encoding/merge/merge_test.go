@@ -12,6 +12,7 @@ import (
 // BenchmarkFlush runs a benchmark for a Merge function for flushing
 // To run it, go in the directory and do 'go test -benchmem -bench=. -benchtime=1s'
 // BenchmarkMerge/orc-8         	       1	7195029600 ns/op	2101578032 B/op	36859501 allocs/op
+// BenchmarkMerge/parquet-12     	       1	18666411036 ns/op	5142058320 B/op	115850463 allocs/op
 func BenchmarkMerge(b *testing.B) {
 
 	// Append some files
@@ -25,6 +26,15 @@ func BenchmarkMerge(b *testing.B) {
 		b.ReportAllocs()
 		for n := 0; n < b.N; n++ {
 			ToOrc(blocks, blocks[0].Schema())
+		}
+	})
+
+	// Run the actual benchmark
+	b.Run("parquet", func(b *testing.B) {
+		b.ResetTimer()
+		b.ReportAllocs()
+		for n := 0; n < b.N; n++ {
+			ToParquet(blocks, blocks[0].Schema())
 		}
 	})
 }
