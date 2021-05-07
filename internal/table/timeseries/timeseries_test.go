@@ -114,7 +114,7 @@ func TestTimeseries_DynamicSchema(t *testing.T) {
 	{
 		schema, isStatic := eventlog.Schema()
 		assert.False(t, isStatic)
-		assert.Len(t, schema, 8)
+		assert.Len(t, schema, 9)
 	}
 
 	// Get the splits
