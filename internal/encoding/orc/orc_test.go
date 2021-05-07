@@ -22,7 +22,7 @@ func TestOrcRead(t *testing.T) {
 	assert.NoError(t, err)
 
 	schema := i.Schema()
-	assert.Equal(t, 8, len(schema))
+	assert.Equal(t, 9, len(schema))
 
 	{
 		kind, ok := schema[column]
