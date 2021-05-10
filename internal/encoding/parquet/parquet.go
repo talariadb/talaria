@@ -113,7 +113,7 @@ func (i *iterator) Schema() typeof.Schema {
 		t := c.Type()
 
 		if t == nil {
-			p := getSchemaLogicalType(c.Element().GetLogicalType())
+			p := getSchemaLogicalType(c)
 
 			if t, supported := typeof.FromParquet(&p); supported {
 				result[c.Name()] = t
@@ -127,7 +127,9 @@ func (i *iterator) Schema() typeof.Schema {
 	return result
 }
 
-func getSchemaLogicalType(t *parquet.LogicalType) parquet.Type {
+func getSchemaLogicalType(c *goparquet.Column) parquet.Type {
+	t := c.Element().GetLogicalType()
+
 	switch {
 	case t.IsSetSTRING():
 		return parquet.Type_BYTE_ARRAY

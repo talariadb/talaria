@@ -66,17 +66,14 @@ func FromParquetBy(payload []byte, partitionBy string, filter *typeof.Schema, ap
 			columnName := cols[i]
 			columnType := schema[columnName]
 
-			fieldHandler, _ := getReverseHandler(columnType.String())
-
-			// Encode to JSON
-			if columnType == typeof.JSON {
-				if encoded, ok := convertToJSON(v); ok {
-					v = encoded
-				}
-			}
+			fieldHandler := parquetHandlerFor(columnType.String())
 
 			if fieldHandler != nil {
-				v, _ = fieldHandler(v)
+				v, err = fieldHandler(v)
+
+				if err != nil {
+					return true
+				}
 			}
 
 			row.Set(columnName, v)
@@ -100,38 +97,22 @@ func FromParquetBy(payload []byte, partitionBy string, filter *typeof.Schema, ap
 	return blocks, nil
 }
 
-type fieldHandler func(interface{}) (interface{}, error)
+type parquetFieldHandler func(interface{}) (interface{}, error)
 
-func getReverseHandler(typ string) (fieldHandler func(interface{}) (interface{}, error), err error) {
+func parquetHandlerFor(typ string) (parquetFieldHandler parquetFieldHandler) {
 
 	switch typ {
 	case "string":
-		fieldHandler = stringHandler
+		parquetFieldHandler = parquetStringHandler
+
+	case "json":
+		parquetFieldHandler = parquetJsonHandler
 	}
 
-	return fieldHandler, nil
+	return parquetFieldHandler
 }
 
-// Transform runs the computed Values and overwrites/appends them to the set.
-func ApplyCastHandlers(r Row, fieldHandlers []fieldHandler) Row {
-	// Create a new output row and copy the column values from the input
-	schema := make(typeof.Schema, len(r.Schema))
-	out := NewRow(schema, len(r.Values))
-
-	i := 0
-	for k, v := range r.Values {
-		handler := fieldHandlers[i]
-
-		if handler != nil {
-			out.Values[k], _ = handler(v)
-		}
-		out.Schema[k] = r.Schema[k]
-	}
-
-	return out
-}
-
-func stringHandler(s interface{}) (interface{}, error) {
+func parquetStringHandler(s interface{}) (interface{}, error) {
 
 	switch s.(type) {
 	case []byte:
@@ -144,4 +125,12 @@ func stringHandler(s interface{}) (interface{}, error) {
 	}
 
 	return nil, nil
+}
+
+func parquetJsonHandler(s interface{}) (interface{}, error) {
+	if encoded, ok := convertToJSON(s); ok {
+		return encoded, nil
+	}
+
+	return nil, fmt.Errorf("Failed to convert to JSON")
 }

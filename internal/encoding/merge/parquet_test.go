@@ -37,8 +37,11 @@ func TestToParquet(t *testing.T) {
 	data["col1"], _ = fieldHandlers[1](5)
 	data["col2"], _ = fieldHandlers[2](14.6)
 
-	_ = writer.AddData(data)
-	_ = writer.Close()
+	err = writer.AddData(data)
+	assert.NoError(t, err)
+
+	err = writer.Close()
+	assert.NoError(t, err)
 
 	parquetBuffer2 := &bytes.Buffer{}
 	writer = goparquet.NewFileWriter(parquetBuffer2,
@@ -53,10 +56,14 @@ func TestToParquet(t *testing.T) {
 	data2["col1"], _ = fieldHandlers[1](10)
 	data2["col2"], _ = fieldHandlers[2](17)
 
-	_ = writer.AddData(data2)
-	_ = writer.FlushRowGroup()
+	err = writer.AddData(data2)
+	assert.NoError(t, err)
 
-	_ = writer.Close()
+	err = writer.FlushRowGroup()
+	assert.NoError(t, err)
+
+	err = writer.Close()
+	assert.NoError(t, err)
 
 	apply := block.Transform(nil)
 

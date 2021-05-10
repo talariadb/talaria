@@ -3,6 +3,7 @@ package merge
 import (
 	"encoding/json"
 	"fmt"
+
 	goparquet "github.com/fraugster/parquet-go"
 	"github.com/fraugster/parquet-go/parquet"
 	"github.com/fraugster/parquet-go/parquetschema"
@@ -216,15 +217,27 @@ func createColumn(field, typ string) (col *parquetschema.ColumnDefinition, field
 }
 
 func byteArrayHandler(s interface{}) (interface{}, error) {
-	localString := fmt.Sprintf("%v", s)
-
-	return []byte(localString), nil
+	switch v := s.(type){
+	case []byte:
+		return v, nil
+	case string:
+		return []byte(v), nil
+	case json.RawMessage:
+		return []byte(v), nil
+	default:
+		return []byte(fmt.Sprintf("%v", s)), nil
+	}
 }
 
 func booleanHandler(s interface{}) (interface{}, error) {
-	localString := fmt.Sprintf("%v", s)
-
-	return strconv.ParseBool(localString)
+	switch v := s.(type){
+	case bool:
+		return v, nil
+	case string:
+		return strconv.ParseBool(v)
+	default:
+		return nil, fmt.Errorf("Unknown format")
+	}
 }
 
 func uintHandler(bitSize int) func(interface{}) (interface{}, error) {
@@ -246,33 +259,55 @@ func uintHandler(bitSize int) func(interface{}) (interface{}, error) {
 }
 
 func intHandler(bitSize int) func(interface{}) (interface{}, error) {
+
 	return func(s interface{}) (interface{}, error) {
-		localString := fmt.Sprintf("%v", s)
-		i, err := strconv.ParseInt(localString, 10, bitSize)
-		if err != nil {
-			return nil, err
-		}
-		switch bitSize {
-		case 8, 16, 32:
-			return int32(i), nil
-		case 64:
-			return i, nil
+		switch v := s.(type) {
+		case int:
+			return intHandlerHelper(bitSize, int64(v))
+		case int64:
+			return intHandlerHelper(bitSize, v)
+		case int32:
+			return intHandlerHelper(bitSize, int64(v))
+		case string:
+			var intVal, err = strconv.ParseInt(v, 10, bitSize)
+			if err != nil {
+				return nil, err
+			}
+
+			return intHandlerHelper(bitSize, intVal)
 		default:
 			return nil, fmt.Errorf("invalid bit size %d", bitSize)
 		}
 	}
 }
 
+func intHandlerHelper(bitSize int, rawValue int64) (interface{}, error) {
+	switch bitSize {
+	case 8, 16, 32:
+		return int32(rawValue), nil
+	case 64:
+		return rawValue, nil
+	default:
+		return nil, fmt.Errorf("invalid bit size %d", bitSize)
+	}
+}
+
 func floatHandler(s interface{}) (interface{}, error) {
-	localString := fmt.Sprintf("%v", s)
-	f, err := strconv.ParseFloat(localString, 32)
-	return float32(f), err
+	switch v := s.(type){
+	case float32:
+		return v, nil
+	default:
+		return nil, fmt.Errorf("Error in parsing")
+	}
 }
 
 func doubleHandler(s interface{}) (interface{}, error) {
-	localString := fmt.Sprintf("%v", s)
-	f, err := strconv.ParseFloat(localString, 64)
-	return f, err
+	switch v := s.(type){
+	case float64:
+		return v, nil
+	default:
+		return nil, fmt.Errorf("Error in parsing")
+	}
 }
 
 func jsonHandler(s interface{}) (interface{}, error) {
