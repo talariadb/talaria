@@ -170,6 +170,7 @@ We are open to contributions, feel free to submit a pull request and we'll revie
 * [Ankit Kumar Sinha](https://www.linkedin.com/in/ankit-kumar-sinha-805359b6/)
 * [Atri Sharma](https://www.linkedin.com/in/atrisharma/)
 * [Qiao Wei](https://www.linkedin.com/in/qiao-wei-3aa22480)
+* [Oscar Cassetti](https://www.linkedin.com/in/ocassetti/)
 
 ## License
 
