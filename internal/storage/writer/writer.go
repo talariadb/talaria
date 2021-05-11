@@ -95,7 +95,7 @@ func newWriter(config config.Sinks, monitor monitor.Monitor, loader *script.Load
 
 	// Configure Azure MultiAccount writer if present
 	if config.Azure != nil && len(config.Azure.StorageAccounts) > 0 {
-		w, err := azure.NewMultiAccountWriter(monitor, config.Azure.BlobServiceURL, config.Azure.Container, config.Azure.Prefix, config.Azure.StorageAccounts, config.Azure.Parallelism, config.Azure.BlockSize)
+		w, err := azure.NewMultiAccountWriter(monitor, config.Azure.BlobServiceURL, config.Azure.Container, config.Azure.Prefix, config.Azure.StorageAccounts, config.Azure.StorageAccountWeights, config.Azure.Parallelism, config.Azure.BlockSize)
 		if err != nil {
 			return nil, err
 		}

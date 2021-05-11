@@ -31,7 +31,7 @@ func TestMultiAccountWriter(t *testing.T) {
 	os.Setenv("AZURE_CLIENT_SECRET", "xyz")
 
 	c, err := NewMultiAccountWriter(monitor.New(logging.NewStandard(), statsd.NewNoop(), "x", "x"),
-		defaultBlobServiceURL, "container", "x", []string{"x-0"}, 0, 0)
+		defaultBlobServiceURL, "container", "x", []string{"x-0"}, nil, 0, 0)
 
 	assert.Nil(t, c)
 	assert.True(t, strings.Contains(err.Error(), "azure: unable to get azure storage credential"))

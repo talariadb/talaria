@@ -17,9 +17,7 @@ stages:
   - build_binary
   - build_docker
 
-# This builds and tests the binary prior to building an image.
-build_binary:
-  stage: build_binary
+.build_base:
   image: golang:1.14
   before_script:
     - cd $GOPATH/src
@@ -27,6 +25,24 @@ build_binary:
     - cd github.com/grab
     - ln -s $CI_PROJECT_DIR
     - cd $CI_PROJECT_NAME
+
+.docker_build:
+  image: docker:stable
+  services:
+    - docker:dind
+  before_script:
+    - apk add --no-cache curl jq python3 py3-pip
+    - pip install awscli==1.18.117
+    - aws ecr get-login-password | docker login --username AWS --password-stdin $DOCKER_REGISTRY
+    - aws --version
+    - docker info
+    - docker --version
+
+# This builds and tests the binary prior to building an image.
+build_binary:
+  stage: build_binary
+  extends:
+    - .build_base
   script:
     - go test -race ./...
     - go build .
@@ -42,20 +58,12 @@ build_binary:
 # This builds a docker for the merge request. The docker image can be fetched under 'talaria:testing' tag.
 build_docker_mr:
   stage: build_docker
-  image: docker:stable
   dependencies: 
     - build_binary
-  services:
-    - docker:dind
+  extends:
+    - .docker_build
   tags:
     - docker
-  before_script:
-    - apk add --no-cache curl jq python3 py3-pip
-    - pip install awscli==1.18.117
-    - aws ecr get-login-password | docker login --username AWS --password-stdin $DOCKER_REGISTRY
-    - aws --version
-    - docker info
-    - docker --version
   script:
     - docker build . --build-arg GO_BINARY=talaria -t="$DOCKER_REGISTRY/talaria:testing"
     - docker push $DOCKER_REGISTRY/talaria:testing
@@ -66,20 +74,14 @@ build_docker_mr:
 # This builds the final docker image that can be deployed. It creates 'talaria:latest' and 'talaria:$COMMIT' tags.
 build_docker:
   stage: build_docker
-  image: docker:stable
+  extends: 
+    - .docker_build
   dependencies: 
     - build_binary
   services:
     - docker:dind
   tags:
     - docker
-  before_script:
-    - apk add --no-cache curl jq python3 py3-pip
-    - pip install awscli==1.18.117
-    - aws ecr get-login-password | docker login --username AWS --password-stdin $DOCKER_REGISTRY
-    - aws --version
-    - docker info
-    - docker --version  
   script:
     - docker build . --build-arg GO_BINARY=talaria  -t="$DOCKER_REGISTRY/talaria:$CI_COMMIT_SHORT_SHA" -t="$DOCKER_REGISTRY/talaria:latest"
     - docker push $DOCKER_REGISTRY/talaria:$CI_COMMIT_SHORT_SHA
