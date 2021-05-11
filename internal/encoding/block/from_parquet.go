@@ -66,12 +66,8 @@ func FromParquetBy(payload []byte, partitionBy string, filter *typeof.Schema, ap
 			columnName := cols[i]
 			columnType := schema[columnName]
 
-			fieldHandler := parquetHandlerFor(columnType.String())
-
-			if fieldHandler != nil {
-				v, err = fieldHandler(v)
-
-				if err != nil {
+			if handler := parquetHandlerFor(columnType.String()); handler != nil {
+				if v, err = handler(v); err != nil {
 					return true
 				}
 			}
@@ -100,16 +96,15 @@ func FromParquetBy(payload []byte, partitionBy string, filter *typeof.Schema, ap
 type parquetFieldHandler func(interface{}) (interface{}, error)
 
 func parquetHandlerFor(typ string) (parquetFieldHandler parquetFieldHandler) {
-
 	switch typ {
 	case "string":
-		parquetFieldHandler = parquetStringHandler
+		return parquetStringHandler
 
 	case "json":
-		parquetFieldHandler = parquetJsonHandler
+		return parquetJsonHandler
 	}
 
-	return parquetFieldHandler
+	return nil
 }
 
 func parquetStringHandler(s interface{}) (interface{}, error) {

@@ -2,6 +2,7 @@ package parquet
 
 import (
 	"bytes"
+
 	goparquet "github.com/fraugster/parquet-go"
 	"github.com/fraugster/parquet-go/parquet"
 	"github.com/kelindar/talaria/internal/encoding/typeof"
@@ -110,21 +111,25 @@ func (i *iterator) Schema() typeof.Schema {
 	schema := i.reader.SchemaReader
 	result := make(typeof.Schema, len(schema.Columns()))
 	for _, c := range schema.Columns() {
-		t := c.Type()
+		t := parquetTypeOf(c)
 
-		if t == nil {
-			p := getSchemaLogicalType(c)
-
-			if t, supported := typeof.FromParquet(&p); supported {
-				result[c.Name()] = t
-			}
-		} else {
-			if t, supported := typeof.FromParquet(t); supported {
-				result[c.Name()] = t
-			}
+		if t, supported := typeof.FromParquet(t); supported {
+			result[c.Name()] = t
 		}
 	}
 	return result
+}
+
+func parquetTypeOf(c *goparquet.Column) *parquet.Type {
+	t := c.Type()
+
+	if t == nil {
+		p := getSchemaLogicalType(c)
+
+		return &p
+	}
+
+	return t
 }
 
 func getSchemaLogicalType(c *goparquet.Column) parquet.Type {

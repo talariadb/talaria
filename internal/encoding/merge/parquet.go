@@ -134,86 +134,82 @@ func createColumn(field, typ string) (col *parquetschema.ColumnDefinition, field
 		col.SchemaElement.LogicalType = parquet.NewLogicalType()
 		col.SchemaElement.LogicalType.STRING = &parquet.StringType{}
 		col.SchemaElement.ConvertedType = parquet.ConvertedTypePtr(parquet.ConvertedType_UTF8)
-		fieldHandler = byteArrayHandler
+		return col, optional(byteArrayHandler), nil
 	case "byte_array":
 		col.SchemaElement.Type = parquet.TypePtr(parquet.Type_BYTE_ARRAY)
-		fieldHandler = byteArrayHandler
+		return col, optional(byteArrayHandler), nil
 	case "boolean":
 		col.SchemaElement.Type = parquet.TypePtr(parquet.Type_BOOLEAN)
-		fieldHandler = booleanHandler
+		return col, optional(booleanHandler), nil
 	case "int8":
 		col.SchemaElement.Type = parquet.TypePtr(parquet.Type_INT32)
 		col.SchemaElement.LogicalType = parquet.NewLogicalType()
 		col.SchemaElement.LogicalType.INTEGER = &parquet.IntType{BitWidth: 8, IsSigned: true}
 		col.SchemaElement.ConvertedType = parquet.ConvertedTypePtr(parquet.ConvertedType_INT_8)
-		fieldHandler = intHandler(8)
+		return col, optional(intHandler(8)), nil
 	case "uint8":
 		col.SchemaElement.Type = parquet.TypePtr(parquet.Type_INT32)
 		col.SchemaElement.LogicalType = parquet.NewLogicalType()
 		col.SchemaElement.LogicalType.INTEGER = &parquet.IntType{BitWidth: 8, IsSigned: false}
 		col.SchemaElement.ConvertedType = parquet.ConvertedTypePtr(parquet.ConvertedType_UINT_8)
-		fieldHandler = uintHandler(8)
+		return col, optional(uintHandler(8)), nil
 	case "int16":
 		col.SchemaElement.Type = parquet.TypePtr(parquet.Type_INT32)
 		col.SchemaElement.LogicalType = parquet.NewLogicalType()
 		col.SchemaElement.LogicalType.INTEGER = &parquet.IntType{BitWidth: 16, IsSigned: true}
 		col.SchemaElement.ConvertedType = parquet.ConvertedTypePtr(parquet.ConvertedType_INT_16)
-		fieldHandler = intHandler(16)
+		return col, optional(intHandler(16)), nil
 	case "uint16":
 		col.SchemaElement.Type = parquet.TypePtr(parquet.Type_INT32)
 		col.SchemaElement.LogicalType = parquet.NewLogicalType()
 		col.SchemaElement.LogicalType.INTEGER = &parquet.IntType{BitWidth: 16, IsSigned: false}
 		col.SchemaElement.ConvertedType = parquet.ConvertedTypePtr(parquet.ConvertedType_UINT_16)
-		fieldHandler = uintHandler(16)
+		return col, optional(uintHandler(16)), nil
 	case "int32":
 		col.SchemaElement.Type = parquet.TypePtr(parquet.Type_INT32)
 		col.SchemaElement.LogicalType = parquet.NewLogicalType()
 		col.SchemaElement.LogicalType.INTEGER = &parquet.IntType{BitWidth: 32, IsSigned: true}
 		col.SchemaElement.ConvertedType = parquet.ConvertedTypePtr(parquet.ConvertedType_INT_32)
-		fieldHandler = intHandler(32)
+		return col, optional(uintHandler(32)), nil
 	case "uint32":
 		col.SchemaElement.Type = parquet.TypePtr(parquet.Type_INT32)
 		col.SchemaElement.LogicalType = parquet.NewLogicalType()
 		col.SchemaElement.LogicalType.INTEGER = &parquet.IntType{BitWidth: 32, IsSigned: false}
 		col.SchemaElement.ConvertedType = parquet.ConvertedTypePtr(parquet.ConvertedType_UINT_32)
-		fieldHandler = uintHandler(32)
+		return col, optional(uintHandler(32)), nil
 	case "int64":
 		col.SchemaElement.Type = parquet.TypePtr(parquet.Type_INT64)
 		col.SchemaElement.LogicalType = parquet.NewLogicalType()
 		col.SchemaElement.LogicalType.INTEGER = &parquet.IntType{BitWidth: 64, IsSigned: true}
 		col.SchemaElement.ConvertedType = parquet.ConvertedTypePtr(parquet.ConvertedType_INT_64)
-		fieldHandler = intHandler(64)
+		return col, optional(intHandler(64)), nil
 	case "uint64":
 		col.SchemaElement.Type = parquet.TypePtr(parquet.Type_INT64)
 		col.SchemaElement.LogicalType = parquet.NewLogicalType()
 		col.SchemaElement.LogicalType.INTEGER = &parquet.IntType{BitWidth: 64, IsSigned: false}
 		col.SchemaElement.ConvertedType = parquet.ConvertedTypePtr(parquet.ConvertedType_UINT_64)
-		fieldHandler = uintHandler(64)
+		return col, optional(uintHandler(64)), nil
 	case "float64":
 		col.SchemaElement.Type = parquet.TypePtr(parquet.Type_FLOAT)
-		fieldHandler = floatHandler
+		return col, optional(floatHandler), nil
 	case "double":
 		col.SchemaElement.Type = parquet.TypePtr(parquet.Type_DOUBLE)
-		fieldHandler = doubleHandler
+		return col, optional(doubleHandler), nil
 	case "int":
 		col.SchemaElement.Type = parquet.TypePtr(parquet.Type_INT64)
 		col.SchemaElement.LogicalType = parquet.NewLogicalType()
 		col.SchemaElement.LogicalType.INTEGER = &parquet.IntType{BitWidth: 64, IsSigned: true}
 		col.SchemaElement.ConvertedType = parquet.ConvertedTypePtr(parquet.ConvertedType_INT_64)
-		fieldHandler = intHandler(64)
+		return col, optional(intHandler(64)), nil
 	case "json":
 		col.SchemaElement.Type = parquet.TypePtr(parquet.Type_BYTE_ARRAY)
 		col.SchemaElement.LogicalType = parquet.NewLogicalType()
 		col.SchemaElement.LogicalType.JSON = &parquet.JsonType{}
 		col.SchemaElement.ConvertedType = parquet.ConvertedTypePtr(parquet.ConvertedType_JSON)
-		fieldHandler = jsonHandler
+		return col, optional(jsonHandler), nil
 	default:
 		return nil, nil, fmt.Errorf("unsupported type %q", typ)
 	}
-
-	fieldHandler = optionalHandler(fieldHandler)
-
-	return col, fieldHandler, nil
 }
 
 func byteArrayHandler(s interface{}) (interface{}, error) {
@@ -320,7 +316,7 @@ func jsonHandler(s interface{}) (interface{}, error) {
 	return data, nil
 }
 
-func optionalHandler(next fieldHandler) fieldHandler {
+func optional(next fieldHandler) fieldHandler {
 	return func(s interface{}) (interface{}, error) {
 		if s == "" {
 			return nil, nil
