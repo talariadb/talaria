@@ -41,7 +41,7 @@ func ForStreaming(config config.Streams, monitor monitor.Monitor, loader *script
 
 // ForCompaction creates a compaction writer
 func ForCompaction(config *config.Compaction, monitor monitor.Monitor, store storage.Storage, loader *script.Loader) (*compact.Storage, error) {
-	writer, err := newWriter(config.Sinks, loader)
+	writer, err := newWriter(config.Sinks, monitor, loader)
 	if err != nil {
 		return nil, err
 	}
@@ -81,20 +81,29 @@ func ForCompaction(config *config.Compaction, monitor monitor.Monitor, store sto
 }
 
 // NewWriter creates a new writer from the configuration.
-func newWriter(config config.Sinks, loader *script.Loader) (flush.Writer, error) {
+func newWriter(config config.Sinks, monitor monitor.Monitor, loader *script.Loader) (flush.Writer, error) {
 	var writers []multi.SubWriter
 
 	// Configure S3 writer if present
 	if config.S3 != nil {
-		w, err := s3.New(config.S3.Bucket, config.S3.Prefix, config.S3.Region, config.S3.Endpoint, config.S3.SSE, config.S3.AccessKey, config.S3.SecretKey, config.S3.Concurrency)
+		w, err := s3.New(monitor, config.S3.Bucket, config.S3.Prefix, config.S3.Region, config.S3.Endpoint, config.S3.SSE, config.S3.AccessKey, config.S3.SecretKey, config.S3.Concurrency)
 		if err != nil {
 			return nil, err
 		}
 		writers = append(writers, w)
 	}
 
-	// Configure Azure writer if present
-	if config.Azure != nil {
+	// Configure Azure MultiAccount writer if present
+	if config.Azure != nil && len(config.Azure.StorageAccounts) > 0 {
+		w, err := azure.NewMultiAccountWriter(monitor, config.Azure.BlobServiceURL, config.Azure.Container, config.Azure.Prefix, config.Azure.StorageAccounts, config.Azure.StorageAccountWeights, config.Azure.Parallelism, config.Azure.BlockSize)
+		if err != nil {
+			return nil, err
+		}
+		writers = append(writers, w)
+	}
+
+	// Configure Azure SingleAccount writer if present
+	if config.Azure != nil && len(config.Azure.StorageAccounts) == 0 {
 		w, err := azure.New(config.Azure.Container, config.Azure.Prefix)
 		if err != nil {
 			return nil, err
@@ -166,7 +175,7 @@ func newStreamer(config config.Streams, monitor monitor.Monitor, loader *script.
 	}
 
 	for _, v := range config {
-		w, err := newWriter(v, loader)
+		w, err := newWriter(v, monitor, loader)
 		if err != nil {
 			return noop.New(), err
 		}

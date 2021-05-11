@@ -121,7 +121,7 @@ func (t *Table) loadStaticSchema(uriOrSchema string) *typeof.Schema {
 
 	// Check if given uri has error
 	if u.Err != nil {
-		t.monitor.Warning(errors.Internal("error reading from uri", u.Err))
+		t.monitor.Warning(errors.Internal(fmt.Sprintf("error reading from uri %s", uriOrSchema), u.Err))
 		return nil
 	}
 

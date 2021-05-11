@@ -2,6 +2,7 @@ package multi
 
 import (
 	"context"
+	"sync/atomic"
 	"testing"
 
 	"github.com/grab/async"
@@ -35,15 +36,15 @@ func (w *MockWriterFull) Run(ctx context.Context) (async.Task, error) {
 }
 
 func TestMulti(t *testing.T) {
-	var count int
+	var count int64
 	sub := MockWriter(func(key key.Key, val []byte) error {
-		count++
+		atomic.AddInt64(&count, 1)
 		return nil
 	})
 
 	multiWriter := New(sub, sub, sub)
 	assert.NoError(t, multiWriter.Write(nil, nil))
-	assert.Equal(t, 3, count)
+	assert.EqualValues(t, 3, count)
 
 	mock1 := MockWriterFull{Count: 0}
 	mock2 := MockWriterFull{Count: 5}
