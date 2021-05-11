@@ -155,12 +155,13 @@ type S3Sink struct {
 
 // AzureSink represents a sink to Azure
 type AzureSink struct {
-	Container       string   `json:"container" yaml:"container" env:"CONTAINER"`                   // The container name
-	Prefix          string   `json:"prefix" yaml:"prefix" env:"PREFIX"`                            // The prefix to add
-	Parallelism     uint16   `json:"parallelism" yaml:"parallelism" env:"PARALLELISM"`             // The BlockBlob upload parallelism
-	BlockSize       int64    `json:"blockSize" yaml:"blockSize" env:"BLOCKSIZE"`                   // The Block Size for upload
-	BlobServiceURL  string   `json:"blobServiceURL" yaml:"blobServiceURL" env:"BLOBSERVICEURL"`    // The blob service URL
-	StorageAccounts []string `json:"storageAccounts" yaml:"storageAccounts" env:"STORAGEACCOUNTS"` // The list of storage accounts
+	Container             string   `json:"container" yaml:"container" env:"CONTAINER"`                                     // The container name
+	Prefix                string   `json:"prefix" yaml:"prefix" env:"PREFIX"`                                              // The prefix to add
+	Parallelism           uint16   `json:"parallelism" yaml:"parallelism" env:"PARALLELISM"`                               // The BlockBlob upload parallelism
+	BlockSize             int64    `json:"blockSize" yaml:"blockSize" env:"BLOCKSIZE"`                                     // The Block Size for upload
+	BlobServiceURL        string   `json:"blobServiceURL" yaml:"blobServiceURL" env:"BLOBSERVICEURL"`                      // The blob service URL
+	StorageAccounts       []string `json:"storageAccounts" yaml:"storageAccounts" env:"STORAGEACCOUNTS"`                   // The list of storage accounts
+	StorageAccountWeights []uint   `json:"storageAccountWeights" yaml:"storageAccountWeights" env:"STORAGEACCOUNTWEIGHTS"` //The list of weighting factor of each storage accounts
 }
 
 // BigQuerySink represents a sink to Google Big Query

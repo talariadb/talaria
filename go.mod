@@ -40,6 +40,7 @@ require (
 	github.com/kelindar/loader v0.0.11
 	github.com/kelindar/lua v0.0.7
 	github.com/miekg/dns v1.1.29 // indirect
+	github.com/mroth/weightedrand v0.4.1
 	github.com/myteksi/hystrix-go v1.1.3
 	github.com/samuel/go-thrift v0.0.0-20191111193933-5165175b40af
 	github.com/satori/go.uuid v1.2.0 // indirect
