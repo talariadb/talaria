@@ -74,6 +74,7 @@ service Ingress {
 ```
 
 Below is a list of currently supported sinks and their example configurations:
+
 - [Amazon S3](https://aws.amazon.com/s3/) using [s3 sink](./internal/storage/writer/s3).
 - [DigitalOcean Spaces](https://www.digitalocean.com/products/spaces/) using [s3 sink](./internal/storage/writer/s3), a custom endpoint and us-east-1 region.
 - [Google Cloud Storage](https://cloud.google.com/storage/) using [gcs sink](./internal/storage/writer/gcs).
@@ -82,6 +83,31 @@ Below is a list of currently supported sinks and their example configurations:
 - [Minio](https://min.io/) using [s3 sink](./internal/storage/writer/s3), a custom endpoint and us-east-1 region.
 - [Google Big Query](https://cloud.google.com/bigquery/) using [bigquery sink](./internal/storage/writer/bigquery).
 - Talaria itself using [talaria sink](./internal/storage/writer/talaria).
+
+For Microsoft Azure Blob Storage and Azure Data Lake Gen 2, we support writing across multiple storage accounts.
+We supports two modes:
+
+1. Random choice, where each write is directed to a storage account randomly, for which you can just specficy a list of storage accouts.
+2. Weighted choice, where a set of weights (positive integers) are assigned and each write is directed to a storage account based on the specified weights.
+
+An example of weighted choice is shown below:
+
+```yaml
+    - azure:
+        container: a_container
+        prefix: a_prefix
+        blobServiceURL: .storage.microsoft.net    
+        storageAccounts:
+            - a_storage_account
+            - b_storage_account
+        storageAccountWeights: [1, 2]
+```
+
+Random choice and weighed choice are particularly useful for some key scenarios:
+
+- High throughput deployment where the I/O generate by Talaria exceedes the limitation of the stroage accounts.
+- When deploying on internal endpoints with multiple VPNs links and you want to split the network traffic across multiple
+  network links.  
 
 ## Hot Data Query with Talaria
 
@@ -142,7 +168,8 @@ We are open to contributions, feel free to submit a pull request and we'll revie
 * [Yichao Wang](https://www.linkedin.com/in/wangyichao/)
 * [Chun Rong Phang](https://www.linkedin.com/in/phang-chun-rong-6232ab78/)
 * [Ankit Kumar Sinha](https://www.linkedin.com/in/ankit-kumar-sinha-805359b6/)
-* [Atri Sharma] (https://www.linkedin.com/in/atrisharma/)
+* [Atri Sharma](https://www.linkedin.com/in/atrisharma/)
+* [Qiao Wei](https://www.linkedin.com/in/qiao-wei-3aa22480)
 
 ## License
 

@@ -7,12 +7,15 @@ import (
 	"testing"
 
 	"github.com/kelindar/talaria/internal/encoding/key"
+	"github.com/kelindar/talaria/internal/monitor"
+	"github.com/kelindar/talaria/internal/monitor/logging"
+	"github.com/kelindar/talaria/internal/monitor/statsd"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
 
 func TestS3Writer(t *testing.T) {
-	_, err := New("testBucket", "", "us-east-1", "", "", "", "", 128)
+	_, err := New(nil, "testBucket", "", "us-east-1", "", "", "", "", 128)
 
 	assert.Nil(t, err)
 }
@@ -22,6 +25,7 @@ func TestS3Writer_Write(t *testing.T) {
 	mockUploader.On("Upload", mock.Anything, mock.Anything).Return(nil, nil).Once()
 
 	s3Writer := &Writer{
+		monitor:  monitor.New(logging.NewStandard(), statsd.NewNoop(), "x", "x"),
 		uploader: mockUploader,
 		bucket:   "testBucket",
 	}
