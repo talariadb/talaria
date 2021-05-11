@@ -16,6 +16,7 @@ func TestToParquet(t *testing.T) {
 		"col0": typeof.String,
 		"col1": typeof.Int64,
 		"col2": typeof.Float64,
+		"col3": typeof.JSON,
 	}
 	parquetSchema, fieldHandlers, err := deriveSchema(schema)
 
@@ -36,6 +37,7 @@ func TestToParquet(t *testing.T) {
 	data["col0"], _ = fieldHandlers[0]("foo")
 	data["col1"], _ = fieldHandlers[1](5)
 	data["col2"], _ = fieldHandlers[2](14.6)
+	data["col3"], _ = fieldHandlers[3]("[{\"column\":\"a\",\"type\":\"VARCHAR\"}")
 
 	err = writer.AddData(data)
 	assert.NoError(t, err)
@@ -55,6 +57,7 @@ func TestToParquet(t *testing.T) {
 	data2["col0"], _ = fieldHandlers[0]("foofoo")
 	data2["col1"], _ = fieldHandlers[1](10)
 	data2["col2"], _ = fieldHandlers[2](17)
+	data2["col3"], _ = fieldHandlers[3]("[{\"column\":\"a\",\"type\":\"VARCHAR\"}")
 
 	err = writer.AddData(data2)
 	assert.NoError(t, err)
