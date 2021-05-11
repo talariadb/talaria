@@ -7,6 +7,7 @@ import (
 	"github.com/fraugster/parquet-go/parquet"
 	"github.com/kelindar/talaria/internal/encoding/typeof"
 	"github.com/kelindar/talaria/internal/monitor/errors"
+
 	"io"
 	"os"
 	"sort"

@@ -59,8 +59,7 @@ func ToParquet(blocks []block.Block, schema typeof.Schema) ([]byte, error) {
 		for i := 0; i < allCols[0].Count(); i++ {
 			data := make(map[string]interface{})
 
-			j := 0
-			for _, colName := range schema.Columns() {
+			for j, colName := range schema.Columns() {
 				localCol := allCols[j]
 				fieldHandler := fieldHandlers[j]
 				finalData := localCol.At(i)
@@ -70,8 +69,6 @@ func ToParquet(blocks []block.Block, schema typeof.Schema) ([]byte, error) {
 				}
 
 				data[colName] = finalData
-
-				j++
 			}
 
 			if err := writer.AddData(data); err != nil {
@@ -100,7 +97,7 @@ func deriveSchema(inputSchema typeof.Schema) (schema *parquetschema.SchemaDefini
 		},
 	}
 
-	fieldHandlers = make([]fieldHandler, 0)
+	fieldHandlers = make([]fieldHandler, 0, len(inputSchema.Columns()))
 
 	for _, field := range inputSchema.Columns() {
 		typ := inputSchema[field]
@@ -316,6 +313,7 @@ func jsonHandler(s interface{}) (interface{}, error) {
 	return data, nil
 }
 
+// Allows fieldHandlers to be chained
 func optional(next fieldHandler) fieldHandler {
 	return func(s interface{}) (interface{}, error) {
 		if s == "" {

@@ -95,7 +95,7 @@ func FromParquetBy(payload []byte, partitionBy string, filter *typeof.Schema, ap
 
 type parquetFieldHandler func(interface{}) (interface{}, error)
 
-func parquetHandlerFor(typ string) (parquetFieldHandler parquetFieldHandler) {
+func parquetHandlerFor(typ string) parquetFieldHandler {
 	switch typ {
 	case "string":
 		return parquetStringHandler
@@ -108,15 +108,9 @@ func parquetHandlerFor(typ string) (parquetFieldHandler parquetFieldHandler) {
 }
 
 func parquetStringHandler(s interface{}) (interface{}, error) {
-
-	switch s.(type) {
+	switch v := s.(type) {
 	case []byte:
-		buf, ok := s.([]byte)
-		if !ok {
-			return nil, fmt.Errorf("Failed to get bytes from the interface")
-		}
-
-		return string(buf), nil
+		return string(v), nil
 	}
 
 	return nil, nil
