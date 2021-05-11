@@ -121,7 +121,7 @@ func NewMultiAccountWriter(monitor monitor.Monitor, blobServiceURL, container, p
 	if weights != nil {
 
 		if len(storageAccount) != len(weights) {
-			return nil, fmt.Errorf("Invalid configuration number of storage account %v !=  number of weights %v", len(storageAccount), len(weights))
+			return nil, fmt.Errorf("azure: Invalid configuration number of storage account %v !=  number of weights %v", len(storageAccount), len(weights))
 		}
 
 		choices := make([]weightedrand.Choice, len(storageAccount))
