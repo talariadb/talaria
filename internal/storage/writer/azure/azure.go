@@ -15,6 +15,7 @@ import (
 	"github.com/kelindar/talaria/internal/encoding/key"
 	"github.com/kelindar/talaria/internal/monitor"
 	"github.com/kelindar/talaria/internal/monitor/errors"
+	"github.com/mroth/weightedrand"
 )
 
 // Writer represents a writer for Microsoft Azure.
