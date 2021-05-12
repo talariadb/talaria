@@ -3,6 +3,7 @@ package merge
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/kelindar/talaria/internal/presto"
 
 	goparquet "github.com/fraugster/parquet-go"
 	"github.com/fraugster/parquet-go/parquet"
@@ -42,7 +43,7 @@ func ToParquet(blocks []block.Block, schema typeof.Schema) ([]byte, error) {
 		cols := make(column.Columns, 16)
 		for name, typ := range schema {
 			col, ok := rows[name]
-			if !ok || col.Kind() != typ {
+			if !ok || (col.Kind() != typ && !isTypeCompatible(col, typ)) {
 				col = column.NewColumn(typ)
 			}
 
@@ -203,7 +204,7 @@ func createColumn(field, typ string) (col *parquetschema.ColumnDefinition, field
 		col.SchemaElement.LogicalType = parquet.NewLogicalType()
 		col.SchemaElement.LogicalType.JSON = &parquet.JsonType{}
 		col.SchemaElement.ConvertedType = parquet.ConvertedTypePtr(parquet.ConvertedType_JSON)
-		return col, optional(jsonHandler), nil
+		return col, optional(byteArrayHandler), nil
 	default:
 		return nil, nil, fmt.Errorf("unsupported type %q", typ)
 	}
@@ -289,6 +290,8 @@ func floatHandler(s interface{}) (interface{}, error) {
 	switch v := s.(type){
 	case float32:
 		return v, nil
+	case float64:
+		return float32(v), nil
 	default:
 		return nil, fmt.Errorf("Error in parsing")
 	}
@@ -303,16 +306,6 @@ func doubleHandler(s interface{}) (interface{}, error) {
 	}
 }
 
-func jsonHandler(s interface{}) (interface{}, error) {
-	localString := fmt.Sprintf("%v", s)
-	data := []byte(localString)
-	var obj interface{}
-	if err := json.Unmarshal(data, &obj); err != nil {
-		return nil, err
-	}
-	return data, nil
-}
-
 // Allows fieldHandlers to be chained
 func optional(next fieldHandler) fieldHandler {
 	return func(s interface{}) (interface{}, error) {
@@ -321,4 +314,13 @@ func optional(next fieldHandler) fieldHandler {
 		}
 		return next(s)
 	}
+}
+
+func isTypeCompatible(c presto.Column, p typeof.Type) bool {
+	if c.Kind() == typeof.String && p == typeof.JSON {
+		// Intercompatible types
+		return true
+	}
+
+	return false
 }

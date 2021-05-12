@@ -36,10 +36,17 @@ func TestToParquet(t *testing.T) {
 
 	data := make(map[string]interface{})
 
-	data["col0"], _ = fieldHandlers[0]("foo")
-	data["col1"], _ = fieldHandlers[1](5)
-	data["col2"], _ = fieldHandlers[2](14.6)
-	data["col3"], _ = fieldHandlers[3]("[{\"column\":\"a\",\"type\":\"VARCHAR\"}")
+	data["col0"], err = fieldHandlers[0]("foo")
+	assert.NoError(t, err)
+
+	data["col1"], err = fieldHandlers[1](5)
+	assert.NoError(t, err)
+
+	data["col2"], err = fieldHandlers[2](14.6)
+	assert.NoError(t, err)
+
+	data["col3"], err = fieldHandlers[3]("[{\"column\":\"a\",\"type\":\"VARCHAR\"}]")
+	assert.NoError(t, err)
 
 	err = writer.AddData(data)
 	assert.NoError(t, err)
@@ -57,9 +64,16 @@ func TestToParquet(t *testing.T) {
 	data2 := make(map[string]interface{})
 
 	data2["col0"], _ = fieldHandlers[0]("foofoo")
+	assert.NoError(t, err)
+
 	data2["col1"], _ = fieldHandlers[1](10)
-	data2["col2"], _ = fieldHandlers[2](17)
-	data2["col3"], _ = fieldHandlers[3]("[{\"column\":\"a\",\"type\":\"VARCHAR\"}")
+	assert.NoError(t, err)
+
+	data2["col2"], _ = fieldHandlers[2](17.4)
+	assert.NoError(t, err)
+
+	data2["col3"], _ = fieldHandlers[3]("[{\"column\":\"a\",\"type\":\"VARCHAR\"}]")
+	assert.NoError(t, err)
 
 	err = writer.AddData(data2)
 	assert.NoError(t, err)
