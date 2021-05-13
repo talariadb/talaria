@@ -2,14 +2,13 @@ package merge
 
 import (
 	"bytes"
+	"testing"
 
 	goparquet "github.com/fraugster/parquet-go"
 	"github.com/fraugster/parquet-go/parquet"
 	"github.com/kelindar/talaria/internal/encoding/block"
 	"github.com/kelindar/talaria/internal/encoding/typeof"
 	"github.com/stretchr/testify/assert"
-
-	"testing"
 )
 
 func TestToParquet(t *testing.T) {

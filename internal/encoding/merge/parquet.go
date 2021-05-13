@@ -3,7 +3,7 @@ package merge
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/kelindar/talaria/internal/presto"
+	"strconv"
 
 	goparquet "github.com/fraugster/parquet-go"
 	"github.com/fraugster/parquet-go/parquet"
@@ -12,7 +12,7 @@ import (
 	"github.com/kelindar/talaria/internal/encoding/block"
 	"github.com/kelindar/talaria/internal/encoding/typeof"
 	"github.com/kelindar/talaria/internal/monitor/errors"
-	"strconv"
+	"github.com/kelindar/talaria/internal/presto"
 )
 
 // ToParquet merges multiple blocks together and outputs a key and merged Parquet data

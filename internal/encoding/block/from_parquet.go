@@ -2,6 +2,7 @@ package block
 
 import (
 	"fmt"
+
 	"github.com/kelindar/talaria/internal/column"
 	"github.com/kelindar/talaria/internal/encoding/parquet"
 	"github.com/kelindar/talaria/internal/encoding/typeof"

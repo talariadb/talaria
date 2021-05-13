@@ -1,9 +1,10 @@
 package block
 
 import (
-	"github.com/stretchr/testify/assert"
 	"io/ioutil"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 const testFileForParquet = "../../../test/test2.parquet"
