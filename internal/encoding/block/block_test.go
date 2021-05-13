@@ -22,7 +22,7 @@ func TestBlock_Types(t *testing.T) {
 	assert.NoError(t, err)
 
 	schema := b[0].Schema()
-	assert.Equal(t, 8, len(schema))
+	assert.Equal(t, 9, len(schema))
 	assert.Contains(t, schema, "boolean1")
 	assert.Contains(t, schema, "double1")
 	assert.Contains(t, schema, "int1")

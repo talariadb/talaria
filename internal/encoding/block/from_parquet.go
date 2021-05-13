@@ -1,6 +1,8 @@
 package block
 
 import (
+	"fmt"
+
 	"github.com/kelindar/talaria/internal/column"
 	"github.com/kelindar/talaria/internal/encoding/parquet"
 	"github.com/kelindar/talaria/internal/encoding/typeof"
@@ -65,10 +67,9 @@ func FromParquetBy(payload []byte, partitionBy string, filter *typeof.Schema, ap
 			columnName := cols[i]
 			columnType := schema[columnName]
 
-			// Encode to JSON
-			if columnType == typeof.JSON {
-				if encoded, ok := convertToJSON(v); ok {
-					v = encoded
+			if handler := parquetHandlerFor(columnType.String()); handler != nil {
+				if v, err = handler(v); err != nil {
+					return true
 				}
 			}
 
@@ -91,4 +92,35 @@ func FromParquetBy(payload []byte, partitionBy string, filter *typeof.Schema, ap
 
 	blocks = append(blocks, last...)
 	return blocks, nil
+}
+
+type parquetFieldHandler func(interface{}) (interface{}, error)
+
+func parquetHandlerFor(typ string) parquetFieldHandler {
+	switch typ {
+	case "string":
+		return parquetStringHandler
+
+	case "json":
+		return parquetJsonHandler
+	}
+
+	return nil
+}
+
+func parquetStringHandler(s interface{}) (interface{}, error) {
+	switch v := s.(type) {
+	case []byte:
+		return string(v), nil
+	}
+
+	return nil, nil
+}
+
+func parquetJsonHandler(s interface{}) (interface{}, error) {
+	if encoded, ok := convertToJSON(s); ok {
+		return encoded, nil
+	}
+
+	return nil, fmt.Errorf("Failed to convert to JSON")
 }

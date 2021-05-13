@@ -2,12 +2,14 @@ package parquet
 
 import (
 	"bytes"
-	goparquet "github.com/fraugster/parquet-go"
-	"github.com/kelindar/talaria/internal/encoding/typeof"
-	"github.com/kelindar/talaria/internal/monitor/errors"
 	"io"
 	"os"
 	"sort"
+
+	goparquet "github.com/fraugster/parquet-go"
+	"github.com/fraugster/parquet-go/parquet"
+	"github.com/kelindar/talaria/internal/encoding/typeof"
+	"github.com/kelindar/talaria/internal/monitor/errors"
 )
 
 var errNoWriter = errors.New("unable to create Parquet writer")
@@ -109,13 +111,40 @@ func (i *iterator) Schema() typeof.Schema {
 	schema := i.reader.SchemaReader
 	result := make(typeof.Schema, len(schema.Columns()))
 	for _, c := range schema.Columns() {
-		t := c.Type()
+		t := parquetTypeOf(c)
 
-		if t, supported := typeof.FromParquet(t); supported {
+		if t, supported := typeof.FromParquet(&t); supported {
 			result[c.Name()] = t
 		}
 	}
 	return result
+}
+
+func parquetTypeOf(c *goparquet.Column) parquet.Type {
+	if t := c.Type(); t != nil {
+		return *t
+	}
+
+	k := c.Element().GetLogicalType()
+
+	switch  {
+	case k.IsSetSTRING():
+		return parquet.Type_BYTE_ARRAY
+	case k.IsSetJSON():
+		return parquet.Type_FIXED_LEN_BYTE_ARRAY
+	case k.IsSetDECIMAL():
+		return parquet.Type_FLOAT
+	case k.IsSetINTEGER():
+		if k.INTEGER.GetBitWidth() == 32 {
+			return parquet.Type_INT32
+		} else if k.INTEGER.GetBitWidth() == 64 {
+			return parquet.Type_INT64
+		} else {
+			panic("parquet: unsupported integer bitsize")
+		}
+	default:
+		return parquet.SchemaElement_Type_DEFAULT
+	}
 }
 
 // Close closes the iterator.

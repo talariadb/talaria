@@ -147,5 +147,6 @@ func convertToString(value interface{}) (string, bool) {
 	if ok {
 		return strconv.FormatInt(valueInt, 10), true
 	}
+
 	return "", false
 }
