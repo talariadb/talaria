@@ -105,7 +105,7 @@ func deriveSchema(inputSchema typeof.Schema) (schema *parquetschema.SchemaDefini
 
 		col, fieldHandler, err := createColumn(field, typ.String())
 		if err != nil {
-			return nil, nil, fmt.Errorf("toparquet:couldn't create column for field %s: %v", field, err)
+			return nil, nil, fmt.Errorf("toparquet: couldn't create column for field %s: %v", field, err)
 		}
 
 		fieldHandlers = append(fieldHandlers, fieldHandler)
@@ -113,7 +113,7 @@ func deriveSchema(inputSchema typeof.Schema) (schema *parquetschema.SchemaDefini
 	}
 
 	if err := schema.Validate(); err != nil {
-		return schema, nil, fmt.Errorf("toparquet:validation of generated schema failed: %w", err)
+		return schema, nil, fmt.Errorf("toparquet: validation of generated schema failed: %w", err)
 	}
 
 	return schema, fieldHandlers, nil
@@ -206,7 +206,7 @@ func createColumn(field, typ string) (col *parquetschema.ColumnDefinition, field
 		col.SchemaElement.ConvertedType = parquet.ConvertedTypePtr(parquet.ConvertedType_JSON)
 		return col, optional(byteArrayHandler), nil
 	default:
-		return nil, nil, fmt.Errorf("toparquet:unsupported type %q", typ)
+		return nil, nil, fmt.Errorf("toparquet: unsupported type %q", typ)
 	}
 }
 
@@ -230,7 +230,7 @@ func booleanHandler(s interface{}) (interface{}, error) {
 	case string:
 		return strconv.ParseBool(v)
 	default:
-		return nil, fmt.Errorf("toparquet:Unable to parse as boolean %d", s)
+		return nil, fmt.Errorf("toparquet: unable to parse as boolean %d", s)
 	}
 }
 
@@ -247,7 +247,7 @@ func uintHandler(bitSize int) func(interface{}) (interface{}, error) {
 		case 64:
 			return i, nil
 		default:
-			return nil, fmt.Errorf("toparquet:invalid uint bit size %d", bitSize)
+			return nil, fmt.Errorf("toparquet: invalid uint bit size %d", bitSize)
 		}
 	}
 }
@@ -261,7 +261,7 @@ func intHandler(bitSize int) func(interface{}) (interface{}, error) {
 		case 64:
 			return rawValue, nil
 		default:
-			return nil, fmt.Errorf("toparquet:invalid integer bit size %d", bitSize)
+			return nil, fmt.Errorf("toparquet: invalid integer bit size %d", bitSize)
 		}
 	}
 
@@ -281,7 +281,7 @@ func intHandler(bitSize int) func(interface{}) (interface{}, error) {
 
 			return helperFunc(bitSize, intVal)
 		default:
-			return nil, fmt.Errorf("toparquet:invalid integer bit size %d", bitSize)
+			return nil, fmt.Errorf("toparquet: invalid integer bit size %d", bitSize)
 		}
 	}
 }
@@ -293,7 +293,7 @@ func floatHandler(s interface{}) (interface{}, error) {
 	case float64:
 		return float32(v), nil
 	default:
-		return nil, fmt.Errorf("toparquet:Error to parse as float32 %d", s)
+		return nil, fmt.Errorf("toparquet: Error to parse as float32 %d", s)
 	}
 }
 
@@ -302,7 +302,7 @@ func doubleHandler(s interface{}) (interface{}, error) {
 	case float64:
 		return v, nil
 	default:
-		return nil, fmt.Errorf("toparquet:Error in parse as float64 %d", s)
+		return nil, fmt.Errorf("toparquet: Error in parse as float64 %d", s)
 	}
 }
 
