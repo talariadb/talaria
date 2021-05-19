@@ -7,3 +7,6 @@ data
 .idea/
 testdata-*
 .DS_Store
+*.vim
+/*.yaml
+.env
