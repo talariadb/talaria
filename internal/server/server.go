@@ -9,6 +9,7 @@ import (
 	"io"
 	"net"
 	"runtime/debug"
+	"strings"
 	"time"
 
 	"github.com/grab/async"
@@ -138,9 +139,15 @@ func (s *Server) pollFromSQS(conf *config.Config) (err error) {
 	// Start ingesting
 	s.monitor.Info("server: starting ingestion from S3/SQS...")
 	s.s3sqs.Range(func(v []byte) bool {
-		if _, err := s.Ingest(context.Background(), &talaria.IngestRequest{
-			Data: &talaria.IngestRequest_Orc{Orc: v},
-		}); err != nil {
+		ingestRequest := talaria.IngestRequest{
+			Data: &talaria.IngestRequest_Orc{Orc: v}}
+
+		if strings.EqualFold(conf.Writers.S3SQS.IngestFileType, "parquet") {
+			ingestRequest = talaria.IngestRequest{
+				Data: &talaria.IngestRequest_Parquet{Parquet: v}}
+		}
+
+		if _, err := s.Ingest(context.Background(), &ingestRequest); err != nil {
 			s.monitor.Warning(err)
 		}
 		return false

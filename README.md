@@ -129,6 +129,7 @@ writers:
     queue: "queue-url"
     waitTimeout: 1
     retries: 5
+    ingestFileType: "parquet" # if this field is not specified, default is ORC
 readers:
   presto:
     schema: data
@@ -142,7 +143,6 @@ tables:
     sortBy: time
 ...
 ```
-
 Once you have set up Talaria, you'll need to configure Presto to talk to it using the [Thrift Connector](https://prestodb.io/docs/current/connector/thrift.html). You would need to make sure that:
  1. In the properties file you have configured to talk to Talaria through a kubernetes load balancer.
  2. Presto can access directly the nodes, without the load balancer.
