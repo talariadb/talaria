@@ -129,7 +129,7 @@ writers:
     queue: "queue-url"
     waitTimeout: 1
     retries: 5
-    ingestFileType: "parquet" # if this field is not specified, default is ORC
+    encoding: "parquet" # if this field is not specified, default is ORC
 readers:
   presto:
     schema: data

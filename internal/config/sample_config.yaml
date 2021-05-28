@@ -13,7 +13,7 @@ writers:
     queue: "queue-url"
     waitTimeout: 1
     retries: 5
-    ingestFileType: "parquet"
+    encoding: "parquet"
 storage:
   dir: "/data"
 statsd:

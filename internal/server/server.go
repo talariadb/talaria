@@ -142,7 +142,7 @@ func (s *Server) pollFromSQS(conf *config.Config) (err error) {
 		ingestRequest := talaria.IngestRequest{
 			Data: &talaria.IngestRequest_Orc{Orc: v}}
 
-		if strings.EqualFold(conf.Writers.S3SQS.IngestFileType, "parquet") {
+		if strings.EqualFold(conf.Writers.S3SQS.Encoding, "parquet") {
 			ingestRequest = talaria.IngestRequest{
 				Data: &talaria.IngestRequest_Parquet{Parquet: v}}
 		}
