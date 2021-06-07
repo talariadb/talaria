@@ -156,6 +156,11 @@ where event = 'table1.update'
 limit 1000
 ```
 
+## Ingesting Files Into Talaria
+
+To ingest existing ORC, CSV or Parquet files from a storage URL (imagine S3 or Azure Blob Storage), use the Talaria File Ingestion Client:
+
+https://github.com/atris/TalariaFileIngestionClient
 
 ## Quick Start
 
