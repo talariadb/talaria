@@ -137,7 +137,7 @@ func convertToJSON(value interface{}) (string, bool) {
 	return string(json.RawMessage(b)), true
 }
 
-// convertToString converst value to string because currently all the keys in Badger are stored in the form of string before hashing to the byte array
+// convertToString converts value to string because currently all the keys in Badger are stored in the form of string before hashing to the byte array
 func convertToString(value interface{}) (string, bool) {
 	v, ok := value.(string)
 	if ok {
@@ -146,6 +146,27 @@ func convertToString(value interface{}) (string, bool) {
 	valueInt, ok := value.(int64)
 	if ok {
 		return strconv.FormatInt(valueInt, 10), true
+	}
+
+	valueInt32, ok := value.(int32)
+	if ok {
+		return strconv.FormatInt(int64(valueInt32), 10), true
+	}
+
+	valueByteArray := string(value.([]uint8))
+
+	if valueByteArray != "" {
+		return valueByteArray, true
+	}
+
+	valueFloat32, ok := value.(float32)
+	if ok {
+		return strconv.FormatFloat(float64(valueFloat32), 'E', -1, 64), true
+	}
+
+	valueFloat64, ok := value.(float64)
+	if ok {
+		return strconv.FormatFloat(valueFloat64, 'E', -1, 64), true
 	}
 
 	return "", false
