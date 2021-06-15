@@ -13,7 +13,7 @@ import (
 func FromParquetBy(payload []byte, partitionBy string, filter *typeof.Schema, apply applyFunc) ([]Block, error) {
 	const max = 10000000 // 10MB
 
-	iter, err := parquet.FromBufferWithPartitionKey(payload, partitionBy)
+	iter, err := parquet.FromBuffer(payload)
 	if err != nil {
 		return nil, err
 	}

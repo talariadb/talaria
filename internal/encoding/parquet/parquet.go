@@ -43,16 +43,6 @@ func FromBuffer(b []byte) (Iterator, error) {
 	return &iterator{reader: r}, nil
 }
 
-// FromBuffer creates an iterator from a buffer.
-func FromBufferWithPartitionKey(b []byte, partitionBy string) (Iterator, error) {
-	r, err := goparquet.NewFileReader(bytes.NewReader(b))
-	if err != nil {
-		return nil, err
-	}
-
-	return &iterator{reader: r, partitionBy: partitionBy}, nil
-}
-
 // Range is a helper function that ranges over a set of columns in a Parquet buffer
 func Range(payload []byte, f func(int, map[string]interface{}) bool, columns ...string) error {
 	i, err := FromBuffer(payload)
@@ -76,7 +66,6 @@ func First(payload []byte, columns ...string) (result map[string]interface{}, er
 // Iterator represents parquet data frame.
 type iterator struct {
 	reader *goparquet.FileReader
-	partitionBy string
 }
 
 // Range iterates through the reader.
