@@ -13,7 +13,7 @@ import (
 func FromParquetBy(payload []byte, partitionBy string, filter *typeof.Schema, apply applyFunc) ([]Block, error) {
 	const max = 10000000 // 10MB
 
-	iter, err := parquet.FromBuffer(payload)
+	iter, err := parquet.FromBufferWithPartitionKey(payload, partitionBy)
 	if err != nil {
 		return nil, err
 	}
@@ -21,17 +21,14 @@ func FromParquetBy(payload []byte, partitionBy string, filter *typeof.Schema, ap
 	// Find the partition index
 	schema := iter.Schema()
 	cols := schema.Columns()
-	partitionIdx, ok := findString(cols, partitionBy)
-	if !ok {
-		return nil, nil // Skip the file if it has no partition column
-	}
 
 	// The resulting set of blocks, repartitioned and chunked
 	blocks := make([]Block, 0, 128)
 
 	// Create presto columns and iterate
 	result, size := make(map[string]column.Columns, 16), 0
-	_, _ = iter.Range(func(rowIdx int, r []interface{}) bool {
+
+	_, _ = iter.Range(func(rowIdx int, r map[string]interface{}) bool {
 		if size >= max {
 			pending, err := makeBlocks(result)
 			if err != nil {
@@ -44,7 +41,7 @@ func FromParquetBy(payload []byte, partitionBy string, filter *typeof.Schema, ap
 		}
 
 		// Get the partition value, must be a string
-		partition, ok := convertToString(r[partitionIdx])
+		partition, ok := convertToString(r[partitionBy])
 		if !ok {
 			return true
 		}
@@ -63,9 +60,8 @@ func FromParquetBy(payload []byte, partitionBy string, filter *typeof.Schema, ap
 
 		// Prepare a row for transformation
 		row := NewRow(schema, len(r))
-		for i, v := range r {
-			columnName := cols[i]
-			columnType := schema[columnName]
+		for k, v := range r {
+			columnType := schema[k]
 
 			if handler := parquetHandlerFor(columnType.String()); handler != nil {
 				if v, err = handler(v); err != nil {
@@ -73,7 +69,7 @@ func FromParquetBy(payload []byte, partitionBy string, filter *typeof.Schema, ap
 				}
 			}
 
-			row.Set(columnName, v)
+			row.Set(k, v)
 		}
 
 		// Append computed columns and fill nulls for the row

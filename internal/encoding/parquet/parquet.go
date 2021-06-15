@@ -17,7 +17,7 @@ var errNoWriter = errors.New("unable to create Parquet writer")
 // Iterator represents parquet data frame.
 type Iterator interface {
 	io.Closer
-	Range(f func(int, []interface{}) bool, columns ...string) (int, bool)
+	Range(f func(int, map[string]interface{}) bool, columns ...string) (int, bool)
 	Schema() typeof.Schema
 }
 
@@ -43,8 +43,18 @@ func FromBuffer(b []byte) (Iterator, error) {
 	return &iterator{reader: r}, nil
 }
 
+// FromBuffer creates an iterator from a buffer.
+func FromBufferWithPartitionKey(b []byte, partitionBy string) (Iterator, error) {
+	r, err := goparquet.NewFileReader(bytes.NewReader(b))
+	if err != nil {
+		return nil, err
+	}
+
+	return &iterator{reader: r, partitionBy: partitionBy}, nil
+}
+
 // Range is a helper function that ranges over a set of columns in a Parquet buffer
-func Range(payload []byte, f func(int, []interface{}) bool, columns ...string) error {
+func Range(payload []byte, f func(int, map[string]interface{}) bool, columns ...string) error {
 	i, err := FromBuffer(payload)
 	if err != nil {
 		return err
@@ -55,8 +65,8 @@ func Range(payload []byte, f func(int, []interface{}) bool, columns ...string) e
 }
 
 // First selects a first row only, then stops.
-func First(payload []byte, columns ...string) (result []interface{}, err error) {
-	err = Range(payload, func(_ int, v []interface{}) bool {
+func First(payload []byte, columns ...string) (result map[string]interface{}, err error) {
+	err = Range(payload, func(_ int, v map[string]interface{}) bool {
 		result = v
 		return true // No need to iterate further, we just take 1st element
 	}, columns...)
@@ -66,10 +76,11 @@ func First(payload []byte, columns ...string) (result []interface{}, err error) 
 // Iterator represents parquet data frame.
 type iterator struct {
 	reader *goparquet.FileReader
+	partitionBy string
 }
 
 // Range iterates through the reader.
-func (i *iterator) Range(f func(int, []interface{}) bool, columns ...string) (index int, stop bool) {
+func (i *iterator) Range(f func(int, map[string]interface{}) bool, columns ...string) (index int, stop bool) {
 	//TODO: Do this once the release is done
 	//c := i.reader.SchemaReader.setSelectedColumns
 	r := i.reader
@@ -80,6 +91,7 @@ func (i *iterator) Range(f func(int, []interface{}) bool, columns ...string) (in
 		}
 
 		var arr []interface{}
+		m := make(map[string]interface{})
 
 		// We need to ensure that the row has columns ordered by name since that is how columns are generated
 		// in the upstream schema
@@ -87,18 +99,25 @@ func (i *iterator) Range(f func(int, []interface{}) bool, columns ...string) (in
 		i := 0
 		for k := range row {
 			keys[i] = k
+
 			i++
 		}
 		sort.Strings(keys)
 
+		j := 0
+
 		for k := range keys {
-			k := keys[k]
-			v := row[k]
+			p := keys[k]
+			v := row[p]
+
+			m[p] = v
 
 			arr = append(arr, v)
+
+			j++
 		}
 
-		if stop = f(index-1, arr); stop {
+		if stop = f(index-1, m); stop {
 			return index, false
 		}
 	}

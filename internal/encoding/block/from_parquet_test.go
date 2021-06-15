@@ -8,9 +8,18 @@ import (
 )
 
 const testFileForParquet = "../../../test/test2.parquet"
+const testFileForParquetWithMissingAttributes = "../../../test/testfilewithmissingatts.parquet"
 
 func TestFromParquet_Nested(t *testing.T) {
-	o, err := ioutil.ReadFile(testFileForParquet)
+	RunTest(t, testFileForParquet)
+}
+
+func TestFromParquet_MissingAttributes(t *testing.T) {
+	RunTest(t, testFileForParquetWithMissingAttributes)
+}
+
+func RunTest(t *testing.T, testFileName string) {
+	o, err := ioutil.ReadFile(testFileName)
 	assert.NotEmpty(t, o)
 	assert.NoError(t, err)
 
