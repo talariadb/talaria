@@ -2,14 +2,12 @@ package parquet
 
 import (
 	"bytes"
-	"io"
-	"os"
-	"sort"
-
 	goparquet "github.com/fraugster/parquet-go"
 	"github.com/fraugster/parquet-go/parquet"
 	"github.com/kelindar/talaria/internal/encoding/typeof"
 	"github.com/kelindar/talaria/internal/monitor/errors"
+	"io"
+	"os"
 )
 
 var errNoWriter = errors.New("unable to create Parquet writer")
@@ -70,39 +68,29 @@ type iterator struct {
 
 // Range iterates through the reader.
 func (i *iterator) Range(f func(int, []interface{}) bool, columns ...string) (index int, stop bool) {
-	//TODO: Do this once the release is done
-	//c := i.reader.SchemaReader.setSelectedColumns
-	r := i.reader
+	// Preallocate the colums slice (row)
+	arr := make([]interface{}, len(columns))
 	for {
-		row, err := r.NextRow()
+		row, err := i.reader.NextRow()
 		if err == io.EOF {
 			break
 		}
 
-		var arr []interface{}
+		index++
 
-		// We need to ensure that the row has columns ordered by name since that is how columns are generated
-		// in the upstream schema
-		keys := make([]string, len(row))
-		i := 0
-		for k := range row {
-			keys[i] = k
-			i++
+		// Prepare the row slice
+		for i, columnName := range columns{
+			if v, ok := row[columnName]; ok {
+				arr[i] = v
+			}else{
+				arr[i] = nil
+			}
 		}
-		sort.Strings(keys)
-
-		for k := range keys {
-			k := keys[k]
-			v := row[k]
-
-			arr = append(arr, v)
-		}
-
+		// Call the range callback
 		if stop = f(index-1, arr); stop {
 			return index, false
 		}
 	}
-
 	return index, true
 }
 
