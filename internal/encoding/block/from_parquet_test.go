@@ -18,4 +18,16 @@ func TestFromParquet_Nested(t *testing.T) {
 	b, err := FromParquetBy(o, "foo", nil, apply)
 	assert.NoError(t, err)
 	assert.Equal(t, 10000, len(b))
+
+	b, err = FromParquetBy(o, "bar", nil, apply)
+	assert.NoError(t, err)
+	assert.Equal(t, 10000, len(b))
+
+	b, err = FromParquetBy(o, "foofoo", nil, apply)
+	assert.NoError(t, err)
+	assert.Equal(t, 1, len(b))
+
+	b, err = FromParquetBy(o, "barbar", nil, apply)
+	assert.NoError(t, err)
+	assert.Equal(t, 10000, len(b))
 }
