@@ -13,7 +13,6 @@ import (
 	"time"
 
 	"github.com/kelindar/talaria/internal/config"
-
 	"github.com/kelindar/talaria/internal/encoding/key"
 	"github.com/kelindar/talaria/internal/monitor"
 	"github.com/stretchr/testify/assert"
