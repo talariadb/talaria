@@ -6,6 +6,7 @@ package presto
 
 import (
 	"errors"
+	"fmt"
 	"io"
 	"net/rpc"
 	"strings"
@@ -17,8 +18,7 @@ import (
 type serverCodec struct {
 	conn       thrift.Transport
 	nameCache  map[string]string // incoming name -> registered name
-	methodName map[uint64]string // sequence ID -> method name
-	mu         sync.Mutex
+	methodName sync.Map          // sequence ID -> method name
 }
 
 // ServeConn runs the Thrift RPC server on a single connection. ServeConn blocks,
@@ -31,9 +31,8 @@ func ServeConn(conn thrift.Transport) {
 // NewServerCodec returns a new rpc.ServerCodec using Thrift RPC on conn using the specified protocol.
 func NewServerCodec(conn thrift.Transport) rpc.ServerCodec {
 	return &serverCodec{
-		conn:       conn,
-		nameCache:  make(map[string]string, 8),
-		methodName: make(map[uint64]string, 8),
+		conn:      conn,
+		nameCache: make(map[string]string, 8),
 	}
 }
 
@@ -61,9 +60,7 @@ func (c *serverCodec) ReadRequestHeader(request *rpc.Request) error {
 		c.nameCache[name] = newName
 	}
 
-	c.mu.Lock()
-	c.methodName[uint64(seq)] = wireName
-	c.mu.Unlock()
+	c.methodName.Store(uint64(seq), wireName)
 
 	request.ServiceMethod = newName
 	request.Seq = uint64(seq)
@@ -88,10 +85,15 @@ func (c *serverCodec) ReadRequestBody(thriftStruct interface{}) error {
 // WriteResponse is the same implementation which serverCodec from samual/go-thrift requires
 //      to compile a thrift-response and send it back.
 func (c *serverCodec) WriteResponse(response *rpc.Response, thriftStruct interface{}) error {
-	c.mu.Lock()
-	methodName := c.methodName[response.Seq]
-	delete(c.methodName, response.Seq)
-	c.mu.Unlock()
+
+	var methodName string
+	if val, ok := c.methodName.Load(uint64(response.Seq)); !ok {
+		return fmt.Errorf("rpc: can't find requested seq %d", response.Seq)
+	} else {
+		methodName = val.(string)
+		c.methodName.Delete(uint64(response.Seq))
+	}
+
 	response.ServiceMethod = methodName
 
 	mtype := byte(thrift.MessageTypeReply)
