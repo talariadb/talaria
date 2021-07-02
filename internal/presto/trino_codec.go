@@ -1,5 +1,6 @@
-// Copyright 2019-2020 Grabtaxi Holdings PTE LTE (GRAB), All rights reserved.
-// Use of this source code is governed by an MIT-style license that can be found in the LICENSE file
+// Copyright 2012-2015 Samuel Stauffer. All rights reserved.
+// Use of this source code is governed by a 3-clause BSD
+// license that can be found in the LICENSE file at https://github.com/samuel/go-thrift/blob/master/LICENSE.
 
 package presto
 
@@ -36,6 +37,8 @@ func NewServerCodec(conn thrift.Transport) rpc.ServerCodec {
 	}
 }
 
+// ReadRequestHeader implements the serverCodec except it incercepts and translates
+//      the rpc name on wire to the name which talaria implements like presto.GetTableMetadata
 func (c *serverCodec) ReadRequestHeader(request *rpc.Request) error {
 	name, messageType, seq, err := c.conn.ReadMessageBegin()
 	if err != nil {
@@ -45,10 +48,9 @@ func (c *serverCodec) ReadRequestHeader(request *rpc.Request) error {
 		return errors.New("thrift: expected Call message type")
 	}
 
-	// TODO: should use a limited size cache for the nameCache to avoid a possible
-	//       memory overflow from nefarious or broken clients
+	// storing the original rpc call name as wireName and
 	wireName := name
-	name = strings.Replace(name, "trino", "presto", 1)
+	name = getWireNameFor(name)
 
 	newName := c.nameCache[name]
 	if newName == "" {
@@ -69,6 +71,7 @@ func (c *serverCodec) ReadRequestHeader(request *rpc.Request) error {
 	return nil
 }
 
+// ReadRequestBody is the same implementation as samuel/go-thrift serverCodec impl.
 func (c *serverCodec) ReadRequestBody(thriftStruct interface{}) error {
 	if thriftStruct == nil {
 		if err := thrift.SkipValue(c.conn, thrift.TypeStruct); err != nil {
@@ -82,6 +85,8 @@ func (c *serverCodec) ReadRequestBody(thriftStruct interface{}) error {
 	return c.conn.ReadMessageEnd()
 }
 
+// WriteResponse is the same implementation which serverCodec from samual/go-thrift requires
+//      to compile a thrift-response and send it back.
 func (c *serverCodec) WriteResponse(response *rpc.Response, thriftStruct interface{}) error {
 	c.mu.Lock()
 	methodName := c.methodName[response.Seq]
@@ -110,9 +115,19 @@ func (c *serverCodec) WriteResponse(response *rpc.Response, thriftStruct interfa
 	return c.conn.Flush()
 }
 
+// Close is the same impl of sameuel/go-thrift Close
 func (c *serverCodec) Close() error {
 	if cl, ok := c.conn.(io.Closer); ok {
 		return cl.Close()
 	}
 	return nil
+}
+
+// getWireNameFor will actually modify the rpc call name coming from clients
+//      to presto rpc names.
+//      ex: trino.GetTableMetadata will be changed to presto.GetTableMetadata
+//      This way the RPC call names are translated appropriately with our current
+//      presto-thrift connector implementations.
+func getWireNameFor(name string) string {
+	return strings.Replace(name, "trino", "presto", 1)
 }
