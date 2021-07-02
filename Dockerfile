@@ -6,6 +6,7 @@ ARG GOARCH="amd64"
 ENV GO111MODULE=${GO111MODULE}
 ENV GOOS=${GOOS}
 ENV GOARCH=${GOARCH}
+
 # GOPATH => /go
 RUN mkdir -p /go/src/talaria
 COPY . src/talaria
