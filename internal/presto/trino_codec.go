@@ -70,11 +70,12 @@ func (c *serverCodec) ReadRequestHeader(request *rpc.Request) error {
 
 // ReadRequestBody is the same implementation as samuel/go-thrift serverCodec impl.
 func (c *serverCodec) ReadRequestBody(thriftStruct interface{}) error {
-	if thriftStruct == nil {
+	switch {
+	case thriftStruct == nil:
 		if err := thrift.SkipValue(c.conn, thrift.TypeStruct); err != nil {
 			return err
 		}
-	} else {
+	default:
 		if err := thrift.DecodeStruct(c.conn, thriftStruct); err != nil {
 			return err
 		}
@@ -86,14 +87,12 @@ func (c *serverCodec) ReadRequestBody(thriftStruct interface{}) error {
 //      to compile a thrift-response and send it back.
 func (c *serverCodec) WriteResponse(response *rpc.Response, thriftStruct interface{}) error {
 
-	var methodName string
-	if val, ok := c.methodName.LoadAndDelete(uint64(response.Seq)); !ok {
+	methodName, loaded := c.methodName.LoadAndDelete(uint64(response.Seq))
+	if !loaded {
 		return fmt.Errorf("rpc: can't find requested seq %d", response.Seq)
-	} else {
-		methodName = val.(string)
 	}
 
-	response.ServiceMethod = methodName
+	response.ServiceMethod = methodName.(string)
 
 	mtype := byte(thrift.MessageTypeReply)
 	if response.Error != "" {
