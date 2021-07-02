@@ -87,11 +87,10 @@ func (c *serverCodec) ReadRequestBody(thriftStruct interface{}) error {
 func (c *serverCodec) WriteResponse(response *rpc.Response, thriftStruct interface{}) error {
 
 	var methodName string
-	if val, ok := c.methodName.Load(uint64(response.Seq)); !ok {
+	if val, ok := c.methodName.LoadAndDelete(uint64(response.Seq)); !ok {
 		return fmt.Errorf("rpc: can't find requested seq %d", response.Seq)
 	} else {
 		methodName = val.(string)
-		c.methodName.Delete(uint64(response.Seq))
 	}
 
 	response.ServiceMethod = methodName
