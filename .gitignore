@@ -10,3 +10,5 @@ testdata-*
 *.vim
 /*.yaml
 .env
+.envrc
+logs/

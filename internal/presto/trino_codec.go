@@ -17,8 +17,8 @@ import (
 
 type serverCodec struct {
 	conn       thrift.Transport
-	nameCache  map[string]string // incoming name -> registered name
-	methodName sync.Map          // sequence ID -> method name
+	nameCache  sync.Map // incoming name -> registered name
+	methodName sync.Map // sequence ID -> method name
 }
 
 // ServeConn runs the Thrift RPC server on a single connection. ServeConn blocks,
@@ -31,8 +31,7 @@ func ServeConn(conn thrift.Transport) {
 // NewServerCodec returns a new rpc.ServerCodec using Thrift RPC on conn using the specified protocol.
 func NewServerCodec(conn thrift.Transport) rpc.ServerCodec {
 	return &serverCodec{
-		conn:      conn,
-		nameCache: make(map[string]string, 8),
+		conn: conn,
 	}
 }
 
@@ -51,13 +50,20 @@ func (c *serverCodec) ReadRequestHeader(request *rpc.Request) error {
 	wireName := name
 	name = getWireNameFor(name)
 
-	newName := c.nameCache[name]
+	var newName string
+	newNameLoaded, loaded := c.nameCache.Load(name)
+	if !loaded {
+		newName = ""
+	} else {
+		newName = newNameLoaded.(string)
+	}
+
 	if newName == "" {
 		newName = thrift.CamelCase(name)
 		if !strings.ContainsRune(newName, '.') {
 			newName = "Thrift." + newName
 		}
-		c.nameCache[name] = newName
+		c.nameCache.Store(name, newName)
 	}
 
 	c.methodName.Store(uint64(seq), wireName)
