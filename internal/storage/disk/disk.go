@@ -77,7 +77,7 @@ func (s *Storage) Open(dir string, options config.Badger) error {
 
 	switch options.Default {
 	case config.BadgerStorage:
-		opts = opts.WithMaxLevels(64 << 15).
+		opts = opts.WithBaseTableSize(64 << 15).
 			WithValueLogMaxEntries(5000).
 			WithBaseLevelSize(1 << 16).
 			WithLevelSizeMultiplier(3).
