@@ -88,6 +88,14 @@ tables:
         project: my-gcp-project
         topic: my-topic2
         encoder: json
+    - azure:
+        container: a_container
+        prefix: a_prefix
+        blobServiceURL: .storage.microsoft.net    
+        storageAccounts:
+            - a_storage_account
+            - b_storage_account
+        storageAccountWeights: [1, 2]
 statsd:
   host: "127.0.0.1"
   port: 8126
@@ -106,10 +114,11 @@ computed:
 	assert.NoError(t, e.Configure(c))
 
 	// asserts
-	assert.Len(t, c.Tables["eventlog"].Streams, 2)
+	assert.Len(t, c.Tables["eventlog"].Streams, 3)
 	assert.Len(t, c.Computed, 1)
 	assert.Len(t, c.Tables, 1)
 
 	assert.Equal(t, "my-gcp-project", c.Tables["eventlog"].Streams[0].PubSub.Project)
 	assert.Equal(t, "output/", c.Tables["eventlog"].Compact.File.Directory)
+	assert.Equal(t, []uint{1, 2}, c.Tables["eventlog"].Streams[2].Azure.StorageAccountWeights)
 }

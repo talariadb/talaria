@@ -147,6 +147,18 @@ func (c *Client) IngestORC(ctx context.Context, data []byte) error {
 	}, nil)
 }
 
+// IngestParquet sends an Parquet-encoded file to Talaria to ingest.
+func (c *Client) IngestParquet(ctx context.Context, data []byte) error {
+	return hystrix.Do(commandName, func() error {
+		_, err := c.ingress.Ingest(ctx, &pb.IngestRequest{
+			Data: &pb.IngestRequest_Parquet{
+				Parquet: data,
+			},
+		})
+		return err
+	}, nil)
+}
+
 // Close connection
 func (c *Client) Close() error {
 	return c.conn.Close()

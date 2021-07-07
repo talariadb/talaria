@@ -59,7 +59,7 @@ func Serve(ctx context.Context, port int32, service PrestoThriftService) error {
 		default:
 			if conn, err := ln.Accept(); err == nil {
 				t := thrift.NewTransport(thrift.NewFramedReadWriteCloser(conn, frameSize), thrift.BinaryProtocol)
-				go rpc.ServeCodec(thrift.NewServerCodec(t))
+				go ServeConn(t)
 			}
 		}
 	}

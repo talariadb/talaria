@@ -122,6 +122,7 @@ type Computed struct {
 // Compaction represents a configuration for compaction sinks
 type Compaction struct {
 	Sinks    `yaml:",inline"`
+	Encoder  string `json:"encoder" yaml:"encoder"`                  // The default encoder for the compaction
 	NameFunc string `json:"nameFunc" yaml:"nameFunc" env:"NAMEFUNC"` // The lua script to compute file name given a row
 	Interval int    `json:"interval" yaml:"interval" env:"INTERVAL"` // The compaction interval, in seconds
 }
@@ -152,13 +153,18 @@ type S3Sink struct {
 	Concurrency int    `json:"concurrency" yaml:"concurrency" env:"CONCURRENCY"` // The S3 upload concurrency
 }
 
-// AzureSink reprents a sink to Azure
+// AzureSink represents a sink to Azure
 type AzureSink struct {
-	Container string `json:"container" yaml:"container" env:"CONTAINER"` // The container name
-	Prefix    string `json:"prefix" yaml:"prefix" env:"PREFIX"`          // The prefix to add
+	Container             string   `json:"container" yaml:"container" env:"CONTAINER"`                                     // The container name
+	Prefix                string   `json:"prefix" yaml:"prefix" env:"PREFIX"`                                              // The prefix to add
+	Parallelism           uint16   `json:"parallelism" yaml:"parallelism" env:"PARALLELISM"`                               // The BlockBlob upload parallelism
+	BlockSize             int64    `json:"blockSize" yaml:"blockSize" env:"BLOCKSIZE"`                                     // The Block Size for upload
+	BlobServiceURL        string   `json:"blobServiceURL" yaml:"blobServiceURL" env:"BLOBSERVICEURL"`                      // The blob service URL
+	StorageAccounts       []string `json:"storageAccounts" yaml:"storageAccounts" env:"STORAGEACCOUNTS"`                   // The list of storage accounts
+	StorageAccountWeights []uint   `json:"storageAccountWeights" yaml:"storageAccountWeights" env:"STORAGEACCOUNTWEIGHTS"` //The list of weighting factor of each storage accounts
 }
 
-// BigQuerySink reprents a sink to Google Big Query
+// BigQuerySink represents a sink to Google Big Query
 type BigQuerySink struct {
 	Project string `json:"project" yaml:"project" env:"PROJECT"` // The project ID
 	Dataset string `json:"dataset" yaml:"dataset" env:"DATASET"` // The dataset ID

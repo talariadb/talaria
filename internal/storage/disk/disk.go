@@ -14,7 +14,7 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/dgraph-io/badger/v2"
+	"github.com/dgraph-io/badger/v3"
 	"github.com/grab/async"
 	"github.com/kelindar/talaria/internal/config"
 	"github.com/kelindar/talaria/internal/encoding/key"
@@ -72,11 +72,22 @@ func (s *Storage) Open(dir string, options config.Badger) error {
 
 	opts := badger.DefaultOptions(dir)
 
+	//WithNumLevelZeroTables().
+	//WithNumLevelZeroTablesStall()
+
 	switch options.Default {
 	case config.BadgerStorage:
-		opts = opts.WithMaxLevels(64 << 15).WithValueLogMaxEntries(5000).WithLevelOneSize(1 << 16).WithLevelSizeMultiplier(3).WithMaxLevels(25).WithSyncWrites(false)
+		opts = opts.WithMaxLevels(64 << 15).
+			WithValueLogMaxEntries(5000).
+			WithBaseLevelSize(1 << 16).
+			WithLevelSizeMultiplier(3).
+			WithMaxLevels(25).
+			WithSyncWrites(false)
 	case config.BadgerIngestion:
-		opts = opts.WithLevelOneSize(204800000).WithMaxLevels(3).WithSyncWrites(false)
+		opts = opts.
+			WithBaseLevelSize(204800000).
+			WithMaxLevels(3).
+			WithSyncWrites(false)
 	}
 
 	// Create the options
@@ -87,7 +98,7 @@ func (s *Storage) Open(dir string, options config.Badger) error {
 	// max size of lsm tree in bytes after which data is propagated to disk.
 	// The default is 64 MB.
 	if options.MaxTableSize != nil {
-		opts = opts.WithMaxTableSize(*options.MaxTableSize)
+		opts = opts.WithBaseTableSize(*options.MaxTableSize)
 	}
 
 	// ValueLogMaxEntries sets the maximum number of entries a value log file can hold approximately.
@@ -101,7 +112,7 @@ func (s *Storage) Open(dir string, options config.Badger) error {
 	// LevelOneSize sets the maximum total size for Level 1.
 	// The default value of LevelOneSize is 20MB.
 	if options.LevelOneSize != nil {
-		opts = opts.WithLevelOneSize(*options.LevelOneSize)
+		opts = opts.WithBaseLevelSize(*options.LevelOneSize)
 	}
 
 	// Maximum number of levels of compaction allowed in the LSM.
@@ -117,11 +128,6 @@ func (s *Storage) Open(dir string, options config.Badger) error {
 	if options.LevelSizeMultiplier != nil {
 		opts = opts.WithLevelSizeMultiplier(*options.LevelSizeMultiplier)
 	}
-
-	// Truncate indicates whether value log files should be truncated to delete corrupt data, if any.
-	// This option is ignored when ReadOnly is true.
-	// The default value of Truncate is false.
-	opts = opts.WithTruncate(true)
 
 	opts = opts.WithLogger(&logger{s.monitor})
 	s.monitor.Info("opening badger with options %+v", opts)

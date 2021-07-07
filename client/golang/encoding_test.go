@@ -44,7 +44,7 @@ func TestEncoder(t *testing.T) {
 			"topic": "movie",
 		},
 		{
-			"event": "xyz",
+			"event": "abc",
 			"nested": map[string]interface{}{
 				"level0": 0,
 				"level1": map[string]interface{}{
@@ -69,5 +69,5 @@ func TestEncoder(t *testing.T) {
 	assert.Equal(t, &pb.Event{Value: map[uint32]*pb.Value{5: {Value: &pb.Value_Time{Time: testTime.Unix()}}}}, res.Events[3])
 	assert.Equal(t, &pb.Event{Value: map[uint32]*pb.Value{6: {Value: &pb.Value_Json{Json: 7}}}}, res.Events[4])
 	assert.Equal(t, &pb.Event{Value: map[uint32]*pb.Value{6: {Value: &pb.Value_String_{String_: 8}}}}, res.Events[5])
-	assert.Equal(t, &pb.Event{Value: map[uint32]*pb.Value{1: {Value: &pb.Value_String_{String_: 9}}, 14: {Value: &pb.Value_Json{Json: 15}}}}, res.Events[7])
+	assert.Equal(t, &pb.Event{Value: map[uint32]*pb.Value{1: {Value: &pb.Value_String_{String_: 2}}, 14: {Value: &pb.Value_Json{Json: 15}}}}, res.Events[7])
 }
