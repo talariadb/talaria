@@ -1,6 +1,12 @@
 syntax = "proto3";
 package talaria;
 
+// go package lets the compiler put the generated files relative to
+// the path specified in go_out option. With this, you can just give
+// --go_out=$GOPATH/src and it would just work as expected. Passing
+// talaria at the end will add "package talaria" statement to the 
+// generated file. Can be overridden by using M go_opt.
+option go_package = "github.com/kelindar/talaria/proto;talaria";
 // ---------------------------------------------------------------------------
 //                              Ingress Service
 // ---------------------------------------------------------------------------

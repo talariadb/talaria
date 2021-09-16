@@ -12,3 +12,5 @@ testdata-*
 .env
 .envrc
 logs/
+*.venv
+.vscode/
