@@ -22,20 +22,8 @@ import (
 	"github.com/kelindar/talaria/internal/server/thriftlog"
 	"github.com/kelindar/talaria/internal/table"
 	talaria "github.com/kelindar/talaria/proto"
-
-	// using vgrpc just to register the vtprotobuf codec for (de)serialization
-	vgrpc "github.com/planetscale/vtprotobuf/codec/grpc"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/encoding"
-
-	// adding proto to keep the mod file clean
-	_ "google.golang.org/grpc/encoding/proto"
 )
-
-// Recommended way to register custom gRPC codec than setting grpc options
-func init() {
-	encoding.RegisterCodec(vgrpc.Codec{})
-}
 
 const (
 	ctxTag  = "server"
