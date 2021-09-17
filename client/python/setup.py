@@ -2,7 +2,7 @@ import setuptools
 
 setuptools.setup(
     name="TalariaClient",
-    version="0.0.5",
+    version="0.0.6",
     author="Chun Rong Phang",
     author_email="crphang@gmail.com",
     description="Talaria Client to ingest events to TalariaDB",
@@ -14,8 +14,8 @@ setuptools.setup(
         "Operating System :: OS Independent",
     ],
     install_requires=[
-        "grpcio~=1.28.1",
-        "protobuf~=3.11.3"
+        "grpcio>=1.36.0",
+        "protobuf~=3.17.3"
     ],
-    python_requires='>=3.4',
+    python_requires='>=3.6',
 )

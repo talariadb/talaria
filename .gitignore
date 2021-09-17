@@ -12,3 +12,4 @@ testdata-*
 .env
 .envrc
 logs/
+*.venv
