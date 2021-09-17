@@ -4,10 +4,9 @@
 package server
 
 import (
-	// using vgrpc just to register the vtprotobuf codec for (de)serialization
-
 	"fmt"
 
+	// using vgrpc just to register the vtprotobuf codec for (de)serialization
 	"google.golang.org/grpc/encoding"
 	_ "google.golang.org/grpc/encoding/proto"
 	"google.golang.org/protobuf/proto"
@@ -23,6 +22,7 @@ type vtprotoMessage interface {
 	UnmarshalVT([]byte) error
 }
 
+// Marshall helper function ports the vtprotobuf message to proto Marshall
 func (vtprotoCodec) Marshal(v interface{}) ([]byte, error) {
 	vt, ok := v.(vtprotoMessage)
 	if ok {
@@ -36,6 +36,7 @@ func (vtprotoCodec) Marshal(v interface{}) ([]byte, error) {
 	return proto.Marshal(vv)
 }
 
+// Unmarshall helper function ports the vtprotobuf message to proto Unmarshall
 func (vtprotoCodec) Unmarshal(data []byte, v interface{}) error {
 	vt, ok := v.(vtprotoMessage)
 	if ok {
@@ -53,6 +54,7 @@ func (vtprotoCodec) Name() string {
 	return Name
 }
 
+// Register the codec for gRPC message (de)serializtion.
 func init() {
 	encoding.RegisterCodec(vtprotoCodec{})
 }

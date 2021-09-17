@@ -103,9 +103,6 @@ func TestAppend_Bigint(t *testing.T) {
 			assert.Equal(t, td.size, output.Size(), td.desc)
 			assert.Equal(t, td.count, output.Count(), td.desc)
 			assert.NotNil(t, output.AsThrift().BigintData)
-			// commenting as vtprotobuf doesn't provide reflection
-			// (un)marshall for sized buffers.
-			// assert.NotZero(t, output.AsProto().Value.Size())
 			assert.Equal(t, td.last, output.Last())
 		})
 	}
@@ -187,9 +184,6 @@ func TestAppend_Varchar(t *testing.T) {
 			assert.Equal(t, td.size, output.Size(), td.desc)
 			assert.Equal(t, td.count, output.Count(), td.desc)
 			assert.NotNil(t, output.AsThrift().VarcharData)
-			// commenting as vtprotobuf doesn't provide reflection
-			// (un)marshall for sized buffers.
-			// assert.NotZero(t, output.AsProto().Value.Size())
 			assert.Equal(t, td.last, output.Last())
 		})
 	}
@@ -267,9 +261,6 @@ func TestAppend_Double(t *testing.T) {
 			assert.Equal(t, td.size, output.Size(), td.desc)
 			assert.Equal(t, td.count, output.Count(), td.desc)
 			assert.NotNil(t, output.AsThrift().DoubleData)
-			// commenting as vtprotobuf doesn't provide reflection
-			// (un)marshall for sized buffers.
-			// assert.NotZero(t, output.AsProto().Value.Size())
 			assert.Equal(t, td.last, output.Last())
 		})
 	}
@@ -347,9 +338,6 @@ func TestAppend_Int32(t *testing.T) {
 			assert.Equal(t, td.size, output.Size(), td.desc)
 			assert.Equal(t, td.count, output.Count(), td.desc)
 			assert.NotNil(t, output.AsThrift().IntegerData)
-			// commenting as vtprotobuf doesn't provide reflection
-			// (un)marshall for sized buffers.
-			// assert.NotZero(t, output.AsProto().Value.Size())
 			assert.Equal(t, td.last, output.Last())
 		})
 	}
@@ -427,9 +415,6 @@ func TestAppend_Boolean(t *testing.T) {
 			assert.Equal(t, td.size, output.Size(), td.desc)
 			assert.Equal(t, td.count, output.Count(), td.desc)
 			assert.NotNil(t, output.AsThrift().BooleanData)
-			// commenting as vtprotobuf doesn't provide reflection
-			// (un)marshall for sized buffers.
-			// assert.NotZero(t, output.AsProto().Value.Size())
 			assert.Equal(t, td.last, output.Last())
 		})
 	}
@@ -531,9 +516,6 @@ func TestAppend_Timestamp(t *testing.T) {
 			assert.Equal(t, td.size, output.Size(), td.desc)
 			assert.Equal(t, td.count, output.Count(), td.desc)
 			assert.NotNil(t, output.AsThrift().TimestampData)
-			// commenting as vtprotobuf doesn't provide reflection
-			// (un)marshall for sized buffers.
-			// assert.NotZero(t, output.AsProto().Value.Size())
 			assert.Equal(t, td.last, output.Last())
 		})
 	}
@@ -628,9 +610,6 @@ func TestAppend_Json(t *testing.T) {
 			assert.Equal(t, td.size, output.Size(), td.desc)
 			assert.Equal(t, td.count, output.Count(), td.desc)
 			assert.NotNil(t, output.AsThrift().JsonData)
-			// commenting as vtprotobuf doesn't provide reflection
-			// (un)marshall for sized buffers.
-			// assert.NotZero(t, output.AsProto().Value.Size())
 			assert.Equal(t, td.last, output.Last())
 		})
 	}
