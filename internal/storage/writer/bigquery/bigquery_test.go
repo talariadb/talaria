@@ -8,7 +8,7 @@ import (
 
 func TestWriter(t *testing.T) {
 
-	c, err := New("my-project-id", "mydataset", "mytable")
+	c, err := New("my-project-id", "mydataset", "mytable", nil)
 
 	assert.Nil(t, c)
 	assert.Error(t, err)

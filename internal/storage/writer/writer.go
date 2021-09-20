@@ -122,7 +122,7 @@ func newWriter(config config.Sinks, monitor monitor.Monitor, loader *script.Load
 
 	// Configure BigQuery writer if present
 	if config.BigQuery != nil {
-		w, err := bigquery.New(config.BigQuery.Project, config.BigQuery.Dataset, config.BigQuery.Table)
+		w, err := bigquery.New(config.BigQuery.Project, config.BigQuery.Dataset, config.BigQuery.Table, config.BigQuery.Encoder, config.BigQuery.Filter, monitor, loader)
 		if err != nil {
 			return nil, err
 		}
@@ -149,7 +149,7 @@ func newWriter(config config.Sinks, monitor monitor.Monitor, loader *script.Load
 
 	// Configure Google Pub/Sub writer if present
 	if config.PubSub != nil {
-		w, err := pubsub.New(config.PubSub.Project, config.PubSub.Topic, config.PubSub.Encoder, config.PubSub.Filter, loader, nil)
+		w, err := pubsub.New(config.PubSub.Project, config.PubSub.Topic, config.PubSub.Encoder, config.PubSub.Filter, loader, monitor)
 		if err != nil {
 			return nil, err
 		}

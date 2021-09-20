@@ -1,3 +1,6 @@
+// Copyright 2019-2020 Grabtaxi Holdings PTE LTE (GRAB), All rights reserved.
+// Use of this source code is governed by an MIT-style license that can be found in the LICENSE file
+
 package merge
 
 import (
@@ -20,6 +23,8 @@ func New(mergeFunc string) (Func, error) {
 		return ToOrc, nil
 	case "parquet":
 		return ToParquet, nil
+	case "block":
+		return ToBlock, nil
 	case "": // Default to "orc" so we don't break existing configs
 		return ToOrc, nil
 	}

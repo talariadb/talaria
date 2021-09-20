@@ -99,7 +99,8 @@ func (w *Writer) process(parent context.Context) error {
 	async.Consume(parent, runtime.NumCPU()*8, w.queue)
 	for message := range w.buffer {
 		select {
-		// Returns error if the parent context gets cancelled. Done() returns an empty struct
+		// Returns error if the parent context gets cancelled or Done() is not closed.
+		// Err() returns nil if Done() is closed.
 		case <-parent.Done():
 			return parent.Err()
 		default:

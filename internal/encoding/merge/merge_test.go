@@ -11,8 +11,11 @@ import (
 
 // BenchmarkFlush runs a benchmark for a Merge function for flushing
 // To run it, go in the directory and do 'go test -benchmem -bench=. -benchtime=1s'
-// BenchmarkMerge/orc-8         	       1	7195029600 ns/op	2101578032 B/op	36859501 allocs/op
-// BenchmarkMerge/parquet-12     	       1	18666411036 ns/op	5142058320 B/op	115850463 allocs/op
+// cpu: Intel(R) Core(TM) i7-8850H CPU @ 2.60GHz
+// BenchmarkMerge/orc-12                  1        7868658835 ns/op        2021461008 B/op26978868 allocs/op
+// BenchmarkMerge/parquet-12          13016             91517 ns/op          225734 B/op       294 allocs/op
+// BenchmarkMerge/block-12                1        8572385675 ns/op        64364809048 B/op   58445 allocs/op
+// PASS
 func BenchmarkMerge(b *testing.B) {
 
 	// Append some files
@@ -37,6 +40,16 @@ func BenchmarkMerge(b *testing.B) {
 			ToParquet(blocks, blocks[0].Schema())
 		}
 	})
+
+	// Run the actual benchmark
+	b.Run("block", func(b *testing.B) {
+		b.ResetTimer()
+		b.ReportAllocs()
+		for n := 0; n < b.N; n++ {
+			ToBlock(blocks, blocks[0].Schema())
+		}
+	})
+
 }
 
 func TestMergeNew(t *testing.T) {
@@ -52,7 +65,16 @@ func TestMergeNew(t *testing.T) {
 		assert.NotNil(t, o)
 		assert.NoError(t, err)
 	}
-
+	{
+		o, err := New("parquet")
+		assert.NotNil(t, o)
+		assert.NoError(t, err)
+	}
+	{
+		o, err := New("block")
+		assert.NotNil(t, o)
+		assert.NoError(t, err)
+	}
 	{
 		o, err := New("xxx")
 		assert.Nil(t, o)

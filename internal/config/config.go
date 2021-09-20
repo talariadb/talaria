@@ -169,12 +169,15 @@ type BigQuerySink struct {
 	Project string `json:"project" yaml:"project" env:"PROJECT"` // The project ID
 	Dataset string `json:"dataset" yaml:"dataset" env:"DATASET"` // The dataset ID
 	Table   string `json:"table" yaml:"table" env:"TABLE"`       // The table ID
+	Filter  string `json:"filter" yaml:"filter" env:"FILTER"`
+	Encoder string `json:"encoder" yaml:"encoder" env:"ENCODER"`
 }
 
 // GCSSink represents a sink to Google Cloud Storage
 type GCSSink struct {
-	Bucket string `json:"bucket" yaml:"bucket" env:"BUCKET"` // The name of the bucket
-	Prefix string `json:"prefix" yaml:"prefix" env:"PREFIX"` // The prefix to add
+	Bucket  string `json:"bucket" yaml:"bucket" env:"BUCKET"` // The name of the bucket
+	Prefix  string `json:"prefix" yaml:"prefix" env:"PREFIX"` // The prefix to add
+	Encoder string `json:"encoder" yaml:"encoder" env:"ENCODER"`
 }
 
 // FileSink represents a sink to the local file system

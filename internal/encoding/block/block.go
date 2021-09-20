@@ -9,11 +9,11 @@ import (
 	"fmt"
 
 	"github.com/golang/snappy"
+	"github.com/kelindar/binary"
+	"github.com/kelindar/binary/nocopy"
 	"github.com/kelindar/talaria/internal/column"
 	"github.com/kelindar/talaria/internal/encoding/typeof"
 	"github.com/kelindar/talaria/internal/presto"
-	"github.com/kelindar/binary"
-	"github.com/kelindar/binary/nocopy"
 )
 
 var (
