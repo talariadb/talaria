@@ -72,7 +72,7 @@ func ForCompaction(config *config.Compaction, monitor monitor.Monitor, store sto
 	monitor.Info("server: setting up compaction %T to run every %.0fs...", writer, interval.Seconds())
 
 	// TODO: once we have everything working, consider making the flusher per writer (requires changing all writers)
-	flusher, err := flush.ForCompaction(monitor, writer, config.Encoder, nameFunc)
+	flusher, err := flush.ForCompaction(monitor, writer, nameFunc)
 	if err != nil {
 		return nil, err
 	}
@@ -81,101 +81,104 @@ func ForCompaction(config *config.Compaction, monitor monitor.Monitor, store sto
 }
 
 // NewWriter creates a new writer from the configuration.
-func newWriter(config config.Sinks, monitor monitor.Monitor, loader *script.Loader) (flush.Writer, error) {
+func newWriter(sinks []config.Sink, monitor monitor.Monitor, loader *script.Loader) (flush.Writer, error) {
 	var writers []multi.SubWriter
 
-	// Configure S3 writer if present
-	if config.S3 != nil {
-		w, err := s3.New(monitor, config.S3.Bucket, config.S3.Prefix, config.S3.Region, config.S3.Endpoint, config.S3.SSE, config.S3.AccessKey, config.S3.SecretKey, config.S3.Concurrency)
-		if err != nil {
-			return nil, err
+	for _, config := range sinks {
+		// Configure S3 writer if present
+		if config.S3 != nil {
+			w, err := s3.New(monitor, config.S3.Bucket, config.S3.Prefix, config.S3.Region, config.S3.Endpoint, config.S3.SSE, config.S3.AccessKey, config.S3.SecretKey, config.S3.Filter, config.S3.Encoder, loader, config.S3.Concurrency)
+			if err != nil {
+				return nil, err
+			}
+			writers = append(writers, w)
 		}
-		writers = append(writers, w)
-	}
 
-	// Configure Azure MultiAccount writer if present
-	if config.Azure != nil && len(config.Azure.StorageAccounts) > 0 {
-		w, err := azure.NewMultiAccountWriter(monitor, config.Azure.BlobServiceURL, config.Azure.Container, config.Azure.Prefix, config.Azure.StorageAccounts, config.Azure.StorageAccountWeights, config.Azure.Parallelism, config.Azure.BlockSize)
-		if err != nil {
-			return nil, err
+		// Configure Azure MultiAccount writer if present
+		if config.Azure != nil && len(config.Azure.StorageAccounts) > 0 {
+			w, err := azure.NewMultiAccountWriter(monitor, config.Azure.BlobServiceURL, config.Azure.Container, config.Azure.Prefix, config.Azure.Filter, config.Azure.Encoder, loader, config.Azure.StorageAccounts, config.Azure.StorageAccountWeights, config.Azure.Parallelism, config.Azure.BlockSize)
+			if err != nil {
+				return nil, err
+			}
+			writers = append(writers, w)
 		}
-		writers = append(writers, w)
-	}
 
-	// Configure Azure SingleAccount writer if present
-	if config.Azure != nil && len(config.Azure.StorageAccounts) == 0 {
-		w, err := azure.New(config.Azure.Container, config.Azure.Prefix)
-		if err != nil {
-			return nil, err
+		// Configure Azure SingleAccount writer if present
+		if config.Azure != nil && len(config.Azure.StorageAccounts) == 0 {
+			w, err := azure.New(config.Azure.Container, config.Azure.Prefix, config.Azure.Filter, config.Azure.Encoder, loader, monitor)
+			if err != nil {
+				return nil, err
+			}
+			writers = append(writers, w)
 		}
-		writers = append(writers, w)
-	}
 
-	// Configure GCS writer if present
-	if config.GCS != nil {
-		w, err := gcs.New(config.GCS.Bucket, config.GCS.Prefix)
-		if err != nil {
-			return nil, err
+		// Configure GCS writer if present
+		if config.GCS != nil {
+			w, err := gcs.New(config.GCS.Bucket, config.GCS.Prefix, config.GCS.Filter, config.GCS.Encoder, loader)
+			if err != nil {
+				return nil, err
+			}
+			writers = append(writers, w)
 		}
-		writers = append(writers, w)
-	}
 
-	// Configure BigQuery writer if present
-	if config.BigQuery != nil {
-		w, err := bigquery.New(config.BigQuery.Project, config.BigQuery.Dataset, config.BigQuery.Table, config.BigQuery.Encoder, config.BigQuery.Filter, monitor, loader)
-		if err != nil {
-			return nil, err
+		// Configure BigQuery writer if present
+		if config.BigQuery != nil {
+			w, err := bigquery.New(config.BigQuery.Project, config.BigQuery.Dataset, config.BigQuery.Table, config.BigQuery.Encoder, config.BigQuery.Filter, monitor, loader)
+			if err != nil {
+				return nil, err
+			}
+			writers = append(writers, w)
 		}
-		writers = append(writers, w)
-	}
 
-	// Configure File writer if present
-	if config.File != nil {
-		w, err := file.New(config.File.Directory)
-		if err != nil {
-			return nil, err
+		// Configure File writer if present
+		if config.File != nil {
+			w, err := file.New(config.File.Directory, config.File.Filter, config.File.Encoder, loader)
+			if err != nil {
+				return nil, err
+			}
+			writers = append(writers, w)
 		}
-		writers = append(writers, w)
-	}
 
-	// Configure Talaria writer if present
-	if config.Talaria != nil {
-		w, err := talaria.New(config.Talaria.Endpoint, config.Talaria.CircuitTimeout, config.Talaria.MaxConcurrent, config.Talaria.ErrorPercentThreshold)
-		if err != nil {
-			return nil, err
+		// Configure Talaria writer if present
+		if config.Talaria != nil {
+			w, err := talaria.New(config.Talaria.Endpoint, config.Talaria.Filter, config.Talaria.Encoder, loader, config.Talaria.CircuitTimeout, config.Talaria.MaxConcurrent, config.Talaria.ErrorPercentThreshold)
+			if err != nil {
+				return nil, err
+			}
+			writers = append(writers, w)
 		}
-		writers = append(writers, w)
-	}
 
-	// Configure Google Pub/Sub writer if present
-	if config.PubSub != nil {
-		w, err := pubsub.New(config.PubSub.Project, config.PubSub.Topic, config.PubSub.Encoder, config.PubSub.Filter, loader, monitor)
-		if err != nil {
-			return nil, err
+		// Configure Google Pub/Sub writer if present
+		if config.PubSub != nil {
+			w, err := pubsub.New(config.PubSub.Project, config.PubSub.Topic, config.PubSub.Encoder, config.PubSub.Filter, loader, monitor)
+			if err != nil {
+				return nil, err
+			}
+			writers = append(writers, w)
 		}
-		writers = append(writers, w)
-	}
 
-	// If no writers were configured, error out
-	if len(writers) == 0 {
-		return noop.New(), errors.New("compact: writer was not configured")
-	}
+		// If no writers were configured, error out
+		if len(writers) == 0 {
+			return noop.New(), errors.New("compact: writer was not configured")
+		}
 
+	}
 	// Setup a multi-writer for all configured writers
 	return multi.New(writers...), nil
 }
 
 // newStreamer creates a new streamer from the configuration.
-func newStreamer(config config.Streams, monitor monitor.Monitor, loader *script.Loader) (flush.Writer, error) {
+func newStreamer(sinks config.Streams, monitor monitor.Monitor, loader *script.Loader) (flush.Writer, error) {
 	var writers []multi.SubWriter
 
 	// If no streams were configured, error out
-	if len(config) == 0 {
+	if len(sinks) == 0 {
 		return noop.New(), errors.New("stream: writer was not configured")
 	}
 
-	for _, v := range config {
-		w, err := newWriter(v, monitor, loader)
+	for _, v := range sinks {
+		conf := []config.Sink{v}
+		w, err := newWriter(conf, monitor, loader)
 		if err != nil {
 			return noop.New(), err
 		}

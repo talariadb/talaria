@@ -6,12 +6,20 @@ package merge
 import (
 	"github.com/kelindar/talaria/internal/column"
 	"github.com/kelindar/talaria/internal/encoding/block"
-	"github.com/kelindar/talaria/internal/encoding/typeof"
+	"github.com/kelindar/talaria/internal/monitor/errors"
 	"github.com/kelindar/talaria/internal/presto"
 )
 
 // ToBlock merges multiple blocks together and outputs merged Block bytes
-func ToBlock(blocks []block.Block, schema typeof.Schema) ([]byte, error) {
+func ToBlock(input interface{}) ([]byte, error) {
+	if input == nil {
+		return nil, nil
+	}
+	if _, ok := input.([]block.Block); !ok {
+		return nil, errors.Internal("Blocks merge not supported. input must be []block.Block", nil)
+	}
+	blocks := input.([]block.Block)
+	schema := blocks[0].Schema()
 	// Acquire a buffer to be used during the merging process
 	buffer := acquire()
 	defer release(buffer)

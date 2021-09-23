@@ -14,7 +14,7 @@ func New() *Writer {
 }
 
 // Write writes the data to the sink.
-func (w *Writer) Write(key key.Key, val []byte) error {
+func (w *Writer) Write(key key.Key, blocks []block.Block) error {
 	return nil
 }
 

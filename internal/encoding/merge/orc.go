@@ -10,12 +10,19 @@ import (
 	"github.com/kelindar/talaria/internal/column"
 	"github.com/kelindar/talaria/internal/encoding/block"
 	"github.com/kelindar/talaria/internal/encoding/orc"
-	"github.com/kelindar/talaria/internal/encoding/typeof"
 	"github.com/kelindar/talaria/internal/monitor/errors"
 )
 
 // ToOrc merges multiple blocks together and outputs a key and merged orc data
-func ToOrc(blocks []block.Block, schema typeof.Schema) ([]byte, error) {
+func ToOrc(input interface{}) ([]byte, error) {
+	if input == nil {
+		return nil, nil
+	}
+	if _, ok := input.([]block.Block); !ok {
+		return nil, errors.Internal("ORC merge not supported. input must be []block.Block", nil)
+	}
+	blocks := input.([]block.Block)
+	schema := blocks[0].Schema()
 	orcSchema, err := orc.SchemaFor(schema)
 	if err != nil {
 		return nil, errors.Internal("merge: error generating orc schema", err)

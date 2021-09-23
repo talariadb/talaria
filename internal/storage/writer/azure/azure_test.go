@@ -8,19 +8,21 @@ import (
 	"github.com/kelindar/talaria/internal/monitor"
 	"github.com/kelindar/talaria/internal/monitor/logging"
 	"github.com/kelindar/talaria/internal/monitor/statsd"
+	"github.com/kelindar/talaria/internal/storage/writer/base"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestWriter(t *testing.T) {
 	os.Setenv("AZURE_STORAGE_ACCOUNT", "golangrocksonazure")
 	os.Setenv("AZURE_STORAGE_ACCESS_KEY", "YmFy")
-	c, err := New("test", "test")
+	c, err := New("test", "test", "", "orc", nil, nil)
 
 	assert.NotNil(t, c)
 	assert.NoError(t, err)
 
+	blocks, _ := base.Setup()
 	assert.NotPanics(t, func() {
-		err := c.Write([]byte("abc"), []byte("hello"))
+		err := c.Write([]byte("abc"), blocks)
 		assert.NotNil(t, err)
 	})
 }
@@ -30,8 +32,7 @@ func TestMultiAccountWriter(t *testing.T) {
 	os.Setenv("AZURE_CLIENT_ID", "xyz")
 	os.Setenv("AZURE_CLIENT_SECRET", "xyz")
 
-	c, err := NewMultiAccountWriter(monitor.New(logging.NewStandard(), statsd.NewNoop(), "x", "x"),
-		defaultBlobServiceURL, "container", "x", []string{"x-0"}, nil, 0, 0)
+	c, err := NewMultiAccountWriter(monitor.New(logging.NewStandard(), statsd.NewNoop(), "x", "x"), "", "orc", defaultBlobServiceURL, "container", "x", nil, []string{"x-0"}, nil, 0, 0)
 
 	assert.Nil(t, c)
 	assert.True(t, strings.Contains(err.Error(), "azure: unable to get azure storage credential"))

@@ -5,19 +5,31 @@ package merge
 
 import (
 	"bytes"
+	"encoding/json"
 	"strings"
 	"sync"
-
-	"github.com/kelindar/talaria/internal/encoding/block"
-	"github.com/kelindar/talaria/internal/encoding/typeof"
-	"github.com/kelindar/talaria/internal/monitor/errors"
 )
 
 // Func represents merge function
-type Func func([]block.Block, typeof.Schema) ([]byte, error)
+type Func func(interface{}) ([]byte, error)
 
 // New creates a new merge function
-func New(mergeFunc string) (Func, error) {
+func New(mergeFunc string) (map[string]Func, error) {
+	encoder := make(map[string]Func)
+	blockEncoder, err := newBlockEncoder(mergeFunc)
+	if err != nil {
+		return nil, err
+	}
+	rowEncoder, err := newRowEncoder(mergeFunc)
+	if err != nil {
+		return nil, err
+	}
+	encoder["block"] = blockEncoder
+	encoder["row"] = rowEncoder
+	return encoder, nil
+}
+
+func newBlockEncoder(mergeFunc string) (Func, error) {
 	switch strings.ToLower(mergeFunc) {
 	case "orc":
 		return ToOrc, nil
@@ -28,8 +40,16 @@ func New(mergeFunc string) (Func, error) {
 	case "": // Default to "orc" so we don't break existing configs
 		return ToOrc, nil
 	}
+	return nil, nil
+}
 
-	return nil, errors.Newf("unsupported merge function %v", mergeFunc)
+func newRowEncoder(mergeFunc string) (Func, error) {
+	switch mergeFunc {
+	case "json":
+		return Func(json.Marshal), nil
+	default:
+		return nil, nil
+	}
 }
 
 // ----------------------------------------------------------------------------

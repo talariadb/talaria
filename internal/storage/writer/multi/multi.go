@@ -11,7 +11,7 @@ import (
 
 // SubWriter represents the sub-writer
 type SubWriter interface {
-	Write(key.Key, []byte) error
+	Write(key.Key, []block.Block) error
 }
 
 // streamer represents the sub-streamer
@@ -42,12 +42,12 @@ func New(writers ...SubWriter) *Writer {
 }
 
 // Write writes the data to the sink.
-func (w *Writer) Write(key key.Key, val []byte) error {
+func (w *Writer) Write(key key.Key, blocks []block.Block) error {
 	eg := new(errgroup.Group)
 	for _, w := range w.writers {
 		w := w
 		eg.Go(func() error {
-			return w.Write(key, val)
+			return w.Write(key, blocks)
 		})
 	}
 	// Wait blocks until all finished, and returns the first non-nil error (if any) from them

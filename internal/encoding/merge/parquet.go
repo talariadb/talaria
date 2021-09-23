@@ -19,7 +19,15 @@ import (
 )
 
 // ToParquet merges multiple blocks together and outputs a key and merged Parquet data
-func ToParquet(blocks []block.Block, schema typeof.Schema) ([]byte, error) {
+func ToParquet(input interface{}) ([]byte, error) {
+	if input == nil {
+		return nil, nil
+	}
+	if _, ok := input.([]block.Block); !ok {
+		return nil, errors.Internal("Parquet merge not supported. input must be []block.Block", nil)
+	}
+	blocks := input.([]block.Block)
+	schema := blocks[0].Schema()
 	parquetSchema, fieldHandlers, err := deriveSchema(schema)
 
 	if err != nil {

@@ -2,19 +2,18 @@ package base
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"time"
 
 	"github.com/grab/async"
 	"github.com/kelindar/lua"
 	"github.com/kelindar/talaria/internal/encoding/block"
+	"github.com/kelindar/talaria/internal/encoding/merge"
+	"github.com/kelindar/talaria/internal/encoding/typeof"
 	"github.com/kelindar/talaria/internal/monitor/errors"
 	script "github.com/kelindar/talaria/internal/scripting"
 )
-
-// Func encodes the payload
-type Func func(interface{}) ([]byte, error)
 
 // Writer is to filter and encode row of events
 type Writer struct {
@@ -22,22 +21,15 @@ type Writer struct {
 	Process func(context.Context) error
 	filter  *lua.Script
 	name    string
-	encode  Func
+	encoder map[string]merge.Func
 }
 
 // New creates a new encoder
 func New(filter, encoderFunc string, loader *script.Loader) (*Writer, error) {
-	if encoderFunc == "" {
-		encoderFunc = "json"
-	}
-
 	// Extendable encoder functions
-	var encoder Func
-	switch encoderFunc {
-	case "json":
-		encoder = Func(json.Marshal)
-	default:
-		return nil, errors.Newf("encoder: unsupported encoder '%s'", encoderFunc)
+	encoder, err := merge.New(encoderFunc)
+	if err != nil {
+		return nil, err
 	}
 
 	// If no filter was specified, create a base writer without a filter
@@ -55,15 +47,11 @@ func New(filter, encoderFunc string, loader *script.Loader) (*Writer, error) {
 }
 
 // newWithEncoder will generate a new encoder for a writer
-func newWithEncoder(name string, filter *lua.Script, encoder Func) (*Writer, error) {
-	if encoder == nil {
-		encoder = Func(json.Marshal)
-	}
-
+func newWithEncoder(name string, filter *lua.Script, encoder map[string]merge.Func) (*Writer, error) {
 	return &Writer{
-		name:   name,
-		filter: filter,
-		encode: encoder,
+		name:    name,
+		filter:  filter,
+		encoder: encoder,
 	}, nil
 }
 
@@ -86,20 +74,18 @@ func (w *Writer) Close() error {
 	return nil
 }
 
-// Encode will encode a row to the format the user specifies
+// Encode will encode a row/block to the format the user specifies
 func (w *Writer) Encode(input interface{}) ([]byte, error) {
 	// TODO: make this work for block.Block and block.Row
 
-	// If it's a row, take the value map
-	if r, ok := input.(block.Row); ok {
-		if w.applyFilter(&r) {
-			input = r.Values
-		} else {
-			return nil, nil
-		}
+	encoderType := "block"
+	if _, ok := input.(block.Row); ok {
+		encoderType = "row"
+	} else {
+
 	}
 
-	encodedData, err := w.encode(input)
+	encodedData, err := w.encoder[encoderType](input)
 	if err != nil {
 		return nil, errors.Internal(fmt.Sprintf("encoder: could not marshal to %s", w.name), err)
 	}
@@ -121,4 +107,33 @@ func (w *Writer) applyFilter(row *block.Row) bool {
 		return false
 	}
 	return true
+}
+
+// Filter filters out a row/blocks
+func (w *Writer) Filter(input interface{}) (interface{}, error) {
+	// If it's a row, take the value map
+	if r, ok := input.(block.Row); ok {
+		if w.applyFilter(&r) {
+			return input, nil
+		} else {
+			return nil, nil
+		}
+	}
+	return nil, nil
+}
+
+func Setup() ([]block.Block, typeof.Schema) {
+
+	const testFile = "../../../../test/test4.csv"
+	o, _ := ioutil.ReadFile(testFile)
+	schema := &typeof.Schema{
+		"raisedCurrency": typeof.String,
+		"raisedAmt":      typeof.Float64,
+	}
+	apply := block.Transform(schema)
+	b, _ := block.FromCSVBy(o, "raisedCurrency", &typeof.Schema{
+		"raisedCurrency": typeof.String,
+		"raisedAmt":      typeof.Float64,
+	}, apply)
+	return b, *schema
 }

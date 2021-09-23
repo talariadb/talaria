@@ -6,8 +6,11 @@ import (
 	"time"
 
 	talaria "github.com/kelindar/talaria/client/golang"
+	"github.com/kelindar/talaria/internal/encoding/block"
 	"github.com/kelindar/talaria/internal/encoding/key"
 	"github.com/kelindar/talaria/internal/monitor/errors"
+	script "github.com/kelindar/talaria/internal/scripting"
+	"github.com/kelindar/talaria/internal/storage/writer/base"
 	"github.com/myteksi/hystrix-go/hystrix"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -25,6 +28,7 @@ func getClient(endpoint string, options ...talaria.Option) (*talaria.Client, err
 
 // Writer to write to TalariaDB
 type Writer struct {
+	*base.Writer
 	lock     sync.Mutex
 	endpoint string
 	client   *talaria.Client
@@ -32,12 +36,16 @@ type Writer struct {
 }
 
 // New initializes a new Talaria writer.
-func New(endpoint string, circuitTimeout *time.Duration, maxConcurrent *int, errorPercentThreshold *int) (*Writer, error) {
+func New(endpoint, filter, encoding string, loader *script.Loader, circuitTimeout *time.Duration, maxConcurrent *int, errorPercentThreshold *int) (*Writer, error) {
 
 	var newTimeout = 5 * time.Second
 	var newMaxConcurrent = hystrix.DefaultMaxConcurrent
 	var newErrorPercentThreshold = hystrix.DefaultErrorPercentThreshold
 
+	baseWriter, err := base.New(filter, encoding, loader)
+	if err != nil {
+		return nil, errors.Internal("talaria: ", err)
+	}
 	// Set defaults for variables if there aren't any
 	if circuitTimeout != nil {
 		newTimeout = *circuitTimeout * time.Second
@@ -62,6 +70,7 @@ func New(endpoint string, circuitTimeout *time.Duration, maxConcurrent *int, err
 	}
 
 	return &Writer{
+		Writer:   baseWriter,
 		client:   client,
 		endpoint: endpoint,
 		options:  dialOptions,
@@ -69,7 +78,7 @@ func New(endpoint string, circuitTimeout *time.Duration, maxConcurrent *int, err
 }
 
 // Write will write the ORC data to Talaria
-func (w *Writer) Write(key key.Key, val []byte) error {
+func (w *Writer) Write(key key.Key, blocks []block.Block) error {
 
 	// Check if client is nil
 	if w.client == nil {
@@ -78,8 +87,13 @@ func (w *Writer) Write(key key.Key, val []byte) error {
 		}
 	}
 
+	buffer, err := w.Writer.Encode(blocks)
+	if err != nil {
+		return errors.Internal("talaria: encoding err", err)
+	}
+
 	// Check error status if it needs to redial
-	if err := w.client.IngestORC(context.Background(), val); err != nil {
+	if err = w.client.IngestORC(context.Background(), buffer); err != nil {
 		errStatus, _ := status.FromError(err)
 		if codes.Unavailable == errStatus.Code() {
 			// Server unavailable, redial
@@ -87,7 +101,7 @@ func (w *Writer) Write(key key.Key, val []byte) error {
 				return errors.Internal("talaria: unable to redial", err)
 			}
 			// Send again after redial
-			if err := w.client.IngestORC(context.Background(), val); err != nil {
+			if err := w.client.IngestORC(context.Background(), buffer); err != nil {
 				return errors.Internal("talaria: unable to write after redial", err)
 			}
 		}

@@ -12,20 +12,43 @@ import (
 	"github.com/Azure/azure-sdk-for-go/storage"
 	"github.com/Azure/azure-storage-blob-go/azblob"
 	"github.com/Azure/go-autorest/autorest/azure/auth"
+	"github.com/kelindar/talaria/internal/encoding/block"
 	"github.com/kelindar/talaria/internal/encoding/key"
 	"github.com/kelindar/talaria/internal/monitor"
 	"github.com/kelindar/talaria/internal/monitor/errors"
+	script "github.com/kelindar/talaria/internal/scripting"
+	"github.com/kelindar/talaria/internal/storage/writer/base"
 	"github.com/mroth/weightedrand"
+)
+
+const (
+	ctxTag                = "azure"
+	tokenRefreshBuffer    = 2 * time.Minute
+	defaultBlobServiceURL = "https://%s.blob.core.windows.net"
+	defaultResourceID     = "https://storage.azure.com/"
 )
 
 // Writer represents a writer for Microsoft Azure.
 type Writer struct {
+	*base.Writer
+	monitor   monitor.Monitor
 	prefix    string
 	container *storage.Container
 }
 
+// MultiAccountWriter represents a writer for Microsoft Azure with multiple storage accounts.
+type MultiAccountWriter struct {
+	*base.Writer
+	monitor        monitor.Monitor
+	blobServiceURL string
+	prefix         string
+	containerURLs  []azblob.ContainerURL
+	options        azblob.UploadToBlockBlobOptions
+	chooser        *weightedrand.Chooser
+}
+
 // New creates a new writer.
-func New(container, prefix string) (*Writer, error) {
+func New(container, prefix, filter, encoding string, loader *script.Loader, monitor monitor.Monitor) (*Writer, error) {
 
 	// From the Azure portal, get your storage account name and key and set environment variables.
 	accountName, accountKey := os.Getenv("AZURE_STORAGE_ACCOUNT"), os.Getenv("AZURE_STORAGE_ACCESS_KEY")
@@ -41,6 +64,11 @@ func New(container, prefix string) (*Writer, error) {
 	if len(accountName) == 0 || len(accountKey) == 0 {
 		return nil, errors.New("azure: either the AZURE_STORAGE_ACCOUNT or AZURE_STORAGE_ACCESS_KEY environment variable is not set")
 	}
+	// Load Encoder and Filter
+	baseWriter, err := base.New(filter, encoding, loader)
+	if err != nil {
+		return nil, err
+	}
 
 	// Create a new storage client
 	client, err := storage.NewClient(accountName, accountKey, serviceBaseURL, apiVersion, true)
@@ -51,13 +79,15 @@ func New(container, prefix string) (*Writer, error) {
 	svc := client.GetBlobService()
 	ref := svc.GetContainerReference(container)
 	return &Writer{
+		Writer:    baseWriter,
+		monitor:   monitor,
 		prefix:    prefix,
 		container: ref,
 	}, nil
 }
 
 // Write writes the data to the sink.
-func (w *Writer) Write(key key.Key, val []byte) error {
+func (w *Writer) Write(key key.Key, blocks []block.Block) error {
 	if w.container == nil {
 		return errors.New("azure: unable to obtain a container reference")
 	}
@@ -67,31 +97,21 @@ func (w *Writer) Write(key key.Key, val []byte) error {
 		return errors.Internal("azure: unable to write", err)
 	}
 
-	if err := ref.AppendBlock(val, nil); err != nil {
+	buffer, err := w.Writer.Encode(blocks)
+	fmt.Println("here")
+	fmt.Println(buffer)
+	if err != nil {
+		return errors.Internal("encoder: unable to encode blocks to bytes ", err)
+	}
+
+	if err := ref.AppendBlock(buffer, nil); err != nil {
 		return errors.Internal("azure: unable to write", err)
 	}
 	return nil
 }
 
-const (
-	ctxTag                = "azure"
-	tokenRefreshBuffer    = 2 * time.Minute
-	defaultBlobServiceURL = "https://%s.blob.core.windows.net"
-	defaultResourceID     = "https://storage.azure.com/"
-)
-
-// MultiAccountWriter represents a writer for Microsoft Azure with multiple storage accounts.
-type MultiAccountWriter struct {
-	monitor        monitor.Monitor
-	blobServiceURL string
-	prefix         string
-	containerURLs  []azblob.ContainerURL
-	options        azblob.UploadToBlockBlobOptions
-	chooser        *weightedrand.Chooser
-}
-
 // NewMultiAccountWriter creates a new MultiAccountWriter.
-func NewMultiAccountWriter(monitor monitor.Monitor, blobServiceURL, container, prefix string, storageAccount []string, weights []uint, parallelism uint16, blockSize int64) (*MultiAccountWriter, error) {
+func NewMultiAccountWriter(monitor monitor.Monitor, filter, encoding, blobServiceURL, container, prefix string, loader *script.Loader, storageAccount []string, weights []uint, parallelism uint16, blockSize int64) (*MultiAccountWriter, error) {
 	if _, present := os.LookupEnv("AZURE_AD_RESOURCE"); !present {
 		if err := os.Setenv("AZURE_AD_RESOURCE", defaultResourceID); err != nil {
 			return nil, errors.New("azure: unable to set default AZURE_AD_RESOURCE environment variable")
@@ -137,7 +157,14 @@ func NewMultiAccountWriter(monitor monitor.Monitor, blobServiceURL, container, p
 		}
 	}
 
+	// Load Encoder and Filter
+	baseWriter, err := base.New(filter, encoding, loader)
+	if err != nil {
+		return nil, err
+	}
+
 	return &MultiAccountWriter{
+		Writer:        baseWriter,
 		monitor:       monitor,
 		prefix:        prefix,
 		containerURLs: containerURLs,
@@ -194,21 +221,26 @@ func GetAzureStorageCredentials(monitor monitor.Monitor) (azblob.Credential, err
 }
 
 // Write writes the data to a randomly selected storage account sink.
-func (m *MultiAccountWriter) Write(key key.Key, val []byte) error {
+func (m *MultiAccountWriter) Write(key key.Key, blocks []block.Block) error {
 	containerURL, err := m.getContainerURL()
 	if err != nil {
 		return err
 	}
-	return m.WriteToContanier(key, val, containerURL)
+	buffer, err := m.Writer.Encode(blocks)
+	if err != nil {
+		return errors.Internal("encoder: unable to encode blocks to bytes ", err)
+	}
+
+	return m.WriteToContanier(key, buffer, containerURL)
 }
-func (m *MultiAccountWriter) WriteToContanier(key key.Key, val []byte, containerURL *azblob.ContainerURL) error {
+func (m *MultiAccountWriter) WriteToContanier(key key.Key, buffer []byte, containerURL *azblob.ContainerURL) error {
 	start := time.Now()
 	ctx := context.Background()
 
 	blobName := path.Join(m.prefix, string(key))
 	blockBlobURL := containerURL.NewBlockBlobURL(blobName)
 
-	_, err := azblob.UploadBufferToBlockBlob(ctx, val, blockBlobURL, m.options)
+	_, err := azblob.UploadBufferToBlockBlob(ctx, buffer, blockBlobURL, m.options)
 	if err != nil {
 		m.monitor.Count1(ctxTag, "writeerror")
 		m.monitor.Info("failed_azure_write: %s", blobName)

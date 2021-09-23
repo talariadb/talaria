@@ -40,6 +40,9 @@ func New(project, dataset, table, encoding, filter string, monitor monitor.Monit
 		return nil, errors.Newf("bigquery: %v", err)
 	}
 	encoderwriter, err := base.New(filter, encoding, loader)
+	if err != nil {
+		return nil, errors.Newf("bigquery: %v", err)
+	}
 
 	tableRef := client.Dataset(dataset).Table(table)
 	inserter := tableRef.Inserter()
@@ -61,8 +64,12 @@ func New(project, dataset, table, encoding, filter string, monitor monitor.Monit
 }
 
 // Write writes the data to the sink.
-func (w *Writer) Write(key key.Key, val []byte) error {
-	blk, _ := block.FromBuffer(val)
+func (w *Writer) Write(key key.Key, blocks []block.Block) error {
+	buffer, err := w.Writer.Encode(blocks)
+	if err != nil {
+		return err
+	}
+	blk, _ := block.FromBuffer(buffer)
 	rows, _ := block.FromBlockBy(blk, blk.Schema())
 	bqrows := make([]bigquery.ValueSaver, 0)
 	for _, row := range rows {

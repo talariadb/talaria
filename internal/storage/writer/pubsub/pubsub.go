@@ -70,7 +70,7 @@ func New(project, topic, encoding, filter string, loader *script.Loader, monitor
 }
 
 // Write writes the data to the sink.
-func (w *Writer) Write(key.Key, []byte) error {
+func (w *Writer) Write(key.Key, []block.Block) error {
 	return nil // Noop
 }
 
