@@ -76,14 +76,17 @@ func (w *Writer) Write(key.Key, []block.Block) error {
 
 // Stream encodes data and pushes it into buffer
 func (w *Writer) Stream(row block.Row) error {
-	message, err := w.Writer.Encode(row)
+	filtered, err := w.Writer.Filter(row)
+	// If message is filtered out, return nil
+	if filtered == nil {
+		return nil
+	}
 	if err != nil {
 		return err
 	}
-
-	// If message is filtered out, return nil
-	if message == nil {
-		return nil
+	message, err := w.Writer.Encode(filtered)
+	if err != nil {
+		return err
 	}
 
 	select {

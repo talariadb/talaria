@@ -69,8 +69,19 @@ func (w *Writer) Write(key key.Key, blocks []block.Block) error {
 	if err != nil {
 		return err
 	}
-	blk, _ := block.FromBuffer(buffer)
-	rows, _ := block.FromBlockBy(blk, blk.Schema())
+	blk, err := block.FromBuffer(buffer)
+	if err != nil {
+		return err
+	}
+	rows, err := block.FromBlockBy(blk, blk.Schema())
+	if err != nil {
+		return err
+	}
+	filtered, err := w.Writer.Filter(rows)
+	if err != nil {
+		return err
+	}
+	rows, _ = filtered.([]block.Row)
 	bqrows := make([]bigquery.ValueSaver, 0)
 	for _, row := range rows {
 		bqrow := &bqRow{
@@ -95,6 +106,16 @@ func (b *bqRow) Save() (map[string]bigquery.Value, string, error) {
 
 // Stream publishes the rows in real-time.
 func (w *Writer) Stream(row block.Row) error {
+
+	filtered, err := w.Writer.Filter(row)
+	// If message is filtered out, return nil
+	if filtered == nil {
+		return nil
+	}
+	if err != nil {
+		return err
+	}
+	row, _ = filtered.(block.Row)
 
 	bqrow := &bqRow{
 		values: row.Values,

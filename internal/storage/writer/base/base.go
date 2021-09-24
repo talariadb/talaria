@@ -3,14 +3,12 @@ package base
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
 	"time"
 
 	"github.com/grab/async"
 	"github.com/kelindar/lua"
 	"github.com/kelindar/talaria/internal/encoding/block"
 	"github.com/kelindar/talaria/internal/encoding/merge"
-	"github.com/kelindar/talaria/internal/encoding/typeof"
 	"github.com/kelindar/talaria/internal/monitor/errors"
 	script "github.com/kelindar/talaria/internal/scripting"
 )
@@ -115,25 +113,17 @@ func (w *Writer) Filter(input interface{}) (interface{}, error) {
 	if r, ok := input.(block.Row); ok {
 		if w.applyFilter(&r) {
 			return input, nil
-		} else {
-			return nil, nil
 		}
 	}
-	return nil, nil
-}
-
-func Setup() ([]block.Block, typeof.Schema) {
-
-	const testFile = "../../../../test/test4.csv"
-	o, _ := ioutil.ReadFile(testFile)
-	schema := &typeof.Schema{
-		"raisedCurrency": typeof.String,
-		"raisedAmt":      typeof.Float64,
+	// If it's a slice of rows, applyFilter for each row
+	if rows, ok := input.([]block.Row); ok {
+		filtered := make([]block.Row, 0)
+		for _, row := range rows {
+			if w.applyFilter(&row) {
+				filtered = append(filtered, row)
+			}
+		}
+		return filtered, nil
 	}
-	apply := block.Transform(schema)
-	b, _ := block.FromCSVBy(o, "raisedCurrency", &typeof.Schema{
-		"raisedCurrency": typeof.String,
-		"raisedAmt":      typeof.Float64,
-	}, apply)
-	return b, *schema
+	return nil, nil
 }
