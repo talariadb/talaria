@@ -12,7 +12,9 @@ RUN mkdir -p /go/src/talaria
 COPY . src/talaria
 RUN cd src/talaria && go build . && test -x talaria
 
-FROM debian:latest AS base
+
+ARG UBUNTU_VERSION="20.04"
+FROM ubuntu:${UBUNTU_VERSION} AS base
 ARG MAINTAINER=roman.atachiants@gmail.com
 LABEL maintainer=${MAINTAINER}
 
