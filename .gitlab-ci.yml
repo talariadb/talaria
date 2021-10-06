@@ -1,1 +1,6 @@
-
+include:
+  - project: "data-engineering/infra/gitlab_ci"
+    ref: alpha
+    file: "alpha/common/base.yml"
+variables:
+  DEPLOY_SCRIPT_BRANCH: alpha
