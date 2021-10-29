@@ -48,7 +48,8 @@ func newRowEncoder(mergeFunc string) (Func, error) {
 	case "json":
 		return Func(json.Marshal), nil
 	default:
-		return nil, nil
+		return Func(json.Marshal), nil
+
 	}
 }
 
