@@ -59,11 +59,12 @@ require (
 	gopkg.in/yaml.v2 v2.2.8
 )
 
+require github.com/Azure/go-autorest/autorest/adal v0.9.11
+
 require (
 	github.com/Azure/azure-pipeline-go v0.2.3 // indirect
 	github.com/Azure/go-autorest v14.2.0+incompatible // indirect
 	github.com/Azure/go-autorest/autorest v0.11.17 // indirect
-	github.com/Azure/go-autorest/autorest/adal v0.9.11 // indirect
 	github.com/Azure/go-autorest/autorest/azure/cli v0.4.2 // indirect
 	github.com/Azure/go-autorest/autorest/date v0.3.0 // indirect
 	github.com/Azure/go-autorest/logger v0.2.0 // indirect
