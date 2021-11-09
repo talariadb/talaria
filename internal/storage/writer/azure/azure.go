@@ -12,6 +12,7 @@ import (
 	"github.com/Azure/azure-sdk-for-go/storage"
 	"github.com/Azure/azure-storage-blob-go/azblob"
 	"github.com/Azure/go-autorest/autorest/adal"
+	"github.com/Azure/go-autorest/autorest/azure"
 	"github.com/Azure/go-autorest/autorest/azure/auth"
 	"github.com/kelindar/talaria/internal/encoding/key"
 	"github.com/kelindar/talaria/internal/monitor"
@@ -223,19 +224,17 @@ func (m *MultiAccountWriter) getContainerURL() (*azblob.ContainerURL, error) {
 
 func getServicePrincipalToken(monitor monitor.Monitor) (*adal.ServicePrincipalToken, error) {
 
-	settings, err := auth.GetSettingsFromEnvironment()
-	if err != nil {
-		return nil, err
-	}
-
-	msi := settings.GetMSI()
-	spt, err := msi.ServicePrincipalToken()
+	spt, err := adal.NewServicePrincipalTokenFromManagedIdentity(azure.PublicCloud.ResourceIdentifiers.Storage, &adal.ManagedIdentityOptions{})
 
 	if err == nil {
 		return spt, err
 	}
 	monitor.Warning(errors.Internal("Unable to retrieve Manange Identity Credentials", err))
 
+	settings, err := auth.GetSettingsFromEnvironment()
+	if err != nil {
+		return nil, err
+	}
 	cc, err := settings.GetClientCredentials()
 	if err != nil {
 		return nil, err
