@@ -11,6 +11,8 @@ import (
 
 	"github.com/Azure/azure-sdk-for-go/storage"
 	"github.com/Azure/azure-storage-blob-go/azblob"
+	"github.com/Azure/go-autorest/autorest/adal"
+	"github.com/Azure/go-autorest/autorest/azure"
 	"github.com/Azure/go-autorest/autorest/azure/auth"
 	"github.com/kelindar/talaria/internal/encoding/key"
 	"github.com/kelindar/talaria/internal/monitor"
@@ -100,12 +102,10 @@ func NewMultiAccountWriter(monitor monitor.Monitor, blobServiceURL, container, p
 	if blobServiceURL == "" {
 		blobServiceURL = defaultBlobServiceURL
 	}
-
 	credential, err := GetAzureStorageCredentials(monitor)
 	if err != nil {
 		return nil, errors.Internal("azure: unable to get azure storage credential", err)
 	}
-
 	containerURLs := make([]azblob.ContainerURL, len(storageAccount))
 	for i, sa := range storageAccount {
 		azureStoragePipeline := azblob.NewPipeline(credential, azblob.PipelineOptions{
@@ -121,7 +121,7 @@ func NewMultiAccountWriter(monitor monitor.Monitor, blobServiceURL, container, p
 	if weights != nil {
 
 		if len(storageAccount) != len(weights) {
-			return nil, fmt.Errorf("azure: Invalid configuration number of storage account %v !=  number of weights %v", len(storageAccount), len(weights))
+			return nil, fmt.Errorf("Invalid configuration number of storage account %v !=  number of weights %v", len(storageAccount), len(weights))
 		}
 
 		choices := make([]weightedrand.Choice, len(storageAccount))
@@ -150,17 +150,9 @@ func NewMultiAccountWriter(monitor monitor.Monitor, blobServiceURL, container, p
 }
 
 func GetAzureStorageCredentials(monitor monitor.Monitor) (azblob.Credential, error) {
-	settings, err := auth.GetSettingsFromEnvironment()
-	if err != nil {
-		return nil, err
-	}
 
-	cc, err := settings.GetClientCredentials()
-	if err != nil {
-		return nil, err
-	}
+	spt, err := getServicePrincipalToken(monitor)
 
-	spt, err := cc.ServicePrincipalToken()
 	if err != nil {
 		return nil, err
 	}
@@ -169,7 +161,6 @@ func GetAzureStorageCredentials(monitor monitor.Monitor) (azblob.Credential, err
 	if err := spt.Refresh(); err != nil {
 		return nil, err
 	}
-
 	// Token refresher function
 	var tokenRefresher azblob.TokenRefresher
 	tokenRefresher = func(credential azblob.TokenCredential) time.Duration {
@@ -229,4 +220,27 @@ func (m *MultiAccountWriter) getContainerURL() (*azblob.ContainerURL, error) {
 
 	i := rand.Intn(len(m.containerURLs))
 	return &m.containerURLs[i], nil
+}
+
+func getServicePrincipalToken(monitor monitor.Monitor) (*adal.ServicePrincipalToken, error) {
+
+	spt, err := adal.NewServicePrincipalTokenFromManagedIdentity(azure.PublicCloud.ResourceIdentifiers.Storage, &adal.ManagedIdentityOptions{})
+
+	if err == nil {
+		return spt, err
+	}
+	monitor.Warning(errors.Internal("Unable to retrieve Manange Identity Credentials", err))
+
+	settings, err := auth.GetSettingsFromEnvironment()
+	if err != nil {
+		return nil, err
+	}
+	cc, err := settings.GetClientCredentials()
+	if err != nil {
+		return nil, err
+	}
+
+	spt, err = cc.ServicePrincipalToken()
+
+	return spt, err
 }
