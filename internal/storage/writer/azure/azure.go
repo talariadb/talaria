@@ -115,6 +115,8 @@ func NewMultiAccountWriter(monitor monitor.Monitor, blobServiceURL, container, p
 		})
 		u, _ := url.Parse(fmt.Sprintf(blobServiceURL, sa))
 		containerURLs[i] = azblob.NewServiceURL(*u, azureStoragePipeline).NewContainerURL(container)
+		monitor.Info(fmt.Sprintf("azure: new azure storage pipeline created for  %s", u))
+
 	}
 
 	var chooser *weightedrand.Chooser
@@ -130,6 +132,7 @@ func NewMultiAccountWriter(monitor monitor.Monitor, blobServiceURL, container, p
 				Item:   &containerURLs[i],
 				Weight: w,
 			}
+			monitor.Info(fmt.Sprintf("azure: writer weights for  %v set to %d", containerURLs[i], w))
 		}
 		chooser, err = weightedrand.NewChooser(choices...)
 		if err != nil {
@@ -227,9 +230,10 @@ func getServicePrincipalToken(monitor monitor.Monitor) (*adal.ServicePrincipalTo
 	spt, err := adal.NewServicePrincipalTokenFromManagedIdentity(azure.PublicCloud.ResourceIdentifiers.Storage, &adal.ManagedIdentityOptions{})
 
 	if err == nil {
+		monitor.Info("azure: acquired Manange Identity Credentials")
 		return spt, err
 	}
-	monitor.Warning(errors.Internal("Unable to retrieve Manange Identity Credentials", err))
+	monitor.Warning(errors.Internal("azure: unable to retrieve Manange Identity Credentials", err))
 
 	settings, err := auth.GetSettingsFromEnvironment()
 	if err != nil {
