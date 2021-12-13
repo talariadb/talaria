@@ -13,11 +13,11 @@ import (
 	"time"
 
 	awssqs "github.com/aws/aws-sdk-go/service/sqs"
+	"github.com/kelindar/loader"
 	"github.com/kelindar/talaria/internal/config"
 	"github.com/kelindar/talaria/internal/ingress/s3sqs/sqs"
 	"github.com/kelindar/talaria/internal/monitor"
 	"github.com/kelindar/talaria/internal/monitor/errors"
-	"github.com/kelindar/loader"
 	"golang.org/x/sync/semaphore"
 )
 
@@ -51,7 +51,7 @@ type Reader interface {
 // New creates a new ingestion with SQS/S3 files.
 func New(conf *config.S3SQS, region string, monitor monitor.Monitor) (*Ingress, error) {
 	loader := loader.New()
-	reader, err := sqs.NewReader(conf, region)
+	reader, err := sqs.NewReader(conf, region, monitor)
 	if err != nil {
 		return nil, err
 	}
@@ -146,6 +146,7 @@ func (s *Ingress) ingest(bucket, key string, handler func(v []byte) bool) {
 	data, err := s.loader.Load(context.Background(), fmt.Sprintf("s3://%s/%s", bucket, key))
 	defer s.limit.Release(1)
 	if err != nil {
+		s.monitor.Count1(ctxTag, "s3readerror")
 		s.monitor.Error(err)
 		return
 	}

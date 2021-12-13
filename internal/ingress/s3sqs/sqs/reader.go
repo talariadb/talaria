@@ -10,6 +10,8 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/sqs"
 	"github.com/kelindar/talaria/internal/config"
+	"github.com/kelindar/talaria/internal/monitor"
+	"github.com/kelindar/talaria/internal/monitor/errors"
 )
 
 const (
@@ -21,7 +23,7 @@ const (
 )
 
 // NewReader returns a reader
-func NewReader(c *config.S3SQS, region string) (*Reader, error) {
+func NewReader(c *config.S3SQS, region string, monitor monitor.Monitor) (*Reader, error) {
 	const defaultVisibilityTimeout = time.Second * 30
 
 	conf := aws.NewConfig().
@@ -46,6 +48,7 @@ func NewReader(c *config.S3SQS, region string) (*Reader, error) {
 		visibilityTimeout: visibilityTimeout,
 		queueURL:          c.Queue,
 		waitTimeSeconds:   c.WaitTimeout,
+		monitor:           monitor,
 	}, nil
 }
 
@@ -56,6 +59,7 @@ type Reader struct {
 	visibilityTimeout time.Duration
 	queueURL          string
 	waitTimeSeconds   int64 // The duration (in seconds) for which the call will wait for a message to arrive
+	monitor           monitor.Monitor
 }
 
 // StartPolling messages from SQS. User defines
@@ -100,7 +104,10 @@ func (r *Reader) receive(attributeNames, messageAttributeNames []*string, maxPer
 		WaitTimeSeconds:       &r.waitTimeSeconds,
 	}
 
-	resp, _ := r.sqs.ReceiveMessage(input)
+	resp, err := r.sqs.ReceiveMessage(input)
+	if err != nil {
+		r.monitor.Error(errors.Internal("sqs: failed to receive messages", err))
+	}
 	return resp.Messages
 }
 
