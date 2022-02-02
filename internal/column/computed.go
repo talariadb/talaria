@@ -9,22 +9,24 @@ import (
 	"encoding/binary"
 	"encoding/hex"
 	"fmt"
+	"log"
 	"sync/atomic"
 	"time"
 
 	"github.com/kelindar/loader"
+	loaderpkg "github.com/kelindar/loader"
 	"github.com/kelindar/lua"
 	"github.com/kelindar/talaria/internal/encoding/typeof"
-	"github.com/kelindar/talaria/internal/scripting"
+	"github.com/kelindar/talaria/internal/monitor"
+	mlog "github.com/kelindar/talaria/internal/scripting/log"
+	mnet "github.com/kelindar/talaria/internal/scripting/net"
+	mstats "github.com/kelindar/talaria/internal/scripting/stats"
 )
 
-// Loader is the default loader to use for loading computed columns.
-var Loader = loader.New()
-
-// Default empty script
-const emptyScript = `function main(row) 
-	return null
-end`
+const (
+	LuaLoaderTyp    = "lua"
+	PluginLoaderTyp = "plugin"
+)
 
 // Computed represents a computed column
 type Computed interface {
@@ -33,24 +35,104 @@ type Computed interface {
 	Value(map[string]interface{}) (interface{}, error)
 }
 
-// NewComputed creates a new script from a string
-func NewComputed(name string, typ typeof.Type, uriOrCode string, loader *script.Loader) (Computed, error) {
-	switch uriOrCode {
-	case "make://identifier":
-		return newIdentifier(name), nil
-	case "make://timestamp":
-		return newTimestamp(name), nil
-	}
+type Loader struct {
+	loader *loader.Loader // The loader to use to load and watch for code updates
+}
 
-	s, err := loader.Load(name, uriOrCode)
-	if err != nil {
+type Handler interface {
+	Load(columnName string, uriOrCode string) (Computed, error)
+	String() string
+}
+
+type PluginHandler struct {
+	Loader
+	main         mainFunc
+	functionName string
+}
+type LuaHandler struct {
+	modules []lua.Module // The modules for the scripting environment
+	Loader
+}
+
+func (h *PluginHandler) Load(columnName, uriOrCode string) (Computed, error) {
+	log.Println("LoadGoPlugin: ", columnName, uriOrCode)
+	// try to download it
+	if err := h.watch(uriOrCode, h.updateGoPlugin); err != nil {
 		return nil, err
 	}
 
-	return &scripted{
-		code: s,
-		typ:  typ,
-	}, nil
+	return newGoFunc(columnName, h.main), nil
+}
+
+func (h *PluginHandler) String() string { return "plugin" }
+
+type HandlerLoader struct {
+	hs []Handler
+}
+
+func NewHandlerLoader(handlers ...Handler) *HandlerLoader {
+	s := HandlerLoader{}
+	for _, h := range handlers {
+		s.hs = append(s.hs, h)
+	}
+	return &s
+}
+
+func (l *HandlerLoader) LoadHandler(uri string, monitor monitor.Monitor) Handler {
+	h := "plugin"
+	// h := parseHandler(uri)
+	for _, d := range l.hs {
+		if d.String() == h {
+			return d
+		}
+	}
+
+	return nil
+}
+func NewPluginHandler(functionName string) *PluginHandler {
+	return &PluginHandler{
+		Loader:       Loader{loaderpkg.New()},
+		functionName: functionName,
+	}
+}
+
+// NewComputed creates a new script from a string
+func NewComputed(columnName, functionName string, outpuTyp typeof.Type, uriOrCode string, monitor monitor.Monitor) (Computed, error) {
+	switch uriOrCode {
+	case "make://identifier":
+		return newIdentifier(columnName), nil
+	case "make://timestamp":
+		return newTimestamp(columnName), nil
+	}
+
+	pluginHandler := NewPluginHandler(functionName)
+	luaHandler := NewLuaHandler([]lua.Module{
+		mlog.New(monitor),
+		mstats.New(monitor),
+		mnet.New(monitor),
+	})
+	NewHandlerLoader(pluginHandler, luaHandler)
+	return nil, nil
+
+	// if strings.HasSuffix(uriOrCode, ".so") {
+	// 	l := script.NewPluginHandler(functionName)
+	// 	return l.LoadGoPlugin(columnName, uriOrCode)
+	// }
+
+	// loader := script.NewLuaHandler([]lua.Module{
+	// 	mlog.New(monitor),
+	// 	mstats.New(monitor),
+	// 	mnet.New(monitor),
+	// })
+	// s, err := loader.LoadLua(columnName, uriOrCode)
+	// if err != nil {
+	// 	return nil, err
+	// }
+
+	// return &scripted{
+	// 	code: s,
+	// 	typ:  outpuTyp,
+	// }, nil
 }
 
 // ------------------------------------------------------------------------------------------------------------

@@ -5,6 +5,7 @@ package config
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"sync/atomic"
 	"time"
@@ -27,7 +28,7 @@ func newStore(li time.Duration, co []Configurer) *store {
 
 	c, err := s.value()
 	if err != nil {
-		panic("unable to load config")
+		panic(fmt.Sprintf("unable to load config, err is %v", err))
 	}
 	s.config.Store(c)
 	return s
@@ -56,7 +57,7 @@ func (cs *store) value() (*Config, error) {
 	// Iterate through all the loaders to fill this config object
 	for _, p := range cs.configurers {
 		if err := p.Configure(c); err != nil {
-			log.Printf("%s : error in loadig config %s", p, err)
+			log.Printf("%+v : error in loadig config %s", p, err)
 			return nil, err
 		}
 	}

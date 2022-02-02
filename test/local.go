@@ -69,7 +69,7 @@ func main() {
 	gossip.JoinHostname("localhost")
 
 	store := disk.Open(cfg().Storage.Directory, tableName, monitor, config.Badger{})
-	streams, _ := writer.ForStreaming(config.Streams{}, monitor, script.NewLoader(nil))
+	streams, _ := writer.ForStreaming(config.Streams{}, monitor, script.NewLuaLoader(nil))
 
 	// Start the server and open the database
 	eventlog := timeseries.New(tableName, gossip, monitor, store, &config.Table{
@@ -79,7 +79,7 @@ func main() {
 		Schema: "",
 	}, streams)
 
-	server := server.New(cfg, monitor, script.NewLoader(nil),
+	server := server.New(cfg, monitor, nil,
 		eventlog,
 		nodes.New(gossip),
 	)

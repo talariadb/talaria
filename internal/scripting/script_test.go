@@ -11,9 +11,9 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func Test_Download(t *testing.T) {
-	l := NewLoader(nil)
-	s, err := l.Load("data", "https://raw.githubusercontent.com/kelindar/lua/master/fixtures/json.lua")
+func TestLoadLua(t *testing.T) {
+	l := NewLuaLoader(nil)
+	s, err := l.LoadLua("data", "https://raw.githubusercontent.com/kelindar/lua/master/fixtures/json.lua")
 	assert.NotNil(t, s)
 	assert.NoError(t, err)
 

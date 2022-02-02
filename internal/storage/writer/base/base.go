@@ -26,7 +26,7 @@ type Writer struct {
 }
 
 // New creates a new encoder
-func New(filter, encoderFunc string, loader *script.Loader) (*Writer, error) {
+func New(filter, encoderFunc string, loader *script.LuaLoader) (*Writer, error) {
 	if encoderFunc == "" {
 		encoderFunc = "json"
 	}
@@ -46,7 +46,7 @@ func New(filter, encoderFunc string, loader *script.Loader) (*Writer, error) {
 	}
 
 	// Load the filter script if required
-	script, err := loader.Load(filter, filter)
+	script, err := loader.LoadLua(filter, filter)
 	if err != nil {
 		return nil, err
 	}

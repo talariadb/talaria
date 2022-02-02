@@ -38,6 +38,7 @@ func TestTransform(t *testing.T) {
 	// Run a transformation
 	apply := Transform(&filter, dataColumn)
 	out, err := apply(in)
+	assert.NoError(t, err)
 	assert.NotNil(t, out)
 
 	// Make sure input is not changed
@@ -69,6 +70,7 @@ func TestTransform_NoFilter(t *testing.T) {
 	// Run a transformation
 	apply := Transform(nil, dataColumn)
 	out, err := apply(in)
+	assert.NoError(t, err)
 	assert.NotNil(t, out)
 
 	// Make sure input is not changed

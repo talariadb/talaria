@@ -7,7 +7,6 @@ import (
 	"testing"
 
 	"github.com/kelindar/talaria/internal/encoding/typeof"
-	"github.com/kelindar/talaria/internal/scripting"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -24,7 +23,7 @@ func Test_Computed(t *testing.T) {
 }
 
 func Test_Identifier(t *testing.T) {
-	c, err := NewComputed("id", typeof.String, "make://identifier", nil)
+	c, err := NewComputed("id", "", typeof.String, "make://identifier", nil)
 	assert.NoError(t, err)
 	out, err := c.Value(map[string]interface{}{
 		"a": 1,
@@ -39,7 +38,7 @@ func Test_Identifier(t *testing.T) {
 }
 
 func Test_Timestamp(t *testing.T) {
-	c, err := NewComputed("ts", typeof.String, "make://timestamp", nil)
+	c, err := NewComputed("ts", "", typeof.String, "make://timestamp", nil)
 	assert.NoError(t, err)
 	out, err := c.Value(map[string]interface{}{
 		"a": 1,
@@ -54,8 +53,8 @@ func Test_Timestamp(t *testing.T) {
 }
 
 func Test_Download(t *testing.T) {
-	l := script.NewLoader(nil)
-	c, err := NewComputed("data", typeof.JSON, "https://raw.githubusercontent.com/kelindar/lua/master/fixtures/json.lua", l)
+	c, err := NewComputed("data", "main", typeof.JSON, "https://raw.githubusercontent.com/kelindar/lua/master/fixtures/json.lua", nil)
+	assert.NoError(t, err)
 	out, err := c.Value(map[string]interface{}{
 		"a": 1,
 		"b": "hello",
@@ -67,13 +66,12 @@ func Test_Download(t *testing.T) {
 }
 
 func newDataColumn(t *testing.T) Computed {
-	l := script.NewLoader(nil)
-	c, err := NewComputed("data", typeof.JSON, `
+	c, err := NewComputed("data", "main", typeof.JSON, `
 	local json = require("json")
 
-	function main(row) 
+	function main(row)
 		return json.encode(row)
-	end`, l)
+	end`, nil)
 	assert.NoError(t, err)
 	return c
 }

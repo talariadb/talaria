@@ -26,7 +26,6 @@ require (
 	github.com/fraugster/parquet-go v0.3.0
 	github.com/golang/snappy v0.0.3
 	github.com/gopherjs/gopherjs v0.0.0-20200209183636-89e6cbcd0b6d // indirect
-	github.com/gorilla/mux v1.7.4
 	github.com/grab/async v0.0.5
 	github.com/hako/durafmt v0.0.0-20191009132224-3f39dc1ed9f4
 	github.com/hashicorp/go-immutable-radix v1.2.0 // indirect

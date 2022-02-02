@@ -28,7 +28,7 @@ type Writer struct {
 }
 
 // New creates a new writer
-func New(project, topic, encoding, filter string, loader *script.Loader, monitor monitor.Monitor, opts ...option.ClientOption) (*Writer, error) {
+func New(project, topic, encoding, filter string, loader *script.LuaLoader, monitor monitor.Monitor, opts ...option.ClientOption) (*Writer, error) {
 	ctx := context.Background()
 	client, err := pubsub.NewClient(ctx, project, opts...)
 

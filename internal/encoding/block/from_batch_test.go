@@ -9,7 +9,6 @@ import (
 
 	"github.com/kelindar/talaria/internal/column"
 	"github.com/kelindar/talaria/internal/encoding/typeof"
-	script "github.com/kelindar/talaria/internal/scripting"
 	talaria "github.com/kelindar/talaria/proto"
 	"github.com/stretchr/testify/assert"
 )
@@ -109,10 +108,10 @@ func TestBlock_FromBatch(t *testing.T) {
 }
 
 func newDataColumn() (column.Computed, error) {
-	return column.NewComputed("data", typeof.JSON, `
+	return column.NewComputed("data", "main", typeof.JSON, `
 	local json = require("json")
 
 	function main(input)
 		return json.encode(input)
-	end`, script.NewLoader(nil))
+	end`, nil)
 }

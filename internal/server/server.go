@@ -18,7 +18,6 @@ import (
 	"github.com/kelindar/talaria/internal/monitor"
 	"github.com/kelindar/talaria/internal/monitor/errors"
 	"github.com/kelindar/talaria/internal/presto"
-	script "github.com/kelindar/talaria/internal/scripting"
 	"github.com/kelindar/talaria/internal/server/thriftlog"
 	"github.com/kelindar/talaria/internal/table"
 	talaria "github.com/kelindar/talaria/proto"
@@ -46,7 +45,7 @@ type Storage interface {
 // ------------------------------------------------------------------------------------------------------------
 
 // New creates a new talaria server.
-func New(conf config.Func, monitor monitor.Monitor, loader *script.Loader, tables ...table.Table) *Server {
+func New(conf config.Func, monitor monitor.Monitor, tables ...table.Table) *Server {
 	const maxMessageSize = 32 * 1024 * 1024 // 32 MB
 	server := &Server{
 		server:  grpc.NewServer(grpc.MaxRecvMsgSize(maxMessageSize)),
@@ -57,7 +56,7 @@ func New(conf config.Func, monitor monitor.Monitor, loader *script.Loader, table
 
 	// Load computed columns
 	for _, c := range conf().Computed {
-		col, err := column.NewComputed(c.Name, c.Type, c.Func, loader)
+		col, err := column.NewComputed(c.Name, c.FuncName, c.Type, c.Func, monitor)
 		if err != nil {
 			monitor.Error(err)
 			continue

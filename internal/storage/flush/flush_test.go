@@ -13,14 +13,13 @@ import (
 	"github.com/kelindar/talaria/internal/encoding/orc"
 	"github.com/kelindar/talaria/internal/encoding/typeof"
 	"github.com/kelindar/talaria/internal/monitor"
-	script "github.com/kelindar/talaria/internal/scripting"
 	"github.com/kelindar/talaria/internal/storage/writer/noop"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestNameFunc(t *testing.T) {
 	fileNameFunc := func(row map[string]interface{}) (string, error) {
-		lua, _ := column.NewComputed("fileName", typeof.String, `
+		lua, _ := column.NewComputed("fileName", "main", typeof.String, `
 	function main(row)
 
 		-- Convert the time to a lua date
@@ -46,7 +45,7 @@ func TestNameFunc(t *testing.T) {
 		--localdate.isdst = false
 		return os.difftime(os.time(localdate), os.time(utcdate))
 	end
-	`, script.NewLoader(nil))
+	`, nil)
 
 		output, err := lua.Value(row)
 		return output.(string), err
@@ -73,6 +72,7 @@ func TestNameFunc(t *testing.T) {
 	apply := block.Transform(nil)
 
 	blocks, err := block.FromOrcBy(orcBuffer.Bytes(), "col0", nil, apply)
+	assert.NoError(t, err)
 	fileName := flusher.generateFileName(blocks[0])
 
 	assert.Equal(t, "year=46970/month=3/day=29/ns=eventName/0-0-0-127.0.0.1.orc", string(fileName))

@@ -30,7 +30,7 @@ import (
 var seed = maphash.MakeSeed()
 
 // ForStreaming creates a streaming writer
-func ForStreaming(config config.Streams, monitor monitor.Monitor, loader *script.Loader) (storage.Streamer, error) {
+func ForStreaming(config config.Streams, monitor monitor.Monitor, loader *script.LuaLoader) (storage.Streamer, error) {
 	writer, err := newStreamer(config, monitor, loader)
 	if err != nil {
 		monitor.Error(err)
@@ -40,7 +40,7 @@ func ForStreaming(config config.Streams, monitor monitor.Monitor, loader *script
 }
 
 // ForCompaction creates a compaction writer
-func ForCompaction(config *config.Compaction, monitor monitor.Monitor, store storage.Storage, loader *script.Loader) (*compact.Storage, error) {
+func ForCompaction(config *config.Compaction, monitor monitor.Monitor, store storage.Storage, loader *script.LuaLoader) (*compact.Storage, error) {
 	writer, err := newWriter(config.Sinks, monitor, loader)
 	if err != nil {
 		return nil, err
@@ -55,7 +55,7 @@ func ForCompaction(config *config.Compaction, monitor monitor.Monitor, store sto
 	// If name function was specified, use it
 	nameFunc := defaultNameFunc
 	if config.NameFunc != "" {
-		if fn, err := column.NewComputed("nameFunc", typeof.String, config.NameFunc, loader); err == nil {
+		if fn, err := column.NewComputed("nameFunc", "main", typeof.String, config.NameFunc, monitor); err == nil {
 			nameFunc = func(row map[string]interface{}) (s string, e error) {
 				val, err := fn.Value(row)
 				if err != nil {
@@ -81,7 +81,7 @@ func ForCompaction(config *config.Compaction, monitor monitor.Monitor, store sto
 }
 
 // NewWriter creates a new writer from the configuration.
-func newWriter(config config.Sinks, monitor monitor.Monitor, loader *script.Loader) (flush.Writer, error) {
+func newWriter(config config.Sinks, monitor monitor.Monitor, loader *script.LuaLoader) (flush.Writer, error) {
 	var writers []multi.SubWriter
 
 	// Configure S3 writer if present
@@ -166,7 +166,7 @@ func newWriter(config config.Sinks, monitor monitor.Monitor, loader *script.Load
 }
 
 // newStreamer creates a new streamer from the configuration.
-func newStreamer(config config.Streams, monitor monitor.Monitor, loader *script.Loader) (flush.Writer, error) {
+func newStreamer(config config.Streams, monitor monitor.Monitor, loader *script.LuaLoader) (flush.Writer, error) {
 	var writers []multi.SubWriter
 
 	// If no streams were configured, error out

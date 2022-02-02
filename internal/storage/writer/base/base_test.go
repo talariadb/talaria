@@ -22,7 +22,7 @@ func TestFilter(t *testing.T) {
 	filter := `function main(row) 
 		return row['age'] > 10
 	end`
-	loader := script.NewLoader(nil)
+	loader := script.NewLuaLoader(nil)
 	enc1, _ := New(filter, "json", loader)
 	data, err := enc1.Encode(row)
 
@@ -32,16 +32,17 @@ func TestFilter(t *testing.T) {
 	filter2 := `function main(row)
 		return row['age'] < 10
 	end`
-	loader2 := script.NewLoader(nil)
+	loader2 := script.NewLuaLoader(nil)
 	enc2, _ := New(filter2, "json", loader2)
 	data2, err := enc2.Encode(row)
+	assert.NoError(t, err)
 
 	assert.Nil(t, data2)
 }
 
 func TestRun(t *testing.T) {
 	ctx := context.Background()
-	loader := script.NewLoader(nil)
+	loader := script.NewLuaLoader(nil)
 	w, _ := New("", "json", loader)
 	w.Process = func(context.Context) error {
 		return nil
@@ -53,7 +54,7 @@ func TestRun(t *testing.T) {
 
 func TestCancel(t *testing.T) {
 	ctx := context.Background()
-	loader := script.NewLoader(nil)
+	loader := script.NewLuaLoader(nil)
 	w, _ := New("", "json", loader)
 	w.Process = func(context.Context) error {
 		time.Sleep(1 * time.Second)
@@ -66,7 +67,7 @@ func TestCancel(t *testing.T) {
 }
 
 func TestEmptyFilter(t *testing.T) {
-	loader := script.NewLoader(nil)
+	loader := script.NewLuaLoader(nil)
 	enc1, err := New("", "json", loader)
 	assert.NotNil(t, enc1)
 	assert.NoError(t, err)
