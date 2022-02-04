@@ -12,7 +12,7 @@ import (
 	"time"
 
 	"github.com/grab/async"
-	"github.com/kelindar/talaria/internal/column"
+	"github.com/kelindar/talaria/internal/column/computed"
 	"github.com/kelindar/talaria/internal/config"
 	"github.com/kelindar/talaria/internal/ingress/s3sqs"
 	"github.com/kelindar/talaria/internal/monitor"
@@ -56,7 +56,7 @@ func New(conf config.Func, monitor monitor.Monitor, tables ...table.Table) *Serv
 
 	// Load computed columns
 	for _, c := range conf().Computed {
-		col, err := column.NewComputed(c.Name, c.FuncName, c.Type, c.Func, monitor)
+		col, err := computed.NewComputed(c.Name, c.FuncName, c.Type, c.Func, monitor)
 		if err != nil {
 			monitor.Error(err)
 			continue
@@ -85,7 +85,7 @@ type Server struct {
 	monitor  monitor.Monitor        // The monitoring layer
 	cancel   context.CancelFunc     // The cancellation function for the server
 	tables   map[string]table.Table // The list of tables
-	computed []column.Computed      // The set of computed columns
+	computed []computed.Computed    // The set of computed columns
 	s3sqs    *s3sqs.Ingress         // The S3SQS Ingress (optional)
 }
 

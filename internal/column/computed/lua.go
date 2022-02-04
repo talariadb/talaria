@@ -1,4 +1,4 @@
-package column
+package computed
 
 import (
 	"github.com/kelindar/talaria/internal/encoding/typeof"

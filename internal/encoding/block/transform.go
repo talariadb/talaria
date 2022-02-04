@@ -4,12 +4,12 @@
 package block
 
 import (
-	"github.com/kelindar/talaria/internal/column"
+	"github.com/kelindar/talaria/internal/column/computed"
 	"github.com/kelindar/talaria/internal/encoding/typeof"
 )
 
 // Transform runs the computed Values and overwrites/appends them to the set.
-func Transform(filter *typeof.Schema, computed ...column.Computed) applyFunc {
+func Transform(filter *typeof.Schema, computed ...computed.Computed) applyFunc {
 	return func(r Row) (Row, error) {
 		// Create a new output row and copy the column values from the input
 		schema := make(typeof.Schema, len(r.Schema))

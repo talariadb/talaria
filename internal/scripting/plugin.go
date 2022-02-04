@@ -34,8 +34,7 @@ func (h *PluginLoader) Load(uriOrCode string) (Handler, error) {
 		return nil, err
 	}
 
-	return &PluginLoader{main: h.main, functionName: h.functionName}, nil
-	// return newGoFunc(columnName, h.main), nil
+	return h, nil
 }
 
 func (h *PluginLoader) String() string { return pluginType }

@@ -1,4 +1,4 @@
-package column
+package computed
 
 // // goFunc represents a go computed column
 // type goFunc struct {

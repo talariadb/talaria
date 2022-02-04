@@ -7,9 +7,10 @@ import (
 
 	"cloud.google.com/go/pubsub"
 	"github.com/grab/async"
-	"github.com/kelindar/talaria/internal/column"
+	"github.com/kelindar/talaria/internal/column/computed"
 	"github.com/kelindar/talaria/internal/encoding/block"
 	"github.com/kelindar/talaria/internal/encoding/key"
+	"github.com/kelindar/talaria/internal/encoding/typeof"
 	"github.com/kelindar/talaria/internal/monitor"
 	"github.com/kelindar/talaria/internal/monitor/errors"
 	"github.com/kelindar/talaria/internal/storage/writer/base"
@@ -28,7 +29,7 @@ type Writer struct {
 }
 
 // New creates a new writer
-func New(project, topic, encoding, filter string, loader column.Computed, monitor monitor.Monitor, opts ...option.ClientOption) (*Writer, error) {
+func New(project, topic, encoding, filter string, monitor monitor.Monitor, opts ...option.ClientOption) (*Writer, error) {
 	ctx := context.Background()
 	client, err := pubsub.NewClient(ctx, project, opts...)
 
@@ -36,8 +37,12 @@ func New(project, topic, encoding, filter string, loader column.Computed, monito
 		return nil, errors.Newf("pubsub: %v", err)
 	}
 
+	computed, err := computed.NewComputed("", "", typeof.Bool, filter, monitor)
+	if err != nil {
+		return nil, err
+	}
 	// Load encoder
-	encoderWriter, err := base.New(filter, encoding, loader)
+	encoderWriter, err := base.New(filter, encoding, computed)
 	if err != nil {
 		return nil, err
 	}

@@ -1,7 +1,7 @@
 // Copyright 2019-2020 Grabtaxi Holdings PTE LTE (GRAB), All rights reserved.
 // Use of this source code is governed by an MIT-style license that can be found in the LICENSE file
 
-package column
+package computed
 
 import (
 	"crypto/rand"
@@ -40,13 +40,14 @@ func NewComputed(columnName, functionName string, outpuTyp typeof.Type, uriOrCod
 		return newTimestamp(columnName), nil
 	}
 
-	pluginHandler := script.NewPluginLoader(functionName)
-	luaHandler := script.NewLuaLoader([]lua.Module{
+	pluginLoader := script.NewPluginLoader(functionName)
+	luaLoader := script.NewLuaLoader([]lua.Module{
 		mlog.New(monitor),
 		mstats.New(monitor),
 		mnet.New(monitor),
 	}, outpuTyp)
-	l := script.NewHandlerLoader(pluginHandler, luaHandler)
+	l := script.NewHandlerLoader(pluginLoader, luaLoader)
+
 	h, err := l.LoadHandler(uriOrCode)
 	if err != nil {
 		return nil, err
@@ -57,26 +58,6 @@ func NewComputed(columnName, functionName string, outpuTyp typeof.Type, uriOrCod
 		loader: h,
 		typ:    outpuTyp,
 	}, nil
-
-	// if strings.HasSuffix(uriOrCode, ".so") {
-	// 	l := script.NewPluginHandler(functionName)
-	// 	return l.LoadGoPlugin(columnName, uriOrCode)
-	// }
-
-	// loader := script.NewLuaLoader([]lua.Module{
-	// 	mlog.New(monitor),
-	// 	mstats.New(monitor),
-	// 	mnet.New(monitor),
-	// })
-	// s, err := loader.LoadLua(columnName, uriOrCode)
-	// if err != nil {
-	// 	return nil, err
-	// }
-
-	// return &scripted{
-	// 	code: s,
-	// 	typ:  outpuTyp,
-	// }, nil
 }
 
 // ------------------------------------------------------------------------------------------------------------

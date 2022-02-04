@@ -42,7 +42,7 @@ func New(cfg config.Func, cluster Membership, monitor monitor.Monitor) *Table {
 	store := disk.Open(cfg().Storage.Directory, name, monitor, cfg().Storage.Badger)
 
 	// Create a noop streamer
-	streams, _ := writer.ForStreaming(config.Streams{}, monitor, nil)
+	streams, _ := writer.ForStreaming(config.Streams{}, monitor)
 
 	base := timeseries.New(name, cluster, monitor, store, &config.Table{
 		TTL:    24 * 3600, // 1 day

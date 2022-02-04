@@ -48,10 +48,7 @@ func (l *LuaLoader) Load(uriOrCode string) (Handler, error) {
 		return nil, err
 	}
 
-	return &LuaLoader{
-		code: s,
-		typ:  l.typ,
-	}, nil
+	return l, nil
 }
 
 func (l *LuaLoader) Value(row map[string]interface{}) (interface{}, error) {

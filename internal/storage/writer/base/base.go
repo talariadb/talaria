@@ -7,7 +7,7 @@ import (
 
 	"github.com/grab/async"
 	"github.com/kelindar/lua"
-	"github.com/kelindar/talaria/internal/column"
+	"github.com/kelindar/talaria/internal/column/computed"
 	"github.com/kelindar/talaria/internal/encoding/block"
 	"github.com/kelindar/talaria/internal/monitor/errors"
 )
@@ -19,13 +19,13 @@ type Func func(interface{}) ([]byte, error)
 type Writer struct {
 	task    async.Task
 	Process func(context.Context) error
-	filter  column.Computed
+	filter  computed.Computed
 	name    string
 	encode  Func
 }
 
 // New creates a new encoder
-func New(filter, encoderFunc string, loader column.Computed) (*Writer, error) {
+func New(filter, encoderFunc string, computed computed.Computed) (*Writer, error) {
 	if encoderFunc == "" {
 		encoderFunc = "json"
 	}
@@ -45,16 +45,16 @@ func New(filter, encoderFunc string, loader column.Computed) (*Writer, error) {
 	}
 
 	// Load the filter script if required
-	script, err := loader.Load(filter, filter)
-	if err != nil {
-		return nil, err
-	}
+	// script, err := computed.Load(filter)
+	// if err != nil {
+	// 	return nil, err
+	// }
 
-	return newWithEncoder(encoderFunc, script, encoder)
+	return newWithEncoder(encoderFunc, computed, encoder)
 }
 
 // newWithEncoder will generate a new encoder for a writer
-func newWithEncoder(name string, filter column.Computed, encoder Func) (*Writer, error) {
+func newWithEncoder(name string, filter computed.Computed, encoder Func) (*Writer, error) {
 	if encoder == nil {
 		encoder = Func(json.Marshal)
 	}
