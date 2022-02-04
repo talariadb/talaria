@@ -4,13 +4,12 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"time"
 
 	"github.com/grab/async"
 	"github.com/kelindar/lua"
+	"github.com/kelindar/talaria/internal/column"
 	"github.com/kelindar/talaria/internal/encoding/block"
 	"github.com/kelindar/talaria/internal/monitor/errors"
-	script "github.com/kelindar/talaria/internal/scripting"
 )
 
 // Func encodes the payload
@@ -20,13 +19,13 @@ type Func func(interface{}) ([]byte, error)
 type Writer struct {
 	task    async.Task
 	Process func(context.Context) error
-	filter  *lua.Script
+	filter  column.Computed
 	name    string
 	encode  Func
 }
 
 // New creates a new encoder
-func New(filter, encoderFunc string, loader *script.LuaLoader) (*Writer, error) {
+func New(filter, encoderFunc string, loader column.Computed) (*Writer, error) {
 	if encoderFunc == "" {
 		encoderFunc = "json"
 	}
@@ -46,7 +45,7 @@ func New(filter, encoderFunc string, loader *script.LuaLoader) (*Writer, error) 
 	}
 
 	// Load the filter script if required
-	script, err := loader.LoadLua(filter, filter)
+	script, err := loader.Load(filter, filter)
 	if err != nil {
 		return nil, err
 	}
@@ -55,7 +54,7 @@ func New(filter, encoderFunc string, loader *script.LuaLoader) (*Writer, error) 
 }
 
 // newWithEncoder will generate a new encoder for a writer
-func newWithEncoder(name string, filter *lua.Script, encoder Func) (*Writer, error) {
+func newWithEncoder(name string, filter column.Computed, encoder Func) (*Writer, error) {
 	if encoder == nil {
 		encoder = Func(json.Marshal)
 	}
@@ -112,11 +111,11 @@ func (w *Writer) applyFilter(row *block.Row) bool {
 		return true
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
-	defer cancel()
+	// 	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
+	// 	defer cancel()
 
 	// Runs the lua script
-	out, err := w.filter.Run(ctx, row.Values)
+	out, err := w.filter.Value(row.Values)
 	if err != nil || !out.(lua.Bool) {
 		return false
 	}

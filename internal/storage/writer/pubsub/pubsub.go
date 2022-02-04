@@ -7,11 +7,11 @@ import (
 
 	"cloud.google.com/go/pubsub"
 	"github.com/grab/async"
+	"github.com/kelindar/talaria/internal/column"
 	"github.com/kelindar/talaria/internal/encoding/block"
 	"github.com/kelindar/talaria/internal/encoding/key"
 	"github.com/kelindar/talaria/internal/monitor"
 	"github.com/kelindar/talaria/internal/monitor/errors"
-	script "github.com/kelindar/talaria/internal/scripting"
 	"github.com/kelindar/talaria/internal/storage/writer/base"
 	"google.golang.org/api/option"
 )
@@ -28,7 +28,7 @@ type Writer struct {
 }
 
 // New creates a new writer
-func New(project, topic, encoding, filter string, loader *script.LuaLoader, monitor monitor.Monitor, opts ...option.ClientOption) (*Writer, error) {
+func New(project, topic, encoding, filter string, loader column.Computed, monitor monitor.Monitor, opts ...option.ClientOption) (*Writer, error) {
 	ctx := context.Background()
 	client, err := pubsub.NewClient(ctx, project, opts...)
 

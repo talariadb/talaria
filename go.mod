@@ -60,6 +60,8 @@ require (
 
 require github.com/Azure/go-autorest/autorest/adal v0.9.11
 
+require github.com/gorilla/mux v1.8.0
+
 require (
 	github.com/Azure/azure-pipeline-go v0.2.3 // indirect
 	github.com/Azure/go-autorest v14.2.0+incompatible // indirect
