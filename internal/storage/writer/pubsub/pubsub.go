@@ -42,7 +42,7 @@ func New(project, topic, encoding, filter string, monitor monitor.Monitor, opts 
 		return nil, err
 	}
 	// Load encoder
-	encoderWriter, err := base.New(filter, encoding, computed)
+	encoderWriter, err := base.New(encoding, computed)
 	if err != nil {
 		return nil, err
 	}

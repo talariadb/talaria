@@ -6,8 +6,9 @@ import (
 	"time"
 
 	"github.com/grab/async"
+	"github.com/kelindar/talaria/internal/column/computed"
 	"github.com/kelindar/talaria/internal/encoding/block"
-	script "github.com/kelindar/talaria/internal/scripting"
+	"github.com/kelindar/talaria/internal/encoding/typeof"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -22,8 +23,9 @@ func TestFilter(t *testing.T) {
 	filter := `function main(row) 
 		return row['age'] > 10
 	end`
-	loader := script.NewLuaLoader(nil)
-	enc1, _ := New(filter, "json", loader)
+	computedFilter, err := computed.NewComputed("", "", typeof.String, filter, nil)
+	assert.NoError(t, err)
+	enc1, _ := New("json", computedFilter)
 	data, err := enc1.Encode(row)
 
 	assert.Equal(t, `{"age":30,"test":"Hello Talaria"}`, string(data))
@@ -32,8 +34,9 @@ func TestFilter(t *testing.T) {
 	filter2 := `function main(row)
 		return row['age'] < 10
 	end`
-	loader2 := script.NewLuaLoader(nil)
-	enc2, _ := New(filter2, "json", loader2)
+	computedFilter, err = computed.NewComputed("", "", typeof.String, filter2, nil)
+	assert.NoError(t, err)
+	enc2, _ := New("json", computedFilter)
 	data2, err := enc2.Encode(row)
 	assert.NoError(t, err)
 
@@ -42,20 +45,22 @@ func TestFilter(t *testing.T) {
 
 func TestRun(t *testing.T) {
 	ctx := context.Background()
-	loader := script.NewLuaLoader(nil)
-	w, _ := New("", "json", loader)
+	computedFilter, err := computed.NewComputed("", "", typeof.String, "", nil)
+	assert.NoError(t, err)
+	w, _ := New("json", computedFilter)
 	w.Process = func(context.Context) error {
 		return nil
 	}
 	w.Run(ctx)
-	_, err := w.task.Outcome()
+	_, err = w.task.Outcome()
 	assert.NoError(t, err)
 }
 
 func TestCancel(t *testing.T) {
 	ctx := context.Background()
-	loader := script.NewLuaLoader(nil)
-	w, _ := New("", "json", loader)
+	computedFilter, err := computed.NewComputed("", "", typeof.String, "", nil)
+	assert.NoError(t, err)
+	w, _ := New("json", computedFilter)
 	w.Process = func(context.Context) error {
 		time.Sleep(1 * time.Second)
 		return nil
@@ -67,8 +72,9 @@ func TestCancel(t *testing.T) {
 }
 
 func TestEmptyFilter(t *testing.T) {
-	loader := script.NewLuaLoader(nil)
-	enc1, err := New("", "json", loader)
+	computedFilter, err := computed.NewComputed("", "", typeof.String, "", nil)
+	assert.NoError(t, err)
+	enc1, err := New("json", computedFilter)
 	assert.NotNil(t, enc1)
 	assert.NoError(t, err)
 }

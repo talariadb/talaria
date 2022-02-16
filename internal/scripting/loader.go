@@ -25,7 +25,6 @@ type Handler interface {
 	Load(uriOrCode string) (Handler, error)
 	String() string
 	Value(map[string]interface{}) (interface{}, error)
-	// Type() typeof.Type
 }
 
 type HandlerLoader struct {

@@ -34,7 +34,7 @@ func TestNew(t *testing.T) {
 	conn := setup()
 
 	// Fail because topic doesn't exist
-	c, err := New("gcp-project", "talaria", "", "", nil, monitor.New(logging.NewStandard(), statsd.NewNoop(), "x", "x"), option.WithGRPCConn(conn))
+	c, err := New("gcp-project", "talaria", "", "", monitor.New(logging.NewStandard(), statsd.NewNoop(), "x", "x"), option.WithGRPCConn(conn))
 
 	assert.Nil(t, c)
 	assert.Error(t, err)
@@ -42,7 +42,7 @@ func TestNew(t *testing.T) {
 	setup2(conn)
 
 	// Doesn't fail after creating topic
-	c, err = New("gcp-project", "talaria", "", "", nil, monitor.New(logging.NewStandard(), statsd.NewNoop(), "x", "x"), option.WithGRPCConn(conn))
+	c, err = New("gcp-project", "talaria", "", "", monitor.New(logging.NewStandard(), statsd.NewNoop(), "x", "x"), option.WithGRPCConn(conn))
 
 	assert.IsType(t, &Writer{}, c)
 	assert.NoError(t, err)
@@ -78,7 +78,7 @@ func TestFullMessageBuffer(t *testing.T) {
 	setup2(conn)
 
 	// Doesn't fail after creating topic
-	c, err := New("gcp-project", "talaria", "", "", nil, monitor.New(logging.NewStandard(), statsd.NewNoop(), "x", "x"), option.WithGRPCConn(conn))
+	c, err := New("gcp-project", "talaria", "", "", monitor.New(logging.NewStandard(), statsd.NewNoop(), "x", "x"), option.WithGRPCConn(conn))
 
 	assert.IsType(t, &Writer{}, c)
 	assert.NoError(t, err)

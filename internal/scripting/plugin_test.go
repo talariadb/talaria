@@ -9,7 +9,7 @@ import (
 
 func TestLoadGoPlugin(t *testing.T) {
 	l := NewPluginLoader("Computed")
-	s, err := l.LoadGoPlugin("data", "file:///talaria_go_function.so")
+	s, err := l.Load("file:///talaria_go_function.so")
 	assert.NotNil(t, s)
 	assert.NoError(t, err)
 	require.NoError(t, err)

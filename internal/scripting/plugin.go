@@ -44,16 +44,22 @@ func (h *PluginLoader) Value(row map[string]interface{}) (interface{}, error) {
 	fmt.Println("after, data is ", res, err)
 	return h.main(row)
 }
+
 func (h *PluginLoader) updateGoPlugin(r io.Reader) error {
 	tmpFileName := fmt.Sprintf("%s.so", time.Now().Format("20060102150405"))
 	tmpFile, err := ioutil.TempFile("", tmpFileName)
 	if err != nil {
 		return err
 	}
-	_, err = io.Copy(tmpFile, r)
+
+	written, err := io.Copy(tmpFile, r)
 	if err != nil {
 		return err
 	}
+	if written == 0 {
+		return errors.New("PluginLoader load plugin content failed, content was empty")
+	}
+
 	log.Printf("updateGoPlugin: write to file %s, try to open %s: ", tmpFileName, tmpFile.Name())
 	p, err := plugin.Open(tmpFile.Name())
 	if err != nil {

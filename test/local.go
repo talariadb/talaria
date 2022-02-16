@@ -15,7 +15,6 @@ import (
 	"github.com/kelindar/talaria/internal/monitor"
 	"github.com/kelindar/talaria/internal/monitor/logging"
 	"github.com/kelindar/talaria/internal/monitor/statsd"
-	script "github.com/kelindar/talaria/internal/scripting"
 	"github.com/kelindar/talaria/internal/server"
 	"github.com/kelindar/talaria/internal/server/cluster"
 	"github.com/kelindar/talaria/internal/storage/disk"
@@ -69,7 +68,7 @@ func main() {
 	gossip.JoinHostname("localhost")
 
 	store := disk.Open(cfg().Storage.Directory, tableName, monitor, config.Badger{})
-	streams, _ := writer.ForStreaming(config.Streams{}, monitor, script.NewLuaLoader(nil))
+	streams, _ := writer.ForStreaming(config.Streams{}, monitor)
 
 	// Start the server and open the database
 	eventlog := timeseries.New(tableName, gossip, monitor, store, &config.Table{

@@ -72,6 +72,7 @@ func newDataColumn(t *testing.T) Computed {
 	function main(row)
 		return json.encode(row)
 	end`, nil)
+	assert.NotNil(t, c)
 	assert.NoError(t, err)
 	return c
 }

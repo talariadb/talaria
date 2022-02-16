@@ -25,7 +25,7 @@ type Writer struct {
 }
 
 // New creates a new encoder
-func New(filter, encoderFunc string, computed computed.Computed) (*Writer, error) {
+func New(encoderFunc string, computed computed.Computed) (*Writer, error) {
 	if encoderFunc == "" {
 		encoderFunc = "json"
 	}
@@ -38,17 +38,6 @@ func New(filter, encoderFunc string, computed computed.Computed) (*Writer, error
 	default:
 		return nil, errors.Newf("encoder: unsupported encoder '%s'", encoderFunc)
 	}
-
-	// If no filter was specified, create a base writer without a filter
-	if filter == "" {
-		return newWithEncoder(encoderFunc, nil, encoder)
-	}
-
-	// Load the filter script if required
-	// script, err := computed.Load(filter)
-	// if err != nil {
-	// 	return nil, err
-	// }
 
 	return newWithEncoder(encoderFunc, computed, encoder)
 }
@@ -110,9 +99,6 @@ func (w *Writer) applyFilter(row *block.Row) bool {
 	if w.filter == nil {
 		return true
 	}
-
-	// 	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
-	// 	defer cancel()
 
 	// Runs the lua script
 	out, err := w.filter.Value(row.Values)

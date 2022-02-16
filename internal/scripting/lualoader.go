@@ -2,6 +2,7 @@ package script
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log"
 	"time"
@@ -30,7 +31,7 @@ func (l *LuaLoader) String() string { return luaType }
 
 // Load creates a new script from code or URL and starts a watching if needed
 func (l *LuaLoader) Load(uriOrCode string) (Handler, error) {
-	log.Println("LoadLua: ", uriOrCode)
+	log.Println("LuaLoader loadLua: ", uriOrCode)
 
 	// Default empty script
 	const emptyScript = `function main(row)
@@ -38,13 +39,14 @@ func (l *LuaLoader) Load(uriOrCode string) (Handler, error) {
 	end`
 
 	// Create an empty script, we'll update it right away
-	s, err := lua.FromString("luaScript", emptyScript, l.modules...)
+	var err error
+	l.code, err = lua.FromString("luaScript", emptyScript, l.modules...)
 	if err != nil {
 		return nil, err
 	}
 
 	// If the string is actually a URL, try to download it
-	if err := l.watch(uriOrCode, s.Update); err != nil {
+	if err := l.watch(uriOrCode, l.code.Update); err != nil {
 		return nil, err
 	}
 
@@ -52,6 +54,9 @@ func (l *LuaLoader) Load(uriOrCode string) (Handler, error) {
 }
 
 func (l *LuaLoader) Value(row map[string]interface{}) (interface{}, error) {
+	if l.code == nil {
+		return nil, errors.New("LuaLoader's code is not loaded, nil")
+	}
 	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
 	defer cancel()
 

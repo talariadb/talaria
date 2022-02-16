@@ -13,7 +13,6 @@ import (
 	"github.com/kelindar/talaria/internal/config"
 	"github.com/kelindar/talaria/internal/monitor"
 	"github.com/kelindar/talaria/internal/presto"
-	script "github.com/kelindar/talaria/internal/scripting"
 	"github.com/kelindar/talaria/internal/server"
 	"github.com/kelindar/talaria/internal/storage/disk"
 	"github.com/kelindar/talaria/internal/storage/writer"
@@ -61,7 +60,7 @@ func BenchmarkQuery(b *testing.B) {
 	// create monitor
 	monitor := monitor.NewNoop()
 	store := disk.Open(cfg().Storage.Directory, tableName, monitor, cfg().Storage.Badger)
-	streams, _ := writer.ForStreaming(config.Streams{}, monitor, script.NewLuaLoader(nil))
+	streams, _ := writer.ForStreaming(config.Streams{}, monitor)
 
 	// Start the server and open the database
 	eventlog := timeseries.New(tableName, new(noopMembership), monitor, store, &config.Table{
