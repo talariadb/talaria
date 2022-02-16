@@ -8,7 +8,7 @@ import (
 	"testing"
 
 	eorc "github.com/crphang/orc"
-	"github.com/kelindar/talaria/internal/column"
+	"github.com/kelindar/talaria/internal/column/computed"
 	"github.com/kelindar/talaria/internal/encoding/block"
 	"github.com/kelindar/talaria/internal/encoding/orc"
 	"github.com/kelindar/talaria/internal/encoding/typeof"
@@ -19,7 +19,7 @@ import (
 
 func TestNameFunc(t *testing.T) {
 	fileNameFunc := func(row map[string]interface{}) (string, error) {
-		lua, _ := column.NewComputed("fileName", "main", typeof.String, `
+		lua, _ := computed.NewComputed("fileName", "main", typeof.String, `
 	function main(row)
 
 		-- Convert the time to a lua date

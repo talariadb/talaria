@@ -6,7 +6,6 @@ import (
 	"fmt"
 
 	"github.com/grab/async"
-	"github.com/kelindar/lua"
 	"github.com/kelindar/talaria/internal/column/computed"
 	"github.com/kelindar/talaria/internal/encoding/block"
 	"github.com/kelindar/talaria/internal/monitor/errors"
@@ -26,6 +25,9 @@ type Writer struct {
 
 // New creates a new encoder
 func New(encoderFunc string, computed computed.Computed) (*Writer, error) {
+	if computed == nil {
+		return nil, errors.New("Computed is nil")
+	}
 	if encoderFunc == "" {
 		encoderFunc = "json"
 	}
@@ -102,7 +104,7 @@ func (w *Writer) applyFilter(row *block.Row) bool {
 
 	// Runs the lua script
 	out, err := w.filter.Value(row.Values)
-	if err != nil || !out.(lua.Bool) {
+	if err != nil || !out.(bool) {
 		return false
 	}
 	return true

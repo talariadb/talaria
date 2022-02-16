@@ -23,7 +23,7 @@ func TestFilter(t *testing.T) {
 	filter := `function main(row) 
 		return row['age'] > 10
 	end`
-	computedFilter, err := computed.NewComputed("", "", typeof.String, filter, nil)
+	computedFilter, err := computed.NewComputed("", "", typeof.Bool, filter, nil)
 	assert.NoError(t, err)
 	enc1, _ := New("json", computedFilter)
 	data, err := enc1.Encode(row)
@@ -34,7 +34,7 @@ func TestFilter(t *testing.T) {
 	filter2 := `function main(row)
 		return row['age'] < 10
 	end`
-	computedFilter, err = computed.NewComputed("", "", typeof.String, filter2, nil)
+	computedFilter, err = computed.NewComputed("", "", typeof.Bool, filter2, nil)
 	assert.NoError(t, err)
 	enc2, _ := New("json", computedFilter)
 	data2, err := enc2.Encode(row)
@@ -43,9 +43,13 @@ func TestFilter(t *testing.T) {
 	assert.Nil(t, data2)
 }
 
+const globalFilter = `function main(row)
+return true
+	end`
+
 func TestRun(t *testing.T) {
 	ctx := context.Background()
-	computedFilter, err := computed.NewComputed("", "", typeof.String, "", nil)
+	computedFilter, err := computed.NewComputed("", "", typeof.Bool, globalFilter, nil)
 	assert.NoError(t, err)
 	w, _ := New("json", computedFilter)
 	w.Process = func(context.Context) error {
@@ -58,7 +62,7 @@ func TestRun(t *testing.T) {
 
 func TestCancel(t *testing.T) {
 	ctx := context.Background()
-	computedFilter, err := computed.NewComputed("", "", typeof.String, "", nil)
+	computedFilter, err := computed.NewComputed("", "", typeof.Bool, globalFilter, nil)
 	assert.NoError(t, err)
 	w, _ := New("json", computedFilter)
 	w.Process = func(context.Context) error {
@@ -72,9 +76,9 @@ func TestCancel(t *testing.T) {
 }
 
 func TestEmptyFilter(t *testing.T) {
-	computedFilter, err := computed.NewComputed("", "", typeof.String, "", nil)
-	assert.NoError(t, err)
+	computedFilter, err := computed.NewComputed("", "", typeof.Bool, "", nil)
+	assert.Error(t, err)
 	enc1, err := New("json", computedFilter)
-	assert.NotNil(t, enc1)
-	assert.NoError(t, err)
+	assert.Nil(t, enc1)
+	assert.Error(t, err)
 }

@@ -40,8 +40,6 @@ func (h *PluginLoader) Load(uriOrCode string) (Handler, error) {
 func (h *PluginLoader) String() string { return pluginType }
 
 func (h *PluginLoader) Value(row map[string]interface{}) (interface{}, error) {
-	res, err := h.main(row)
-	fmt.Println("after, data is ", res, err)
 	return h.main(row)
 }
 

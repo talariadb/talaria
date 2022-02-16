@@ -2,6 +2,7 @@ package pubsub
 
 import (
 	"context"
+	"log"
 	"runtime"
 	"time"
 
@@ -71,6 +72,7 @@ func New(project, topic, encoding, filter string, monitor monitor.Monitor, opts 
 	}
 	w.Process = w.process
 
+	log.Println("pubsub: New writter successfully, topic ", topic)
 	return w, nil
 }
 

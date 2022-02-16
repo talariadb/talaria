@@ -8,13 +8,14 @@ import (
 )
 
 func TestLoadGoPlugin(t *testing.T) {
-	l := NewPluginLoader("Computed")
+	l := NewPluginLoader("ComputeRow")
 	s, err := l.Load("file:///talaria_go_function.so")
 	assert.NotNil(t, s)
 	assert.NoError(t, err)
 	require.NoError(t, err)
 	out, err := s.Value(map[string]interface{}{
-		"customKeyA": 12, "time": 12999, "uuid": "uuidValue", "id": "idValue", "customKeyB": "testCustomKeyB",
+		"data":       `{"customKeyA": 12, "time": 12999, "uuid": "uuidValue", "id": "idValue", "customKeyB": "testCustomKeyB"}`,
+		"customKeyC": "testCustomKeyC",
 	})
 	require.NotNil(t, out)
 	require.NoError(t, err)
