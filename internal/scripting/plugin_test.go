@@ -14,12 +14,13 @@ func TestLoadGoPlugin(t *testing.T) {
 	assert.NoError(t, err)
 	require.NoError(t, err)
 	out, err := s.Value(map[string]interface{}{
-		"data":       `{"customKeyA": 12, "time": 12999, "uuid": "uuidValue", "id": "idValue", "customKeyB": "testCustomKeyB"}`,
-		"customKeyC": "testCustomKeyC",
+		"customKeyA": 12,
+		"time":       12999,
+		"uuid":       "uuidValue", "id": "idValue", "customKeyB": "testCustomKeyB", "customKeyC": "testCustomKeyC",
 	})
 	require.NotNil(t, out)
 	require.NoError(t, err)
-	require.Equal(t, `{"customKeyA":12,"customKeyB":"testCustomKeyB"}`, out)
+	require.Equal(t, `{"customKeyA":12,"customKeyB":"testCustomKeyB","customKeyC":"testCustomKeyC"}`, out)
 
 }
 

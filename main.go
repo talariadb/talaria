@@ -62,13 +62,6 @@ func main() {
 	// Updating the logger to use the composite logger. This is to make sure the logs from the config is sent to log table as well as stdout
 	s3Configurer.SetLogger(logger)
 
-	// Create a script loader
-	// loader := script.NewLoader([]lua.Module{
-	// 	mlog.New(monitor),
-	// 	mstats.New(monitor),
-	// 	mnet.New(monitor),
-	// })
-
 	// Open every table configured
 	tables := []table.Table{nodes.New(gossip), logTable}
 	for name, tableConf := range conf.Tables {

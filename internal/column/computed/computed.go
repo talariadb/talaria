@@ -26,7 +26,7 @@ const (
 
 // Computed represents a computed column
 type Computed interface {
-	Name() string
+	Name() string // return column 's name
 	Type() typeof.Type
 	Value(map[string]interface{}) (interface{}, error)
 }
