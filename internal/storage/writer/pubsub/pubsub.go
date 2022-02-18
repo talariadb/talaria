@@ -38,12 +38,16 @@ func New(project, topic, encoding, filter string, monitor monitor.Monitor, opts 
 		return nil, errors.Newf("pubsub: %v", err)
 	}
 
-	computed, err := computed.NewComputed("", "", typeof.Bool, filter, monitor)
-	if err != nil {
-		return nil, err
+	var filterF base.FilterFunc = nil
+	if filter != "" {
+		computed, err := computed.NewComputed("", "", typeof.Bool, filter, monitor)
+		if err != nil {
+			return nil, err
+		}
+		filterF = computed.Value
 	}
 	// Load encoder
-	encoderWriter, err := base.New(encoding, computed)
+	encoderWriter, err := base.New(encoding, filterF)
 	if err != nil {
 		return nil, err
 	}

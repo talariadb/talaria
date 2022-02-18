@@ -6,7 +6,6 @@ import (
 	"fmt"
 
 	"github.com/grab/async"
-	"github.com/kelindar/talaria/internal/column/computed"
 	"github.com/kelindar/talaria/internal/encoding/block"
 	"github.com/kelindar/talaria/internal/monitor/errors"
 )
@@ -14,22 +13,27 @@ import (
 // Func encodes the payload
 type Func func(interface{}) ([]byte, error)
 
+// FilterFunc used for filter
+type FilterFunc func(map[string]interface{}) (interface{}, error)
+
 // Writer is to filter and encode row of events
 type Writer struct {
 	task    async.Task
 	Process func(context.Context) error
-	filter  computed.Computed
+	filter  FilterFunc
 	name    string
 	encode  Func
 }
 
 // New creates a new encoder
-func New(encoderFunc string, computed computed.Computed) (*Writer, error) {
-	if computed == nil {
-		return nil, errors.New("Computed is nil")
-	}
+func New(encoderFunc string, filter FilterFunc) (*Writer, error) {
 	if encoderFunc == "" {
 		encoderFunc = "json"
+	}
+	if filter == nil {
+		filter = func(map[string]interface{}) (interface{}, error) {
+			return true, nil
+		}
 	}
 
 	// Extendable encoder functions
@@ -41,11 +45,11 @@ func New(encoderFunc string, computed computed.Computed) (*Writer, error) {
 		return nil, errors.Newf("encoder: unsupported encoder '%s'", encoderFunc)
 	}
 
-	return newWithEncoder(encoderFunc, computed, encoder)
+	return newWithEncoder(encoderFunc, filter, encoder)
 }
 
 // newWithEncoder will generate a new encoder for a writer
-func newWithEncoder(name string, filter computed.Computed, encoder Func) (*Writer, error) {
+func newWithEncoder(name string, filter FilterFunc, encoder Func) (*Writer, error) {
 	if encoder == nil {
 		encoder = Func(json.Marshal)
 	}
@@ -103,7 +107,7 @@ func (w *Writer) applyFilter(row *block.Row) bool {
 	}
 
 	// Runs the lua script
-	out, err := w.filter.Value(row.Values)
+	out, err := w.filter(row.Values)
 	if err != nil || !out.(bool) {
 		return false
 	}
