@@ -36,7 +36,7 @@ func TestToBlock(t *testing.T) {
 		assert.NoError(t, err)
 		totalRowCount += cols.Any().Count()
 	}
-	mergedBytes, err := ToBlock(blks, schema)
+	mergedBytes, err := ToBlock(blks)
 	assert.NoError(t, err)
 	mergedBlock, err := block.FromBuffer(mergedBytes)
 	assert.NoError(t, err)

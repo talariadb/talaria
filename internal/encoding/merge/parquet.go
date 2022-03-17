@@ -27,7 +27,12 @@ func ToParquet(input interface{}) ([]byte, error) {
 		return nil, errors.Internal("Parquet merge not supported. input must be []block.Block", nil)
 	}
 	blocks := input.([]block.Block)
+	if len(blocks) == 0 {
+		return nil, nil
+	}
+
 	schema := blocks[0].Schema()
+
 	parquetSchema, fieldHandlers, err := deriveSchema(schema)
 
 	if err != nil {

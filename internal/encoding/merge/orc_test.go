@@ -53,7 +53,7 @@ func TestToOrc(t *testing.T) {
 	for _, blk := range block2 {
 		mergedBlocks = append(mergedBlocks, blk)
 	}
-	mergedValue, err := ToOrc(mergedBlocks, schema)
+	mergedValue, err := ToOrc(mergedBlocks)
 	assert.NoError(t, err)
 
 	orcBuffer := &bytes.Buffer{}
@@ -116,7 +116,7 @@ func TestMerge_DifferentSchema(t *testing.T) {
 	for _, blk := range block2 {
 		mergedBlocks = append(mergedBlocks, blk)
 	}
-	mergedValue, err := ToOrc(mergedBlocks, schema2)
+	mergedValue, err := ToOrc(mergedBlocks)
 	assert.NoError(t, err)
 
 	orcBuffer := &bytes.Buffer{}
@@ -127,7 +127,7 @@ func TestMerge_DifferentSchema(t *testing.T) {
 	_ = writer.Write("eventName", 2, 2.0, "s")
 	_ = writer.Close()
 
-	if !bytes.Equal(orcBuffer.Bytes(), mergedValue) {
+	if bytes.Equal(orcBuffer.Bytes(), mergedValue) {
 		t.Fatal("Merged orc value differ")
 	}
 

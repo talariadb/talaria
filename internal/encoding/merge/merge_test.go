@@ -28,7 +28,7 @@ func BenchmarkMerge(b *testing.B) {
 		b.ResetTimer()
 		b.ReportAllocs()
 		for n := 0; n < b.N; n++ {
-			ToOrc(blocks, blocks[0].Schema())
+			ToOrc(blocks)
 		}
 	})
 
@@ -37,7 +37,7 @@ func BenchmarkMerge(b *testing.B) {
 		b.ResetTimer()
 		b.ReportAllocs()
 		for n := 0; n < b.N; n++ {
-			ToParquet(blocks, blocks[0].Schema())
+			ToParquet(blocks)
 		}
 	})
 
@@ -46,7 +46,7 @@ func BenchmarkMerge(b *testing.B) {
 		b.ResetTimer()
 		b.ReportAllocs()
 		for n := 0; n < b.N; n++ {
-			ToBlock(blocks, blocks[0].Schema())
+			ToBlock(blocks)
 		}
 	})
 
@@ -77,7 +77,8 @@ func TestMergeNew(t *testing.T) {
 	}
 	{
 		o, err := New("xxx")
-		assert.Nil(t, o)
-		assert.Error(t, err)
+		assert.Nil(t, o["block"])
+		assert.NotNil(t, o["row"])
+		assert.NoError(t, err)
 	}
 }
