@@ -26,7 +26,7 @@ func TestFilter(t *testing.T) {
 	enc1, _ := New(filter, "json", loader)
 	data, err := enc1.Encode(row)
 
-	assert.Equal(t, `{"age":30,"test":"Hello Talaria"}`, string(data))
+	assert.Equal(t, `{"Values":{"age":30,"test":"Hello Talaria"},"Schema":null}`, string(data))
 	assert.NoError(t, err)
 
 	filter2 := `function main(row)
@@ -34,9 +34,11 @@ func TestFilter(t *testing.T) {
 	end`
 	loader2 := script.NewLoader(nil)
 	enc2, _ := New(filter2, "json", loader2)
-	data2, err := enc2.Encode(row)
 
-	assert.Nil(t, data2)
+	filtered, err := enc2.Filter(row)
+	assert.Nil(t, err)
+
+	assert.Nil(t, filtered)
 }
 
 func TestRun(t *testing.T) {

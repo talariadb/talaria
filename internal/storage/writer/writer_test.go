@@ -14,9 +14,11 @@ import (
 
 func TestForCompaction(t *testing.T) {
 	cfg := &config.Compaction{
-		Sinks: config.Sinks{
-			File: &config.FileSink{
-				Directory: "./",
+		Sinks: []config.Sink{
+			config.Sink{
+				File: &config.FileSink{
+					Directory: "./",
+				},
 			},
 		},
 	}

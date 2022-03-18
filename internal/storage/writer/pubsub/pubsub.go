@@ -72,6 +72,9 @@ func New(project, topic, encoding, filter string, loader *script.Loader, monitor
 
 // Write writes the data to the sink.
 func (w *Writer) Write(key key.Key, blocks []block.Block) error {
+	if len(blocks) == 0 {
+		return nil
+	}
 	buffer, err := w.Writer.Encode(blocks)
 	if err != nil {
 		return err

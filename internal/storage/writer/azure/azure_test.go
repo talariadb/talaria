@@ -5,10 +5,10 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/kelindar/talaria/internal/encoding/block"
 	"github.com/kelindar/talaria/internal/monitor"
 	"github.com/kelindar/talaria/internal/monitor/logging"
 	"github.com/kelindar/talaria/internal/monitor/statsd"
-	"github.com/kelindar/talaria/internal/storage/writer/base"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -20,9 +20,10 @@ func TestWriter(t *testing.T) {
 	assert.NotNil(t, c)
 	assert.NoError(t, err)
 
-	blocks, _ := base.Setup()
+	b, err := block.Base()
+	assert.Nil(t, err)
 	assert.NotPanics(t, func() {
-		err := c.Write([]byte("abc"), blocks)
+		err := c.Write([]byte("abc"), b)
 		assert.NotNil(t, err)
 	})
 }

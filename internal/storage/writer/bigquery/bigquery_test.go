@@ -8,12 +8,12 @@ import (
 
 func TestWriter(t *testing.T) {
 
-	c, err := New("my-project-id", "mydataset", "mytable", nil)
+	c, err := New("my-project-id", "mydataset", "mytable", "", "", nil, nil)
 
 	assert.Nil(t, c)
 	assert.Error(t, err)
 
 	assert.Panics(t, func() {
-		c.Write([]byte("abc"), []byte("hello"))
+		c.Write([]byte("abc"), nil)
 	})
 }

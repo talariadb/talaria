@@ -8,10 +8,12 @@ import (
 	"errors"
 	"fmt"
 
+	eorc "github.com/crphang/orc"
 	"github.com/golang/snappy"
 	"github.com/kelindar/binary"
 	"github.com/kelindar/binary/nocopy"
 	"github.com/kelindar/talaria/internal/column"
+	"github.com/kelindar/talaria/internal/encoding/orc"
 	"github.com/kelindar/talaria/internal/encoding/typeof"
 	"github.com/kelindar/talaria/internal/presto"
 )
@@ -31,6 +33,30 @@ type Block struct {
 	Data    nocopy.Bytes   // The set of columnar data
 	Expires int64          // The expiration time for the block, in unix seconds
 	schema  typeof.Schema  `binary:"-"` // The cached schema of the block
+}
+
+// Create a base block for testing purpose
+func Base() ([]Block, error) {
+	schema := typeof.Schema{
+		"col0": typeof.String,
+		"col1": typeof.Int64,
+		"col2": typeof.Float64,
+	}
+	orcSchema, _ := orc.SchemaFor(schema)
+
+	orcBuffer1 := &bytes.Buffer{}
+	writer, _ := eorc.NewWriter(orcBuffer1,
+		eorc.SetSchema(orcSchema))
+	_ = writer.Write("eventName", 1, 1.0)
+	_ = writer.Close()
+
+	apply := Transform(nil)
+
+	block, err := FromOrcBy(orcBuffer1.Bytes(), "col0", nil, apply)
+	if err != nil {
+		return nil, err
+	}
+	return block, nil
 }
 
 // Read decodes the block and selects the columns
