@@ -5,7 +5,6 @@ package s3
 
 import (
 	"bytes"
-	"fmt"
 	"path"
 	"runtime"
 	"strings"
@@ -83,7 +82,6 @@ func (w *Writer) Write(key key.Key, blocks []block.Block) error {
 
 	buffer, err := w.Writer.Encode(blocks)
 	if err != nil {
-		fmt.Println("errorrrr", err)
 		return err
 	}
 	start := time.Now()
