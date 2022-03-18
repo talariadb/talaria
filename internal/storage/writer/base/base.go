@@ -80,7 +80,9 @@ func (w *Writer) Encode(input interface{}) ([]byte, error) {
 	if _, ok := input.(block.Row); ok {
 		encoderType = "row"
 	} else {
-
+		if len(input.([]block.Block)) == 0 {
+			return []byte{}, nil
+		}
 	}
 
 	encodedData, err := w.encoder[encoderType](input)

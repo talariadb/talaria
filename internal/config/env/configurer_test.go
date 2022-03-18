@@ -13,7 +13,6 @@ import (
 )
 
 func TestConfigure(t *testing.T) {
-
 	c := &config.Config{}
 	st := static.New()
 	st.Configure(c)
@@ -76,8 +75,9 @@ tables:
       data: json
     compact:
       interval: 300
-      file:
-        dir: "output/"
+      sinks:
+      - file:
+          dir: "output/"
     streams:
     - pubsub:
         project: my-gcp-project
@@ -119,6 +119,6 @@ computed:
 	assert.Len(t, c.Tables, 1)
 
 	assert.Equal(t, "my-gcp-project", c.Tables["eventlog"].Streams[0].PubSub.Project)
-	assert.Equal(t, "output/", c.Tables["eventlog"].Compact.File.Directory)
+	assert.Equal(t, "output/", c.Tables["eventlog"].Compact.Sinks[0].File.Directory)
 	assert.Equal(t, []uint{1, 2}, c.Tables["eventlog"].Streams[2].Azure.StorageAccountWeights)
 }

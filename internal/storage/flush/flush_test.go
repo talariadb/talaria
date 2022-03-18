@@ -52,7 +52,7 @@ func TestNameFunc(t *testing.T) {
 		return output.(string), err
 	}
 
-	flusher, _ := ForCompaction(monitor.NewNoop(), noop.New(), "orc", fileNameFunc)
+	flusher, _ := ForCompaction(monitor.NewNoop(), noop.New(), fileNameFunc)
 	schema := typeof.Schema{
 		"col0": typeof.String,
 		"col1": typeof.Timestamp,

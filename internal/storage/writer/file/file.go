@@ -38,6 +38,9 @@ func New(directory, filter, encoding string, loader *script.Loader) (*Writer, er
 
 // Write writes the data to the sink.
 func (w *Writer) Write(key key.Key, blocks []block.Block) error {
+	if len(blocks) == 0 {
+		return nil
+	}
 	filename := path.Join(w.directory, string(key))
 	dir := path.Dir(filename)
 	if _, err := os.Stat(dir); err != nil {
