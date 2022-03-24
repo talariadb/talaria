@@ -78,6 +78,7 @@ tables:
       sinks:
       - file:
           dir: "output/"
+          encoder: json
     streams:
     - pubsub:
         project: my-gcp-project
@@ -91,7 +92,7 @@ tables:
     - azure:
         container: a_container
         prefix: a_prefix
-        blobServiceURL: .storage.microsoft.net    
+        blobServiceURL: .storage.microsoft.net
         storageAccounts:
             - a_storage_account
             - b_storage_account
