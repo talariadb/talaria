@@ -33,12 +33,10 @@ func execCommand(ctx context.Context, cli string, params []string, dir string) e
 		return err
 	}
 	multireader := io.MultiReader(stdout, stderr)
-	go func() {
-		_, err := io.Copy(os.Stdout, multireader)
-		if err != nil {
-			fmt.Printf("[execCommand] copy stdout to multireader met err %v\n", err)
-		}
-	}()
+	_, err = io.Copy(os.Stdout, multireader)
+	if err != nil {
+		fmt.Printf("[execCommand] copy stdout to multireader met err %v\n", err)
+	}
 
 	return cmd.Wait()
 }
@@ -47,6 +45,11 @@ func compliePlugin() {
 	os.Remove("./talaria_plugin.so")
 
 	err := execCommand(context.Background(), "pwd", []string{"-P"}, "./plugin_test")
+	if err != nil {
+		panic(err)
+	}
+
+	err = execCommand(context.Background(), "go", []string{"version"}, "./plugin_test")
 	if err != nil {
 		panic(err)
 	}
