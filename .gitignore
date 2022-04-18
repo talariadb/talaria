@@ -14,3 +14,4 @@ testdata-*
 logs/
 *.venv
 talaria
+*.so
