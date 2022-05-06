@@ -86,7 +86,9 @@ func TestToParquet(t *testing.T) {
 	apply := block.Transform(nil)
 
 	block1, err := block.FromParquetBy(parquetBuffer1.Bytes(), "col1", nil, apply)
+	assert.NoError(t, err)
 	block2, err := block.FromParquetBy(parquetBuffer2.Bytes(), "col1", nil, apply)
+	assert.NoError(t, err)
 
 	mergedBlocks := []block.Block{}
 	for _, blk := range block1 {
@@ -122,7 +124,7 @@ func TestMergeParquet_DifferentSchema(t *testing.T) {
 		"col1": typeof.Int64,
 		"col2": typeof.Float64,
 	}
-	parquetSchema, fieldHandlers, err := deriveSchema(schema)
+	parquetSchema, _, err := deriveSchema(schema)
 
 	if err != nil {
 		t.Fatal(err)
@@ -179,7 +181,9 @@ func TestMergeParquet_DifferentSchema(t *testing.T) {
 	apply := block.Transform(nil)
 
 	block1, err := block.FromParquetBy(parquetBuffer1.Bytes(), "col1", nil, apply)
+	assert.NoError(t, err)
 	block2, err := block.FromParquetBy(parquetBuffer2.Bytes(), "col1", nil, apply)
+	assert.NoError(t, err)
 
 	mergedBlocks := []block.Block{}
 	for _, blk := range block1 {
@@ -214,4 +218,3 @@ func TestMergeParquet_DifferentSchema(t *testing.T) {
 		t.Fatal("Merged parquet value differ")
 	}
 }
-

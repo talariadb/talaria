@@ -2,16 +2,18 @@ package pubsub
 
 import (
 	"context"
+	"log"
 	"runtime"
 	"time"
 
 	"cloud.google.com/go/pubsub"
 	"github.com/grab/async"
+	"github.com/kelindar/talaria/internal/column/computed"
 	"github.com/kelindar/talaria/internal/encoding/block"
 	"github.com/kelindar/talaria/internal/encoding/key"
+	"github.com/kelindar/talaria/internal/encoding/typeof"
 	"github.com/kelindar/talaria/internal/monitor"
 	"github.com/kelindar/talaria/internal/monitor/errors"
-	script "github.com/kelindar/talaria/internal/scripting"
 	"github.com/kelindar/talaria/internal/storage/writer/base"
 	"google.golang.org/api/option"
 )
@@ -28,7 +30,7 @@ type Writer struct {
 }
 
 // New creates a new writer
-func New(project, topic, encoding, filter string, loader *script.Loader, monitor monitor.Monitor, opts ...option.ClientOption) (*Writer, error) {
+func New(project, topic, encoding, filter string, monitor monitor.Monitor, opts ...option.ClientOption) (*Writer, error) {
 	ctx := context.Background()
 	client, err := pubsub.NewClient(ctx, project, opts...)
 
@@ -36,8 +38,16 @@ func New(project, topic, encoding, filter string, loader *script.Loader, monitor
 		return nil, errors.Newf("pubsub: %v", err)
 	}
 
+	var filterF base.FilterFunc = nil
+	if filter != "" {
+		computed, err := computed.NewComputed("", "", typeof.Bool, filter, monitor)
+		if err != nil {
+			return nil, err
+		}
+		filterF = computed.Value
+	}
 	// Load encoder
-	encoderWriter, err := base.New(filter, encoding, loader)
+	encoderWriter, err := base.New(encoding, filterF)
 	if err != nil {
 		return nil, err
 	}
@@ -66,6 +76,7 @@ func New(project, topic, encoding, filter string, loader *script.Loader, monitor
 	}
 	w.Process = w.process
 
+	log.Println("pubsub: New writter successfully, topic ", topic)
 	return w, nil
 }
 

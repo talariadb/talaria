@@ -2,12 +2,13 @@ package parquet
 
 import (
 	"bytes"
+	"io"
+	"os"
+
 	goparquet "github.com/fraugster/parquet-go"
 	"github.com/fraugster/parquet-go/parquet"
 	"github.com/kelindar/talaria/internal/encoding/typeof"
 	"github.com/kelindar/talaria/internal/monitor/errors"
-	"io"
-	"os"
 )
 
 var errNoWriter = errors.New("unable to create Parquet writer")
@@ -28,6 +29,9 @@ func FromFile(filename string) (Iterator, error) {
 	}
 
 	r, err := goparquet.NewFileReader(rf)
+	if err != nil {
+		return nil, err
+	}
 	return &iterator{reader: r}, nil
 }
 
@@ -79,10 +83,10 @@ func (i *iterator) Range(f func(int, []interface{}) bool, columns ...string) (in
 		index++
 
 		// Prepare the row slice
-		for i, columnName := range columns{
+		for i, columnName := range columns {
 			if v, ok := row[columnName]; ok {
 				arr[i] = v
-			}else{
+			} else {
 				arr[i] = nil
 			}
 		}
@@ -115,7 +119,7 @@ func parquetTypeOf(c *goparquet.Column) parquet.Type {
 
 	k := c.Element().GetLogicalType()
 
-	switch  {
+	switch {
 	case k.IsSetSTRING():
 		return parquet.Type_BYTE_ARRAY
 	case k.IsSetJSON():

@@ -114,9 +114,10 @@ type StatsD struct {
 
 // Computed represents a computed column
 type Computed struct {
-	Name string      `json:"name"`
-	Type typeof.Type `json:"type"`
-	Func string      `json:"func"`
+	Name     string      `json:"name"`
+	Type     typeof.Type `json:"type"`
+	Func     string      `json:"func"`
+	FuncName string      `json:"funcname"`
 }
 
 // Compaction represents a configuration for compaction sinks

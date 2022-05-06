@@ -26,6 +26,9 @@ func ToOrc(blocks []block.Block, schema typeof.Schema) ([]byte, error) {
 	writer, err := eorc.NewWriter(buffer,
 		eorc.SetSchema(orcSchema),
 		eorc.SetCompression(eorc.CompressionZlib{Level: flate.DefaultCompression}))
+	if err != nil {
+		return nil, err
+	}
 
 	for _, blk := range blocks {
 		rows, err := blk.Select(blk.Schema())

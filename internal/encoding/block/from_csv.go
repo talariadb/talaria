@@ -20,6 +20,9 @@ func FromCSVBy(input []byte, partitionBy string, filter *typeof.Schema, apply ap
 
 	// Read the header first
 	r, err := rdr.Read()
+	if err != nil {
+		return nil, err
+	}
 	header := r
 
 	// Find the partition index

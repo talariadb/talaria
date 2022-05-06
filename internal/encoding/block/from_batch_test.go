@@ -7,9 +7,8 @@ import (
 	"encoding/json"
 	"testing"
 
-	"github.com/kelindar/talaria/internal/column"
+	"github.com/kelindar/talaria/internal/column/computed"
 	"github.com/kelindar/talaria/internal/encoding/typeof"
-	script "github.com/kelindar/talaria/internal/scripting"
 	talaria "github.com/kelindar/talaria/proto"
 	"github.com/stretchr/testify/assert"
 )
@@ -108,11 +107,11 @@ func TestBlock_FromBatch(t *testing.T) {
 	assert.Contains(t, string(row["data"].(json.RawMessage)), "event3")
 }
 
-func newDataColumn() (column.Computed, error) {
-	return column.NewComputed("data", typeof.JSON, `
+func newDataColumn() (computed.Computed, error) {
+	return computed.NewComputed("data", "main", typeof.JSON, `
 	local json = require("json")
 
 	function main(input)
 		return json.encode(input)
-	end`, script.NewLoader(nil))
+	end`, nil)
 }

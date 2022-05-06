@@ -13,3 +13,5 @@ testdata-*
 .envrc
 logs/
 *.venv
+talaria
+*.so

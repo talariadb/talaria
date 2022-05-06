@@ -1,117 +1,63 @@
 // Copyright 2019-2020 Grabtaxi Holdings PTE LTE (GRAB), All rights reserved.
 // Use of this source code is governed by an MIT-style license that can be found in the LICENSE file
 
-package column
+package computed
 
 import (
-	"context"
 	"crypto/rand"
 	"encoding/binary"
 	"encoding/hex"
-	"fmt"
 	"sync/atomic"
 	"time"
 
-	"github.com/kelindar/loader"
 	"github.com/kelindar/lua"
 	"github.com/kelindar/talaria/internal/encoding/typeof"
-	"github.com/kelindar/talaria/internal/scripting"
+	"github.com/kelindar/talaria/internal/monitor"
+	script "github.com/kelindar/talaria/internal/scripting"
+	mlog "github.com/kelindar/talaria/internal/scripting/log"
+	mnet "github.com/kelindar/talaria/internal/scripting/net"
+	mstats "github.com/kelindar/talaria/internal/scripting/stats"
 )
 
-// Loader is the default loader to use for loading computed columns.
-var Loader = loader.New()
-
-// Default empty script
-const emptyScript = `function main(row) 
-	return null
-end`
+const (
+	LuaLoaderTyp    = "lua"
+	PluginLoaderTyp = "plugin"
+)
 
 // Computed represents a computed column
 type Computed interface {
-	Name() string
+	Name() string // return column 's name
 	Type() typeof.Type
 	Value(map[string]interface{}) (interface{}, error)
 }
 
 // NewComputed creates a new script from a string
-func NewComputed(name string, typ typeof.Type, uriOrCode string, loader *script.Loader) (Computed, error) {
+func NewComputed(columnName, functionName string, outpuTyp typeof.Type, uriOrCode string, monitor monitor.Monitor) (Computed, error) {
 	switch uriOrCode {
 	case "make://identifier":
-		return newIdentifier(name), nil
+		return newIdentifier(columnName), nil
 	case "make://timestamp":
-		return newTimestamp(name), nil
+		return newTimestamp(columnName), nil
 	}
 
-	s, err := loader.Load(name, uriOrCode)
+	pluginLoader := script.NewPluginLoader(functionName)
+	luaLoader := script.NewLuaLoader([]lua.Module{
+		mlog.New(monitor),
+		mstats.New(monitor),
+		mnet.New(monitor),
+	}, outpuTyp)
+	l := script.NewHandlerLoader(pluginLoader, luaLoader)
+
+	h, err := l.LoadHandler(uriOrCode)
 	if err != nil {
 		return nil, err
 	}
 
-	return &scripted{
-		code: s,
-		typ:  typ,
+	return &loadComputed{
+		name:   columnName,
+		loader: h,
+		typ:    outpuTyp,
 	}, nil
-}
-
-// ------------------------------------------------------------------------------------------------------------
-
-// scripted represents a computed column computed through a lua script
-type scripted struct {
-	code *lua.Script // The script associated with the column
-	typ  typeof.Type // The type of the column
-}
-
-// Name returns the name of the column
-func (c *scripted) Name() string {
-	return c.code.Name()
-}
-
-// Type returns the type of the column
-func (c *scripted) Type() typeof.Type {
-	return c.typ
-}
-
-// Value computes the column value for the row
-func (c *scripted) Value(row map[string]interface{}) (interface{}, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
-	defer cancel()
-
-	// Run the script
-	out, err := c.code.Run(ctx, row)
-	if err != nil {
-		return nil, err
-	}
-
-	// If there's no new row generated, return nil
-	if out.Type() == lua.TypeNil {
-		return nil, nil
-	}
-
-	switch c.typ {
-	case typeof.Bool:
-		if v, ok := out.(lua.Bool); ok {
-			return bool(v), nil
-		}
-	case typeof.Int32:
-		if v, ok := out.(lua.Number); ok {
-			return int32(v), nil
-		}
-	case typeof.Int64, typeof.Timestamp:
-		if v, ok := out.(lua.Number); ok {
-			return int64(v), nil
-		}
-	case typeof.Float64:
-		if v, ok := out.(lua.Number); ok {
-			return float64(v), nil
-		}
-	case typeof.String, typeof.JSON:
-		if v, ok := out.(lua.String); ok {
-			return string(v), nil
-		}
-	}
-
-	// Type mismatch
-	return nil, fmt.Errorf("script expects %s type but got %T", c.typ.String(), out)
 }
 
 // ------------------------------------------------------------------------------------------------------------

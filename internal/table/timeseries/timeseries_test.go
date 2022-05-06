@@ -56,7 +56,7 @@ func TestTimeseries_DynamicSchema(t *testing.T) {
 
 	monitor := monitor2.NewNoop()
 	store := disk.Open(dir, name, monitor, config.Badger{})
-	streams, _ := writer.ForStreaming(config.Streams{}, monitor, nil)
+	streams, _ := writer.ForStreaming(config.Streams{}, monitor)
 
 	// Start the server and open the database
 	eventlog := timeseries.New(name, new(noopMembership), monitor, store, &tableConf, streams)
@@ -150,7 +150,7 @@ int1: int64
 
 	monitor := monitor2.NewNoop()
 	store := disk.Open(dir, name, monitor, config.Badger{})
-	streams, _ := writer.ForStreaming(config.Streams{}, monitor, nil)
+	streams, _ := writer.ForStreaming(config.Streams{}, monitor)
 
 	// Start the server and open the database
 	eventlog := timeseries.New(name, new(noopMembership), monitor, store, &tableConf, streams)

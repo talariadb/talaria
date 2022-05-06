@@ -4,31 +4,36 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"time"
 
 	"github.com/grab/async"
-	"github.com/kelindar/lua"
 	"github.com/kelindar/talaria/internal/encoding/block"
 	"github.com/kelindar/talaria/internal/monitor/errors"
-	script "github.com/kelindar/talaria/internal/scripting"
 )
 
 // Func encodes the payload
 type Func func(interface{}) ([]byte, error)
 
+// FilterFunc used for filter
+type FilterFunc func(map[string]interface{}) (interface{}, error)
+
 // Writer is to filter and encode row of events
 type Writer struct {
 	task    async.Task
 	Process func(context.Context) error
-	filter  *lua.Script
+	filter  FilterFunc
 	name    string
 	encode  Func
 }
 
 // New creates a new encoder
-func New(filter, encoderFunc string, loader *script.Loader) (*Writer, error) {
+func New(encoderFunc string, filter FilterFunc) (*Writer, error) {
 	if encoderFunc == "" {
 		encoderFunc = "json"
+	}
+	if filter == nil {
+		filter = func(map[string]interface{}) (interface{}, error) {
+			return true, nil
+		}
 	}
 
 	// Extendable encoder functions
@@ -40,22 +45,11 @@ func New(filter, encoderFunc string, loader *script.Loader) (*Writer, error) {
 		return nil, errors.Newf("encoder: unsupported encoder '%s'", encoderFunc)
 	}
 
-	// If no filter was specified, create a base writer without a filter
-	if filter == "" {
-		return newWithEncoder(encoderFunc, nil, encoder)
-	}
-
-	// Load the filter script if required
-	script, err := loader.Load(filter, filter)
-	if err != nil {
-		return nil, err
-	}
-
-	return newWithEncoder(encoderFunc, script, encoder)
+	return newWithEncoder(encoderFunc, filter, encoder)
 }
 
 // newWithEncoder will generate a new encoder for a writer
-func newWithEncoder(name string, filter *lua.Script, encoder Func) (*Writer, error) {
+func newWithEncoder(name string, filter FilterFunc, encoder Func) (*Writer, error) {
 	if encoder == nil {
 		encoder = Func(json.Marshal)
 	}
@@ -112,12 +106,9 @@ func (w *Writer) applyFilter(row *block.Row) bool {
 		return true
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
-	defer cancel()
-
 	// Runs the lua script
-	out, err := w.filter.Run(ctx, row.Values)
-	if err != nil || !out.(lua.Bool) {
+	out, err := w.filter(row.Values)
+	if err != nil || !out.(bool) {
 		return false
 	}
 	return true

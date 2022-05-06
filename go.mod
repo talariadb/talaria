@@ -26,7 +26,6 @@ require (
 	github.com/fraugster/parquet-go v0.3.0
 	github.com/golang/snappy v0.0.3
 	github.com/gopherjs/gopherjs v0.0.0-20200209183636-89e6cbcd0b6d // indirect
-	github.com/gorilla/mux v1.7.4
 	github.com/grab/async v0.0.5
 	github.com/hako/durafmt v0.0.0-20191009132224-3f39dc1ed9f4
 	github.com/hashicorp/go-immutable-radix v1.2.0 // indirect
@@ -62,9 +61,13 @@ require (
 require github.com/Azure/go-autorest/autorest/adal v0.9.11
 
 require (
+	github.com/Azure/go-autorest/autorest v0.11.17
+	github.com/gorilla/mux v1.8.0
+)
+
+require (
 	github.com/Azure/azure-pipeline-go v0.2.3 // indirect
 	github.com/Azure/go-autorest v14.2.0+incompatible // indirect
-	github.com/Azure/go-autorest/autorest v0.11.17 // indirect
 	github.com/Azure/go-autorest/autorest/azure/cli v0.4.2 // indirect
 	github.com/Azure/go-autorest/autorest/date v0.3.0 // indirect
 	github.com/Azure/go-autorest/logger v0.2.0 // indirect
