@@ -7,12 +7,11 @@ import (
 	"sort"
 	"time"
 
-	"github.com/kelindar/talaria/internal/column"
+	"github.com/kelindar/talaria/internal/column/computed"
 	"github.com/kelindar/talaria/internal/config"
 	"github.com/kelindar/talaria/internal/encoding/typeof"
 	"github.com/kelindar/talaria/internal/monitor"
 	"github.com/kelindar/talaria/internal/monitor/errors"
-	script "github.com/kelindar/talaria/internal/scripting"
 	"github.com/kelindar/talaria/internal/storage"
 	"github.com/kelindar/talaria/internal/storage/compact"
 	"github.com/kelindar/talaria/internal/storage/flush"
@@ -30,8 +29,8 @@ import (
 var seed = maphash.MakeSeed()
 
 // ForStreaming creates a streaming writer
-func ForStreaming(config config.Streams, monitor monitor.Monitor, loader *script.Loader) (storage.Streamer, error) {
-	writer, err := newStreamer(config, monitor, loader)
+func ForStreaming(config config.Streams, monitor monitor.Monitor) (storage.Streamer, error) {
+	writer, err := newStreamer(config, monitor)
 	if err != nil {
 		monitor.Error(err)
 	}
@@ -40,8 +39,8 @@ func ForStreaming(config config.Streams, monitor monitor.Monitor, loader *script
 }
 
 // ForCompaction creates a compaction writer
-func ForCompaction(config *config.Compaction, monitor monitor.Monitor, store storage.Storage, loader *script.Loader) (*compact.Storage, error) {
-	writer, err := newWriter(config.Sinks, monitor, loader)
+func ForCompaction(config *config.Compaction, monitor monitor.Monitor, store storage.Storage) (*compact.Storage, error) {
+	writer, err := newWriter(config.Sinks, monitor)
 	if err != nil {
 		return nil, err
 	}
@@ -55,7 +54,7 @@ func ForCompaction(config *config.Compaction, monitor monitor.Monitor, store sto
 	// If name function was specified, use it
 	nameFunc := defaultNameFunc
 	if config.NameFunc != "" {
-		if fn, err := column.NewComputed("nameFunc", typeof.String, config.NameFunc, loader); err == nil {
+		if fn, err := computed.NewComputed("nameFunc", "main", typeof.String, config.NameFunc, monitor); err == nil {
 			nameFunc = func(row map[string]interface{}) (s string, e error) {
 				val, err := fn.Value(row)
 				if err != nil {

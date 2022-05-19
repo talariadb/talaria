@@ -5,6 +5,7 @@ package env
 
 import (
 	"errors"
+	"io/ioutil"
 	"os"
 	"reflect"
 	"strconv"
@@ -34,7 +35,11 @@ func New(key string) *Configurer {
 // Configure fetches the values of the env variable for file name and sets that in the config
 func (e *Configurer) Configure(c *config.Config) error {
 	if v, ok := os.LookupEnv(e.key); ok {
-		return yaml.Unmarshal([]byte(v), c)
+		yamlFile, err := ioutil.ReadFile(v)
+		if err != nil {
+			return yaml.Unmarshal([]byte(v), c)
+		}
+		return yaml.Unmarshal([]byte(yamlFile), c)
 	}
 
 	populate(c, e.key)

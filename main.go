@@ -15,7 +15,6 @@ import (
 
 	eorc "github.com/crphang/orc"
 	"github.com/gorilla/mux"
-	"github.com/kelindar/lua"
 	"github.com/kelindar/talaria/internal/config"
 	"github.com/kelindar/talaria/internal/config/env"
 	"github.com/kelindar/talaria/internal/config/s3"
@@ -23,10 +22,6 @@ import (
 	"github.com/kelindar/talaria/internal/monitor"
 	"github.com/kelindar/talaria/internal/monitor/logging"
 	"github.com/kelindar/talaria/internal/monitor/statsd"
-	script "github.com/kelindar/talaria/internal/scripting"
-	mlog "github.com/kelindar/talaria/internal/scripting/log"
-	mnet "github.com/kelindar/talaria/internal/scripting/net"
-	mstats "github.com/kelindar/talaria/internal/scripting/stats"
 	"github.com/kelindar/talaria/internal/server"
 	"github.com/kelindar/talaria/internal/server/cluster"
 	"github.com/kelindar/talaria/internal/storage"
@@ -67,21 +62,14 @@ func main() {
 	// Updating the logger to use the composite logger. This is to make sure the logs from the config is sent to log table as well as stdout
 	s3Configurer.SetLogger(logger)
 
-	// Create a script loader
-	loader := script.NewLoader([]lua.Module{
-		mlog.New(monitor),
-		mstats.New(monitor),
-		mnet.New(monitor),
-	})
-
 	// Open every table configured
 	tables := []table.Table{nodes.New(gossip), logTable}
 	for name, tableConf := range conf.Tables {
-		tables = append(tables, openTable(name, conf.Storage, tableConf, gossip, monitor, loader))
+		tables = append(tables, openTable(name, conf.Storage, tableConf, gossip, monitor))
 	}
 
 	// Start the new server
-	server := server.New(configure, monitor, loader, tables...)
+	server := server.New(configure, monitor, tables...)
 
 	// onSignal will be called when a OS-level signal is received.
 	onSignal(func(_ os.Signal) {
@@ -108,21 +96,21 @@ func main() {
 }
 
 // openTable creates a new table with storage & optional compaction fully configured
-func openTable(name string, storageConf config.Storage, tableConf config.Table, cluster cluster.Membership, monitor monitor.Monitor, loader *script.Loader) table.Table {
+func openTable(name string, storageConf config.Storage, tableConf config.Table, cluster cluster.Membership, monitor monitor.Monitor) table.Table {
 	monitor.Info("server: opening table %s...", name)
 
 	// Create a new storage layer and optional compaction
 	store := storage.Storage(disk.Open(storageConf.Directory, name, monitor, storageConf.Badger))
 	if tableConf.Compact != nil {
 		var err error
-		store, err = writer.ForCompaction(tableConf.Compact, monitor, store, loader)
+		store, err = writer.ForCompaction(tableConf.Compact, monitor, store)
 		if err != nil {
 			panic(err)
 		}
 	}
 
 	// Returns noop streamer if array is empty
-	streams, err := writer.ForStreaming(tableConf.Streams, monitor, loader)
+	streams, err := writer.ForStreaming(tableConf.Streams, monitor)
 	if err != nil {
 		panic(err)
 	}

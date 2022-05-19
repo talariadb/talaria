@@ -3,21 +3,18 @@ package base
 import (
 	"context"
 	"fmt"
-	"time"
 
 	"github.com/grab/async"
-	"github.com/kelindar/lua"
 	"github.com/kelindar/talaria/internal/encoding/block"
 	"github.com/kelindar/talaria/internal/encoding/merge"
 	"github.com/kelindar/talaria/internal/monitor/errors"
-	script "github.com/kelindar/talaria/internal/scripting"
 )
 
 // Writer is to filter and encode row of events
 type Writer struct {
 	task    async.Task
 	Process func(context.Context) error
-	filter  *lua.Script
+	filter  FilterFunc
 	name    string
 	encoder map[string]merge.Func
 }
@@ -30,18 +27,7 @@ func New(filter, encoderFunc string, loader *script.Loader) (*Writer, error) {
 		return nil, err
 	}
 
-	// If no filter was specified, create a base writer without a filter
-	if filter == "" {
-		return newWithEncoder(encoderFunc, nil, encoder)
-	}
-
-	// Load the filter script if required
-	script, err := loader.Load(filter, filter)
-	if err != nil {
-		return nil, err
-	}
-
-	return newWithEncoder(encoderFunc, script, encoder)
+	return newWithEncoder(encoderFunc, filter, encoder)
 }
 
 // newWithEncoder will generate a new encoder for a writer
@@ -98,12 +84,9 @@ func (w *Writer) applyFilter(row *block.Row) bool {
 		return true
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
-	defer cancel()
-
 	// Runs the lua script
-	out, err := w.filter.Run(ctx, row.Values)
-	if err != nil || !out.(lua.Bool) {
+	out, err := w.filter(row.Values)
+	if err != nil || !out.(bool) {
 		return false
 	}
 	return true

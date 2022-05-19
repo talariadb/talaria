@@ -6,8 +6,9 @@ import (
 	"time"
 
 	"github.com/grab/async"
+	"github.com/kelindar/talaria/internal/column/computed"
 	"github.com/kelindar/talaria/internal/encoding/block"
-	script "github.com/kelindar/talaria/internal/scripting"
+	"github.com/kelindar/talaria/internal/encoding/typeof"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -22,8 +23,9 @@ func TestFilter(t *testing.T) {
 	filter := `function main(row) 
 		return row['age'] > 10
 	end`
-	loader := script.NewLoader(nil)
-	enc1, _ := New(filter, "json", loader)
+	computedFilter, err := computed.NewComputed("", "", typeof.Bool, filter, nil)
+	assert.NoError(t, err)
+	enc1, _ := New("json", computedFilter.Value)
 	data, err := enc1.Encode(row)
 
 	assert.Equal(t, `{"Values":{"age":30,"test":"Hello Talaria"},"Schema":null}`, string(data))
@@ -43,8 +45,7 @@ func TestFilter(t *testing.T) {
 
 func TestRun(t *testing.T) {
 	ctx := context.Background()
-	loader := script.NewLoader(nil)
-	w, _ := New("", "json", loader)
+	w, _ := New("json", nil)
 	w.Process = func(context.Context) error {
 		return nil
 	}
@@ -55,8 +56,7 @@ func TestRun(t *testing.T) {
 
 func TestCancel(t *testing.T) {
 	ctx := context.Background()
-	loader := script.NewLoader(nil)
-	w, _ := New("", "json", loader)
+	w, _ := New("json", nil)
 	w.Process = func(context.Context) error {
 		time.Sleep(1 * time.Second)
 		return nil
@@ -68,8 +68,7 @@ func TestCancel(t *testing.T) {
 }
 
 func TestEmptyFilter(t *testing.T) {
-	loader := script.NewLoader(nil)
-	enc1, err := New("", "json", loader)
+	enc1, err := New("json", nil)
 	assert.NotNil(t, enc1)
 	assert.NoError(t, err)
 }

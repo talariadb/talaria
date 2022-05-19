@@ -44,7 +44,9 @@ func TestToOrc(t *testing.T) {
 	apply := block.Transform(nil)
 
 	block1, err := block.FromOrcBy(orcBuffer1.Bytes(), "col0", nil, apply)
+	assert.NoError(t, err)
 	block2, err := block.FromOrcBy(orcBuffer2.Bytes(), "col0", nil, apply)
+	assert.NoError(t, err)
 
 	mergedBlocks := []block.Block{}
 	for _, blk := range block1 {
@@ -107,7 +109,9 @@ func TestMerge_DifferentSchema(t *testing.T) {
 	apply := block.Transform(nil)
 
 	block1, err := block.FromOrcBy(orcBuffer1.Bytes(), "col0", nil, apply)
+	assert.NoError(t, err)
 	block2, err := block.FromOrcBy(orcBuffer2.Bytes(), "col0", nil, apply)
+	assert.NoError(t, err)
 
 	mergedBlocks := []block.Block{}
 	for _, blk := range block1 {

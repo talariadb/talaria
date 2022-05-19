@@ -123,7 +123,7 @@ func TestMergeParquet_DifferentSchema(t *testing.T) {
 		"col1": typeof.Int64,
 		"col2": typeof.Float64,
 	}
-	parquetSchema, fieldHandlers, err := deriveSchema(schema)
+	parquetSchema, _, err := deriveSchema(schema)
 
 	if err != nil {
 		t.Fatal(err)
