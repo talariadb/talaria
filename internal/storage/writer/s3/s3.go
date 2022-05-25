@@ -19,7 +19,6 @@ import (
 	"github.com/kelindar/talaria/internal/encoding/key"
 	"github.com/kelindar/talaria/internal/monitor"
 	"github.com/kelindar/talaria/internal/monitor/errors"
-	script "github.com/kelindar/talaria/internal/scripting"
 	"github.com/kelindar/talaria/internal/storage/writer/base"
 )
 
@@ -42,12 +41,12 @@ type Writer struct {
 }
 
 // New initializes a new S3 writer.
-func New(monitor monitor.Monitor, bucket, prefix, region, endpoint, sse, access, secret, filter, encoding string, loader *script.Loader, concurrency int) (*Writer, error) {
+func New(monitor monitor.Monitor, bucket, prefix, region, endpoint, sse, access, secret, filter, encoding string, concurrency int) (*Writer, error) {
 	if concurrency == 0 {
 		concurrency = runtime.NumCPU()
 	}
 
-	baseWriter, err := base.New(filter, encoding, loader)
+	baseWriter, err := base.New(filter, encoding, monitor)
 	if err != nil {
 		return nil, errors.Newf("s3: %v", err)
 	}

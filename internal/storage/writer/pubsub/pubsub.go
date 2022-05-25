@@ -3,15 +3,14 @@ package pubsub
 import (
 	"context"
 	"fmt"
+	"log"
 	"runtime"
 	"time"
 
 	"cloud.google.com/go/pubsub"
 	"github.com/grab/async"
-	"github.com/kelindar/talaria/internal/column/computed"
 	"github.com/kelindar/talaria/internal/encoding/block"
 	"github.com/kelindar/talaria/internal/encoding/key"
-	"github.com/kelindar/talaria/internal/encoding/typeof"
 	"github.com/kelindar/talaria/internal/monitor"
 	"github.com/kelindar/talaria/internal/monitor/errors"
 	"github.com/kelindar/talaria/internal/storage/writer/base"
@@ -38,16 +37,8 @@ func New(project, topic, encoding, filter string, monitor monitor.Monitor, opts 
 		return nil, errors.Newf("pubsub: %v", err)
 	}
 
-	var filterF base.FilterFunc = nil
-	if filter != "" {
-		computed, err := computed.NewComputed("", "", typeof.Bool, filter, monitor)
-		if err != nil {
-			return nil, err
-		}
-		filterF = computed.Value
-	}
 	// Load encoder
-	encoderWriter, err := base.New(encoding, filterF)
+	encoderWriter, err := base.New(filter, encoding, monitor)
 	if err != nil {
 		return nil, err
 	}

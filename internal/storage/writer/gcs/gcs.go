@@ -8,8 +8,8 @@ import (
 	"cloud.google.com/go/storage"
 	"github.com/kelindar/talaria/internal/encoding/block"
 	"github.com/kelindar/talaria/internal/encoding/key"
+	"github.com/kelindar/talaria/internal/monitor"
 	"github.com/kelindar/talaria/internal/monitor/errors"
-	script "github.com/kelindar/talaria/internal/scripting"
 	"github.com/kelindar/talaria/internal/storage/writer/base"
 )
 
@@ -22,14 +22,14 @@ type Writer struct {
 }
 
 // New creates a new writer.
-func New(bucket, prefix, filter, encoding string, loader *script.Loader) (*Writer, error) {
+func New(bucket, prefix, filter, encoding string, monitor monitor.Monitor) (*Writer, error) {
 	ctx := context.Background()
 	client, err := storage.NewClient(ctx)
 	if err != nil {
 		return nil, errors.Internal("gcs: unable to create a client", err)
 	}
 
-	baseWriter, err := base.New(filter, encoding, loader)
+	baseWriter, err := base.New(filter, encoding, monitor)
 	if err != nil {
 		return nil, errors.Internal("gcs: unable to create a base Writer", err)
 	}

@@ -5,7 +5,9 @@ import (
 	"time"
 
 	"github.com/kelindar/talaria/internal/encoding/block"
-	script "github.com/kelindar/talaria/internal/scripting"
+	"github.com/kelindar/talaria/internal/monitor"
+	"github.com/kelindar/talaria/internal/monitor/logging"
+	"github.com/kelindar/talaria/internal/monitor/statsd"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -13,8 +15,8 @@ func TestTalariaWriter(t *testing.T) {
 	var timeout time.Duration = 5
 	var concurrency int = 10
 	var errorPercentage int = 50
-	l := script.NewLoader(nil)
-	c, err := New("www.talaria.net:8043", "", "orc", l, &timeout, &concurrency, &errorPercentage)
+	m := monitor.New(logging.NewNoop(), statsd.NewNoop(), "x", "y")
+	c, err := New("www.talaria.net:8043", "", "orc", m, &timeout, &concurrency, &errorPercentage)
 
 	// TODO: Impove test
 	assert.Nil(t, c)

@@ -6,13 +6,15 @@ import (
 	"time"
 
 	"github.com/grab/async"
-	"github.com/kelindar/talaria/internal/column/computed"
 	"github.com/kelindar/talaria/internal/encoding/block"
-	"github.com/kelindar/talaria/internal/encoding/typeof"
+	"github.com/kelindar/talaria/internal/monitor"
+	"github.com/kelindar/talaria/internal/monitor/logging"
+	"github.com/kelindar/talaria/internal/monitor/statsd"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestFilter(t *testing.T) {
+	m := monitor.New(logging.NewNoop(), statsd.NewNoop(), "x", "y")
 	row := block.Row{
 		Values: map[string]interface{}{
 			"test": "Hello Talaria",
@@ -20,12 +22,10 @@ func TestFilter(t *testing.T) {
 		},
 	}
 
-	filter := `function main(row) 
+	filter := `function main(row)
 		return row['age'] > 10
 	end`
-	computedFilter, err := computed.NewComputed("", "", typeof.Bool, filter, nil)
-	assert.NoError(t, err)
-	enc1, _ := New("json", computedFilter.Value)
+	enc1, _ := New(filter, "json", m)
 	data, err := enc1.Encode(row)
 
 	assert.Equal(t, `{"Values":{"age":30,"test":"Hello Talaria"},"Schema":null}`, string(data))
@@ -34,8 +34,7 @@ func TestFilter(t *testing.T) {
 	filter2 := `function main(row)
 		return row['age'] < 10
 	end`
-	loader2 := script.NewLoader(nil)
-	enc2, _ := New(filter2, "json", loader2)
+	enc2, _ := New(filter2, "json", m)
 
 	filtered, err := enc2.Filter(row)
 	assert.Nil(t, err)
@@ -45,7 +44,8 @@ func TestFilter(t *testing.T) {
 
 func TestRun(t *testing.T) {
 	ctx := context.Background()
-	w, _ := New("json", nil)
+	m := monitor.New(logging.NewNoop(), statsd.NewNoop(), "x", "y")
+	w, _ := New("", "json", m)
 	w.Process = func(context.Context) error {
 		return nil
 	}
@@ -56,7 +56,8 @@ func TestRun(t *testing.T) {
 
 func TestCancel(t *testing.T) {
 	ctx := context.Background()
-	w, _ := New("json", nil)
+	m := monitor.New(logging.NewNoop(), statsd.NewNoop(), "x", "y")
+	w, _ := New("", "json", m)
 	w.Process = func(context.Context) error {
 		time.Sleep(1 * time.Second)
 		return nil
@@ -68,7 +69,8 @@ func TestCancel(t *testing.T) {
 }
 
 func TestEmptyFilter(t *testing.T) {
-	enc1, err := New("json", nil)
+	m := monitor.New(logging.NewNoop(), statsd.NewNoop(), "x", "y")
+	enc1, err := New("", "json", m)
 	assert.NotNil(t, enc1)
 	assert.NoError(t, err)
 }

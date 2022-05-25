@@ -8,8 +8,8 @@ import (
 
 	"github.com/kelindar/talaria/internal/encoding/block"
 	"github.com/kelindar/talaria/internal/encoding/key"
+	"github.com/kelindar/talaria/internal/monitor"
 	"github.com/kelindar/talaria/internal/monitor/errors"
-	script "github.com/kelindar/talaria/internal/scripting"
 	"github.com/kelindar/talaria/internal/storage/writer/base"
 )
 
@@ -20,12 +20,13 @@ type Writer struct {
 }
 
 // New creates a new writer.
-func New(directory, filter, encoding string, loader *script.Loader) (*Writer, error) {
+func New(directory, filter, encoding string, monitor monitor.Monitor) (*Writer, error) {
 	dir, err := filepath.Abs(directory)
 	if err != nil {
 		return nil, errors.Internal("file: unable to create file writer", err)
 	}
-	baseWriter, err := base.New(filter, encoding, loader)
+
+	baseWriter, err := base.New(filter, encoding, monitor)
 	if err != nil {
 		return nil, errors.Newf("file: %v", err)
 	}

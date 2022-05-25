@@ -5,10 +5,16 @@ import (
 	"fmt"
 
 	"github.com/grab/async"
+	"github.com/kelindar/talaria/internal/column/computed"
 	"github.com/kelindar/talaria/internal/encoding/block"
 	"github.com/kelindar/talaria/internal/encoding/merge"
+	"github.com/kelindar/talaria/internal/encoding/typeof"
+	"github.com/kelindar/talaria/internal/monitor"
 	"github.com/kelindar/talaria/internal/monitor/errors"
 )
+
+// FilterFunc used for filter
+type FilterFunc func(map[string]interface{}) (interface{}, error)
 
 // Writer is to filter and encode row of events
 type Writer struct {
@@ -20,18 +26,27 @@ type Writer struct {
 }
 
 // New creates a new encoder
-func New(filter, encoderFunc string, loader *script.Loader) (*Writer, error) {
+func New(filter, encoderFunc string, monitor monitor.Monitor) (*Writer, error) {
+	var filterF FilterFunc = nil
+	if filter != "" {
+		computed, err := computed.NewComputed("", "", typeof.Bool, filter, monitor)
+		if err != nil {
+			return nil, err
+		}
+		filterF = computed.Value
+	}
+
 	// Extendable encoder functions
 	encoder, err := merge.New(encoderFunc)
 	if err != nil {
 		return nil, err
 	}
 
-	return newWithEncoder(encoderFunc, filter, encoder)
+	return newWithEncoder(encoderFunc, filterF, encoder)
 }
 
 // newWithEncoder will generate a new encoder for a writer
-func newWithEncoder(name string, filter *lua.Script, encoder map[string]merge.Func) (*Writer, error) {
+func newWithEncoder(name string, filter FilterFunc, encoder map[string]merge.Func) (*Writer, error) {
 	return &Writer{
 		name:    name,
 		filter:  filter,

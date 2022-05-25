@@ -10,7 +10,6 @@ import (
 	"github.com/kelindar/talaria/internal/encoding/key"
 	"github.com/kelindar/talaria/internal/monitor"
 	"github.com/kelindar/talaria/internal/monitor/errors"
-	script "github.com/kelindar/talaria/internal/scripting"
 	"github.com/kelindar/talaria/internal/storage/writer/base"
 )
 
@@ -33,13 +32,13 @@ type Writer struct {
 }
 
 // New creates a new writer.
-func New(project, dataset, table, encoding, filter string, monitor monitor.Monitor, loader *script.Loader) (*Writer, error) {
+func New(project, dataset, table, encoding, filter string, monitor monitor.Monitor) (*Writer, error) {
 	ctx := context.Background()
 	client, err := bigquery.NewClient(ctx, project)
 	if err != nil {
 		return nil, errors.Newf("bigquery: %v", err)
 	}
-	encoderwriter, err := base.New(filter, encoding, loader)
+	encoderwriter, err := base.New(filter, encoding, monitor)
 	if err != nil {
 		return nil, errors.Newf("bigquery: %v", err)
 	}

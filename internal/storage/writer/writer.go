@@ -80,13 +80,13 @@ func ForCompaction(config *config.Compaction, monitor monitor.Monitor, store sto
 }
 
 // NewWriter creates a new writer from the configuration.
-func newWriter(sinks []config.Sink, monitor monitor.Monitor, loader *script.Loader) (flush.Writer, error) {
+func newWriter(sinks []config.Sink, monitor monitor.Monitor) (flush.Writer, error) {
 	var writers []multi.SubWriter
 
 	for _, config := range sinks {
 		// Configure S3 writer if present
 		if config.S3 != nil {
-			w, err := s3.New(monitor, config.S3.Bucket, config.S3.Prefix, config.S3.Region, config.S3.Endpoint, config.S3.SSE, config.S3.AccessKey, config.S3.SecretKey, config.S3.Filter, config.S3.Encoder, loader, config.S3.Concurrency)
+			w, err := s3.New(monitor, config.S3.Bucket, config.S3.Prefix, config.S3.Region, config.S3.Endpoint, config.S3.SSE, config.S3.AccessKey, config.S3.SecretKey, config.S3.Filter, config.S3.Encoder, config.S3.Concurrency)
 			if err != nil {
 				return nil, err
 			}
@@ -95,7 +95,7 @@ func newWriter(sinks []config.Sink, monitor monitor.Monitor, loader *script.Load
 
 		// Configure Azure MultiAccount writer if present
 		if config.Azure != nil && len(config.Azure.StorageAccounts) > 0 {
-			w, err := azure.NewMultiAccountWriter(monitor, config.Azure.BlobServiceURL, config.Azure.Container, config.Azure.Prefix, config.Azure.Filter, config.Azure.Encoder, loader, config.Azure.StorageAccounts, config.Azure.StorageAccountWeights, config.Azure.Parallelism, config.Azure.BlockSize)
+			w, err := azure.NewMultiAccountWriter(monitor, config.Azure.BlobServiceURL, config.Azure.Container, config.Azure.Prefix, config.Azure.Filter, config.Azure.Encoder, config.Azure.StorageAccounts, config.Azure.StorageAccountWeights, config.Azure.Parallelism, config.Azure.BlockSize)
 			if err != nil {
 				return nil, err
 			}
@@ -104,7 +104,7 @@ func newWriter(sinks []config.Sink, monitor monitor.Monitor, loader *script.Load
 
 		// Configure Azure SingleAccount writer if present
 		if config.Azure != nil && len(config.Azure.StorageAccounts) == 0 {
-			w, err := azure.New(config.Azure.Container, config.Azure.Prefix, config.Azure.Filter, config.Azure.Encoder, loader, monitor)
+			w, err := azure.New(config.Azure.Container, config.Azure.Prefix, config.Azure.Filter, config.Azure.Encoder, monitor)
 			if err != nil {
 				return nil, err
 			}
@@ -113,7 +113,7 @@ func newWriter(sinks []config.Sink, monitor monitor.Monitor, loader *script.Load
 
 		// Configure GCS writer if present
 		if config.GCS != nil {
-			w, err := gcs.New(config.GCS.Bucket, config.GCS.Prefix, config.GCS.Filter, config.GCS.Encoder, loader)
+			w, err := gcs.New(config.GCS.Bucket, config.GCS.Prefix, config.GCS.Filter, config.GCS.Encoder, monitor)
 			if err != nil {
 				return nil, err
 			}
@@ -122,7 +122,7 @@ func newWriter(sinks []config.Sink, monitor monitor.Monitor, loader *script.Load
 
 		// Configure BigQuery writer if present
 		if config.BigQuery != nil {
-			w, err := bigquery.New(config.BigQuery.Project, config.BigQuery.Dataset, config.BigQuery.Table, config.BigQuery.Encoder, config.BigQuery.Filter, monitor, loader)
+			w, err := bigquery.New(config.BigQuery.Project, config.BigQuery.Dataset, config.BigQuery.Table, config.BigQuery.Encoder, config.BigQuery.Filter, monitor)
 			if err != nil {
 				return nil, err
 			}
@@ -131,7 +131,7 @@ func newWriter(sinks []config.Sink, monitor monitor.Monitor, loader *script.Load
 
 		// Configure File writer if present
 		if config.File != nil {
-			w, err := file.New(config.File.Directory, config.File.Filter, config.File.Encoder, loader)
+			w, err := file.New(config.File.Directory, config.File.Filter, config.File.Encoder, monitor)
 			if err != nil {
 				return nil, err
 			}
@@ -140,7 +140,7 @@ func newWriter(sinks []config.Sink, monitor monitor.Monitor, loader *script.Load
 
 		// Configure Talaria writer if present
 		if config.Talaria != nil {
-			w, err := talaria.New(config.Talaria.Endpoint, config.Talaria.Filter, config.Talaria.Encoder, loader, config.Talaria.CircuitTimeout, config.Talaria.MaxConcurrent, config.Talaria.ErrorPercentThreshold)
+			w, err := talaria.New(config.Talaria.Endpoint, config.Talaria.Filter, config.Talaria.Encoder, monitor, config.Talaria.CircuitTimeout, config.Talaria.MaxConcurrent, config.Talaria.ErrorPercentThreshold)
 			if err != nil {
 				return nil, err
 			}
@@ -149,7 +149,7 @@ func newWriter(sinks []config.Sink, monitor monitor.Monitor, loader *script.Load
 
 		// Configure Google Pub/Sub writer if present
 		if config.PubSub != nil {
-			w, err := pubsub.New(config.PubSub.Project, config.PubSub.Topic, config.PubSub.Encoder, config.PubSub.Filter, loader, monitor)
+			w, err := pubsub.New(config.PubSub.Project, config.PubSub.Topic, config.PubSub.Encoder, config.PubSub.Filter, monitor)
 			if err != nil {
 				return nil, err
 			}
@@ -167,7 +167,7 @@ func newWriter(sinks []config.Sink, monitor monitor.Monitor, loader *script.Load
 }
 
 // newStreamer creates a new streamer from the configuration.
-func newStreamer(sinks config.Streams, monitor monitor.Monitor, loader *script.Loader) (flush.Writer, error) {
+func newStreamer(sinks config.Streams, monitor monitor.Monitor) (flush.Writer, error) {
 	var writers []multi.SubWriter
 
 	// If no streams were configured, error out
@@ -177,7 +177,7 @@ func newStreamer(sinks config.Streams, monitor monitor.Monitor, loader *script.L
 
 	for _, v := range sinks {
 		conf := []config.Sink{v}
-		w, err := newWriter(conf, monitor, loader)
+		w, err := newWriter(conf, monitor)
 		if err != nil {
 			return noop.New(), err
 		}

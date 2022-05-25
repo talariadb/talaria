@@ -8,8 +8,8 @@ import (
 	talaria "github.com/kelindar/talaria/client/golang"
 	"github.com/kelindar/talaria/internal/encoding/block"
 	"github.com/kelindar/talaria/internal/encoding/key"
+	"github.com/kelindar/talaria/internal/monitor"
 	"github.com/kelindar/talaria/internal/monitor/errors"
-	script "github.com/kelindar/talaria/internal/scripting"
 	"github.com/kelindar/talaria/internal/storage/writer/base"
 	"github.com/myteksi/hystrix-go/hystrix"
 	"google.golang.org/grpc/codes"
@@ -36,13 +36,13 @@ type Writer struct {
 }
 
 // New initializes a new Talaria writer.
-func New(endpoint, filter, encoding string, loader *script.Loader, circuitTimeout *time.Duration, maxConcurrent *int, errorPercentThreshold *int) (*Writer, error) {
+func New(endpoint, filter, encoding string, monitor monitor.Monitor, circuitTimeout *time.Duration, maxConcurrent *int, errorPercentThreshold *int) (*Writer, error) {
 
 	var newTimeout = 5 * time.Second
 	var newMaxConcurrent = hystrix.DefaultMaxConcurrent
 	var newErrorPercentThreshold = hystrix.DefaultErrorPercentThreshold
 
-	baseWriter, err := base.New(filter, encoding, loader)
+	baseWriter, err := base.New(filter, encoding, monitor)
 	if err != nil {
 		return nil, errors.Internal("talaria: ", err)
 	}

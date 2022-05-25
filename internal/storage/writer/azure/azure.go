@@ -18,7 +18,6 @@ import (
 	"github.com/kelindar/talaria/internal/encoding/key"
 	"github.com/kelindar/talaria/internal/monitor"
 	"github.com/kelindar/talaria/internal/monitor/errors"
-	script "github.com/kelindar/talaria/internal/scripting"
 	"github.com/kelindar/talaria/internal/storage/writer/base"
 	"github.com/mroth/weightedrand"
 )
@@ -50,7 +49,7 @@ type MultiAccountWriter struct {
 }
 
 // New creates a new writer.
-func New(container, prefix, filter, encoding string, loader *script.Loader, monitor monitor.Monitor) (*Writer, error) {
+func New(container, prefix, filter, encoding string, monitor monitor.Monitor) (*Writer, error) {
 
 	// From the Azure portal, get your storage account name and key and set environment variables.
 	accountName, accountKey := os.Getenv("AZURE_STORAGE_ACCOUNT"), os.Getenv("AZURE_STORAGE_ACCESS_KEY")
@@ -67,7 +66,7 @@ func New(container, prefix, filter, encoding string, loader *script.Loader, moni
 		return nil, errors.New("azure: either the AZURE_STORAGE_ACCOUNT or AZURE_STORAGE_ACCESS_KEY environment variable is not set")
 	}
 	// Load Encoder and Filter
-	baseWriter, err := base.New(filter, encoding, loader)
+	baseWriter, err := base.New(filter, encoding, monitor)
 	if err != nil {
 		return nil, err
 	}
@@ -113,7 +112,7 @@ func (w *Writer) Write(key key.Key, blocks []block.Block) error {
 }
 
 // NewMultiAccountWriter creates a new MultiAccountWriter.
-func NewMultiAccountWriter(monitor monitor.Monitor, filter, encoding, blobServiceURL, container, prefix string, loader *script.Loader, storageAccount []string, weights []uint, parallelism uint16, blockSize int64) (*MultiAccountWriter, error) {
+func NewMultiAccountWriter(monitor monitor.Monitor, filter, encoding, blobServiceURL, container, prefix string, storageAccount []string, weights []uint, parallelism uint16, blockSize int64) (*MultiAccountWriter, error) {
 	if _, present := os.LookupEnv("AZURE_AD_RESOURCE"); !present {
 		if err := os.Setenv("AZURE_AD_RESOURCE", defaultResourceID); err != nil {
 			return nil, errors.New("azure: unable to set default AZURE_AD_RESOURCE environment variable")
@@ -161,7 +160,7 @@ func NewMultiAccountWriter(monitor monitor.Monitor, filter, encoding, blobServic
 	}
 
 	// Load Encoder and Filter
-	baseWriter, err := base.New(filter, encoding, loader)
+	baseWriter, err := base.New(filter, encoding, monitor)
 	if err != nil {
 		return nil, err
 	}
