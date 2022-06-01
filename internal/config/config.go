@@ -37,6 +37,7 @@ type Config struct {
 	Tables   Tables     `json:"tables" yaml:"tables"`
 	Statsd   *StatsD    `json:"statsd,omitempty" yaml:"statsd" env:"STATSD"`
 	Computed []Computed `json:"computed" yaml:"computed" env:"COMPUTED"`
+	Filters  []Computed `json:"filters" yaml:"filters" env:"FILTERS"`
 	K8s      *K8s       `json:"k8s,omitempty" yaml:"k8s" env:"K8S"`
 }
 

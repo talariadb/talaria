@@ -39,7 +39,7 @@ func (s *Server) Ingest(ctx context.Context, request *talaria.IngestRequest) (*t
 		}
 
 		// Functions to be applied
-		funcs := []applyFunc{block.Transform(filter, s.computed...)}
+		funcs := []applyFunc{block.Strip(filter, s.filter...), block.Transform(filter, s.computed...)}
 
 		// If table supports streaming, add publishing function
 		if streamer, ok := t.(storage.Streamer); ok {
