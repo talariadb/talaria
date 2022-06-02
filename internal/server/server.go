@@ -66,6 +66,18 @@ func New(conf config.Func, monitor monitor.Monitor, tables ...table.Table) *Serv
 		server.computed = append(server.computed, col)
 	}
 
+	// Load filter columns
+	for _, c := range conf().Filters {
+		col, err := computed.NewComputed(c.Name, c.FuncName, c.Type, c.Func, monitor)
+		if err != nil {
+			monitor.Error(err)
+			continue
+		}
+
+		monitor.Info("server: loaded filter %v of type %v", c.Name, c.Type)
+		server.filter = append(server.filter, col)
+	}
+
 	// Register the gRPC servers
 	talaria.RegisterIngressServer(server.server, server)
 	talaria.RegisterQueryServer(server.server, server)
@@ -86,6 +98,7 @@ type Server struct {
 	cancel   context.CancelFunc     // The cancellation function for the server
 	tables   map[string]table.Table // The list of tables
 	computed []computed.Computed    // The set of computed columns
+	filter   []computed.Computed    // The set of filters
 	s3sqs    *s3sqs.Ingress         // The S3SQS Ingress (optional)
 }
 
