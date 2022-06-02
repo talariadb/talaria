@@ -226,25 +226,20 @@ func (m *MultiAccountWriter) getContainerURL() (*azblob.ContainerURL, error) {
 }
 
 func getServicePrincipalToken(monitor monitor.Monitor) (*adal.ServicePrincipalToken, error) {
+	if settings, err := auth.GetSettingsFromEnvironment(); err == nil {
+		if cc, err := settings.GetClientCredentials(); err == nil {
+			monitor.Info("azure: acquired Credentials from Environment")
+			return cc.ServicePrincipalToken()
+		}
+	}
 
 	spt, err := adal.NewServicePrincipalTokenFromManagedIdentity(azure.PublicCloud.ResourceIdentifiers.Storage, &adal.ManagedIdentityOptions{})
-
-	if err == nil {
-		monitor.Info("azure: acquired Manange Identity Credentials")
+	if err != nil {
+		monitor.Warning(errors.Internal("azure: unable to retrieve Credentials", err))
 		return spt, err
 	}
-	monitor.Warning(errors.Internal("azure: unable to retrieve Manange Identity Credentials", err))
 
-	settings, err := auth.GetSettingsFromEnvironment()
-	if err != nil {
-		return nil, err
-	}
-	cc, err := settings.GetClientCredentials()
-	if err != nil {
-		return nil, err
-	}
-
-	spt, err = cc.ServicePrincipalToken()
-
+	monitor.Info("azure: acquired Credentials")
 	return spt, err
+
 }
