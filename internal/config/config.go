@@ -120,19 +120,23 @@ type Computed struct {
 	FuncName string      `json:"funcname"`
 }
 
+type BaseSink struct {
+	Encoder string `json:"encoder" yaml:"encoder"` // The default encoder for the compaction
+	Filter  string `json:"filter" yaml:"filter"`   // The default encoder for the compaction
+}
+
 // Compaction represents a configuration for compaction sinks
 type Compaction struct {
-	Sinks    `yaml:",inline"`
-	Encoder  string `json:"encoder" yaml:"encoder"`                  // The default encoder for the compaction
+	Sinks    []Sink `yaml:"sinks"`
 	NameFunc string `json:"nameFunc" yaml:"nameFunc" env:"NAMEFUNC"` // The lua script to compute file name given a row
 	Interval int    `json:"interval" yaml:"interval" env:"INTERVAL"` // The compaction interval, in seconds
 }
 
 // Streams are lists of sinks to be streamed to
-type Streams []Sinks
+type Streams []Sink
 
 // Sinks represents a configuration for writer sinks
-type Sinks struct {
+type Sink struct {
 	S3       *S3Sink       `json:"s3" yaml:"s3"`              // The S3 writer configuration
 	Azure    *AzureSink    `json:"azure" yaml:"azure"`        // The Azure writer configuration
 	BigQuery *BigQuerySink `json:"bigquery" yaml:"bigquery" ` // The Big Query writer configuration
@@ -144,6 +148,7 @@ type Sinks struct {
 
 // S3Sink represents a sink for AWS S3 and compatible stores.
 type S3Sink struct {
+	BaseSink    `yaml:",inline"`
 	Region      string `json:"region" yaml:"region" env:"REGION"`                // The region of AWS bucket
 	Bucket      string `json:"bucket" yaml:"bucket" env:"BUCKET"`                // The name of AWS bucket
 	Prefix      string `json:"prefix" yaml:"prefix" env:"PREFIX"`                // The prefix to add
@@ -156,6 +161,7 @@ type S3Sink struct {
 
 // AzureSink represents a sink to Azure
 type AzureSink struct {
+	BaseSink              `yaml:",inline"`
 	Container             string   `json:"container" yaml:"container" env:"CONTAINER"`                                     // The container name
 	Prefix                string   `json:"prefix" yaml:"prefix" env:"PREFIX"`                                              // The prefix to add
 	Parallelism           uint16   `json:"parallelism" yaml:"parallelism" env:"PARALLELISM"`                               // The BlockBlob upload parallelism
@@ -167,32 +173,35 @@ type AzureSink struct {
 
 // BigQuerySink represents a sink to Google Big Query
 type BigQuerySink struct {
-	Project string `json:"project" yaml:"project" env:"PROJECT"` // The project ID
-	Dataset string `json:"dataset" yaml:"dataset" env:"DATASET"` // The dataset ID
-	Table   string `json:"table" yaml:"table" env:"TABLE"`       // The table ID
+	BaseSink `yaml:",inline"`
+	Project  string `json:"project" yaml:"project" env:"PROJECT"` // The project ID
+	Dataset  string `json:"dataset" yaml:"dataset" env:"DATASET"` // The dataset ID
+	Table    string `json:"table" yaml:"table" env:"TABLE"`       // The table ID
 }
 
 // GCSSink represents a sink to Google Cloud Storage
 type GCSSink struct {
-	Bucket string `json:"bucket" yaml:"bucket" env:"BUCKET"` // The name of the bucket
-	Prefix string `json:"prefix" yaml:"prefix" env:"PREFIX"` // The prefix to add
+	BaseSink `yaml:",inline"`
+	Bucket   string `json:"bucket" yaml:"bucket" env:"BUCKET"` // The name of the bucket
+	Prefix   string `json:"prefix" yaml:"prefix" env:"PREFIX"` // The prefix to add
 }
 
 // FileSink represents a sink to the local file system
 type FileSink struct {
+	BaseSink  `yaml:",inline"`
 	Directory string `json:"dir" yaml:"dir" env:"DIR"`
 }
 
 // PubSubSink represents a stream to Google Pub/Sub
 type PubSubSink struct {
-	Project string `json:"project" yaml:"project" env:"PROJECT"`
-	Topic   string `json:"topic" yaml:"topic" env:"TOPIC"`
-	Filter  string `json:"filter" yaml:"filter" env:"FILTER"`
-	Encoder string `json:"encoder" yaml:"encoder" env:"ENCODER"`
+	BaseSink `yaml:",inline"`
+	Project  string `json:"project" yaml:"project" env:"PROJECT"`
+	Topic    string `json:"topic" yaml:"topic" env:"TOPIC"`
 }
 
 // TalariaSink represents a sink to an instance of Talaria
 type TalariaSink struct {
+	BaseSink              `yaml:",inline"`
 	Endpoint              string         `json:"endpoint" yaml:"endpoint" env:"ENDPOINT"`                    // The second Talaria endpoint
 	CircuitTimeout        *time.Duration `json:"timeout" yaml:"timeout" env:"TIMEOUT"`                       // The timeout (in seconds) for requests to the second Talaria
 	MaxConcurrent         *int           `json:"concurrency" yaml:"concurrency" env:"CONCURRENCY"`           // The number of concurrent requests permissible

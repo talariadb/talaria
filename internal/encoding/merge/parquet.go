@@ -1,3 +1,6 @@
+// Copyright 2019-2020 Grabtaxi Holdings PTE LTE (GRAB), All rights reserved.
+// Use of this source code is governed by an MIT-style license that can be found in the LICENSE file
+
 package merge
 
 import (
@@ -16,7 +19,20 @@ import (
 )
 
 // ToParquet merges multiple blocks together and outputs a key and merged Parquet data
-func ToParquet(blocks []block.Block, schema typeof.Schema) ([]byte, error) {
+func ToParquet(input interface{}) ([]byte, error) {
+	if input == nil {
+		return nil, nil
+	}
+	if _, ok := input.([]block.Block); !ok {
+		return nil, errors.Internal("Parquet merge not supported. input must be []block.Block", nil)
+	}
+	blocks := input.([]block.Block)
+	if len(blocks) == 0 {
+		return nil, nil
+	}
+
+	schema := blocks[0].Schema()
+
 	parquetSchema, fieldHandlers, err := deriveSchema(schema)
 
 	if err != nil {
@@ -211,7 +227,7 @@ func createColumn(field, typ string) (col *parquetschema.ColumnDefinition, field
 }
 
 func byteArrayHandler(s interface{}) (interface{}, error) {
-	switch v := s.(type){
+	switch v := s.(type) {
 	case []byte:
 		return v, nil
 	case string:
@@ -224,7 +240,7 @@ func byteArrayHandler(s interface{}) (interface{}, error) {
 }
 
 func booleanHandler(s interface{}) (interface{}, error) {
-	switch v := s.(type){
+	switch v := s.(type) {
 	case bool:
 		return v, nil
 	case string:
@@ -254,7 +270,7 @@ func uintHandler(bitSize int) func(interface{}) (interface{}, error) {
 
 func intHandler(bitSize int) func(interface{}) (interface{}, error) {
 
-	helperFunc := func (bitSize int, rawValue int64) (interface{}, error) {
+	helperFunc := func(bitSize int, rawValue int64) (interface{}, error) {
 		switch bitSize {
 		case 8, 16, 32:
 			return int32(rawValue), nil
@@ -287,7 +303,7 @@ func intHandler(bitSize int) func(interface{}) (interface{}, error) {
 }
 
 func floatHandler(s interface{}) (interface{}, error) {
-	switch v := s.(type){
+	switch v := s.(type) {
 	case float32:
 		return v, nil
 	case float64:
@@ -298,7 +314,7 @@ func floatHandler(s interface{}) (interface{}, error) {
 }
 
 func doubleHandler(s interface{}) (interface{}, error) {
-	switch v := s.(type){
+	switch v := s.(type) {
 	case float64:
 		return v, nil
 	default:

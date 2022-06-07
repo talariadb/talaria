@@ -15,9 +15,11 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
+	"github.com/kelindar/talaria/internal/encoding/block"
 	"github.com/kelindar/talaria/internal/encoding/key"
 	"github.com/kelindar/talaria/internal/monitor"
 	"github.com/kelindar/talaria/internal/monitor/errors"
+	"github.com/kelindar/talaria/internal/storage/writer/base"
 )
 
 const ctxTag = "s3"
@@ -30,6 +32,7 @@ type Uploader interface {
 
 // Writer represents a writer for Amazon S3 and compatible storages.
 type Writer struct {
+	*base.Writer
 	monitor  monitor.Monitor
 	uploader Uploader
 	bucket   string
@@ -38,9 +41,14 @@ type Writer struct {
 }
 
 // New initializes a new S3 writer.
-func New(monitor monitor.Monitor, bucket, prefix, region, endpoint, sse, access, secret string, concurrency int) (*Writer, error) {
+func New(monitor monitor.Monitor, bucket, prefix, region, endpoint, sse, access, secret, filter, encoding string, concurrency int) (*Writer, error) {
 	if concurrency == 0 {
 		concurrency = runtime.NumCPU()
+	}
+
+	baseWriter, err := base.New(filter, encoding, monitor)
+	if err != nil {
+		return nil, errors.Newf("s3: %v", err)
 	}
 
 	config := &aws.Config{
@@ -57,6 +65,7 @@ func New(monitor monitor.Monitor, bucket, prefix, region, endpoint, sse, access,
 
 	client := s3.New(session.New(), config)
 	return &Writer{
+		Writer:  baseWriter,
 		monitor: monitor,
 		uploader: s3manager.NewUploaderWithClient(client, func(u *s3manager.Uploader) {
 			u.Concurrency = concurrency
@@ -68,11 +77,16 @@ func New(monitor monitor.Monitor, bucket, prefix, region, endpoint, sse, access,
 }
 
 // Write writes creates object of S3 bucket prefix key in S3Writer bucket with value val
-func (w *Writer) Write(key key.Key, val []byte) error {
+func (w *Writer) Write(key key.Key, blocks []block.Block) error {
+
+	buffer, err := w.Writer.Encode(blocks)
+	if err != nil {
+		return err
+	}
 	start := time.Now()
 	uploadInput := &s3manager.UploadInput{
 		Bucket: aws.String(w.bucket),
-		Body:   bytes.NewReader(val),
+		Body:   bytes.NewReader(buffer),
 		Key:    aws.String(path.Join(w.prefix, string(key))),
 	}
 

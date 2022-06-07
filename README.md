@@ -1,12 +1,12 @@
 # Talaria
 
-![Test](https://github.com/kelindar/talaria/workflows/Test/badge.svg) 
+![Test](https://github.com/kelindar/talaria/workflows/Test/badge.svg)
 ![Release](https://github.com/kelindar/talaria/workflows/Release/badge.svg)
 [![Go Report Card](https://goreportcard.com/badge/github.com/kelindar/talaria)](https://goreportcard.com/report/github.com/kelindar/talaria)
 [![Docker Pulls](https://img.shields.io/docker/pulls/kelindar/talaria)](https://hub.docker.com/repository/docker/kelindar/talaria/general)
 
 
-This repository contains a fork of TalariaDB, a distributed, highly available, and low latency time-series database for Big Data systems. It was originally [designed and implemented in Grab](https://engineering.grab.com/big-data-real-time-presto-talariadb), where millions and millions of transactions and connections take place every day , which requires a platform scalable data-driven decision making. 
+This repository contains a fork of TalariaDB, a distributed, highly available, and low latency time-series database for Big Data systems. It was originally [designed and implemented in Grab](https://engineering.grab.com/big-data-real-time-presto-talariadb), where millions and millions of transactions and connections take place every day , which requires a platform scalable data-driven decision making.
 
 <p align="center">
     <img width="746" height="348" src=".github/images/query-event.png">
@@ -96,7 +96,7 @@ An example of weighted choice is shown below:
     - azure:
         container: a_container
         prefix: a_prefix
-        blobServiceURL: .storage.microsoft.net    
+        blobServiceURL: .storage.microsoft.net
         storageAccounts:
             - a_storage_account
             - b_storage_account
@@ -107,11 +107,11 @@ Random choice and weighed choice are particularly useful for some key scenarios:
 
 - High throughput deployment where the I/O generate by Talaria exceedes the limitation of the stroage accounts.
 - When deploying on internal endpoints with multiple VPNs links and you want to split the network traffic across multiple
-  network links.  
+  network links.
 
 ## Hot Data Query with Talaria
 
-If your organisation requires querying of either hot data (e.g. last n hours) or in-flight data (i.e as ingested), you can also configure Talaria to serve it to Presto using built-in [Presto Thrift](https://prestodb.io/docs/current/connector/thrift.html) connector. 
+If your organisation requires querying of either hot data (e.g. last n hours) or in-flight data (i.e as ingested), you can also configure Talaria to serve it to Presto using built-in [Presto Thrift](https://prestodb.io/docs/current/connector/thrift.html) connector.
 
 ![alt text](.github/images/query.png)
 
@@ -150,7 +150,7 @@ Once you have set up Talaria, you'll need to configure Presto to talk to it usin
 Once this is done, you should be able to query your data via Presto.
 
 ```sql
-select * 
+select *
 from talaria.data.eventlog
 where event = 'table1.update'
 limit 1000
@@ -176,6 +176,8 @@ We are open to contributions, feel free to submit a pull request and we'll revie
 * [Atri Sharma](https://www.linkedin.com/in/atrisharma/)
 * [Qiao Wei](https://www.linkedin.com/in/qiao-wei-3aa22480)
 * [Oscar Cassetti](https://www.linkedin.com/in/ocassetti/)
+* [Manoj Babu Katragadda](https://www.linkedin.com/in/manojbabuiit/)
+* [Jeffrey Lean](https://www.linkedin.com/in/jeffrey-lean-4089a1198/)
 
 ## License
 

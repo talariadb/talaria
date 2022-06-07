@@ -85,10 +85,8 @@ func TestToParquet(t *testing.T) {
 
 	apply := block.Transform(nil)
 
-	block1, err := block.FromParquetBy(parquetBuffer1.Bytes(), "col1", nil, apply)
-	assert.NoError(t, err)
-	block2, err := block.FromParquetBy(parquetBuffer2.Bytes(), "col1", nil, apply)
-	assert.NoError(t, err)
+	block1, err := block.FromParquetBy(parquetBuffer1.Bytes(), "col1", &schema, apply)
+	block2, err := block.FromParquetBy(parquetBuffer2.Bytes(), "col1", &schema, apply)
 
 	mergedBlocks := []block.Block{}
 	for _, blk := range block1 {
@@ -97,7 +95,8 @@ func TestToParquet(t *testing.T) {
 	for _, blk := range block2 {
 		mergedBlocks = append(mergedBlocks, blk)
 	}
-	mergedValue, err := ToParquet(mergedBlocks, schema)
+
+	mergedValue, err := ToParquet(mergedBlocks)
 	assert.NoError(t, err)
 
 	parquetBuffer := &bytes.Buffer{}
@@ -180,10 +179,8 @@ func TestMergeParquet_DifferentSchema(t *testing.T) {
 
 	apply := block.Transform(nil)
 
-	block1, err := block.FromParquetBy(parquetBuffer1.Bytes(), "col1", nil, apply)
-	assert.NoError(t, err)
-	block2, err := block.FromParquetBy(parquetBuffer2.Bytes(), "col1", nil, apply)
-	assert.NoError(t, err)
+	block1, err := block.FromParquetBy(parquetBuffer1.Bytes(), "col1", &schema, apply)
+	block2, err := block.FromParquetBy(parquetBuffer2.Bytes(), "col1", &schema, apply)
 
 	mergedBlocks := []block.Block{}
 	for _, blk := range block1 {
@@ -192,7 +189,7 @@ func TestMergeParquet_DifferentSchema(t *testing.T) {
 	for _, blk := range block2 {
 		mergedBlocks = append(mergedBlocks, blk)
 	}
-	mergedValue, err := ToParquet(mergedBlocks, schema2)
+	mergedValue, err := ToParquet(mergedBlocks)
 	assert.NoError(t, err)
 
 	parquetBuffer := &bytes.Buffer{}
@@ -214,7 +211,7 @@ func TestMergeParquet_DifferentSchema(t *testing.T) {
 	_ = writer.AddData(data2)
 	_ = writer.Close()
 
-	if !bytes.Equal(parquetBuffer.Bytes(), mergedValue) {
+	if bytes.Equal(parquetBuffer.Bytes(), mergedValue) {
 		t.Fatal("Merged parquet value differ")
 	}
 }

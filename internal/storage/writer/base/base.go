@@ -2,16 +2,16 @@ package base
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 
 	"github.com/grab/async"
+	"github.com/kelindar/talaria/internal/column/computed"
 	"github.com/kelindar/talaria/internal/encoding/block"
+	"github.com/kelindar/talaria/internal/encoding/merge"
+	"github.com/kelindar/talaria/internal/encoding/typeof"
+	"github.com/kelindar/talaria/internal/monitor"
 	"github.com/kelindar/talaria/internal/monitor/errors"
 )
-
-// Func encodes the payload
-type Func func(interface{}) ([]byte, error)
 
 // FilterFunc used for filter
 type FilterFunc func(map[string]interface{}) (interface{}, error)
@@ -22,42 +22,35 @@ type Writer struct {
 	Process func(context.Context) error
 	filter  FilterFunc
 	name    string
-	encode  Func
+	encoder map[string]merge.Func
 }
 
 // New creates a new encoder
-func New(encoderFunc string, filter FilterFunc) (*Writer, error) {
-	if encoderFunc == "" {
-		encoderFunc = "json"
-	}
-	if filter == nil {
-		filter = func(map[string]interface{}) (interface{}, error) {
-			return true, nil
+func New(filter, encoderFunc string, monitor monitor.Monitor) (*Writer, error) {
+	var filterF FilterFunc = nil
+	if filter != "" {
+		computed, err := computed.NewComputed("", "", typeof.Bool, filter, monitor)
+		if err != nil {
+			return nil, err
 		}
+		filterF = computed.Value
 	}
 
 	// Extendable encoder functions
-	var encoder Func
-	switch encoderFunc {
-	case "json":
-		encoder = Func(json.Marshal)
-	default:
-		return nil, errors.Newf("encoder: unsupported encoder '%s'", encoderFunc)
+	encoder, err := merge.New(encoderFunc)
+	if err != nil {
+		return nil, err
 	}
 
-	return newWithEncoder(encoderFunc, filter, encoder)
+	return newWithEncoder(encoderFunc, filterF, encoder)
 }
 
 // newWithEncoder will generate a new encoder for a writer
-func newWithEncoder(name string, filter FilterFunc, encoder Func) (*Writer, error) {
-	if encoder == nil {
-		encoder = Func(json.Marshal)
-	}
-
+func newWithEncoder(name string, filter FilterFunc, encoder map[string]merge.Func) (*Writer, error) {
 	return &Writer{
-		name:   name,
-		filter: filter,
-		encode: encoder,
+		name:    name,
+		filter:  filter,
+		encoder: encoder,
 	}, nil
 }
 
@@ -80,20 +73,20 @@ func (w *Writer) Close() error {
 	return nil
 }
 
-// Encode will encode a row to the format the user specifies
+// Encode will encode a row/block to the format the user specifies
 func (w *Writer) Encode(input interface{}) ([]byte, error) {
 	// TODO: make this work for block.Block and block.Row
 
-	// If it's a row, take the value map
-	if r, ok := input.(block.Row); ok {
-		if w.applyFilter(&r) {
-			input = r.Values
-		} else {
-			return nil, nil
+	encoderType := "block"
+	if _, ok := input.(block.Row); ok {
+		encoderType = "row"
+	} else {
+		if len(input.([]block.Block)) == 0 {
+			return []byte{}, nil
 		}
 	}
 
-	encodedData, err := w.encode(input)
+	encodedData, err := w.encoder[encoderType](input)
 	if err != nil {
 		return nil, errors.Internal(fmt.Sprintf("encoder: could not marshal to %s", w.name), err)
 	}
@@ -112,4 +105,25 @@ func (w *Writer) applyFilter(row *block.Row) bool {
 		return false
 	}
 	return true
+}
+
+// Filter filters out a row/blocks
+func (w *Writer) Filter(input interface{}) (interface{}, error) {
+	// If it's a row, take the value map
+	if r, ok := input.(block.Row); ok {
+		if w.applyFilter(&r) {
+			return input, nil
+		}
+	}
+	// If it's a slice of rows, applyFilter for each row
+	if rows, ok := input.([]block.Row); ok {
+		filtered := make([]block.Row, 0)
+		for _, row := range rows {
+			if w.applyFilter(&row) {
+				filtered = append(filtered, row)
+			}
+		}
+		return filtered, nil
+	}
+	return nil, nil
 }

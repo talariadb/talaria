@@ -6,7 +6,6 @@ package flush
 import (
 	"github.com/kelindar/talaria/internal/encoding/block"
 	"github.com/kelindar/talaria/internal/encoding/key"
-	"github.com/kelindar/talaria/internal/encoding/merge"
 	"github.com/kelindar/talaria/internal/encoding/typeof"
 	"github.com/kelindar/talaria/internal/monitor"
 	"github.com/kelindar/talaria/internal/storage"
@@ -14,29 +13,23 @@ import (
 
 // Writer represents a sink for the flusher.
 type Writer interface {
-	Write(key key.Key, value []byte) error
+	Write(key key.Key, blocks []block.Block) error
 }
 
 // Flusher represents a flusher/merger.
 type Flusher struct {
 	monitor      monitor.Monitor // The monitor client
 	writer       Writer          // The underlying block writer
-	merge        merge.Func      // The function used to merge blocks
 	fileNameFunc func(map[string]interface{}) (string, error)
 	streamer     storage.Streamer // The underlying row writer
 }
 
 // ForCompaction creates a new storage implementation.
-func ForCompaction(monitor monitor.Monitor, writer Writer, encoder string, fileNameFunc func(map[string]interface{}) (string, error)) (*Flusher, error) {
-	mergeFn, err := merge.New(encoder)
-	if err != nil {
-		return nil, err
-	}
+func ForCompaction(monitor monitor.Monitor, writer Writer, fileNameFunc func(map[string]interface{}) (string, error)) (*Flusher, error) {
 
 	return &Flusher{
 		monitor:      monitor,
 		writer:       writer,
-		merge:        mergeFn,
 		fileNameFunc: fileNameFunc,
 	}, nil
 }
@@ -50,13 +43,13 @@ func (s *Flusher) WriteBlock(blocks []block.Block, schema typeof.Schema) error {
 	}
 
 	// Merge the blocks based on the specified merging function
-	buffer, err := s.merge(blocks, schema)
-	if err != nil {
-		return err
-	}
+	// buffer, err := s.merge(blocks, schema)
+	// if err != nil {
+	//     return err
+	// }
 
 	// Generate the file name and write the data to the underlying writer
-	return s.writer.Write(s.generateFileName(blocks[0]), buffer)
+	return s.writer.Write(s.generateFileName(blocks[0]), blocks)
 }
 
 // WriteRow writes a single row to the underlying writer (i.e. streamer).

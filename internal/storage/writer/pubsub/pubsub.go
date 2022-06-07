@@ -2,16 +2,15 @@ package pubsub
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"runtime"
 	"time"
 
 	"cloud.google.com/go/pubsub"
 	"github.com/grab/async"
-	"github.com/kelindar/talaria/internal/column/computed"
 	"github.com/kelindar/talaria/internal/encoding/block"
 	"github.com/kelindar/talaria/internal/encoding/key"
-	"github.com/kelindar/talaria/internal/encoding/typeof"
 	"github.com/kelindar/talaria/internal/monitor"
 	"github.com/kelindar/talaria/internal/monitor/errors"
 	"github.com/kelindar/talaria/internal/storage/writer/base"
@@ -38,16 +37,8 @@ func New(project, topic, encoding, filter string, monitor monitor.Monitor, opts 
 		return nil, errors.Newf("pubsub: %v", err)
 	}
 
-	var filterF base.FilterFunc = nil
-	if filter != "" {
-		computed, err := computed.NewComputed("", "", typeof.Bool, filter, monitor)
-		if err != nil {
-			return nil, err
-		}
-		filterF = computed.Value
-	}
 	// Load encoder
-	encoderWriter, err := base.New(encoding, filterF)
+	encoderWriter, err := base.New(filter, encoding, monitor)
 	if err != nil {
 		return nil, err
 	}
@@ -81,20 +72,66 @@ func New(project, topic, encoding, filter string, monitor monitor.Monitor, opts 
 }
 
 // Write writes the data to the sink.
-func (w *Writer) Write(key.Key, []byte) error {
-	return nil // Noop
+func (w *Writer) Write(key key.Key, blocks []block.Block) error {
+	if len(blocks) == 0 {
+		return nil
+	}
+	buffer, err := w.Writer.Encode(blocks)
+	if err != nil {
+		return err
+	}
+	blk, err := block.FromBuffer(buffer)
+	if err != nil {
+		return err
+	}
+	rows, err := block.FromBlockBy(blk, blk.Schema())
+	if err != nil {
+		return err
+	}
+	filtered, err := w.Writer.Filter(rows)
+	if err != nil {
+		return err
+	}
+	rows, _ = filtered.([]block.Row)
+	var results []*pubsub.PublishResult
+	var resultErrors []error
+	ctx := context.Background()
+	for _, row := range rows {
+		message, err := w.Writer.Encode(row)
+		if err != nil {
+			return err
+		}
+		result := w.topic.Publish(ctx, &pubsub.Message{
+			Data: message,
+		})
+		results = append(results, result)
+	}
+	// The Get method blocks until a server-generated ID or
+	// an error is returned for the published message.
+	for _, res := range results {
+		_, err := res.Get(ctx)
+		if err != nil {
+			resultErrors = append(resultErrors, err)
+			fmt.Printf("Failed to publish: %v", err)
+			continue
+		}
+	}
+	return nil
 }
 
 // Stream encodes data and pushes it into buffer
 func (w *Writer) Stream(row block.Row) error {
-	message, err := w.Writer.Encode(row)
+	filtered, err := w.Writer.Filter(row)
+	// If message is filtered out, return nil
+	if filtered == nil {
+		return nil
+	}
 	if err != nil {
 		return err
 	}
-
-	// If message is filtered out, return nil
-	if message == nil {
-		return nil
+	message, err := w.Writer.Encode(filtered)
+	if err != nil {
+		return err
 	}
 
 	select {
@@ -110,7 +147,8 @@ func (w *Writer) process(parent context.Context) error {
 	async.Consume(parent, runtime.NumCPU()*8, w.queue)
 	for message := range w.buffer {
 		select {
-		// Returns error if the parent context gets cancelled. Done() returns an empty struct
+		// Returns error if the parent context gets cancelled or Done() is not closed.
+		// Err() returns nil if Done() is closed.
 		case <-parent.Done():
 			return parent.Err()
 		default:
