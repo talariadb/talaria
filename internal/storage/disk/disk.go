@@ -86,7 +86,7 @@ func (s *Storage) Open(dir string, options config.Badger) error {
 	case config.BadgerIngestion:
 		opts = opts.
 			WithBaseLevelSize(204800000).
-			WithMaxLevels(3).
+			WithMaxLevels(7).
 			WithSyncWrites(false)
 	}
 
@@ -96,7 +96,7 @@ func (s *Storage) Open(dir string, options config.Badger) error {
 	}
 
 	// max size of lsm tree in bytes after which data is propagated to disk.
-	// The default is 64 MB.
+	// The default is 2 MB.
 	if options.MaxTableSize != nil {
 		opts = opts.WithBaseTableSize(*options.MaxTableSize)
 	}
@@ -104,7 +104,7 @@ func (s *Storage) Open(dir string, options config.Badger) error {
 	// ValueLogMaxEntries sets the maximum number of entries a value log file can hold approximately.
 	// A actual size limit of a value log file is the minimum of ValueLogFileSize and
 	// ValueLogMaxEntries.
-	// The default value of ValueLogMaxEntries is 1 Million
+	// The default value of ValueLogMaxEntries is one million (1000000)
 	if options.ValueLogMaxEntries != nil {
 		opts = opts.WithValueLogMaxEntries(*options.ValueLogMaxEntries)
 	}
