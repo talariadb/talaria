@@ -6,7 +6,6 @@ package main
 import (
 	"context"
 	"io/ioutil"
-	"os"
 	"testing"
 	"time"
 
@@ -52,9 +51,7 @@ func (m *benchMockConfigurer) Configure(c *config.Config) error {
 // To run it, go in the directory and do 'go test -benchmem -bench=. -benchtime=1s'
 // BenchmarkQuery/query-8         	     194	   6067001 ns/op	34924064 B/op	    1504 allocs/op
 func BenchmarkQuery(b *testing.B) {
-	dir, err := ioutil.TempDir(".", "testdata-")
-	noerror(err)
-	defer func() { _ = os.RemoveAll(dir) }()
+	dir := b.TempDir()
 	cfg := config.Load(context.Background(), 60*time.Second, &benchMockConfigurer{dir: dir})
 
 	// create monitor
