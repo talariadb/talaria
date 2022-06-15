@@ -6,8 +6,6 @@ package disk
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
-	"os"
 	"strconv"
 	"testing"
 	"time"
@@ -21,18 +19,17 @@ import (
 // Opens a new disk storage and runs a a test on it.
 func runTest(t *testing.T, test func(store *Storage)) {
 	assert.NotPanics(t, func() {
-		run(test)
+		run(t, test)
 	})
 }
 
 // Run runs a function on a temp store
-func run(f func(store *Storage)) {
-	dir, _ := ioutil.TempDir("", "test")
+func run(tb testing.TB, f func(store *Storage)) {
+	dir := tb.TempDir()
 	store := New(monitor.NewNoop())
 	_ = store.Open(dir, config.Badger{})
 
 	// Close once we're done and delete data
-	defer func() { _ = os.RemoveAll(dir) }()
 	defer func() { _ = store.Close() }()
 
 	f(store)
@@ -146,7 +143,7 @@ func asBytes(s string) []byte {
 // BenchmarkRange/tail-2-pass-8         	    4495	    260039 ns/op	   14442 B/op	    1546 allocs/op
 func BenchmarkRange(b *testing.B) {
 	b.Run("head-1-pass", func(b *testing.B) {
-		run(func(store *Storage) {
+		run(b, func(store *Storage) {
 			populate(store)
 
 			b.ResetTimer()
@@ -160,7 +157,7 @@ func BenchmarkRange(b *testing.B) {
 	})
 
 	b.Run("head-2-pass", func(b *testing.B) {
-		run(func(store *Storage) {
+		run(b, func(store *Storage) {
 			populate(store)
 
 			b.ResetTimer()
@@ -178,7 +175,7 @@ func BenchmarkRange(b *testing.B) {
 	})
 
 	b.Run("mid-1-pass", func(b *testing.B) {
-		run(func(store *Storage) {
+		run(b, func(store *Storage) {
 			populate(store)
 
 			b.ResetTimer()
@@ -192,7 +189,7 @@ func BenchmarkRange(b *testing.B) {
 	})
 
 	b.Run("mid-2-pass", func(b *testing.B) {
-		run(func(store *Storage) {
+		run(b, func(store *Storage) {
 			populate(store)
 
 			b.ResetTimer()
@@ -210,7 +207,7 @@ func BenchmarkRange(b *testing.B) {
 	})
 
 	b.Run("tail-1-pass", func(b *testing.B) {
-		run(func(store *Storage) {
+		run(b, func(store *Storage) {
 			populate(store)
 
 			b.ResetTimer()
@@ -224,7 +221,7 @@ func BenchmarkRange(b *testing.B) {
 	})
 
 	b.Run("tail-2-pass", func(b *testing.B) {
-		run(func(store *Storage) {
+		run(b, func(store *Storage) {
 			populate(store)
 
 			b.ResetTimer()
@@ -252,11 +249,10 @@ func populate(store *Storage) {
 func TestOpen(t *testing.T) {
 	assert.NotPanicsf(t, func() {
 		syncWrites := false
-		disk := Open(".", "test-table", monitor.NewNoop(), config.Badger{
+		disk := Open(t.TempDir(), "test-table", monitor.NewNoop(), config.Badger{
 			SyncWrites: &syncWrites,
 		})
 		assert.NotNil(t, disk)
 		disk.Close()
-		os.RemoveAll("test-table")
 	}, "Panic while creating disk storage and opening the directory")
 }

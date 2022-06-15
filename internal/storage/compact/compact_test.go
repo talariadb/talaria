@@ -5,8 +5,6 @@ package compact
 
 import (
 	"context"
-	"io/ioutil"
-	"os"
 	"sync/atomic"
 	"testing"
 	"time"
@@ -47,13 +45,13 @@ func (w blockWriter) WriteBlock(blocks []block.Block, schema typeof.Schema) erro
 // Opens a new disk storage and runs a a test on it.
 func runTest(t *testing.T, test func(store *disk.Storage)) {
 	assert.NotPanics(t, func() {
-		run(test)
+		run(t, test)
 	})
 }
 
 // Run runs a function on a temp store
-func run(f func(store *disk.Storage)) {
-	dir, _ := ioutil.TempDir("", "test")
+func run(t *testing.T, f func(store *disk.Storage)) {
+	dir := t.TempDir()
 	store := disk.New(monitor.NewNoop())
 	syncWrite := false
 	_ = store.Open(dir, config.Badger{
@@ -61,7 +59,6 @@ func run(f func(store *disk.Storage)) {
 	})
 
 	// Close once we're done and delete data
-	defer func() { _ = os.RemoveAll(dir) }()
 	defer func() { _ = store.Close() }()
 
 	f(store)

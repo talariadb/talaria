@@ -5,7 +5,6 @@ package timeseries_test
 
 import (
 	"io/ioutil"
-	"os"
 	"testing"
 
 	"github.com/kelindar/talaria/internal/config"
@@ -44,8 +43,7 @@ func (m *mockConfigurer) Configure(c *config.Config) error {
 }
 
 func TestTimeseries_DynamicSchema(t *testing.T) {
-	dir, _ := ioutil.TempDir(".", "testdata-")
-	defer func() { _ = os.RemoveAll(dir) }()
+	dir := t.TempDir()
 
 	const name = "eventlog"
 	tableConf := config.Table{
@@ -134,8 +132,7 @@ func TestTimeseries_DynamicSchema(t *testing.T) {
 }
 
 func TestTimeSeries_LoadStaticSchema(t *testing.T) {
-	dir, _ := ioutil.TempDir(".", "testdata-")
-	defer func() { _ = os.RemoveAll(dir) }()
+	dir := t.TempDir()
 
 	staticSchema := `string1: string
 int1: int64

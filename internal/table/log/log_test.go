@@ -5,8 +5,6 @@ package log
 
 import (
 	"context"
-	"io/ioutil"
-	"os"
 	"testing"
 	"time"
 
@@ -37,10 +35,7 @@ func (m *mockConfigurer) Configure(c *config.Config) error {
 }
 
 func TestLog(t *testing.T) {
-	dir, err := ioutil.TempDir(".", "testlog-")
-	assert.NoError(t, err)
-
-	defer func() { _ = os.RemoveAll(dir) }()
+	dir := t.TempDir()
 
 	cfg := config.Load(context.Background(), 60*time.Second, &mockConfigurer{
 		dir: dir,
@@ -55,8 +50,6 @@ func TestLog(t *testing.T) {
 
 	// Append some files
 	{
-
-		assert.NoError(t, err)
 		assert.NoError(t, logs.Append("hello world", logging.LevelInfo))
 		assert.NoError(t, logs.Append("test message", logging.LevelWarning))
 	}
