@@ -139,6 +139,7 @@ func (s *Ingress) acknowledge(msg *awssqs.Message) error {
 	if err := s.sqs.DeleteMessage(msg); err != nil {
 		return errors.Internal("sqs: unable to delete", err)
 	}
+	s.monitor.Count1(ctxTag, "s3sqs.ack.count")
 	return nil
 }
 

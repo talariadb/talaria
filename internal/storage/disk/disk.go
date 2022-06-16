@@ -129,6 +129,12 @@ func (s *Storage) Open(dir string, options config.Badger) error {
 		opts = opts.WithLevelSizeMultiplier(*options.LevelSizeMultiplier)
 	}
 
+	// BlockCacheSize specifies how much data cache should hold in memory.
+	// The default value of BlockCacheSize is 256*1024*1024=256M(zero should be the typo comment is badgerDB)
+	if options.BlockCacheSize != nil {
+		opts = opts.WithBlockCacheSize(*options.BlockCacheSize)
+	}
+
 	opts = opts.WithLogger(&logger{s.monitor})
 	s.monitor.Info("opening badger with options %+v", opts)
 
