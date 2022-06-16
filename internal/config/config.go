@@ -98,6 +98,7 @@ type S3SQS struct {
 	WaitTimeout       int64  `json:"waitTimeout,omitempty" yaml:"waitTimeout" env:"WAITTIMEOUT"`                   // in seconds
 	VisibilityTimeout int64  `json:"visibilityTimeout,omitempty" yaml:"visibilityTimeout" env:"VISIBILITYTIMEOUT"` // in seconds
 	Retries           int    `json:"retries" yaml:"retries" env:"RETRIES"`
+	ConcurrencyThread int    `json:"concurrencyThread" yaml:"concurrencyThread" env:"concurrencyThread"`
 }
 
 // Presto represents the Presto configuration

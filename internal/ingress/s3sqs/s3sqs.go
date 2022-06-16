@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"net/url"
 	"runtime"
 	"time"
@@ -55,7 +56,10 @@ func New(conf *config.S3SQS, region string, monitor monitor.Monitor) (*Ingress, 
 	if err != nil {
 		return nil, err
 	}
-
+	if conf.ConcurrencyThread != 0 {
+		concurrency = int64(runtime.NumCPU() * conf.ConcurrencyThread)
+		log.Printf("new sqs: use config ConcurrencyThread(%d) to set the threads per CPU, total threads are %d", conf.ConcurrencyThread, concurrency)
+	}
 	return NewWith(reader, loader, monitor), nil
 }
 
