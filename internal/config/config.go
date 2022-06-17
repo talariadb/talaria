@@ -72,6 +72,7 @@ type Badger struct {
 	LevelOneSize        *int64        `json:"levelOneSize" yaml:"levelOneSize" env:"LEVELONESIZE"`                      // Maximum total size in bytes for Level 1. defaults to 1 Million
 	LevelSizeMultiplier *int          `json:"levelSizeMultiplier" yaml:"levelSizeMultiplier" env:"LEVELSIZEMULTIPLIER"` // The ratio between the maximum sizes of contiguous levels in the LSM. defaults to 10
 	MaxLevels           *int          `json:"maxLevels" yaml:"maxLevels" env:"MAXLEVELS"`                               // Maximum number of levels of compaction allowed in the LSM. defaults to 7
+	BlockCacheSize      *int64        `json:"blockCacheSize" yaml:"blockCacheSize" env:"BLOCKCACHESIZE"`                // How much data cache should hold in memory, default is 256M
 	Default             BadgerDefault `json:"default" yaml:"default" env:"DEFAULT"`                                     // default badger option to optimize for storage, ingestion or default that badger provides
 }
 
