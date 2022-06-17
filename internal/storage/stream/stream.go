@@ -7,7 +7,7 @@ import (
 )
 
 // applyFunc applies a transformation on a row and returns a new row
-type applyFunc = func(block.Row) (block.Row, error)
+type streamFunc = func(block.Row) (block.Row, error)
 
 const (
 	ctxTag         = "stream"
@@ -15,7 +15,7 @@ const (
 )
 
 // Publish will publish the row to the topic
-func Publish(streamer storage.Streamer, monitor monitor.Monitor) applyFunc {
+func Publish(streamer storage.Streamer, monitor monitor.Monitor) streamFunc {
 	return func(r block.Row) (block.Row, error) {
 		err := streamer.Stream(r)
 		if err != nil {

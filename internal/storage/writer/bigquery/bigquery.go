@@ -86,7 +86,7 @@ func New(project, dataset, table, encoding, filter string, monitor monitor.Monit
 		monitor:           monitor,
 		context:           ctx,
 		queue:             make(chan async.Task),
-		buffer:            make(chan block.Row, 100),
+		buffer:            make(chan block.Row, 65000),
 	}
 	w.Process = w.process
 	return w, nil
@@ -154,11 +154,7 @@ func (w *Writer) Stream(row block.Row) error {
 	}
 	row, _ = filtered.(block.Row)
 
-	select {
-	case w.buffer <- row:
-	default:
-		return errors.New("bigquery: buffer is full")
-	}
+	w.buffer <- row
 
 	return nil
 }
@@ -172,27 +168,36 @@ func (w *Writer) process(parent context.Context) error {
 			return parent.Err()
 		default:
 		}
-		w.queue <- async.NewTask(func(ctx context.Context) (interface{}, error) {
-			v := row.Values
-			v["ingested_at"] = v["ingested_at"].(int64) * 1000000
-			j, _ := json.Marshal(v)
-			message := dynamicpb.NewMessage(*w.messageDescriptor)
-			if err := protojson.Unmarshal(j, message); err != nil {
-				return nil, err
-			}
-			b, err := proto.Marshal(message)
-			if err != nil {
-				return nil, err
-			}
-
-			_, err = w.managedStream.AppendRows(w.context, [][]byte{b})
-			if err != nil {
-				return nil, err
-			}
-			return nil, nil
-		})
+		w.queue <- w.addToQueue(row)
 	}
 	return nil
+}
+
+func (w *Writer) addToQueue(row block.Row) async.Task {
+	return async.NewTask(func(ctx context.Context) (_ interface{}, err error) {
+		v := row.Values
+		r := new(bqRow)
+		r.values = make(map[string]interface{})
+		for k, v := range v {
+			r.values[k] = v
+		}
+		r.values["ingested_at"] = r.values["ingested_at"].(time.Time).UnixMicro()
+		j, _ := json.Marshal(r.values)
+		message := dynamicpb.NewMessage(*w.messageDescriptor)
+		if err := protojson.Unmarshal(j, message); err != nil {
+			return nil, err
+		}
+		b, err := proto.Marshal(message)
+		if err != nil {
+			return nil, err
+		}
+
+		_, err = w.managedStream.AppendRows(w.context, [][]byte{b})
+		if err != nil {
+			return nil, err
+		}
+		return nil, nil
+	})
 }
 
 // setupDynamicDescriptors aids testing when not using a supplied proto

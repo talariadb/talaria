@@ -134,11 +134,8 @@ func (w *Writer) Stream(row block.Row) error {
 		return err
 	}
 
-	select {
-	case w.buffer <- message:
-	default:
-		return errors.New("pubsub: buffer is full")
-	}
+	w.buffer <- message
+
 	return nil
 }
 
@@ -155,16 +152,18 @@ func (w *Writer) process(parent context.Context) error {
 		}
 
 		// Asynchronously adds a task to publish to Pub/Sub and check its response
-		encoded := message
-		w.queue <- async.NewTask(func(ctx context.Context) (interface{}, error) {
-			result := w.topic.Publish(ctx, &pubsub.Message{
-				Data: message,
-			})
-			return nil, w.processResult(result, encoded)
-		})
-
+		w.queue <- w.addToQueue(message)
 	}
 	return nil
+}
+
+func (w *Writer) addToQueue(message []byte) async.Task {
+	return async.NewTask(func(ctx context.Context) (interface{}, error) {
+		result := w.topic.Publish(ctx, &pubsub.Message{
+			Data: message,
+		})
+		return nil, w.processResult(result, message)
+	})
 }
 
 // processResult will process the result from publish to check if there are errors

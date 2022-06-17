@@ -16,3 +16,7 @@ logs/
 .vscode/
 talaria
 *.so
+*.lua
+*.json
+events/
+.vscode/
