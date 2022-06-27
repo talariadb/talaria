@@ -125,11 +125,6 @@ func TestFullBufferBlocking(t *testing.T) {
 	b := len(c.buffer)
 	assert.NoError(t, err)
 	assert.Equal(t, 1, b)
-	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
-	defer cancel()
-	task, _ := c.Run(ctx)
-
-	task.Outcome()
 }
 
 func TestWrite(t *testing.T) {
