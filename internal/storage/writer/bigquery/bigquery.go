@@ -64,7 +64,10 @@ func New(project, dataset, table, encoding, filter string, monitor monitor.Monit
 	inserter.SkipInvalidRows = true
 	inserter.IgnoreUnknownValues = true
 
-	mt, _ := tableRef.Metadata(ctx)
+	mt, err := tableRef.Metadata(ctx)
+	if err != nil {
+		return nil, err
+	}
 	md, descriptorProto, err := setupDynamicDescriptors(mt.Schema)
 
 	ms, err := managedClient.NewManagedStream(ctx,
