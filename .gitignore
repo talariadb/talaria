@@ -18,5 +18,4 @@ talaria
 *.lua
 *.json
 events/
-.vscode/
 local/
