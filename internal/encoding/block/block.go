@@ -8,12 +8,10 @@ import (
 	"errors"
 	"fmt"
 
-	eorc "github.com/crphang/orc"
 	"github.com/golang/snappy"
 	"github.com/kelindar/binary"
 	"github.com/kelindar/binary/nocopy"
 	"github.com/kelindar/talaria/internal/column"
-	"github.com/kelindar/talaria/internal/encoding/orc"
 	"github.com/kelindar/talaria/internal/encoding/typeof"
 	"github.com/kelindar/talaria/internal/presto"
 )
@@ -33,30 +31,6 @@ type Block struct {
 	Data    nocopy.Bytes   // The set of columnar data
 	Expires int64          // The expiration time for the block, in unix seconds
 	schema  typeof.Schema  `binary:"-"` // The cached schema of the block
-}
-
-// Create a base block for testing purpose
-func Base() ([]Block, error) {
-	schema := typeof.Schema{
-		"col0": typeof.String,
-		"col1": typeof.Int64,
-		"col2": typeof.Float64,
-	}
-	orcSchema, _ := orc.SchemaFor(schema)
-
-	orcBuffer1 := &bytes.Buffer{}
-	writer, _ := eorc.NewWriter(orcBuffer1,
-		eorc.SetSchema(orcSchema))
-	_ = writer.Write("eventName", 1, 1.0)
-	_ = writer.Close()
-
-	apply := Transform(nil)
-
-	block, err := FromOrcBy(orcBuffer1.Bytes(), "col0", nil, apply)
-	if err != nil {
-		return nil, err
-	}
-	return block, nil
 }
 
 // Read decodes the block and selects the columns
@@ -400,3 +374,26 @@ func decodeValue(kind typeof.Type, b []byte) (presto.Column, error) {
 }
 
 var emptyBlock = presto.PrestoThriftBlock{}
+
+// FromBlockBy creates and returns a list of new block.Row for a block.
+func FromBlockBy(blk Block, schema typeof.Schema) ([]Row, error) {
+	cols, err := blk.Select(schema)
+	if err != nil {
+		return nil, err
+	}
+	rowCount := cols.Any().Count()
+	rows := make([]Row, rowCount)
+	for i := 0; i < rowCount; i++ {
+		row := NewRow(schema, len(schema))
+		for name := range schema {
+			col := cols[name]
+			val := col.At(i)
+			if val == nil {
+				continue
+			}
+			row.Set(name, val)
+		}
+		rows[i] = row
+	}
+	return rows, nil
+}
