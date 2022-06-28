@@ -42,12 +42,6 @@ func (s *Flusher) WriteBlock(blocks []block.Block, schema typeof.Schema) error {
 		return nil
 	}
 
-	// Merge the blocks based on the specified merging function
-	// buffer, err := s.merge(blocks, schema)
-	// if err != nil {
-	//     return err
-	// }
-
 	// Generate the file name and write the data to the underlying writer
 	return s.writer.Write(s.generateFileName(blocks[0]), blocks)
 }

@@ -4,16 +4,44 @@
 package s3
 
 import (
+	"bytes"
 	"testing"
 
+	eorc "github.com/crphang/orc"
 	"github.com/kelindar/talaria/internal/encoding/block"
 	"github.com/kelindar/talaria/internal/encoding/key"
+	"github.com/kelindar/talaria/internal/encoding/orc"
+	"github.com/kelindar/talaria/internal/encoding/typeof"
 	"github.com/kelindar/talaria/internal/monitor"
 	"github.com/kelindar/talaria/internal/monitor/logging"
 	"github.com/kelindar/talaria/internal/monitor/statsd"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
+
+// Create a base block for testing purpose
+func blockBase() ([]block.Block, error) {
+	schema := typeof.Schema{
+		"col0": typeof.String,
+		"col1": typeof.Int64,
+		"col2": typeof.Float64,
+	}
+	orcSchema, _ := orc.SchemaFor(schema)
+
+	orcBuffer1 := &bytes.Buffer{}
+	writer, _ := eorc.NewWriter(orcBuffer1,
+		eorc.SetSchema(orcSchema))
+	_ = writer.Write("eventName", 1, 1.0)
+	_ = writer.Close()
+
+	apply := block.Transform(nil)
+
+	block, err := block.FromOrcBy(orcBuffer1.Bytes(), "col0", nil, apply)
+	if err != nil {
+		return nil, err
+	}
+	return block, nil
+}
 
 func TestS3Writer(t *testing.T) {
 	m := monitor.New(logging.NewNoop(), statsd.NewNoop(), "x", "y")
@@ -32,7 +60,7 @@ func TestS3Writer_Write(t *testing.T) {
 	s3Writer.uploader = mockUploader
 	s3Writer.bucket = "testBucket"
 
-	block, err := block.Base()
+	block, err := blockBase()
 	assert.Nil(t, err)
 	err = s3Writer.Write(key.Key("testKey"), block)
 
