@@ -63,6 +63,7 @@ func TestNew(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
 	defer cancel()
 	task, _ := c.Run(ctx)
+
 	task.Outcome()
 
 	// Give some time for process to run in the background goroutine
@@ -75,7 +76,7 @@ func TestNew(t *testing.T) {
 
 }
 
-func TestFullMessageBuffer(t *testing.T) {
+func TestFullBufferBlocking(t *testing.T) {
 	conn := setup()
 	setup2(conn)
 
@@ -94,12 +95,36 @@ func TestFullMessageBuffer(t *testing.T) {
 		},
 	}
 
-	err = c.Stream(row)
-	assert.NoError(t, err)
+	go func(c *Writer) {
+		err = c.Stream(row)
+		assert.NoError(t, err)
+		// Sleep for 5 seconds before invoking the function
+		time.Sleep(time.Second * 5)
 
-	// Full buffer raises an error
+		ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
+		defer cancel()
+		task, _ := c.Run(ctx)
+
+		task.Outcome()
+	}(c)
+
+	// Buffer 1 second to make sure the row went into buffer
+	time.Sleep(time.Second * 1)
+
+	// Buffer should be full at this point since the buffer is occupied by previous stream
+	// for 10 seconds, the next stream should be blocked by previous stream
+	select {
+	// Try to insert new data into the buffer
+	case c.buffer <- []byte("123"):
+	default:
+		// Buffer full
+		assert.NotEmpty(t, c.buffer)
+	}
+	// Buffer should be full here, subsequent row should get blocked until previous row being processed after 5 seconds
 	err = c.Stream(row)
-	assert.Error(t, err)
+	b := len(c.buffer)
+	assert.NoError(t, err)
+	assert.Equal(t, 1, b)
 }
 
 func TestWrite(t *testing.T) {

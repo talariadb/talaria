@@ -8,7 +8,6 @@ data
 testdata-*
 .DS_Store
 *.vim
-/*.yaml
 .env
 .envrc
 logs/
@@ -16,4 +15,7 @@ logs/
 .vscode/
 talaria
 *.so
+*.lua
+*.json
+events/
 local/

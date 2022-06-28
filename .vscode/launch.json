@@ -5,11 +5,13 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Test current file",
+            "name": "talaria",
             "type": "go",
             "request": "launch",
-            "mode": "test",
-            "program": "${file}"
+            "mode": "debug",
+            "program": "${workspaceRoot}",
+            "cwd": "${workspaceRoot}",
+            "envFile": "${workspaceRoot}/.vscode/env/.env"
         }
     ]
 }
