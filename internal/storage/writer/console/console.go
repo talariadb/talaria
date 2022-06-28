@@ -1,8 +1,6 @@
 package console
 
 import (
-	"fmt"
-
 	"github.com/kelindar/talaria/internal/encoding/block"
 	"github.com/kelindar/talaria/internal/encoding/key"
 	"github.com/kelindar/talaria/internal/monitor"
@@ -12,6 +10,7 @@ import (
 
 type Writer struct {
 	*base.Writer
+	monitor monitor.Monitor
 }
 
 func New(filter, encoding string, monitor monitor.Monitor) (*Writer, error) {
@@ -20,7 +19,8 @@ func New(filter, encoding string, monitor monitor.Monitor) (*Writer, error) {
 		return nil, errors.Newf("file: %v", err)
 	}
 	return &Writer{
-		Writer: baseWriter,
+		Writer:  baseWriter,
+		monitor: monitor,
 	}, nil
 }
 
@@ -39,7 +39,7 @@ func (w *Writer) Write(key key.Key, blocks []block.Block) error {
 		if err != nil {
 			return err
 		}
-		fmt.Println(string(m))
+		w.monitor.Info("console writer: ", string(m))
 	}
 	return nil
 }

@@ -25,15 +25,18 @@ const ingestErrorKey = "ingest.error"
 func (s *Server) Ingest(ctx context.Context, request *talaria.IngestRequest) (*talaria.IngestResponse, error) {
 	defer s.handlePanic()
 
+	tableMap := make(map[string]string, len(request.Tables))
+	for _, each := range request.Tables {
+		tableMap[each] = each
+	}
+
 	// Iterate through all of the appenders and append the blocks to them
 	for _, t := range s.tables {
-		exist := false
-		for _, each := range request.Tables {
-			if each == t.Name() {
-				exist = true
-			}
-		}
 
+		// check whether the current table is present in the requested tables
+		_, exist := tableMap[t.Name()]
+
+		// check whether current table implement appender interface
 		appender, ok := t.(table.Appender)
 		if !ok || !exist {
 			continue
