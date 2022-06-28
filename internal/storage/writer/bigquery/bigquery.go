@@ -43,6 +43,16 @@ type Writer struct {
 	buffer            chan block.Row
 }
 
+func transform(i interface{}) interface{} {
+	switch i.(type) {
+	case time.Time:
+		// Bigquery managedStream api did not support time.Time, need to convert to unixmicro int64
+		return i.(time.Time).UnixMicro()
+	default:
+		return i
+	}
+}
+
 // New creates a new writer.
 func New(project, dataset, table, encoding, filter string, monitor monitor.Monitor) (*Writer, error) {
 	ctx := context.Background()
@@ -118,7 +128,10 @@ func (w *Writer) Write(key key.Key, blocks []block.Block) error {
 	var result *managedwriter.AppendResult
 	for _, row := range rows {
 		v := row.Values
-		v["ingested_at"] = v["ingested_at"].(time.Time).UnixMicro()
+		for k, val := range v {
+			o := transform(val)
+			v[k] = o
+		}
 		j, _ := json.Marshal(v)
 		message := dynamicpb.NewMessage(*w.messageDescriptor)
 		if err = protojson.Unmarshal(j, message); err != nil {
@@ -181,10 +194,9 @@ func (w *Writer) addToQueue(row block.Row) async.Task {
 		v := row.Values
 		r := new(bqRow)
 		r.values = make(map[string]interface{})
-		for k, v := range v {
-			r.values[k] = v
+		for k, val := range v {
+			r.values[k] = transform(val)
 		}
-		r.values["ingested_at"] = r.values["ingested_at"].(time.Time).UnixMicro()
 		j, _ := json.Marshal(r.values)
 		message := dynamicpb.NewMessage(*w.messageDescriptor)
 		if err := protojson.Unmarshal(j, message); err != nil {
