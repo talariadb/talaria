@@ -27,8 +27,15 @@ func (s *Server) Ingest(ctx context.Context, request *talaria.IngestRequest) (*t
 
 	// Iterate through all of the appenders and append the blocks to them
 	for _, t := range s.tables {
+		exist := false
+		for _, each := range request.Tables {
+			if each == t.Name() {
+				exist = true
+			}
+		}
+
 		appender, ok := t.(table.Appender)
-		if !ok {
+		if !ok || !exist {
 			continue
 		}
 

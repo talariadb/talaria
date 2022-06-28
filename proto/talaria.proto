@@ -4,7 +4,7 @@ package talaria;
 // go package lets the compiler put the generated files relative to
 // the path specified in go_out option. With this, you can just give
 // --go_out=$GOPATH/src and it would just work as expected. Passing
-// talaria at the end will add "package talaria" statement to the 
+// talaria at the end will add "package talaria" statement to the
 // generated file. Can be overridden by using M go_opt.
 option go_package = "github.com/kelindar/talaria/proto;talaria";
 // ---------------------------------------------------------------------------
@@ -17,12 +17,13 @@ service Ingress {
 
 // IngestRequest represents an ingestion request.
 message IngestRequest {
+  repeated string tables  = 1;
   oneof data {
-    Batch  batch = 1; // Batch of events
-    bytes  orc   = 2; // An orc file
-    bytes  csv   = 3; // CSV (comma-separated) file
-    string url   = 4; // A url pointing to a file (.orc, .csv)
-    bytes parquet = 5; // A parquet file
+    Batch  batch = 2; // Batch of events
+    bytes  orc   = 3; // An orc file
+    bytes  csv   = 4; // CSV (comma-separated) file
+    string url   = 5; // A url pointing to a file (.orc, .csv)
+    bytes parquet = 6; // A parquet file
   }
 }
 
@@ -37,7 +38,7 @@ message Batch {
   repeated Event     events  = 2;
 }
 
-// Event represents a single event. Name as well as value columns are 
+// Event represents a single event. Name as well as value columns are
 // interned strings which are present in a batch.
 message Event {
   map<uint32, Value> value = 1;
@@ -77,7 +78,7 @@ service Query {
 message DescribeRequest { }
 
 // DescribeResponse represents an response that returns tables and their schemas.
-message DescribeResponse { 
+message DescribeResponse {
   repeated TableMeta tables  = 1; // The set of table metadata
 }
 
@@ -96,7 +97,7 @@ message ColumnMeta {
 }
 
 // GetSplitsRequest represents an request to get the splits for a table.
-message GetSplitsRequest { 
+message GetSplitsRequest {
   string          schema    = 1; // The schema for the table
   string          table     = 2; // The table name
   repeated string columns   = 3; // The set of desired columns
@@ -106,7 +107,7 @@ message GetSplitsRequest {
 }
 
 // GetSplitsResponse represents an response containing the splits for a table.
-message GetSplitsResponse { 
+message GetSplitsResponse {
   repeated Split splits    = 1; // The list of splits that can be queried
   bytes          nextToken = 2; // The cursor representing the next token
 }
@@ -124,7 +125,7 @@ message Split {
 }
 
 // GetRowsRequest represents an request to get the rows for a split.
-message GetRowsRequest { 
+message GetRowsRequest {
   bytes           splitID   = 1; // The split identifier
   repeated string columns   = 2; // The set of desired columns
   int64           maxBytes  = 3; // The maximum bytes that should be returned.
@@ -132,14 +133,14 @@ message GetRowsRequest {
 }
 
 // GetRowsResponse represents a response that returns the rows.
-message GetRowsResponse { 
+message GetRowsResponse {
   repeated Column columns   = 1; // The set of columnar data
   int32           rowCount  = 2; // The number of rows returned
   bytes           nextToken = 3; // The cursor representing the next token
 }
 
 // Column represents a column.
-message Column { 
+message Column {
   oneof value {
     ColumnOfInt32   int32   = 1;
     ColumnOfInt64   int64   = 2;

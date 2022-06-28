@@ -97,9 +97,10 @@ func (c *Client) isConnectionInsecure() bool {
 }
 
 // IngestBatch sends a batch of events to Talaria server.
-func (c *Client) IngestBatch(ctx context.Context, batch []Event) error {
+func (c *Client) IngestBatch(ctx context.Context, batch []Event, tables []string) error {
 	encoded := newEncoder().Encode(batch)
 	req := &pb.IngestRequest{
+		Tables: tables,
 		Data: &pb.IngestRequest_Batch{
 			Batch: encoded,
 		},
