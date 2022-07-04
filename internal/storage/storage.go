@@ -4,6 +4,7 @@
 package storage
 
 import (
+	"context"
 	"io"
 	"time"
 
@@ -18,6 +19,7 @@ type Storage interface {
 	io.Closer
 	Iterator
 	Appender
+	Compacter
 	Delete(...key.Key) error
 }
 
@@ -29,6 +31,11 @@ type Iterator interface {
 // Appender represents a contract that allows appending to a storage.
 type Appender interface {
 	Append(key key.Key, value []byte, ttl time.Duration) error
+}
+
+// Compact...
+type Compacter interface {
+	Compact(ctx context.Context) (interface{}, error)
 }
 
 // Merger represents a contract that merges two or more blocks together.

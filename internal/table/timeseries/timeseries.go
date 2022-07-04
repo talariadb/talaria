@@ -73,6 +73,11 @@ func New(name string, cluster Membership, monitor monitor.Monitor, store storage
 	return t
 }
 
+// Compact...
+func (t *Table) Close() error {
+	return t.store.Compact()
+}
+
 // Close implements io.Closer interface.
 func (t *Table) Close() error {
 	return t.store.Close()

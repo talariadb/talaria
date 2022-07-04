@@ -72,7 +72,7 @@ func TestRange(t *testing.T) {
 			return nil
 		}
 
-		store := New(buffer, dest, monitor.NewNoop(), 100*time.Millisecond)
+		store := New(context.Background(), dest, monitor.NewNoop(), 100*time.Millisecond)
 
 		// Insert out of order
 		_ = store.Append(key.New("A", time.Unix(0, 0)), input, 60*time.Second)

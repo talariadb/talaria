@@ -129,9 +129,10 @@ type BaseSink struct {
 
 // Compaction represents a configuration for compaction sinks
 type Compaction struct {
-	Sinks    []Sink `yaml:"sinks"`
-	NameFunc string `json:"nameFunc" yaml:"nameFunc" env:"NAMEFUNC"` // The lua script to compute file name given a row
-	Interval int    `json:"interval" yaml:"interval" env:"INTERVAL"` // The compaction interval, in seconds
+	Sinks            []Sink `yaml:"sinks"`
+	NameFunc         string `json:"nameFunc" yaml:"nameFunc" env:"NAMEFUNC"`                         // The lua script to compute file name given a row
+	Interval         int    `json:"interval" yaml:"interval" env:"INTERVAL"`                         // The compaction interval, in seconds
+	CompactAllOnQuit bool   `json:"compactAllOnQuit" yaml:"compactAllOnQuit" env:"COMPACTALLONQUIT"` // Read, compact and delete all data in DB or not
 }
 
 // Streams are lists of sinks to be streamed to

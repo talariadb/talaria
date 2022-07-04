@@ -157,12 +157,6 @@ func (s *Server) Close() {
 		s.s3sqs.Close()
 	}
 
-	// Close all the open tables
-	for _, t := range s.tables {
-		if err := t.Close(); err != nil {
-			s.monitor.Error(err)
-		}
-	}
 }
 
 // ------------------------------------------------------------------------------------------------------------

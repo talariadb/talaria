@@ -39,7 +39,7 @@ func ForStreaming(config config.Streams, monitor monitor.Monitor) (storage.Strea
 }
 
 // ForCompaction creates a compaction writer
-func ForCompaction(config *config.Compaction, monitor monitor.Monitor, store storage.Storage) (*compact.Storage, error) {
+func ForCompaction(ctx context.Context, config *config.Compaction, monitor monitor.Monitor, store storage.Storage) (*compact.Storage, error) {
 	writer, err := newWriter(config.Sinks, monitor)
 	if err != nil {
 		return nil, err
@@ -76,7 +76,7 @@ func ForCompaction(config *config.Compaction, monitor monitor.Monitor, store sto
 		return nil, err
 	}
 
-	return compact.New(store, flusher, monitor, interval), nil
+	return compact.New(ctx, store, flusher, monitor, interval), nil
 }
 
 // NewWriter creates a new writer from the configuration.

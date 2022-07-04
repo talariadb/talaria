@@ -36,26 +36,26 @@ type Storage struct {
 }
 
 // New creates a new storage implementation.
-func New(buffer storage.Storage, dest BlockWriter, monitor monitor.Monitor, interval time.Duration) *Storage {
+func New(ctx context.Context, buffer storage.Storage, dest BlockWriter, monitor monitor.Monitor, interval time.Duration) *Storage {
 	s := &Storage{
 		monitor: monitor,
 		buffer:  buffer,
 		dest:    dest,
 	}
-	s.compact = compactEvery(interval, s.Compact)
+	s.compact = compactEvery(ctx, interval, s.Compact)
 	return s
 }
 
 // compactEvery returns the task that compacts on a regular interval.
-func compactEvery(interval time.Duration, compact async.Work) async.Task {
-	return async.Invoke(context.Background(), func(ctx context.Context) (interface{}, error) {
+func compactEvery(ctx context.Context, interval time.Duration, compact async.Work) async.Task {
+	return async.Invoke(ctx, func(ictx context.Context) (interface{}, error) {
 		for {
 			select {
-			case <-ctx.Done():
+			case <-ictx.Done():
 				return nil, nil
 			default:
 				time.Sleep(interval)
-				compact(ctx)
+				compact(ictx)
 			}
 		}
 	})

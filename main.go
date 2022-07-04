@@ -65,17 +65,30 @@ func main() {
 	// Open every table configured
 	tables := []table.Table{nodes.New(gossip), logTable}
 	for name, tableConf := range conf.Tables {
-		tables = append(tables, openTable(name, conf.Storage, tableConf, gossip, monitor))
+		tables = append(tables, openTable(ctx, name, conf.Storage, tableConf, gossip, monitor))
 	}
 
 	// Start the new server
-	server := server.New(configure, monitor, tables...)
+	serverIns := server.New(configure, monitor, tables...)
 
-	// onSignal will be called when a OS-level signal is received.
+	// gracefulShutdown will be called when a OS-level signal is received.
 	onSignal(func(_ os.Signal) {
-		cancel()       // Cancel the context
-		gossip.Close() // Close the gossip layer
-		server.Close() // Close the server and database
+		cancel()          // Cancel the context, which will cancel the perioddly compaction also
+		gossip.Close()    // Close the gossip layer
+		serverIns.Close() // Close the server and database, which will wait RPC/SQS request on ingestion to DB finished
+		for _, t := range tables {
+			// Close all the open tables
+			if err := t.Close(); err != nil {
+				monitor.Error(err)
+			}
+			compactConf := conf.Tables[t.Name()].Compact
+			if compactConf != nil && compactConf.CompactAllOnQuit {
+
+			}
+		}
+		// for _, tableConf := range conf.Tables {
+		// }
+		//db.Consume()
 	})
 
 	// Join the cluster
@@ -90,20 +103,20 @@ func main() {
 	// Start listenHandler
 	monitor.Info("server: starting...")
 	monitor.Count1(logTag, "start")
-	if err := server.Listen(ctx, conf.Readers.Presto.Port, conf.Writers.GRPC.Port); err != nil {
+	if err := serverIns.Listen(ctx, conf.Readers.Presto.Port, conf.Writers.GRPC.Port); err != nil {
 		panic(err)
 	}
 }
 
 // openTable creates a new table with storage & optional compaction fully configured
-func openTable(name string, storageConf config.Storage, tableConf config.Table, cluster cluster.Membership, monitor monitor.Monitor) table.Table {
+func openTable(ctx context.Context, name string, storageConf config.Storage, tableConf config.Table, cluster cluster.Membership, monitor monitor.Monitor) table.Table {
 	monitor.Info("server: opening table %s...", name)
 
 	// Create a new storage layer and optional compaction
 	store := storage.Storage(disk.Open(storageConf.Directory, name, monitor, storageConf.Badger))
 	if tableConf.Compact != nil {
 		var err error
-		store, err = writer.ForCompaction(tableConf.Compact, monitor, store)
+		store, err = writer.ForCompaction(ctx, tableConf.Compact, monitor, store)
 		if err != nil {
 			panic(err)
 		}
@@ -121,7 +134,7 @@ func openTable(name string, storageConf config.Storage, tableConf config.Table, 
 // onSignal hooks a callback for a signal.
 func onSignal(callback func(sig os.Signal)) {
 	c := make(chan os.Signal, 1)
-	signal.Notify(c, syscall.SIGINT, syscall.SIGTERM)
+	signal.Notify(c, syscall.SIGINT, syscall.SIGTERM) // SIGQUIT is reserved as we want it exit with a stack dump by pressing ^\
 	go func() {
 		for sig := range c {
 			callback(sig)

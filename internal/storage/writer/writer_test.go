@@ -1,6 +1,7 @@
 package writer
 
 import (
+	"context"
 	"testing"
 
 	"github.com/kelindar/talaria/internal/config"
@@ -22,7 +23,7 @@ func TestForCompaction(t *testing.T) {
 		},
 	}
 
-	compact, err := ForCompaction(cfg,
+	compact, err := ForCompaction(context.Background(), cfg,
 		monitor.New(logging.NewStandard(), statsd.NewNoop(), "x", "x"),
 		disk.New(monitor.NewNoop()),
 	)
