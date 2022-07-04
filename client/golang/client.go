@@ -97,10 +97,9 @@ func (c *Client) isConnectionInsecure() bool {
 }
 
 // IngestBatch sends a batch of events to Talaria server.
-func (c *Client) IngestBatch(ctx context.Context, batch []Event, tables []string) error {
+func (c *Client) IngestBatch(ctx context.Context, batch []Event) error {
 	encoded := newEncoder().Encode(batch)
 	req := &pb.IngestRequest{
-		Tables: tables,
 		Data: &pb.IngestRequest_Batch{
 			Batch: encoded,
 		},
@@ -108,6 +107,22 @@ func (c *Client) IngestBatch(ctx context.Context, batch []Event, tables []string
 
 	return hystrix.Do(commandName, func() error {
 		_, err := c.ingress.Ingest(ctx, req)
+		return err
+	}, nil)
+}
+
+// IngestBatch sends a batch of events to Talaria server.
+func (c *Client) IngestBatchWithTable(ctx context.Context, batch []Event, tables []string) error {
+	encoded := newEncoder().Encode(batch)
+	req := &pb.IngestWithTableRequest{
+		Tables: tables,
+		Data: &pb.IngestWithTableRequest_Batch{
+			Batch: encoded,
+		},
+	}
+
+	return hystrix.Do(commandName, func() error {
+		_, err := c.ingress.IngestWithTable(ctx, req)
 		return err
 	}, nil)
 }

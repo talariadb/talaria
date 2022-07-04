@@ -32,6 +32,28 @@ func FromRequestBy(request *talaria.IngestRequest, partitionBy string, filter *t
 	}
 }
 
+// FromRequestByTable creates a block from a talaria protobuf-encoded request. It
+// repartitions the batch by a given partition key at the same time.
+func FromRequestWithTable(request *talaria.IngestWithTableRequest, partitionBy string, filter *typeof.Schema, funcs ...applyFunc) ([]Block, error) {
+	apply := multiApply(funcs)
+	switch data := request.GetData().(type) {
+	case *talaria.IngestWithTableRequest_Batch:
+		return FromBatchBy(data.Batch, partitionBy, filter, apply)
+	case *talaria.IngestWithTableRequest_Orc:
+		return FromOrcBy(data.Orc, partitionBy, filter, apply)
+	case *talaria.IngestWithTableRequest_Csv:
+		return FromCSVBy(data.Csv, partitionBy, filter, apply)
+	case *talaria.IngestWithTableRequest_Url:
+		return FromURLBy(data.Url, partitionBy, filter, apply)
+	case *talaria.IngestWithTableRequest_Parquet:
+		return FromParquetBy(data.Parquet, partitionBy, filter, apply)
+	case nil: // The field is not set.
+		return nil, nil
+	default:
+		return nil, fmt.Errorf("unsupported data type %T", data)
+	}
+}
+
 // multiApply creates an apply function from multiple apply functions
 func multiApply(funcs []applyFunc) applyFunc {
 	return func(r Row) (Row, error) {

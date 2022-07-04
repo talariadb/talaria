@@ -13,10 +13,22 @@ option go_package = "github.com/kelindar/talaria/proto;talaria";
 // Ingress represents a Talaria ingress frontend.
 service Ingress {
   rpc Ingest(IngestRequest) returns (IngestResponse) {}
+  rpc IngestWithTable(IngestWithTableRequest) returns (IngestResponse) {}
 }
 
 // IngestRequest represents an ingestion request.
 message IngestRequest {
+  oneof data {
+    Batch  batch = 1; // Batch of events
+    bytes  orc   = 2; // An orc file
+    bytes  csv   = 3; // CSV (comma-separated) file
+    string url   = 4; // A url pointing to a file (.orc, .csv)
+    bytes parquet = 5; // A parquet file
+  }
+}
+
+// IngestRequestWithTable  represents an ingestion request with table name specified.
+message IngestWithTableRequest {
   repeated string tables  = 1;
   oneof data {
     Batch  batch = 2; // Batch of events
