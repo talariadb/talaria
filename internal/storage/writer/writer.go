@@ -17,6 +17,7 @@ import (
 	"github.com/kelindar/talaria/internal/storage/flush"
 	"github.com/kelindar/talaria/internal/storage/writer/azure"
 	"github.com/kelindar/talaria/internal/storage/writer/bigquery"
+	"github.com/kelindar/talaria/internal/storage/writer/console"
 	"github.com/kelindar/talaria/internal/storage/writer/file"
 	"github.com/kelindar/talaria/internal/storage/writer/gcs"
 	"github.com/kelindar/talaria/internal/storage/writer/multi"
@@ -84,6 +85,16 @@ func newWriter(sinks []config.Sink, monitor monitor.Monitor) (flush.Writer, erro
 	var writers []multi.SubWriter
 
 	for _, config := range sinks {
+
+		// Configure console writer if present
+		if config.Console != nil {
+			w, err := console.New(config.Console.Filter, config.Console.Encoder, monitor)
+			if err != nil {
+				return nil, err
+			}
+			writers = append(writers, w)
+		}
+
 		// Configure S3 writer if present
 		if config.S3 != nil {
 			w, err := s3.New(monitor, config.S3.Bucket, config.S3.Prefix, config.S3.Region, config.S3.Endpoint, config.S3.SSE, config.S3.AccessKey, config.S3.SecretKey, config.S3.Filter, config.S3.Encoder, config.S3.Concurrency)

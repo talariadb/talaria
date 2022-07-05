@@ -139,6 +139,7 @@ type Streams []Sink
 
 // Sinks represents a configuration for writer sinks
 type Sink struct {
+	Console  *ConsoleSink  `json:"console" yaml:"console"`
 	S3       *S3Sink       `json:"s3" yaml:"s3"`              // The S3 writer configuration
 	Azure    *AzureSink    `json:"azure" yaml:"azure"`        // The Azure writer configuration
 	BigQuery *BigQuerySink `json:"bigquery" yaml:"bigquery" ` // The Big Query writer configuration
@@ -146,6 +147,11 @@ type Sink struct {
 	File     *FileSink     `json:"file" yaml:"file" `         // The local file system writer configuration
 	Talaria  *TalariaSink  `json:"talaria" yaml:"talaria" `   // The Talaria writer configuration
 	PubSub   *PubSubSink   `json:"pubsub" yaml:"pubsub" `     // The Google Pub/Sub writer configuration
+}
+
+// Console Sink represents a sink to local STDOUT
+type ConsoleSink struct {
+	BaseSink `yaml:",inline"`
 }
 
 // S3Sink represents a sink for AWS S3 and compatible stores.

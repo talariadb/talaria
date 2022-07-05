@@ -111,6 +111,22 @@ func (c *Client) IngestBatch(ctx context.Context, batch []Event) error {
 	}, nil)
 }
 
+// IngestBatch sends a batch of events to Talaria server.
+func (c *Client) IngestBatchWithTable(ctx context.Context, batch []Event, tables []string) error {
+	encoded := newEncoder().Encode(batch)
+	req := &pb.IngestWithTableRequest{
+		Tables: tables,
+		Data: &pb.IngestWithTableRequest_Batch{
+			Batch: encoded,
+		},
+	}
+
+	return hystrix.Do(commandName, func() error {
+		_, err := c.ingress.IngestWithTable(ctx, req)
+		return err
+	}, nil)
+}
+
 // IngestURL sends a request to Talaria to ingest a file from a specific URL.
 func (c *Client) IngestURL(ctx context.Context, url string) error {
 	return hystrix.Do(commandName, func() error {
