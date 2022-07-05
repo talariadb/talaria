@@ -6,5 +6,3 @@ source ${TALARIA_RC}
 fi
 
 echo "Starting talaria with TALARIA_URI = ${TALARIA_URI}"
-
-/root/talaria 
