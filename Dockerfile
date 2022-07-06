@@ -30,4 +30,4 @@ ENV TALARIA_RC=/etc/talaria/talaria.rc
 # # Expose the port and start the service
 EXPOSE 8027
 ENTRYPOINT ["/usr/bin/dumb-init", "--"]
-CMD ["bash", "-c", "/root/entrypoint.sh && exec /root/talaria"]
+CMD ["bash", "-c", "/root/entrypoint.sh"]
