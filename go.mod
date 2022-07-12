@@ -6,12 +6,14 @@ go 1.18
 replace github.com/crphang/orc => github.com/tardunge/orc v0.0.7
 
 require (
-	cloud.google.com/go v0.57.0 // indirect
-	cloud.google.com/go/bigquery v1.7.0
+	cloud.google.com/go/bigquery v1.35.0
+	cloud.google.com/go/kms v1.4.0 // indirect
 	cloud.google.com/go/pubsub v1.3.1
-	cloud.google.com/go/storage v1.7.0
+	cloud.google.com/go/storage v1.23.0
 	github.com/Azure/azure-sdk-for-go v42.1.0+incompatible
 	github.com/Azure/azure-storage-blob-go v0.13.0
+	github.com/Azure/go-autorest/autorest v0.11.17
+	github.com/Azure/go-autorest/autorest/adal v0.9.11
 	github.com/Azure/go-autorest/autorest/azure/auth v0.5.7
 	github.com/Azure/go-autorest/autorest/to v0.3.0 // indirect
 	github.com/DataDog/datadog-go v3.7.1+incompatible
@@ -47,16 +49,13 @@ require (
 	github.com/sercand/kuberesolver/v3 v3.0.0
 	github.com/smartystreets/goconvey v1.6.4 // indirect
 	github.com/stretchr/objx v0.2.0 // indirect
-	github.com/stretchr/testify v1.5.1
+	github.com/stretchr/testify v1.7.0
 	github.com/twmb/murmur3 v1.1.3
 	github.com/yuin/gopher-lua v0.0.0-20191220021717-ab39c6098bdb // indirect
-	golang.org/x/net v0.0.0-20210326060303-6b1517762897 // indirect
-	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
+	golang.org/x/sync v0.0.0-20220601150217-0de741cfad7f
 	golang.org/x/time v0.0.0-20200416051211-89c76fbcd5d1 // indirect
-	google.golang.org/api v0.24.0
-	google.golang.org/grpc v1.40.0
-	google.golang.org/protobuf v1.26.0
+	google.golang.org/api v0.86.0
+	google.golang.org/grpc v1.47.0
+	google.golang.org/protobuf v1.28.0
 	gopkg.in/yaml.v2 v2.2.8
 )
-
-require google.golang.org/genproto v0.0.0-20210513213006-bf773b8c8384 // indirect
