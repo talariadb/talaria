@@ -17,7 +17,7 @@ ARG MAINTAINER=roman.atachiants@gmail.com
 LABEL maintainer=${MAINTAINER}
 
 # # add ca certificates for http secured connection
-RUN apt-get update && apt-get install -y ca-certificates && rm -rf /var/cache/apk/*
+RUN apt-get update && apt-get install -y ca-certificates && apt-get install -y dumb-init && rm -rf /var/cache/apk/*
 
 WORKDIR /root/  
 ARG GO_BINARY=talaria
@@ -29,4 +29,5 @@ RUN mkdir /etc/talaria/ && chmod +x /root/${GO_BINARY} /root/entrypoint.sh
 ENV TALARIA_RC=/etc/talaria/talaria.rc 
 # # Expose the port and start the service
 EXPOSE 8027
-ENTRYPOINT ["/root/entrypoint.sh"]
+ENTRYPOINT ["/usr/bin/dumb-init", "--"]
+CMD ["bash", "-c", "/root/entrypoint.sh"]

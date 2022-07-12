@@ -99,8 +99,6 @@ func (w *Writer) Write(key key.Key, blocks []block.Block) error {
 	}
 
 	buffer, err := w.Writer.Encode(blocks)
-	fmt.Println("here")
-	fmt.Println(buffer)
 	if err != nil {
 		return errors.Internal("encoder: unable to encode blocks to bytes ", err)
 	}
