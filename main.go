@@ -142,6 +142,7 @@ func openTable(name string, storageConf config.Storage, tableConf config.Table, 
 // onSignal hooks a callback for a signal.
 func onSignal(callback func(sig os.Signal)) {
 	c := make(chan os.Signal, 1)
+	// SIGQUIT will be ignore as it is sended by people most of the time
 	signal.Notify(c, syscall.SIGINT, syscall.SIGTERM)
 	go func() {
 		for sig := range c {
