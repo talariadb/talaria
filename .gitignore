@@ -8,6 +8,8 @@ data
 testdata-*
 .DS_Store
 *.vim
+# Ignore yaml files at project root only.
+*.yaml
 .env
 .envrc
 logs/
