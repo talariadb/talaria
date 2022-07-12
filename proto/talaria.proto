@@ -1,6 +1,10 @@
 syntax = "proto3";
 package talaria;
 
+option java_multiple_files = true;
+option java_package = "com.talaria.protos";
+option java_outer_classname = "TalariaProtos";
+
 // go package lets the compiler put the generated files relative to
 // the path specified in go_out option. With this, you can just give
 // --go_out=$GOPATH/src and it would just work as expected. Passing
@@ -66,6 +70,9 @@ service Query {
   // Describe returns the list of schema/table combinations and the metadata
   rpc Describe(DescribeRequest) returns (DescribeResponse) {}
 
+  // DescribeTable returns the columns and its metadata of table given a schema(ex: data)
+  rpc DescribeTable(DescribeTableRequest) returns (DescribeTableResponse) {}
+
   // GetSplits returns the list of splits for a particular table/filter combination
   rpc GetSplits(GetSplitsRequest) returns (GetSplitsResponse) {}
 
@@ -81,11 +88,23 @@ message DescribeResponse {
   repeated TableMeta tables  = 1; // The set of table metadata
 }
 
-// TableMeta represents table metadata
+// DescribeTableRequest represents an request to list the table columns and its metadata.
+message DescribeTableRequest {
+    string name = 1;
+}
+
+// DescribeTableResponse represents an response for the given talbe.
+message DescribeTableResponse {
+  TableMeta table = 1;
+}
+
+//TableMeta represents table metadata
 message TableMeta {
   string              schema  = 1; // The schema for the table
   string              table   = 2; // The table name
   repeated ColumnMeta columns = 3; // The list of columns of the table
+  string              hashby = 4; // The column name used for partitioning.
+  string              sortby = 5; // The column name used for sorting.
 }
 
 // ColumnMeta represents a column metadata

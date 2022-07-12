@@ -43,6 +43,37 @@ func (s *Server) Describe(ctx context.Context, _ *talaria.DescribeRequest) (*tal
 	}, nil
 }
 
+// DescribeTable returns the columns and metadata for a table in schema(logical; ex: data)
+func (s *Server) DescribeTable(ctx context.Context, request *talaria.DescribeTableRequest) (*talaria.DescribeTableResponse, error) {
+	defer s.handlePanic()
+	defer s.monitor.Duration(ctxTag, funcTag, time.Now(), "func:describe_table")
+
+	table, err := s.getTable(request.Name)
+	if err != nil {
+		return nil, err
+	}
+	schema, _ := table.Schema()
+	// Populate the column metadata
+	var columns []*talaria.ColumnMeta
+	for k, v := range schema {
+		columns = append(columns, &talaria.ColumnMeta{
+			Name: k,
+			Type: v.SQL(),
+		})
+	}
+
+	tableMeta := &talaria.TableMeta{
+		Schema:  s.conf().Readers.Presto.Schema,
+		Table:   table.Name(),
+		Columns: columns,
+		Hashby:  table.HashBy(),
+		Sortby:  table.SortBy(),
+	}
+	return &talaria.DescribeTableResponse{
+		Table: tableMeta,
+	}, nil
+}
+
 // GetSplits returns the list of splits for a particular table/filter combination
 func (s *Server) GetSplits(ctx context.Context, request *talaria.GetSplitsRequest) (*talaria.GetSplitsResponse, error) {
 	defer s.handlePanic()

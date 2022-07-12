@@ -271,6 +271,8 @@ func (t *Table) Append(block block.Block) error {
 	if !hasTs || ts < 0 {
 		ts = 0
 	}
+	// fix block.Min for timestamp cols.
+	ts = time.Now().Unix()
 
 	// Encode the block
 	block.Expires = time.Now().Add(t.ttl).Unix()
@@ -283,7 +285,7 @@ func (t *Table) Append(block block.Block) error {
 	t.schema.Store(block.Schema())
 
 	// Append the block to the store
-	return t.store.Append(key.New(string(block.Key), time.Unix(0, ts)), buffer, t.ttl)
+	return t.store.Append(key.New(string(block.Key), time.Unix(ts, 0)), buffer, t.ttl)
 }
 
 // getSchema gets the latest ingested schema.
