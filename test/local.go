@@ -82,7 +82,7 @@ func main() {
 		eventlog,
 		nodes.New(gossip),
 	)
-	defer server.Close()
+	defer server.Close(monitor)
 
 	// onSignal will be called when a OS-level signal is received.
 	ctx, cancel := context.WithCancel(context.Background())
@@ -90,7 +90,7 @@ func main() {
 	onSignal(func(_ os.Signal) {
 		cancel()
 		gossip.Close()
-		server.Close()
+		server.Close(monitor)
 	})
 
 	// Append some files

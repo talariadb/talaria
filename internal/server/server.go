@@ -148,13 +148,15 @@ func (s *Server) pollFromSQS(conf *config.Config) (err error) {
 }
 
 // Close closes the server and related resources.
-func (s *Server) Close() {
+func (s *Server) Close(monitor monitor.Monitor) {
 	s.server.GracefulStop()
+	monitor.Info("GRPC GracefulStop done, it will wait all request finished")
 	s.cancel()
 
 	// Stop S3/SQS ingress
 	if s.s3sqs != nil {
 		s.s3sqs.Close()
+		monitor.Info("Close S3SQS done, it will wait all ingestion finished")
 	}
 
 	// Close all the open tables
@@ -162,6 +164,7 @@ func (s *Server) Close() {
 		if err := t.Close(); err != nil {
 			s.monitor.Error(err)
 		}
+		monitor.Info("Close table %s done, it will compact all if compact is enable", t.Name())
 	}
 }
 

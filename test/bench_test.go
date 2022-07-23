@@ -68,7 +68,7 @@ func BenchmarkQuery(b *testing.B) {
 	}, streams)
 
 	server := server.New(cfg, monitor, nil, eventlog)
-	defer server.Close()
+	defer server.Close(monitor)
 
 	// Append some files
 	orcfile, _ := ioutil.ReadFile(testFile2)

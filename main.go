@@ -70,12 +70,20 @@ func main() {
 
 	// Start the new server
 	server := server.New(configure, monitor, tables...)
-
+	waitExit := make(chan struct{}, 1)
 	// onSignal will be called when a OS-level signal is received.
-	onSignal(func(_ os.Signal) {
-		cancel()       // Cancel the context
-		gossip.Close() // Close the gossip layer
-		server.Close() // Close the server and database
+	onSignal(func(s os.Signal) {
+		monitor.Info("received signal %v, start graceful shutdown", s)
+
+		cancel()
+		monitor.Info("Cancel ctx done")
+
+		gossip.Close()
+		monitor.Info("Close gossip done")
+
+		server.Close(monitor) //Close the server and database, which will wait RPC/SQS request on ingestion to DB finished
+		monitor.Info("Graceful shutdown finished, ready to exit")
+		close(waitExit)
 	})
 
 	// Join the cluster
@@ -93,6 +101,19 @@ func main() {
 	if err := server.Listen(ctx, conf.Readers.Presto.Port, conf.Writers.GRPC.Port); err != nil {
 		panic(err)
 	}
+	for {
+		select {
+		case <-ctx.Done(): // graceful shutdown
+			monitor.Info("server: wait exit...")
+			<-waitExit
+			monitor.Info("server: exit after ctx is done...")
+			os.Exit(1)
+		default:
+			monitor.Info("server: exit...")
+			os.Exit(1)
+		}
+	}
+
 }
 
 // openTable creates a new table with storage & optional compaction fully configured
@@ -121,6 +142,7 @@ func openTable(name string, storageConf config.Storage, tableConf config.Table, 
 // onSignal hooks a callback for a signal.
 func onSignal(callback func(sig os.Signal)) {
 	c := make(chan os.Signal, 1)
+	// SIGQUIT will be ignore as it is sended by people most of the time
 	signal.Notify(c, syscall.SIGINT, syscall.SIGTERM)
 	go func() {
 		for sig := range c {
