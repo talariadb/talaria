@@ -4,6 +4,7 @@ import com.google.common.collect.ImmutableSet;
 import com.talaria.client.TalariaClient;
 import com.talaria.protos.ColumnMeta;
 import com.talaria.protos.TableMeta;
+import org.apache.spark.sql.SparkSession;
 import org.apache.spark.sql.connector.catalog.SupportsRead;
 import org.apache.spark.sql.connector.catalog.Table;
 import org.apache.spark.sql.connector.catalog.TableCapability;
@@ -19,9 +20,14 @@ import java.util.Set;
 
 public class TalariaTable implements Table, SupportsRead {
 
+    private SparkSession lazySpark;
     private final ReadOptions readOptions;
+    private String hashBy;
+    private String sortBy;
     public TalariaTable(ReadOptions rc) {
         this.readOptions = rc;
+        this.hashBy = "";
+        this.sortBy = "";
     }
 
     @Override
@@ -38,6 +44,8 @@ public class TalariaTable implements Table, SupportsRead {
         TalariaClient tc = new TalariaClient(this.readOptions.getDomain(), this.readOptions.getPort());
         TableMeta tableMeta = tc.getTableMeta(this.readOptions.getTable());
         List<StructField> columns = new ArrayList<>();
+        hashBy = tableMeta.getHashby();
+        sortBy = tableMeta.getSortby();
 
         for (var i=0;i<tableMeta.getColumnsCount();i++){
             ColumnMeta column = tableMeta.getColumns(i);
@@ -56,7 +64,22 @@ public class TalariaTable implements Table, SupportsRead {
 
     @Override
     public ScanBuilder newScanBuilder(CaseInsensitiveStringMap options) {
-        return new TalariaScanBuilder(this);
+        return new TalariaScanBuilder(sparkSession(), this);
+    }
+
+    private SparkSession sparkSession(){
+        if (lazySpark == null) {
+            this.lazySpark = SparkSession.active();
+        }
+        return lazySpark;
+    }
+
+    public String getHashBy(){
+        return this.hashBy;
+    }
+
+    public String getSortBy(){
+        return this.sortBy;
     }
 
     public DataType getColType(String type) {

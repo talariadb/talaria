@@ -142,6 +142,8 @@ type QueryClient interface {
 	Describe(ctx context.Context, in *DescribeRequest, opts ...grpc.CallOption) (*DescribeResponse, error)
 	// DescribeTable returns the columns and its metadata of table given a schema(ex: data)
 	DescribeTable(ctx context.Context, in *DescribeTableRequest, opts ...grpc.CallOption) (*DescribeTableResponse, error)
+	// GetNodes returns the memberlist of talaria cluster.
+	GetNodes(ctx context.Context, in *GetNodesRequest, opts ...grpc.CallOption) (*GetNodesResponse, error)
 	// GetSplits returns the list of splits for a particular table/filter combination
 	GetSplits(ctx context.Context, in *GetSplitsRequest, opts ...grpc.CallOption) (*GetSplitsResponse, error)
 	// GetRows returns the rows for a particular split
@@ -174,6 +176,15 @@ func (c *queryClient) DescribeTable(ctx context.Context, in *DescribeTableReques
 	return out, nil
 }
 
+func (c *queryClient) GetNodes(ctx context.Context, in *GetNodesRequest, opts ...grpc.CallOption) (*GetNodesResponse, error) {
+	out := new(GetNodesResponse)
+	err := c.cc.Invoke(ctx, "/talaria.Query/GetNodes", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *queryClient) GetSplits(ctx context.Context, in *GetSplitsRequest, opts ...grpc.CallOption) (*GetSplitsResponse, error) {
 	out := new(GetSplitsResponse)
 	err := c.cc.Invoke(ctx, "/talaria.Query/GetSplits", in, out, opts...)
@@ -200,6 +211,8 @@ type QueryServer interface {
 	Describe(context.Context, *DescribeRequest) (*DescribeResponse, error)
 	// DescribeTable returns the columns and its metadata of table given a schema(ex: data)
 	DescribeTable(context.Context, *DescribeTableRequest) (*DescribeTableResponse, error)
+	// GetNodes returns the memberlist of talaria cluster.
+	GetNodes(context.Context, *GetNodesRequest) (*GetNodesResponse, error)
 	// GetSplits returns the list of splits for a particular table/filter combination
 	GetSplits(context.Context, *GetSplitsRequest) (*GetSplitsResponse, error)
 	// GetRows returns the rows for a particular split
@@ -215,6 +228,9 @@ func (UnimplementedQueryServer) Describe(context.Context, *DescribeRequest) (*De
 }
 func (UnimplementedQueryServer) DescribeTable(context.Context, *DescribeTableRequest) (*DescribeTableResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DescribeTable not implemented")
+}
+func (UnimplementedQueryServer) GetNodes(context.Context, *GetNodesRequest) (*GetNodesResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetNodes not implemented")
 }
 func (UnimplementedQueryServer) GetSplits(context.Context, *GetSplitsRequest) (*GetSplitsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetSplits not implemented")
@@ -270,6 +286,24 @@ func _Query_DescribeTable_Handler(srv interface{}, ctx context.Context, dec func
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Query_GetNodes_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetNodesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(QueryServer).GetNodes(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/talaria.Query/GetNodes",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(QueryServer).GetNodes(ctx, req.(*GetNodesRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _Query_GetSplits_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(GetSplitsRequest)
 	if err := dec(in); err != nil {
@@ -320,6 +354,10 @@ var Query_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "DescribeTable",
 			Handler:    _Query_DescribeTable_Handler,
+		},
+		{
+			MethodName: "GetNodes",
+			Handler:    _Query_GetNodes_Handler,
 		},
 		{
 			MethodName: "GetSplits",

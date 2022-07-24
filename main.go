@@ -69,7 +69,7 @@ func main() {
 	}
 
 	// Start the new server
-	server := server.New(configure, monitor, tables...)
+	server := server.New(configure, monitor, gossip, tables...)
 
 	// onSignal will be called when a OS-level signal is received.
 	onSignal(func(_ os.Signal) {

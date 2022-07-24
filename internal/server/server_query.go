@@ -74,6 +74,21 @@ func (s *Server) DescribeTable(ctx context.Context, request *talaria.DescribeTab
 	}, nil
 }
 
+// GetNodes returns the members list of talaria cluster.
+func (s *Server) GetNodes(ctx context.Context, request *talaria.GetNodesRequest) (*talaria.GetNodesResponse, error) {
+	defer s.handlePanic()
+	defer s.monitor.Duration(ctxTag, funcTag, time.Now(), "func:get_nodes")
+
+	nodes := s.Members()
+	response := new(talaria.GetNodesResponse)
+
+	for _, addr := range nodes {
+		response.Nodes = append(response.Nodes, &talaria.Endpoint{Host: addr, Port: s.conf().Writers.GRPC.Port})
+	}
+
+	return response, nil
+}
+
 // GetSplits returns the list of splits for a particular table/filter combination
 func (s *Server) GetSplits(ctx context.Context, request *talaria.GetSplitsRequest) (*talaria.GetSplitsResponse, error) {
 	defer s.handlePanic()

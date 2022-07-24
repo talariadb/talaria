@@ -17,9 +17,10 @@ public class TalariaMicroBatchStreamPartitionReader implements PartitionReader<C
     ByteString splitID;
     List<String> columns;
     GetRowsResponse rowsData;
-    TalariaMicroBatchStreamPartitionReader(String host, int port, String tableName, StructType schema, String partitionBy, Long start, Long end) {
+
+    TalariaMicroBatchStreamPartitionReader(String host, int port, String tableName, StructType schema, String tSchema, String hashBy, String sortBy, String partitionFilter, Long start, Long end) {
         tc = new TalariaClient(host, port);
-        List<ByteString> splits = tc.getSplits("data",tableName, partitionBy, createSortKeyBoundedFilter(start, end));
+        List<ByteString> splits = tc.getSplits(tSchema, tableName, createPartitionFilter(hashBy, partitionFilter), createSortKeyBoundedFilter(sortBy, start, end));
         if (splits.size() == 0) {
             this.splitID = null;
         }else {
@@ -50,7 +51,11 @@ public class TalariaMicroBatchStreamPartitionReader implements PartitionReader<C
         tc.close();
     }
 
-    private String createSortKeyBoundedFilter(Long start, Long end) {
-        return "ingested_at >= " + start + " && ingested_at < " + end;
+    private String createPartitionFilter(String hashBy, String partitionFilter) {
+        return hashBy + " == " + "'" + partitionFilter + "'";
+    }
+
+    private String createSortKeyBoundedFilter(String sortBy, Long start, Long end) {
+        return sortBy + " >= " + start + " && " + sortBy + " < " + end;
     }
 }

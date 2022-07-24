@@ -897,6 +897,93 @@ func (x *ColumnMeta) GetComment() string {
 	return ""
 }
 
+// GetNodesRequest represents an request to get cluster nodes info.
+type GetNodesRequest struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+}
+
+func (x *GetNodesRequest) Reset() {
+	*x = GetNodesRequest{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_talaria_proto_msgTypes[12]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *GetNodesRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetNodesRequest) ProtoMessage() {}
+
+func (x *GetNodesRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_talaria_proto_msgTypes[12]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetNodesRequest.ProtoReflect.Descriptor instead.
+func (*GetNodesRequest) Descriptor() ([]byte, []int) {
+	return file_talaria_proto_rawDescGZIP(), []int{12}
+}
+
+// GetNodesResponse represents response for talaria cluster nodes.
+type GetNodesResponse struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Nodes []*Endpoint `protobuf:"bytes,1,rep,name=nodes,proto3" json:"nodes,omitempty"`
+}
+
+func (x *GetNodesResponse) Reset() {
+	*x = GetNodesResponse{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_talaria_proto_msgTypes[13]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *GetNodesResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetNodesResponse) ProtoMessage() {}
+
+func (x *GetNodesResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_talaria_proto_msgTypes[13]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetNodesResponse.ProtoReflect.Descriptor instead.
+func (*GetNodesResponse) Descriptor() ([]byte, []int) {
+	return file_talaria_proto_rawDescGZIP(), []int{13}
+}
+
+func (x *GetNodesResponse) GetNodes() []*Endpoint {
+	if x != nil {
+		return x.Nodes
+	}
+	return nil
+}
+
 // GetSplitsRequest represents an request to get the splits for a table.
 type GetSplitsRequest struct {
 	state         protoimpl.MessageState
@@ -914,7 +1001,7 @@ type GetSplitsRequest struct {
 func (x *GetSplitsRequest) Reset() {
 	*x = GetSplitsRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_talaria_proto_msgTypes[12]
+		mi := &file_talaria_proto_msgTypes[14]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -927,7 +1014,7 @@ func (x *GetSplitsRequest) String() string {
 func (*GetSplitsRequest) ProtoMessage() {}
 
 func (x *GetSplitsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_talaria_proto_msgTypes[12]
+	mi := &file_talaria_proto_msgTypes[14]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -940,7 +1027,7 @@ func (x *GetSplitsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetSplitsRequest.ProtoReflect.Descriptor instead.
 func (*GetSplitsRequest) Descriptor() ([]byte, []int) {
-	return file_talaria_proto_rawDescGZIP(), []int{12}
+	return file_talaria_proto_rawDescGZIP(), []int{14}
 }
 
 func (x *GetSplitsRequest) GetSchema() string {
@@ -998,7 +1085,7 @@ type GetSplitsResponse struct {
 func (x *GetSplitsResponse) Reset() {
 	*x = GetSplitsResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_talaria_proto_msgTypes[13]
+		mi := &file_talaria_proto_msgTypes[15]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1011,7 +1098,7 @@ func (x *GetSplitsResponse) String() string {
 func (*GetSplitsResponse) ProtoMessage() {}
 
 func (x *GetSplitsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_talaria_proto_msgTypes[13]
+	mi := &file_talaria_proto_msgTypes[15]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1024,7 +1111,7 @@ func (x *GetSplitsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetSplitsResponse.ProtoReflect.Descriptor instead.
 func (*GetSplitsResponse) Descriptor() ([]byte, []int) {
-	return file_talaria_proto_rawDescGZIP(), []int{13}
+	return file_talaria_proto_rawDescGZIP(), []int{15}
 }
 
 func (x *GetSplitsResponse) GetSplits() []*Split {
@@ -1054,7 +1141,7 @@ type Endpoint struct {
 func (x *Endpoint) Reset() {
 	*x = Endpoint{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_talaria_proto_msgTypes[14]
+		mi := &file_talaria_proto_msgTypes[16]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1067,7 +1154,7 @@ func (x *Endpoint) String() string {
 func (*Endpoint) ProtoMessage() {}
 
 func (x *Endpoint) ProtoReflect() protoreflect.Message {
-	mi := &file_talaria_proto_msgTypes[14]
+	mi := &file_talaria_proto_msgTypes[16]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1080,7 +1167,7 @@ func (x *Endpoint) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Endpoint.ProtoReflect.Descriptor instead.
 func (*Endpoint) Descriptor() ([]byte, []int) {
-	return file_talaria_proto_rawDescGZIP(), []int{14}
+	return file_talaria_proto_rawDescGZIP(), []int{16}
 }
 
 func (x *Endpoint) GetHost() string {
@@ -1110,7 +1197,7 @@ type Split struct {
 func (x *Split) Reset() {
 	*x = Split{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_talaria_proto_msgTypes[15]
+		mi := &file_talaria_proto_msgTypes[17]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1123,7 +1210,7 @@ func (x *Split) String() string {
 func (*Split) ProtoMessage() {}
 
 func (x *Split) ProtoReflect() protoreflect.Message {
-	mi := &file_talaria_proto_msgTypes[15]
+	mi := &file_talaria_proto_msgTypes[17]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1136,7 +1223,7 @@ func (x *Split) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Split.ProtoReflect.Descriptor instead.
 func (*Split) Descriptor() ([]byte, []int) {
-	return file_talaria_proto_rawDescGZIP(), []int{15}
+	return file_talaria_proto_rawDescGZIP(), []int{17}
 }
 
 func (x *Split) GetSplitID() []byte {
@@ -1168,7 +1255,7 @@ type GetRowsRequest struct {
 func (x *GetRowsRequest) Reset() {
 	*x = GetRowsRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_talaria_proto_msgTypes[16]
+		mi := &file_talaria_proto_msgTypes[18]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1181,7 +1268,7 @@ func (x *GetRowsRequest) String() string {
 func (*GetRowsRequest) ProtoMessage() {}
 
 func (x *GetRowsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_talaria_proto_msgTypes[16]
+	mi := &file_talaria_proto_msgTypes[18]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1194,7 +1281,7 @@ func (x *GetRowsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetRowsRequest.ProtoReflect.Descriptor instead.
 func (*GetRowsRequest) Descriptor() ([]byte, []int) {
-	return file_talaria_proto_rawDescGZIP(), []int{16}
+	return file_talaria_proto_rawDescGZIP(), []int{18}
 }
 
 func (x *GetRowsRequest) GetSplitID() []byte {
@@ -1239,7 +1326,7 @@ type GetRowsResponse struct {
 func (x *GetRowsResponse) Reset() {
 	*x = GetRowsResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_talaria_proto_msgTypes[17]
+		mi := &file_talaria_proto_msgTypes[19]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1252,7 +1339,7 @@ func (x *GetRowsResponse) String() string {
 func (*GetRowsResponse) ProtoMessage() {}
 
 func (x *GetRowsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_talaria_proto_msgTypes[17]
+	mi := &file_talaria_proto_msgTypes[19]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1265,7 +1352,7 @@ func (x *GetRowsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetRowsResponse.ProtoReflect.Descriptor instead.
 func (*GetRowsResponse) Descriptor() ([]byte, []int) {
-	return file_talaria_proto_rawDescGZIP(), []int{17}
+	return file_talaria_proto_rawDescGZIP(), []int{19}
 }
 
 func (x *GetRowsResponse) GetColumns() []*Column {
@@ -1309,7 +1396,7 @@ type Column struct {
 func (x *Column) Reset() {
 	*x = Column{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_talaria_proto_msgTypes[18]
+		mi := &file_talaria_proto_msgTypes[20]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1322,7 +1409,7 @@ func (x *Column) String() string {
 func (*Column) ProtoMessage() {}
 
 func (x *Column) ProtoReflect() protoreflect.Message {
-	mi := &file_talaria_proto_msgTypes[18]
+	mi := &file_talaria_proto_msgTypes[20]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1335,7 +1422,7 @@ func (x *Column) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Column.ProtoReflect.Descriptor instead.
 func (*Column) Descriptor() ([]byte, []int) {
-	return file_talaria_proto_rawDescGZIP(), []int{18}
+	return file_talaria_proto_rawDescGZIP(), []int{20}
 }
 
 func (m *Column) GetValue() isColumn_Value {
@@ -1453,7 +1540,7 @@ type ColumnOfInt32 struct {
 func (x *ColumnOfInt32) Reset() {
 	*x = ColumnOfInt32{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_talaria_proto_msgTypes[19]
+		mi := &file_talaria_proto_msgTypes[21]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1466,7 +1553,7 @@ func (x *ColumnOfInt32) String() string {
 func (*ColumnOfInt32) ProtoMessage() {}
 
 func (x *ColumnOfInt32) ProtoReflect() protoreflect.Message {
-	mi := &file_talaria_proto_msgTypes[19]
+	mi := &file_talaria_proto_msgTypes[21]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1479,7 +1566,7 @@ func (x *ColumnOfInt32) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ColumnOfInt32.ProtoReflect.Descriptor instead.
 func (*ColumnOfInt32) Descriptor() ([]byte, []int) {
-	return file_talaria_proto_rawDescGZIP(), []int{19}
+	return file_talaria_proto_rawDescGZIP(), []int{21}
 }
 
 func (x *ColumnOfInt32) GetNulls() []bool {
@@ -1509,7 +1596,7 @@ type ColumnOfInt64 struct {
 func (x *ColumnOfInt64) Reset() {
 	*x = ColumnOfInt64{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_talaria_proto_msgTypes[20]
+		mi := &file_talaria_proto_msgTypes[22]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1522,7 +1609,7 @@ func (x *ColumnOfInt64) String() string {
 func (*ColumnOfInt64) ProtoMessage() {}
 
 func (x *ColumnOfInt64) ProtoReflect() protoreflect.Message {
-	mi := &file_talaria_proto_msgTypes[20]
+	mi := &file_talaria_proto_msgTypes[22]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1535,7 +1622,7 @@ func (x *ColumnOfInt64) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ColumnOfInt64.ProtoReflect.Descriptor instead.
 func (*ColumnOfInt64) Descriptor() ([]byte, []int) {
-	return file_talaria_proto_rawDescGZIP(), []int{20}
+	return file_talaria_proto_rawDescGZIP(), []int{22}
 }
 
 func (x *ColumnOfInt64) GetNulls() []bool {
@@ -1565,7 +1652,7 @@ type ColumnOfFloat64 struct {
 func (x *ColumnOfFloat64) Reset() {
 	*x = ColumnOfFloat64{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_talaria_proto_msgTypes[21]
+		mi := &file_talaria_proto_msgTypes[23]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1578,7 +1665,7 @@ func (x *ColumnOfFloat64) String() string {
 func (*ColumnOfFloat64) ProtoMessage() {}
 
 func (x *ColumnOfFloat64) ProtoReflect() protoreflect.Message {
-	mi := &file_talaria_proto_msgTypes[21]
+	mi := &file_talaria_proto_msgTypes[23]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1591,7 +1678,7 @@ func (x *ColumnOfFloat64) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ColumnOfFloat64.ProtoReflect.Descriptor instead.
 func (*ColumnOfFloat64) Descriptor() ([]byte, []int) {
-	return file_talaria_proto_rawDescGZIP(), []int{21}
+	return file_talaria_proto_rawDescGZIP(), []int{23}
 }
 
 func (x *ColumnOfFloat64) GetNulls() []bool {
@@ -1621,7 +1708,7 @@ type ColumnOfBools struct {
 func (x *ColumnOfBools) Reset() {
 	*x = ColumnOfBools{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_talaria_proto_msgTypes[22]
+		mi := &file_talaria_proto_msgTypes[24]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1634,7 +1721,7 @@ func (x *ColumnOfBools) String() string {
 func (*ColumnOfBools) ProtoMessage() {}
 
 func (x *ColumnOfBools) ProtoReflect() protoreflect.Message {
-	mi := &file_talaria_proto_msgTypes[22]
+	mi := &file_talaria_proto_msgTypes[24]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1647,7 +1734,7 @@ func (x *ColumnOfBools) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ColumnOfBools.ProtoReflect.Descriptor instead.
 func (*ColumnOfBools) Descriptor() ([]byte, []int) {
-	return file_talaria_proto_rawDescGZIP(), []int{22}
+	return file_talaria_proto_rawDescGZIP(), []int{24}
 }
 
 func (x *ColumnOfBools) GetNulls() []bool {
@@ -1678,7 +1765,7 @@ type ColumnOfString struct {
 func (x *ColumnOfString) Reset() {
 	*x = ColumnOfString{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_talaria_proto_msgTypes[23]
+		mi := &file_talaria_proto_msgTypes[25]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1691,7 +1778,7 @@ func (x *ColumnOfString) String() string {
 func (*ColumnOfString) ProtoMessage() {}
 
 func (x *ColumnOfString) ProtoReflect() protoreflect.Message {
-	mi := &file_talaria_proto_msgTypes[23]
+	mi := &file_talaria_proto_msgTypes[25]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1704,7 +1791,7 @@ func (x *ColumnOfString) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ColumnOfString.ProtoReflect.Descriptor instead.
 func (*ColumnOfString) Descriptor() ([]byte, []int) {
-	return file_talaria_proto_rawDescGZIP(), []int{23}
+	return file_talaria_proto_rawDescGZIP(), []int{25}
 }
 
 func (x *ColumnOfString) GetNulls() []bool {
@@ -1812,7 +1899,12 @@ var file_talaria_proto_rawDesc = []byte{
 	0x61, 0x6d, 0x65, 0x12, 0x12, 0x0a, 0x04, 0x74, 0x79, 0x70, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28,
 	0x09, 0x52, 0x04, 0x74, 0x79, 0x70, 0x65, 0x12, 0x18, 0x0a, 0x07, 0x63, 0x6f, 0x6d, 0x6d, 0x65,
 	0x6e, 0x74, 0x18, 0x03, 0x20, 0x01, 0x28, 0x09, 0x52, 0x07, 0x63, 0x6f, 0x6d, 0x6d, 0x65, 0x6e,
-	0x74, 0x22, 0xb0, 0x01, 0x0a, 0x10, 0x47, 0x65, 0x74, 0x53, 0x70, 0x6c, 0x69, 0x74, 0x73, 0x52,
+	0x74, 0x22, 0x11, 0x0a, 0x0f, 0x47, 0x65, 0x74, 0x4e, 0x6f, 0x64, 0x65, 0x73, 0x52, 0x65, 0x71,
+	0x75, 0x65, 0x73, 0x74, 0x22, 0x3b, 0x0a, 0x10, 0x47, 0x65, 0x74, 0x4e, 0x6f, 0x64, 0x65, 0x73,
+	0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x27, 0x0a, 0x05, 0x6e, 0x6f, 0x64, 0x65,
+	0x73, 0x18, 0x01, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x11, 0x2e, 0x74, 0x61, 0x6c, 0x61, 0x72, 0x69,
+	0x61, 0x2e, 0x45, 0x6e, 0x64, 0x70, 0x6f, 0x69, 0x6e, 0x74, 0x52, 0x05, 0x6e, 0x6f, 0x64, 0x65,
+	0x73, 0x22, 0xb0, 0x01, 0x0a, 0x10, 0x47, 0x65, 0x74, 0x53, 0x70, 0x6c, 0x69, 0x74, 0x73, 0x52,
 	0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x16, 0x0a, 0x06, 0x73, 0x63, 0x68, 0x65, 0x6d, 0x61,
 	0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x06, 0x73, 0x63, 0x68, 0x65, 0x6d, 0x61, 0x12, 0x14,
 	0x0a, 0x05, 0x74, 0x61, 0x62, 0x6c, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x05, 0x74,
@@ -1905,7 +1997,7 @@ var file_talaria_proto_rawDesc = []byte{
 	0x61, 0x2e, 0x49, 0x6e, 0x67, 0x65, 0x73, 0x74, 0x57, 0x69, 0x74, 0x68, 0x54, 0x61, 0x62, 0x6c,
 	0x65, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x17, 0x2e, 0x74, 0x61, 0x6c, 0x61, 0x72,
 	0x69, 0x61, 0x2e, 0x49, 0x6e, 0x67, 0x65, 0x73, 0x74, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73,
-	0x65, 0x22, 0x00, 0x32, 0xa2, 0x02, 0x0a, 0x05, 0x51, 0x75, 0x65, 0x72, 0x79, 0x12, 0x41, 0x0a,
+	0x65, 0x22, 0x00, 0x32, 0xe5, 0x02, 0x0a, 0x05, 0x51, 0x75, 0x65, 0x72, 0x79, 0x12, 0x41, 0x0a,
 	0x08, 0x44, 0x65, 0x73, 0x63, 0x72, 0x69, 0x62, 0x65, 0x12, 0x18, 0x2e, 0x74, 0x61, 0x6c, 0x61,
 	0x72, 0x69, 0x61, 0x2e, 0x44, 0x65, 0x73, 0x63, 0x72, 0x69, 0x62, 0x65, 0x52, 0x65, 0x71, 0x75,
 	0x65, 0x73, 0x74, 0x1a, 0x19, 0x2e, 0x74, 0x61, 0x6c, 0x61, 0x72, 0x69, 0x61, 0x2e, 0x44, 0x65,
@@ -1915,21 +2007,25 @@ var file_talaria_proto_rawDesc = []byte{
 	0x72, 0x69, 0x62, 0x65, 0x54, 0x61, 0x62, 0x6c, 0x65, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74,
 	0x1a, 0x1e, 0x2e, 0x74, 0x61, 0x6c, 0x61, 0x72, 0x69, 0x61, 0x2e, 0x44, 0x65, 0x73, 0x63, 0x72,
 	0x69, 0x62, 0x65, 0x54, 0x61, 0x62, 0x6c, 0x65, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65,
-	0x22, 0x00, 0x12, 0x44, 0x0a, 0x09, 0x47, 0x65, 0x74, 0x53, 0x70, 0x6c, 0x69, 0x74, 0x73, 0x12,
-	0x19, 0x2e, 0x74, 0x61, 0x6c, 0x61, 0x72, 0x69, 0x61, 0x2e, 0x47, 0x65, 0x74, 0x53, 0x70, 0x6c,
-	0x69, 0x74, 0x73, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x1a, 0x2e, 0x74, 0x61, 0x6c,
-	0x61, 0x72, 0x69, 0x61, 0x2e, 0x47, 0x65, 0x74, 0x53, 0x70, 0x6c, 0x69, 0x74, 0x73, 0x52, 0x65,
-	0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x00, 0x12, 0x3e, 0x0a, 0x07, 0x47, 0x65, 0x74, 0x52,
-	0x6f, 0x77, 0x73, 0x12, 0x17, 0x2e, 0x74, 0x61, 0x6c, 0x61, 0x72, 0x69, 0x61, 0x2e, 0x47, 0x65,
-	0x74, 0x52, 0x6f, 0x77, 0x73, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x18, 0x2e, 0x74,
-	0x61, 0x6c, 0x61, 0x72, 0x69, 0x61, 0x2e, 0x47, 0x65, 0x74, 0x52, 0x6f, 0x77, 0x73, 0x52, 0x65,
-	0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x00, 0x42, 0x50, 0x0a, 0x12, 0x63, 0x6f, 0x6d, 0x2e,
-	0x74, 0x61, 0x6c, 0x61, 0x72, 0x69, 0x61, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x73, 0x42, 0x0d,
-	0x54, 0x61, 0x6c, 0x61, 0x72, 0x69, 0x61, 0x50, 0x72, 0x6f, 0x74, 0x6f, 0x73, 0x50, 0x01, 0x5a,
-	0x29, 0x67, 0x69, 0x74, 0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x6b, 0x65, 0x6c, 0x69,
-	0x6e, 0x64, 0x61, 0x72, 0x2f, 0x74, 0x61, 0x6c, 0x61, 0x72, 0x69, 0x61, 0x2f, 0x70, 0x72, 0x6f,
-	0x74, 0x6f, 0x3b, 0x74, 0x61, 0x6c, 0x61, 0x72, 0x69, 0x61, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74,
-	0x6f, 0x33,
+	0x22, 0x00, 0x12, 0x41, 0x0a, 0x08, 0x47, 0x65, 0x74, 0x4e, 0x6f, 0x64, 0x65, 0x73, 0x12, 0x18,
+	0x2e, 0x74, 0x61, 0x6c, 0x61, 0x72, 0x69, 0x61, 0x2e, 0x47, 0x65, 0x74, 0x4e, 0x6f, 0x64, 0x65,
+	0x73, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x19, 0x2e, 0x74, 0x61, 0x6c, 0x61, 0x72,
+	0x69, 0x61, 0x2e, 0x47, 0x65, 0x74, 0x4e, 0x6f, 0x64, 0x65, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f,
+	0x6e, 0x73, 0x65, 0x22, 0x00, 0x12, 0x44, 0x0a, 0x09, 0x47, 0x65, 0x74, 0x53, 0x70, 0x6c, 0x69,
+	0x74, 0x73, 0x12, 0x19, 0x2e, 0x74, 0x61, 0x6c, 0x61, 0x72, 0x69, 0x61, 0x2e, 0x47, 0x65, 0x74,
+	0x53, 0x70, 0x6c, 0x69, 0x74, 0x73, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x1a, 0x2e,
+	0x74, 0x61, 0x6c, 0x61, 0x72, 0x69, 0x61, 0x2e, 0x47, 0x65, 0x74, 0x53, 0x70, 0x6c, 0x69, 0x74,
+	0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x00, 0x12, 0x3e, 0x0a, 0x07, 0x47,
+	0x65, 0x74, 0x52, 0x6f, 0x77, 0x73, 0x12, 0x17, 0x2e, 0x74, 0x61, 0x6c, 0x61, 0x72, 0x69, 0x61,
+	0x2e, 0x47, 0x65, 0x74, 0x52, 0x6f, 0x77, 0x73, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a,
+	0x18, 0x2e, 0x74, 0x61, 0x6c, 0x61, 0x72, 0x69, 0x61, 0x2e, 0x47, 0x65, 0x74, 0x52, 0x6f, 0x77,
+	0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x00, 0x42, 0x50, 0x0a, 0x12, 0x63,
+	0x6f, 0x6d, 0x2e, 0x74, 0x61, 0x6c, 0x61, 0x72, 0x69, 0x61, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f,
+	0x73, 0x42, 0x0d, 0x54, 0x61, 0x6c, 0x61, 0x72, 0x69, 0x61, 0x50, 0x72, 0x6f, 0x74, 0x6f, 0x73,
+	0x50, 0x01, 0x5a, 0x29, 0x67, 0x69, 0x74, 0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x6b,
+	0x65, 0x6c, 0x69, 0x6e, 0x64, 0x61, 0x72, 0x2f, 0x74, 0x61, 0x6c, 0x61, 0x72, 0x69, 0x61, 0x2f,
+	0x70, 0x72, 0x6f, 0x74, 0x6f, 0x3b, 0x74, 0x61, 0x6c, 0x61, 0x72, 0x69, 0x61, 0x62, 0x06, 0x70,
+	0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
@@ -1944,7 +2040,7 @@ func file_talaria_proto_rawDescGZIP() []byte {
 	return file_talaria_proto_rawDescData
 }
 
-var file_talaria_proto_msgTypes = make([]protoimpl.MessageInfo, 26)
+var file_talaria_proto_msgTypes = make([]protoimpl.MessageInfo, 28)
 var file_talaria_proto_goTypes = []interface{}{
 	(*IngestRequest)(nil),          // 0: talaria.IngestRequest
 	(*IngestWithTableRequest)(nil), // 1: talaria.IngestWithTableRequest
@@ -1958,58 +2054,63 @@ var file_talaria_proto_goTypes = []interface{}{
 	(*DescribeTableResponse)(nil),  // 9: talaria.DescribeTableResponse
 	(*TableMeta)(nil),              // 10: talaria.TableMeta
 	(*ColumnMeta)(nil),             // 11: talaria.ColumnMeta
-	(*GetSplitsRequest)(nil),       // 12: talaria.GetSplitsRequest
-	(*GetSplitsResponse)(nil),      // 13: talaria.GetSplitsResponse
-	(*Endpoint)(nil),               // 14: talaria.Endpoint
-	(*Split)(nil),                  // 15: talaria.Split
-	(*GetRowsRequest)(nil),         // 16: talaria.GetRowsRequest
-	(*GetRowsResponse)(nil),        // 17: talaria.GetRowsResponse
-	(*Column)(nil),                 // 18: talaria.Column
-	(*ColumnOfInt32)(nil),          // 19: talaria.ColumnOfInt32
-	(*ColumnOfInt64)(nil),          // 20: talaria.ColumnOfInt64
-	(*ColumnOfFloat64)(nil),        // 21: talaria.ColumnOfFloat64
-	(*ColumnOfBools)(nil),          // 22: talaria.ColumnOfBools
-	(*ColumnOfString)(nil),         // 23: talaria.ColumnOfString
-	nil,                            // 24: talaria.Batch.StringsEntry
-	nil,                            // 25: talaria.Event.ValueEntry
+	(*GetNodesRequest)(nil),        // 12: talaria.GetNodesRequest
+	(*GetNodesResponse)(nil),       // 13: talaria.GetNodesResponse
+	(*GetSplitsRequest)(nil),       // 14: talaria.GetSplitsRequest
+	(*GetSplitsResponse)(nil),      // 15: talaria.GetSplitsResponse
+	(*Endpoint)(nil),               // 16: talaria.Endpoint
+	(*Split)(nil),                  // 17: talaria.Split
+	(*GetRowsRequest)(nil),         // 18: talaria.GetRowsRequest
+	(*GetRowsResponse)(nil),        // 19: talaria.GetRowsResponse
+	(*Column)(nil),                 // 20: talaria.Column
+	(*ColumnOfInt32)(nil),          // 21: talaria.ColumnOfInt32
+	(*ColumnOfInt64)(nil),          // 22: talaria.ColumnOfInt64
+	(*ColumnOfFloat64)(nil),        // 23: talaria.ColumnOfFloat64
+	(*ColumnOfBools)(nil),          // 24: talaria.ColumnOfBools
+	(*ColumnOfString)(nil),         // 25: talaria.ColumnOfString
+	nil,                            // 26: talaria.Batch.StringsEntry
+	nil,                            // 27: talaria.Event.ValueEntry
 }
 var file_talaria_proto_depIdxs = []int32{
 	3,  // 0: talaria.IngestRequest.batch:type_name -> talaria.Batch
 	3,  // 1: talaria.IngestWithTableRequest.batch:type_name -> talaria.Batch
-	24, // 2: talaria.Batch.strings:type_name -> talaria.Batch.StringsEntry
+	26, // 2: talaria.Batch.strings:type_name -> talaria.Batch.StringsEntry
 	4,  // 3: talaria.Batch.events:type_name -> talaria.Event
-	25, // 4: talaria.Event.value:type_name -> talaria.Event.ValueEntry
+	27, // 4: talaria.Event.value:type_name -> talaria.Event.ValueEntry
 	10, // 5: talaria.DescribeResponse.tables:type_name -> talaria.TableMeta
 	10, // 6: talaria.DescribeTableResponse.table:type_name -> talaria.TableMeta
 	11, // 7: talaria.TableMeta.columns:type_name -> talaria.ColumnMeta
-	15, // 8: talaria.GetSplitsResponse.splits:type_name -> talaria.Split
-	14, // 9: talaria.Split.hosts:type_name -> talaria.Endpoint
-	18, // 10: talaria.GetRowsResponse.columns:type_name -> talaria.Column
-	19, // 11: talaria.Column.int32:type_name -> talaria.ColumnOfInt32
-	20, // 12: talaria.Column.int64:type_name -> talaria.ColumnOfInt64
-	21, // 13: talaria.Column.float64:type_name -> talaria.ColumnOfFloat64
-	23, // 14: talaria.Column.string:type_name -> talaria.ColumnOfString
-	22, // 15: talaria.Column.bool:type_name -> talaria.ColumnOfBools
-	20, // 16: talaria.Column.time:type_name -> talaria.ColumnOfInt64
-	23, // 17: talaria.Column.json:type_name -> talaria.ColumnOfString
-	5,  // 18: talaria.Event.ValueEntry.value:type_name -> talaria.Value
-	0,  // 19: talaria.Ingress.Ingest:input_type -> talaria.IngestRequest
-	1,  // 20: talaria.Ingress.IngestWithTable:input_type -> talaria.IngestWithTableRequest
-	6,  // 21: talaria.Query.Describe:input_type -> talaria.DescribeRequest
-	8,  // 22: talaria.Query.DescribeTable:input_type -> talaria.DescribeTableRequest
-	12, // 23: talaria.Query.GetSplits:input_type -> talaria.GetSplitsRequest
-	16, // 24: talaria.Query.GetRows:input_type -> talaria.GetRowsRequest
-	2,  // 25: talaria.Ingress.Ingest:output_type -> talaria.IngestResponse
-	2,  // 26: talaria.Ingress.IngestWithTable:output_type -> talaria.IngestResponse
-	7,  // 27: talaria.Query.Describe:output_type -> talaria.DescribeResponse
-	9,  // 28: talaria.Query.DescribeTable:output_type -> talaria.DescribeTableResponse
-	13, // 29: talaria.Query.GetSplits:output_type -> talaria.GetSplitsResponse
-	17, // 30: talaria.Query.GetRows:output_type -> talaria.GetRowsResponse
-	25, // [25:31] is the sub-list for method output_type
-	19, // [19:25] is the sub-list for method input_type
-	19, // [19:19] is the sub-list for extension type_name
-	19, // [19:19] is the sub-list for extension extendee
-	0,  // [0:19] is the sub-list for field type_name
+	16, // 8: talaria.GetNodesResponse.nodes:type_name -> talaria.Endpoint
+	17, // 9: talaria.GetSplitsResponse.splits:type_name -> talaria.Split
+	16, // 10: talaria.Split.hosts:type_name -> talaria.Endpoint
+	20, // 11: talaria.GetRowsResponse.columns:type_name -> talaria.Column
+	21, // 12: talaria.Column.int32:type_name -> talaria.ColumnOfInt32
+	22, // 13: talaria.Column.int64:type_name -> talaria.ColumnOfInt64
+	23, // 14: talaria.Column.float64:type_name -> talaria.ColumnOfFloat64
+	25, // 15: talaria.Column.string:type_name -> talaria.ColumnOfString
+	24, // 16: talaria.Column.bool:type_name -> talaria.ColumnOfBools
+	22, // 17: talaria.Column.time:type_name -> talaria.ColumnOfInt64
+	25, // 18: talaria.Column.json:type_name -> talaria.ColumnOfString
+	5,  // 19: talaria.Event.ValueEntry.value:type_name -> talaria.Value
+	0,  // 20: talaria.Ingress.Ingest:input_type -> talaria.IngestRequest
+	1,  // 21: talaria.Ingress.IngestWithTable:input_type -> talaria.IngestWithTableRequest
+	6,  // 22: talaria.Query.Describe:input_type -> talaria.DescribeRequest
+	8,  // 23: talaria.Query.DescribeTable:input_type -> talaria.DescribeTableRequest
+	12, // 24: talaria.Query.GetNodes:input_type -> talaria.GetNodesRequest
+	14, // 25: talaria.Query.GetSplits:input_type -> talaria.GetSplitsRequest
+	18, // 26: talaria.Query.GetRows:input_type -> talaria.GetRowsRequest
+	2,  // 27: talaria.Ingress.Ingest:output_type -> talaria.IngestResponse
+	2,  // 28: talaria.Ingress.IngestWithTable:output_type -> talaria.IngestResponse
+	7,  // 29: talaria.Query.Describe:output_type -> talaria.DescribeResponse
+	9,  // 30: talaria.Query.DescribeTable:output_type -> talaria.DescribeTableResponse
+	13, // 31: talaria.Query.GetNodes:output_type -> talaria.GetNodesResponse
+	15, // 32: talaria.Query.GetSplits:output_type -> talaria.GetSplitsResponse
+	19, // 33: talaria.Query.GetRows:output_type -> talaria.GetRowsResponse
+	27, // [27:34] is the sub-list for method output_type
+	20, // [20:27] is the sub-list for method input_type
+	20, // [20:20] is the sub-list for extension type_name
+	20, // [20:20] is the sub-list for extension extendee
+	0,  // [0:20] is the sub-list for field type_name
 }
 
 func init() { file_talaria_proto_init() }
@@ -2163,7 +2264,7 @@ func file_talaria_proto_init() {
 			}
 		}
 		file_talaria_proto_msgTypes[12].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*GetSplitsRequest); i {
+			switch v := v.(*GetNodesRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2175,7 +2276,7 @@ func file_talaria_proto_init() {
 			}
 		}
 		file_talaria_proto_msgTypes[13].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*GetSplitsResponse); i {
+			switch v := v.(*GetNodesResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2187,7 +2288,7 @@ func file_talaria_proto_init() {
 			}
 		}
 		file_talaria_proto_msgTypes[14].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*Endpoint); i {
+			switch v := v.(*GetSplitsRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2199,7 +2300,7 @@ func file_talaria_proto_init() {
 			}
 		}
 		file_talaria_proto_msgTypes[15].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*Split); i {
+			switch v := v.(*GetSplitsResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2211,7 +2312,7 @@ func file_talaria_proto_init() {
 			}
 		}
 		file_talaria_proto_msgTypes[16].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*GetRowsRequest); i {
+			switch v := v.(*Endpoint); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2223,7 +2324,7 @@ func file_talaria_proto_init() {
 			}
 		}
 		file_talaria_proto_msgTypes[17].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*GetRowsResponse); i {
+			switch v := v.(*Split); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2235,7 +2336,7 @@ func file_talaria_proto_init() {
 			}
 		}
 		file_talaria_proto_msgTypes[18].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*Column); i {
+			switch v := v.(*GetRowsRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2247,7 +2348,7 @@ func file_talaria_proto_init() {
 			}
 		}
 		file_talaria_proto_msgTypes[19].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*ColumnOfInt32); i {
+			switch v := v.(*GetRowsResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2259,7 +2360,7 @@ func file_talaria_proto_init() {
 			}
 		}
 		file_talaria_proto_msgTypes[20].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*ColumnOfInt64); i {
+			switch v := v.(*Column); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2271,7 +2372,7 @@ func file_talaria_proto_init() {
 			}
 		}
 		file_talaria_proto_msgTypes[21].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*ColumnOfFloat64); i {
+			switch v := v.(*ColumnOfInt32); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2283,7 +2384,7 @@ func file_talaria_proto_init() {
 			}
 		}
 		file_talaria_proto_msgTypes[22].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*ColumnOfBools); i {
+			switch v := v.(*ColumnOfInt64); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2295,6 +2396,30 @@ func file_talaria_proto_init() {
 			}
 		}
 		file_talaria_proto_msgTypes[23].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*ColumnOfFloat64); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_talaria_proto_msgTypes[24].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*ColumnOfBools); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_talaria_proto_msgTypes[25].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*ColumnOfString); i {
 			case 0:
 				return &v.state
@@ -2330,7 +2455,7 @@ func file_talaria_proto_init() {
 		(*Value_Time)(nil),
 		(*Value_Json)(nil),
 	}
-	file_talaria_proto_msgTypes[18].OneofWrappers = []interface{}{
+	file_talaria_proto_msgTypes[20].OneofWrappers = []interface{}{
 		(*Column_Int32)(nil),
 		(*Column_Int64)(nil),
 		(*Column_Float64)(nil),
@@ -2345,7 +2470,7 @@ func file_talaria_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_talaria_proto_rawDesc,
 			NumEnums:      0,
-			NumMessages:   26,
+			NumMessages:   28,
 			NumExtensions: 0,
 			NumServices:   2,
 		},

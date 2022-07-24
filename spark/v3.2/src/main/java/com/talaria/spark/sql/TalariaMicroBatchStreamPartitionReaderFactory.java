@@ -11,12 +11,18 @@ public class TalariaMicroBatchStreamPartitionReaderFactory implements PartitionR
 
     private final String tableName;
     private final StructType schema;
-    private final String partitionBy;
+    private final String partitionFilter;
+    private final String hashBy;
+    private final String sortBy;
+    private final String talariaSchema;
 
-    TalariaMicroBatchStreamPartitionReaderFactory(String tableName, StructType schema, String partitionBy){
+    TalariaMicroBatchStreamPartitionReaderFactory(String tableName, StructType schema, String tschema, String hashBy, String sortBy, String partitionFilter){
         this.tableName = tableName;
         this.schema = schema;
-        this.partitionBy = partitionBy;
+        this.partitionFilter = partitionFilter;
+        this.talariaSchema = tschema;
+        this.hashBy = hashBy;
+        this.sortBy = sortBy;
     }
 
     @Override
@@ -27,7 +33,7 @@ public class TalariaMicroBatchStreamPartitionReaderFactory implements PartitionR
     @Override
     public PartitionReader<ColumnarBatch> createColumnarReader(InputPartition partition) {
         TalariaMicroBatchStreamPartition p = (TalariaMicroBatchStreamPartition) partition;
-        return new TalariaMicroBatchStreamPartitionReader(p.host, p.port, tableName, schema, partitionBy, p.start, p.end);
+        return new TalariaMicroBatchStreamPartitionReader(p.host, p.port, tableName, schema, talariaSchema, hashBy, sortBy, partitionFilter, p.start, p.end);
     }
 
     @Override

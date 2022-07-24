@@ -86,6 +86,9 @@ service Query {
   // DescribeTable returns the columns and its metadata of table given a schema(ex: data)
   rpc DescribeTable(DescribeTableRequest) returns (DescribeTableResponse) {}
 
+  // GetNodes returns the memberlist of talaria cluster.
+  rpc GetNodes(GetNodesRequest) returns (GetNodesResponse) {}
+
   // GetSplits returns the list of splits for a particular table/filter combination
   rpc GetSplits(GetSplitsRequest) returns (GetSplitsResponse) {}
 
@@ -125,6 +128,14 @@ message ColumnMeta {
   string name    = 1; // The name of the column (eg. tsi)
   string type    = 2; // The SQL type of the column (eg. varchar)
   string comment = 3; // The optional comment for the column
+}
+
+// GetNodesRequest represents an request to get cluster nodes info.
+message GetNodesRequest {}
+
+// GetNodesResponse represents response for talaria cluster nodes.
+message GetNodesResponse {
+  repeated Endpoint nodes = 1;
 }
 
 // GetSplitsRequest represents an request to get the splits for a table.
