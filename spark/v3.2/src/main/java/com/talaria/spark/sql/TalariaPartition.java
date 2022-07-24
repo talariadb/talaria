@@ -1,15 +1,16 @@
 package com.talaria.spark.sql;
 
-import com.google.protobuf.ByteString;
 import org.apache.spark.sql.connector.read.InputPartition;
 
 public class TalariaPartition implements InputPartition{
     public final String host;
     public final int port;
-    public final String partitionBy;
-    TalariaPartition(String host, int port, String partitionBy) {
+    public final Long start;
+    public final Long end;
+    TalariaPartition(String host, int port, Long start, Long end) {
        this.host = host;
        this.port = port;
-       this.partitionBy = partitionBy;
+       this.start = start;
+       this.end = end;
     }
 }

@@ -9,7 +9,6 @@ import org.apache.hadoop.fs.Path;
 import java.io.IOException;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
 
 public class TalariaOffsetStore {
     private final Path path;
@@ -23,26 +22,32 @@ public class TalariaOffsetStore {
     }
 
     public TalariaOffset initialOffset() throws IOException {
-        TalariaOffset offset;
+        TalariaOffset offset = null;
         if(fs.exists(path)){
-            FSDataInputStream in = fs.open(path);
-            byte[] buf = in.readAllBytes();
-            offset = TalariaOffset.fromJSON(new String(buf, StandardCharsets.UTF_8));
-            in.close();
+            try (FSDataInputStream in = fs.open(path)) {
+                byte[] buf = in.readAllBytes();
+                offset = TalariaOffset.fromJSON(new String(buf, StandardCharsets.UTF_8));
+            } catch (IOException exception) {
+                // log exception
+            }
         }
         else {
-            offset = new TalariaOffset(epoch);
-            FSDataOutputStream out = fs.create(path, true);
-            out.write(offset.json().getBytes(StandardCharsets.UTF_8));
-            out.close();
+            try (FSDataOutputStream out = fs.create(path, true)) {
+                offset = new TalariaOffset(epoch);
+                out.write(offset.json().getBytes(StandardCharsets.UTF_8));
+            } catch (IOException exception){
+                // log exception
+            }
         }
         return offset;
     }
 
     public void updateOffset(TalariaOffset offset) throws IOException {
-        epoch = offset.getOffset();
-        FSDataOutputStream out = fs.create(path, true);
-        out.write(offset.json().getBytes(StandardCharsets.UTF_8));
-        out.close();
+        try (FSDataOutputStream out = fs.create(path, true)) {
+            epoch = offset.getOffset();
+            out.write(offset.json().getBytes(StandardCharsets.UTF_8));
+        } catch (IOException exception) {
+            // log error for exception
+        }
     }
 }

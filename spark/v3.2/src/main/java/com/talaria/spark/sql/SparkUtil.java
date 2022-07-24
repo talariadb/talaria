@@ -4,10 +4,12 @@ import com.talaria.protos.Column;
 import org.apache.hadoop.hive.ql.exec.vector.BytesColumnVector;
 import org.apache.hadoop.hive.ql.exec.vector.DoubleColumnVector;
 import org.apache.hadoop.hive.ql.exec.vector.LongColumnVector;
+import org.apache.hadoop.hive.ql.exec.vector.TimestampColumnVector;
 import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.StructType;
 import org.apache.spark.sql.vectorized.ColumnVector;
 
+import java.sql.Timestamp;
 import java.util.Arrays;
 import java.util.List;
 
@@ -24,10 +26,26 @@ public class SparkUtil {
         if (col.hasFloat64()){
             return createDoubleVector(rowCount, col);
         }
-        if (col.hasInt32() || col.hasInt64() || col.hasTime() || col.hasBool()) {
+        if (col.hasInt32() || col.hasInt64() || col.hasBool()) {
             return createLongVector(rowCount, col);
         }
+        if (col.hasTime()) {
+            return createTimeStampVector(rowCount, col);
+        }
         return null;
+    }
+
+    private static ColumnVector createTimeStampVector(int rowCount, Column col) {
+        if (rowCount == 0) {
+            return null;
+        }
+        TimestampColumnVector tcv = new TimestampColumnVector(rowCount);
+        if (col.hasTime()) {
+            for(int j = 0; j < rowCount; j++) {
+                tcv.set(j, new Timestamp(col.getTime().getLongs(j)));
+            }
+        }
+        return new OrcColumnVector(DataTypes.TimestampType, tcv);
     }
 
     private static ColumnVector createLongVector(int rowCount, Column col) {
@@ -35,12 +53,6 @@ public class SparkUtil {
             return null;
         }
         LongColumnVector lcv = new LongColumnVector(rowCount);
-        if (col.hasTime()) {
-            for (int j = 0; j < rowCount; j++) {
-                //lcv.vector[j] = col.getTime().getLongs(j) * 1000;
-                lcv.vector[j] = col.getTime().getLongs(j) / 1000;
-            }
-        }
         if (col.hasInt64()) {
             for (int j=0; j<rowCount; j++) {
                 lcv.vector[j] = col.getInt64().getLongs(j);

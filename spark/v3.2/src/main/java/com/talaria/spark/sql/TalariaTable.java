@@ -93,8 +93,8 @@ public class TalariaTable implements Table, SupportsRead {
             case "DOUBLE":
                 return DataTypes.FloatType;
             case "TIMESTAMP":
-                //return DataTypes.TimestampType;
-                return DataTypes.LongType;
+                return DataTypes.TimestampType;
+                //return DataTypes.LongType;
             case "BOOLEAN":
                 return DataTypes.BooleanType;
         }

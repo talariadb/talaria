@@ -10,6 +10,7 @@ import org.apache.spark.sql.connector.read.streaming.MicroBatchStream;
 import org.apache.spark.sql.types.*;
 
 import java.io.IOException;
+import java.util.Objects;
 
 public class TalariaScan implements Scan {
 
@@ -29,16 +30,13 @@ public class TalariaScan implements Scan {
 
     @Override
     public Batch toBatch() {
-        return new TalariaBatch(table.name(), table.schema(), options.getPartitionFilter());
+        return new TalariaBatch(table, options);
     }
 
     @Override
     public MicroBatchStream toMicroBatchStream(String checkpointLocation){
-        System.out.println("*********************");
-        System.out.println(checkpointLocation);
-        System.out.println("*********************");
-        checkpointLocation = options.getCheckpointLocation();
-        System.out.println(checkpointLocation);
+        // use the user defined checkpoint location if its set.
+        checkpointLocation = !Objects.equals(options.getCheckpointLocation(), "") ? options.getCheckpointLocation(): checkpointLocation;
         try {
             return new TalariaMicroBatchStream(sparkContext, table, options, checkpointLocation);
         } catch (IOException e) {

@@ -10,18 +10,19 @@ public class BatchExample {
         SparkSession spark = SparkSession.builder().master("local[*]").appName("Simple Application").getOrCreate();
         spark.sparkContext().setLogLevel("ERROR");
         Dataset<Row> d = spark.read()
-                .format("com.talaria.spark.sql.TalariaSource")
-                .option("tableName", "events")
-                .option("partitionBy", "event == 'relay.outcome'")
+                .format("talaria")
+                .option("domain", "127.0.0.1")
+                .option("port", "8043")
+                .option("schema", "data")
+                .option("table", "events")
+                .option("partitionFilter", "relay.outcome")
+                .option("fromTimestamp", "1658634750")
                 .load();
         d.printSchema();
         d.cache();
         d.groupBy("ingested_by").count().show();
         d.select("ingested_at").show(10);
-        System.out.println(d.count());
-        //d.collectAsList();
 
         spark.stop();
-
     }
 }

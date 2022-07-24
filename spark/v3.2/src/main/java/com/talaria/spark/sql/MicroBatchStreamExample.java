@@ -15,7 +15,6 @@ public class MicroBatchStreamExample {
                 .config("spark.hadoop.google.cloud.auth.service.account.json.keyfile", "/Users/manojbabu/keys/terraform-tracking-stg.json")
                 .appName("Simple Application").getOrCreate();
         spark.sparkContext().setLogLevel("ERROR");
-        //spark.sparkContext().hadoopConfiguration().set("fs.defaultFS", "gs://airasia-tracking-stg-ingestor-raw");
 
         Dataset<Row> df = spark.readStream()
                 .format("talaria")

@@ -20,7 +20,6 @@ import java.util.List;
 
 public class TalariaMicroBatchStream implements MicroBatchStream {
     private static final Logger LOG = LoggerFactory.getLogger(TalariaMicroBatchStream.class);
-    private final JavaSparkContext sparkContext;
     private final String tableName;
     private final StructType schema;
     private final String partitionFilter;
@@ -35,7 +34,6 @@ public class TalariaMicroBatchStream implements MicroBatchStream {
     Long initialOffsetValue;
 
     TalariaMicroBatchStream(JavaSparkContext context, TalariaTable table, ReadOptions options,  String checkpointLocation) throws IOException {
-        this.sparkContext = context;
         this.tableName = table.name();
         this.schema = table.schema();
         this.talariaDomain = options.getDomain();
@@ -66,17 +64,17 @@ public class TalariaMicroBatchStream implements MicroBatchStream {
         TalariaClient tc = new TalariaClient(this.talariaDomain, this.talariaPort);
         List<Endpoint> nodes = tc.getNodes();
         tc.close();
-        List<TalariaMicroBatchStreamPartition> partitions = new ArrayList<>(Collections.emptyList());
+        List<TalariaPartition> partitions = new ArrayList<>(Collections.emptyList());
         for (Endpoint node: nodes) {
-            partitions.add(new TalariaMicroBatchStreamPartition(startOffset, endOffset, node.getHost(), node.getPort()));
+            partitions.add(new TalariaPartition(node.getHost(), node.getPort(), startOffset, endOffset));
         }
-        TalariaMicroBatchStreamPartition[] talariaPartitions = new TalariaMicroBatchStreamPartition[partitions.size()];
+        TalariaPartition[] talariaPartitions = new TalariaPartition[partitions.size()];
         return partitions.toArray(talariaPartitions);
     }
 
     @Override
     public PartitionReaderFactory createReaderFactory() {
-        return new TalariaMicroBatchStreamPartitionReaderFactory(tableName, schema, talariaSchema, hashBy, sortBy, partitionFilter);
+        return new TalariaPartitionReaderFactory(tableName, schema, talariaSchema, hashBy, sortBy, partitionFilter);
     }
 
     @Override
