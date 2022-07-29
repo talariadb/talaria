@@ -23,6 +23,8 @@ import (
 	"google.golang.org/protobuf/types/dynamicpb"
 )
 
+const ctxTag = "bq"
+
 // bqRow implements ValueSaver interface Save method.
 type bqRow struct {
 	values map[string]interface{}
@@ -111,6 +113,9 @@ func (w *Writer) Write(key key.Key, blocks []block.Block) error {
 	if err != nil {
 		return err
 	}
+
+	start := time.Now()
+
 	blk, err := block.FromBuffer(buffer)
 	if err != nil {
 		return err
@@ -144,15 +149,18 @@ func (w *Writer) Write(key key.Key, blocks []block.Block) error {
 
 		result, err = w.managedStream.AppendRows(w.context, [][]byte{b})
 		if err != nil {
-			return err
+			w.monitor.Count1(ctxTag, "writeerror")
+			return errors.Internal("bigquery: unable to write", err)
 		}
 	}
+
+	w.monitor.Histogram(ctxTag, "writelatency", float64(time.Since(start)))
 	o, err := result.GetResult(w.context)
 	if err != nil {
 		return err
 	}
 	if o != managedwriter.NoStreamOffset {
-		return errors.Newf("offset mismatch, got %d want %d", o, managedwriter.NoStreamOffset)
+		return errors.Newf("bigquery: offset mismatch, got %d want %d", o, managedwriter.NoStreamOffset)
 	}
 	return nil
 }
@@ -191,6 +199,7 @@ func (w *Writer) process(parent context.Context) error {
 
 func (w *Writer) addToQueue(row block.Row) async.Task {
 	return async.NewTask(func(ctx context.Context) (_ interface{}, err error) {
+		start := time.Now()
 		v := row.Values
 		r := new(bqRow)
 		r.values = make(map[string]interface{})
@@ -208,7 +217,9 @@ func (w *Writer) addToQueue(row block.Row) async.Task {
 		}
 
 		_, err = w.managedStream.AppendRows(w.context, [][]byte{b})
+		w.monitor.Histogram(ctxTag, "streamlatency", float64(time.Since(start)))
 		if err != nil {
+			w.monitor.Count1(ctxTag, "streamerror")
 			return nil, err
 		}
 		return nil, nil

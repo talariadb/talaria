@@ -6,6 +6,7 @@ package client
 import (
 	"context"
 	"errors"
+	"fmt"
 	"time"
 
 	pb "github.com/kelindar/talaria/proto"
@@ -71,7 +72,7 @@ func (c *Client) connect() error {
 
 	var dialOptions []grpc.DialOption
 	if c.netconf.LoadBalancer != "" {
-		dialOptions = append(dialOptions, grpc.WithBalancerName(c.netconf.LoadBalancer))
+		dialOptions = append(dialOptions, grpc.WithDefaultServiceConfig(fmt.Sprintf(`{"loadBalancingPolicy":"%s"}`, c.netconf.LoadBalancer)))
 	}
 
 	if !c.netconf.NonBlocking {
