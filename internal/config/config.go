@@ -85,6 +85,7 @@ type Readers struct {
 type Writers struct {
 	GRPC  *GRPC  `json:"grpc,omitempty" yaml:"grpc" env:"GRPC"`    // The GRPC ingress
 	S3SQS *S3SQS `json:"s3sqs,omitempty" yaml:"s3sqs" env:"S3SQS"` // The S3SQS ingress
+	NATS  *NATS  `json:"nats,omitempty" yaml:"nats" env:"NATS"`    // The NATS ingress
 }
 
 // GRPC represents the configuration for gRPC ingress
@@ -100,6 +101,14 @@ type S3SQS struct {
 	VisibilityTimeout int64  `json:"visibilityTimeout,omitempty" yaml:"visibilityTimeout" env:"VISIBILITYTIMEOUT"` // in seconds
 	Retries           int    `json:"retries" yaml:"retries" env:"RETRIES"`
 	ConcurrencyThread int    `json:"concurrencyThread" yaml:"concurrencyThread" env:"concurrencyThread"`
+}
+
+// NATS represents NATS consumer configuration
+type NATS struct {
+	Subject string `json:"subject" yaml:"subject" env:"SUBJECT"`
+	URL     string `json:"url" yaml:"url" env:"URL"`
+	Stream  string `json:"stream" yaml:"stream" env:"STREAM"`
+	Queue   string `json:"queue" yaml:"queue" env:"QUEUE"`
 }
 
 // Presto represents the Presto configuration
