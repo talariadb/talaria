@@ -63,7 +63,7 @@ func (c *clientImpl) enrichTags(tags []string) []string {
 
 // Duration is time tracking metrics
 func (c *clientImpl) Duration(contextKey, key string, start time.Time, tags ...string) {
-	c.stats.Timing(contextKey+"."+key, time.Now().Sub(start), c.enrichTags(tags), 1)
+	c.stats.Timing(contextKey+"."+key, time.Since(start), c.enrichTags(tags), 1)
 }
 
 // Gauge measures a value over time
