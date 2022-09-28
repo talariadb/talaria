@@ -10,21 +10,21 @@ import (
 )
 
 type Ingress struct {
-	subscriber subscribe // The Nats subscriber.
-	monitor    monitor.Monitor
-	sinks      []config.Sink // The sink destinations which the subscription will sink to.
+	// jetstream exposed interface.
+	jetstream JetstreamI
+	monitor   monitor.Monitor
+	conn      *nats.Conn
 }
 
-type subscriber struct {
+type jetstream struct {
 	// The name of the queue group.
-	queue string
-	// The name of subject listening to.
+	queue   string // The name of subject listening to.
 	subject string
 	// The jetstream context which provide jetstream api.
 	jsContext nats.JetStreamContext
 }
 
-type subscribe interface {
+type JetstreamI interface {
 	// Subscribe to defined subject from Nats server.
 	Subscribe(handler nats.MsgHandler) (*nats.Subscription, error)
 	Publish(msg []byte) (nats.PubAckFuture, error)
@@ -44,30 +44,30 @@ func New(conf *config.NATS, monitor monitor.Monitor) (*Ingress, error) {
 	}
 
 	return &Ingress{
-		subscriber: NewSubscriber(conf.Subject, conf.Queue, js),
-		monitor:    monitor,
+		jetstream: NewJetStream(conf.Subject, conf.Queue, js),
+		monitor:   monitor,
+		conn:      nc,
 	}, nil
 }
 
-func NewSubscriber(subject, queue string, js nats.JetStreamContext) *subscriber {
-	return &subscriber{
+func NewJetStream(subject, queue string, js nats.JetStreamContext) *jetstream {
+	return &jetstream{
 		subject:   subject,
 		queue:     queue,
 		jsContext: js,
 	}
 }
 
-func (s *subscriber) Subscribe(handler nats.MsgHandler) (*nats.Subscription, error) {
-	// Queuesubscribe automatically create ephemeral push based consumer with queue group defined
+func (s *jetstream) Subscribe(handler nats.MsgHandler) (*nats.Subscription, error) {
+	// Queuesubscribe automatically create ephemeral push based consumer with queue group defined.
 	sb, err := s.jsContext.QueueSubscribe(s.subject, s.queue, handler)
 	if err != nil {
-
 		return nil, err
 	}
 	return sb, nil
 }
 
-func (s *subscriber) Publish(msg []byte) (nats.PubAckFuture, error) {
+func (s *jetstream) Publish(msg []byte) (nats.PubAckFuture, error) {
 	p, err := s.jsContext.PublishAsync(s.subject, msg)
 	if err != nil {
 		return nil, err
@@ -75,11 +75,12 @@ func (s *subscriber) Publish(msg []byte) (nats.PubAckFuture, error) {
 	return p, nil
 }
 
-// SubsribeThen will perform sink whenever there is event coming from stream.
+// SubsribeHandler subscribes to specific subject and unmarshal the message into talaria's event type.
+// The event message then will be used as the input of the handler function defined.
 func (i *Ingress) SubsribeHandler(handler func(b []map[string]interface{})) error {
 	var block []map[string]interface{}
 
-	_, err := i.subscriber.Subscribe(func(msg *nats.Msg) {
+	_, err := i.jetstream.Subscribe(func(msg *nats.Msg) {
 		if err := json.Unmarshal(msg.Data, &block); err != nil {
 			i.monitor.Error(errors.Internal("nats: unable to unmarshal", err))
 		}
@@ -89,4 +90,10 @@ func (i *Ingress) SubsribeHandler(handler func(b []map[string]interface{})) erro
 		return err
 	}
 	return nil
+}
+
+// Close ingress
+func (i *Ingress) Close() {
+	i.conn.Close()
+	return
 }

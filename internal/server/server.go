@@ -193,6 +193,12 @@ func (s *Server) Close(monitor monitor.Monitor) {
 		monitor.Info("Close S3SQS done, it will wait all ingestion finished")
 	}
 
+	// Stop nats jetstream ingress
+	if s.nats != nil {
+		s.nats.Close()
+		monitor.Info("Close nats jetstream done")
+	}
+
 	// Close all the open tables
 	for _, t := range s.tables {
 		if err := t.Close(); err != nil {
