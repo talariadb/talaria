@@ -1,9 +1,15 @@
 plugins {
     id 'java'
+    id 'java-library'
     id 'idea'
     id 'maven-publish'
 }
 
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(11)
+    }
+}
 group 'com.talaria'
 version '1.0-SNAPSHOT'
 
@@ -16,10 +22,10 @@ dependencies {
     compile group: 'com.talaria.client', name: 'java-client', version: '1.0-SNAPSHOT'
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.8.2'
     testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine'
-    compile group: 'org.apache.spark', name: 'spark-sql_2.13', version: '3.2.1'
+    implementation group: 'org.apache.spark', name: 'spark-sql_2.13', version: '3.2.1'
     implementation group: 'org.apache.spark', name: 'spark-core_2.13', version: '3.2.1'
     compile group: 'org.json', name: 'json', version: '20220320'
-    compile group: 'org.apache.spark', name: 'spark-streaming_2.13', version: '3.2.1'
+    implementation group: 'org.apache.spark', name: 'spark-streaming_2.13', version: '3.2.1'
     implementation('com.google.guava:guava:31.1-jre')
     implementation 'com.google.cloud.bigdataoss:gcs-connector:hadoop3-2.2.0'
     //runtime 'com.google.cloud.bigdataoss:gcs-connector:hadoop3-2.2.7'
@@ -42,4 +48,11 @@ publishing {
     repositories {
         mavenLocal()
     }
+}
+
+task fatJar(type: Jar) {
+
+    baseName = project.name + '-all'
+    from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
+    with jar
 }
