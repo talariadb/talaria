@@ -279,7 +279,7 @@ func (s *Storage) GC(ctx context.Context) (interface{}, error) {
 	s.monitor.Gauge(ctxTag, "GC.purge", float64(deleted), "type:deleted")
 	s.monitor.Gauge(ctxTag, "GC.purge", float64(total), "type:total")
 
-	for true {
+	for {
 		if s.db.RunValueLogGC(discardRatio) != nil {
 			s.monitor.Count1(ctxTag, "vlog.GC", "type:stopped")
 			return nil, nil

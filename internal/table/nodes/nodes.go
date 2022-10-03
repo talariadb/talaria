@@ -122,7 +122,7 @@ func (t *Table) getColumn(columnName string, columnType typeof.Type) (presto.Col
 	case "started":
 		column.Append(t.startedAt.Unix())
 	case "uptime":
-		column.Append(durafmt.Parse(time.Now().Sub(t.startedAt)).String())
+		column.Append(durafmt.Parse(time.Since(t.startedAt)).String())
 	case "peers":
 		column.Append(encode(t.cluster.Members()))
 	}
