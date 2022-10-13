@@ -49,12 +49,8 @@ func TestToOrc(t *testing.T) {
 	assert.NoError(t, err)
 
 	mergedBlocks := []block.Block{}
-	for _, blk := range block1 {
-		mergedBlocks = append(mergedBlocks, blk)
-	}
-	for _, blk := range block2 {
-		mergedBlocks = append(mergedBlocks, blk)
-	}
+	mergedBlocks = append(mergedBlocks, block1...)
+	mergedBlocks = append(mergedBlocks, block2...)
 	mergedValue, err := ToOrc(mergedBlocks)
 	assert.NoError(t, err)
 
@@ -114,12 +110,8 @@ func TestMerge_DifferentSchema(t *testing.T) {
 	assert.NoError(t, err)
 
 	mergedBlocks := []block.Block{}
-	for _, blk := range block1 {
-		mergedBlocks = append(mergedBlocks, blk)
-	}
-	for _, blk := range block2 {
-		mergedBlocks = append(mergedBlocks, blk)
-	}
+	mergedBlocks = append(mergedBlocks, block1...)
+	mergedBlocks = append(mergedBlocks, block2...)
 	mergedValue, err := ToOrc(mergedBlocks)
 	assert.NoError(t, err)
 
