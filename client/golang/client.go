@@ -47,8 +47,10 @@ func Dial(address string, options ...Option) (*Client, error) {
 					ErrorPercentThreshold: hystrix.DefaultErrorPercentThreshold,
 				},
 			},
-			Address:     address,
-			DialTimeout: defaultDialTimeout,
+			Address:            address,
+			DialTimeout:        defaultDialTimeout,
+			MaxCallRecvMsgSize: 32 * 1024 * 1024, // 32MB
+			MaxCallSendMsgSize: 32 * 1024 * 1024, // 32MB
 		},
 	}
 
@@ -83,6 +85,14 @@ func (c *Client) connect() error {
 		dialOptions = append(dialOptions, grpc.WithInsecure())
 	} else {
 		dialOptions = append(dialOptions, grpc.WithTransportCredentials(c.netconf.Credentials))
+	}
+
+	if c.netconf.MaxCallSendMsgSize != 0 {
+		dialOptions = append(dialOptions, grpc.WithDefaultCallOptions(grpc.MaxCallSendMsgSize(c.netconf.MaxCallSendMsgSize)))
+	}
+
+	if c.netconf.MaxCallRecvMsgSize != 0 {
+		dialOptions = append(dialOptions, grpc.WithDefaultCallOptions(grpc.MaxCallRecvMsgSize(c.netconf.MaxCallRecvMsgSize)))
 	}
 
 	conn, err := grpc.DialContext(timeoutCtx, c.netconf.Address, dialOptions...)

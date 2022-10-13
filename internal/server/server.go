@@ -46,10 +46,19 @@ type Storage interface {
 // ------------------------------------------------------------------------------------------------------------
 
 // New creates a new talaria server.
+
 func New(conf config.Func, monitor monitor.Monitor, cluster cluster.Membership, tables ...table.Table) *Server {
-	const maxMessageSize = 32 * 1024 * 1024 // 32 MB
+	// Default grpc message size is 32 MB
+	if conf().Writers.GRPC.MaxSendMsgSize == 0 {
+		conf().Writers.GRPC.MaxSendMsgSize = 32 * 1024 * 1024 // 32 MB
+	}
+
+	if conf().Writers.GRPC.MaxRecvMsgSize == 0 {
+		conf().Writers.GRPC.MaxRecvMsgSize = 32 * 1024 * 1024 // 32 MB
+	}
+
 	server := &Server{
-		server:  grpc.NewServer(grpc.MaxRecvMsgSize(maxMessageSize)),
+		server:  grpc.NewServer(grpc.MaxRecvMsgSize(conf().Writers.GRPC.MaxRecvMsgSize), grpc.MaxSendMsgSize(conf().Writers.GRPC.MaxSendMsgSize)),
 		conf:    conf,
 		monitor: monitor,
 		cluster: cluster,

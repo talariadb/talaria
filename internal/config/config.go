@@ -89,7 +89,9 @@ type Writers struct {
 
 // GRPC represents the configuration for gRPC ingress
 type GRPC struct {
-	Port int32 `json:"port" yaml:"port" env:"PORT"` // The port for the gRPC listener (default: 8080)
+	Port           int32 `json:"port" yaml:"port" env:"PORT"` // The port for the gRPC listener (default: 8080)
+	MaxRecvMsgSize int   `json:"maxRecvMsgSize" yaml:"maxRecvMsgSize" env:"MAXRECVMSGSIZE"`
+	MaxSendMsgSize int   `json:"maxSendMsgSize" yaml:"maxSendMsgSize" env:"MAXSENDMSGSIZE"`
 }
 
 // S3SQS represents the aws S3 SQS configuration
@@ -210,10 +212,12 @@ type PubSubSink struct {
 // TalariaSink represents a sink to an instance of Talaria
 type TalariaSink struct {
 	BaseSink              `yaml:",inline"`
-	Endpoint              string         `json:"endpoint" yaml:"endpoint" env:"ENDPOINT"`                    // The second Talaria endpoint
-	CircuitTimeout        *time.Duration `json:"timeout" yaml:"timeout" env:"TIMEOUT"`                       // The timeout (in seconds) for requests to the second Talaria
-	MaxConcurrent         *int           `json:"concurrency" yaml:"concurrency" env:"CONCURRENCY"`           // The number of concurrent requests permissible
-	ErrorPercentThreshold *int           `json:"errorThreshold" yaml:"errorThreshold" env:"ERROR_THRESHOLD"` // The percentage of failed requests tolerated
+	Endpoint              string         `json:"endpoint" yaml:"endpoint" env:"ENDPOINT"`                               // The second Talaria endpoint
+	CircuitTimeout        *time.Duration `json:"timeout" yaml:"timeout" env:"TIMEOUT"`                                  // The timeout (in seconds) for requests to the second Talaria
+	MaxConcurrent         *int           `json:"concurrency" yaml:"concurrency" env:"CONCURRENCY"`                      // The number of concurrent requests permissible
+	ErrorPercentThreshold *int           `json:"errorThreshold" yaml:"errorThreshold" env:"ERROR_THRESHOLD"`            // The percentage of failed requests tolerated
+	MaxCallRecvMsgSize    *int           `json:"maxCallRecvMsgSize" yaml:"maxCallRecvMsgSize" env:"MAXCALLRECVMSGSIZE"` // The Max message size of gprc call per server response
+	MaxCallSendMsgSize    *int           `json:"maxCallSendMsgSize" yaml:"maxCallSendMsgSize" env:"MAXCALLSENDMSGSIZE"` // The Max message size of gprc call per client request
 }
 
 // Func represents a config function
