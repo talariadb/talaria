@@ -15,12 +15,21 @@ type Option func(client *Client)
 
 // netconf defines connection pool configuration for a gRPC service
 type netconf struct {
-	CircuitOptions map[string]hystrix.CommandConfig // Circuit configuration
-	Address        string                           // Endpoint of the server
-	DialTimeout    time.Duration                    // Dial timaout
-	Credentials    credentials.TransportCredentials // Transport credentials to use
-	NonBlocking    bool                             // once set to true, the client will be returned before connection gets ready
-	LoadBalancer   string                           // gRPC load balancing strategy
+	CircuitOptions     map[string]hystrix.CommandConfig // Circuit configuration
+	Address            string                           // Endpoint of the server
+	DialTimeout        time.Duration                    // Dial timaout
+	Credentials        credentials.TransportCredentials // Transport credentials to use
+	NonBlocking        bool                             // once set to true, the client will be returned before connection gets ready
+	LoadBalancer       string                           // gRPC load balancing strategy
+	MaxCallRecvMsgSize int                              // Message size of response from server
+	MaxCallSendMsgSize int                              // Message size of client request
+}
+
+func WithMaxMsgSize(maxSendMsgSize, maxRecvMsgSize int) Option {
+	return func(client *Client) {
+		client.netconf.MaxCallRecvMsgSize = maxRecvMsgSize
+		client.netconf.MaxCallSendMsgSize = maxSendMsgSize
+	}
 }
 
 // WithNetwork specifies the configuration for a connection.

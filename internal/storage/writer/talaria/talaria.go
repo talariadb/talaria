@@ -36,11 +36,14 @@ type Writer struct {
 }
 
 // New initializes a new Talaria writer.
-func New(endpoint, filter, encoding string, monitor monitor.Monitor, circuitTimeout *time.Duration, maxConcurrent *int, errorPercentThreshold *int) (*Writer, error) {
+func New(endpoint, filter, encoding string, monitor monitor.Monitor, circuitTimeout *time.Duration, maxConcurrent, errorPercentThreshold, maxMsgSendSize, maxMsgRecvSize *int) (*Writer, error) {
 
 	var newTimeout = 5 * time.Second
 	var newMaxConcurrent = hystrix.DefaultMaxConcurrent
 	var newErrorPercentThreshold = hystrix.DefaultErrorPercentThreshold
+	var newMaxMsgRecvSize = 32 * 1024 * 1024 // 32MB
+	var newMaxMsgSendSize = 32 * 1024 * 1024 // 32MB
+	var loadBalancingStrategy = "round_robin"
 
 	baseWriter, err := base.New(filter, encoding, monitor)
 	if err != nil {
@@ -59,8 +62,18 @@ func New(endpoint, filter, encoding string, monitor monitor.Monitor, circuitTime
 		newErrorPercentThreshold = *errorPercentThreshold
 	}
 
+	if maxMsgRecvSize != nil {
+		newMaxMsgRecvSize = *maxMsgRecvSize
+	}
+
+	if maxMsgSendSize != nil {
+		newMaxMsgSendSize = *maxMsgSendSize
+	}
+
 	dialOptions := []talaria.Option{}
 	dialOptions = append(dialOptions, talaria.WithCircuit(newTimeout, newMaxConcurrent, newErrorPercentThreshold))
+	dialOptions = append(dialOptions, talaria.WithMaxMsgSize(newMaxMsgSendSize, newMaxMsgRecvSize))
+	dialOptions = append(dialOptions, talaria.WithLoadBalancer(loadBalancingStrategy))
 
 	client, err := getClient(endpoint, dialOptions...)
 
