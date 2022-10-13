@@ -24,6 +24,12 @@ public class TalariaClient {
         asyncStub = QueryGrpc.newStub(channel);
     }
 
+    public TalariaClient(String host, int port, int maxInboundMsgSize) {
+        channel = ManagedChannelBuilder.forTarget(String.format("%s:%d", host, port)).maxInboundMessageSize(maxInboundMsgSize).usePlaintext().build();
+        blockingStub = QueryGrpc.newBlockingStub(channel);
+        asyncStub = QueryGrpc.newStub(channel);
+    }
+
     public void close() {
         channel.shutdownNow();
     }
@@ -34,7 +40,12 @@ public class TalariaClient {
     }
 
     public GetRowsResponse getRows(ByteString splitId, List<String> cols) {
-        GetRowsRequest req = GetRowsRequest.newBuilder().setSplitID(splitId).addAllColumns(cols).setMaxBytes(4096*1000).build();
+        GetRowsRequest req = GetRowsRequest.newBuilder().setSplitID(splitId).addAllColumns(cols).build();
+        return blockingStub.getRows(req);
+    }
+
+    public GetRowsResponse getRows(ByteString splitId, List<String> cols, int maxMsgSize) {
+        GetRowsRequest req = GetRowsRequest.newBuilder().setSplitID(splitId).addAllColumns(cols).setMaxBytes(maxMsgSize).build();
         return blockingStub.getRows(req);
     }
 
