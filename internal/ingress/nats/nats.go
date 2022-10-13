@@ -2,6 +2,7 @@ package nats
 
 import (
 	"encoding/json"
+	"fmt"
 
 	"github.com/kelindar/talaria/internal/config"
 	"github.com/kelindar/talaria/internal/monitor"
@@ -34,30 +35,37 @@ type Event map[string]interface{}
 
 // New create new ingestion from nats jetstream to sinks.
 func New(conf *config.NATS, monitor monitor.Monitor) (*Ingress, error) {
-	nc, err := nats.Connect(conf.URL)
+	nc, err := nats.Connect(fmt.Sprintf("%s:%d", conf.Host, conf.Port))
 	if err != nil {
 		return nil, err
 	}
-	js, err := nc.JetStream(nats.PublishAsyncMaxPending(256))
+
+	js, err := NewJetStream(conf.Subject, conf.Queue, nc)
 	if err != nil {
 		return nil, err
 	}
 
 	return &Ingress{
-		jetstream: NewJetStream(conf.Subject, conf.Queue, js),
+		jetstream: js,
 		monitor:   monitor,
 		conn:      nc,
 	}, nil
 }
 
-func NewJetStream(subject, queue string, js nats.JetStreamContext) *jetstream {
+// NewJetStream create Jetstream context
+func NewJetStream(subject, queue string, nc *nats.Conn) (*jetstream, error) {
+	js, err := nc.JetStream()
+	if err != nil {
+		return nil, err
+	}
 	return &jetstream{
 		subject:   subject,
 		queue:     queue,
 		jsContext: js,
-	}
+	}, nil
 }
 
+// Subscribe to a subject in nats server
 func (s *jetstream) Subscribe(handler nats.MsgHandler) (*nats.Subscription, error) {
 	// Queuesubscribe automatically create ephemeral push based consumer with queue group defined.
 	sb, err := s.jsContext.QueueSubscribe(s.subject, s.queue, handler)
@@ -67,6 +75,7 @@ func (s *jetstream) Subscribe(handler nats.MsgHandler) (*nats.Subscription, erro
 	return sb, nil
 }
 
+// Publish message to the subject in nats server
 func (s *jetstream) Publish(msg []byte) (nats.PubAckFuture, error) {
 	p, err := s.jsContext.PublishAsync(s.subject, msg)
 	if err != nil {

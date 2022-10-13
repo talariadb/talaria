@@ -1,10 +1,15 @@
 package nats
 
 import (
+	"context"
 	"fmt"
+	"os"
 	"testing"
+	"time"
 
 	"github.com/kelindar/talaria/internal/config"
+	"github.com/kelindar/talaria/internal/config/env"
+	"github.com/kelindar/talaria/internal/config/static"
 	"github.com/kelindar/talaria/internal/monitor"
 	"github.com/nats-io/nats-server/v2/server"
 	natsserver "github.com/nats-io/nats-server/v2/test"
@@ -13,6 +18,8 @@ import (
 )
 
 const TEST_PORT = 8369
+
+var conf config.NATS
 
 func RunServerOnPort(port int) *server.Server {
 	opts := natsserver.DefaultTestOptions
@@ -25,18 +32,32 @@ func RunServerWithOptions(opts *server.Options) *server.Server {
 	return natsserver.RunServer(opts)
 }
 
-func TestSubscribe(t *testing.T) {
-	s := RunServerOnPort(TEST_PORT)
-	defer s.Shutdown()
-
-	sUrl := fmt.Sprintf("nats://127.0.0.1:%d", TEST_PORT)
-
-	conf := &config.NATS{
-		URL:     sUrl,
+func TestLoadNatsConfig(t *testing.T) {
+	const refreshTime = 50 * time.Millisecond
+	const waitTime = 100 * time.Millisecond
+	nats := &config.NATS{
+		Host:    "nats://127.0.0.1",
+		Port:    TEST_PORT,
 		Subject: "event.talaria",
 		Queue:   "talarias",
 	}
-	ingress, err := New(conf, monitor.NewNoop())
+
+	os.Setenv("TALARIA_WRITERS_NATS_HOST", "nats://127.0.0.1")
+	os.Setenv("TALARIA_WRITERS_NATS_PORT", fmt.Sprint(TEST_PORT))
+	os.Setenv("TALARIA_WRITERS_NATS_SUBJECT", "event.talaria")
+	os.Setenv("TALARIA_WRITERS_NATS_QUEUE", "talarias")
+
+	cfg := config.Load(context.Background(), refreshTime, static.New(), env.New("TALARIA"))
+	assert.Equal(t, nats, cfg().Writers.NATS)
+
+	conf = *cfg().Writers.NATS
+}
+
+func TestSubscribe(t *testing.T) {
+	s := RunServerOnPort(int(conf.Port))
+	defer s.Shutdown()
+
+	ingress, err := New(&conf, monitor.NewNoop())
 	assert.Nil(t, err)
 	assert.NotNil(t, ingress)
 

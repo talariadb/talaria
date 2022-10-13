@@ -106,7 +106,8 @@ type S3SQS struct {
 // NATS represents NATS consumer configuration
 type NATS struct {
 	Subject string `json:"subject" yaml:"subject" env:"SUBJECT"`
-	URL     string `json:"url" yaml:"url" env:"URL"`
+	Host    string `json:"Host" yaml:"Host" env:"HOST"`
+	Port    int32  `json:"Port" yaml:"Port" env:"PORT"`
 	Stream  string `json:"stream" yaml:"stream" env:"STREAM"`
 	Queue   string `json:"queue" yaml:"queue" env:"QUEUE"`
 }
