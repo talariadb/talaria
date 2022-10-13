@@ -5,6 +5,11 @@ go 1.18
 // should be removed once crphang/orc is up to date with upstream orc
 replace github.com/crphang/orc => github.com/tardunge/orc v0.0.7
 
+replace github.com/dgraph-io/badger/v3 v3.2103.1 => github.com/talariadb/badger/v3 v3.2103.1-with-arm-fix
+
+// This may not necessary, but explictly import it in case of some cache in go mod
+replace github.com/dgraph-io/ristretto v0.1.0 => github.com/talariadb/ristretto v0.2.0
+
 require (
 	cloud.google.com/go/bigquery v1.35.0
 	cloud.google.com/go/pubsub v1.3.1
