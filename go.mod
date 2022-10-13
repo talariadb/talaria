@@ -34,13 +34,14 @@ require (
 	github.com/myteksi/hystrix-go v1.1.3
 	github.com/samuel/go-thrift v0.0.0-20191111193933-5165175b40af
 	github.com/sercand/kuberesolver/v3 v3.0.0
-	github.com/stretchr/testify v1.7.0
+	github.com/stretchr/testify v1.8.0
 	github.com/twmb/murmur3 v1.1.3
+	go.nhat.io/grpcmock v0.20.0
 	golang.org/x/sync v0.0.0-20220601150217-0de741cfad7f
 	google.golang.org/api v0.86.0
-	google.golang.org/grpc v1.47.0
-	google.golang.org/protobuf v1.28.0
-	gopkg.in/yaml.v2 v2.2.8
+	google.golang.org/grpc v1.49.0
+	google.golang.org/protobuf v1.28.1
+	gopkg.in/yaml.v2 v2.4.0
 )
 
 require (
@@ -58,6 +59,7 @@ require (
 	github.com/apache/thrift v0.13.0 // indirect
 	github.com/armon/go-metrics v0.3.3 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
+	github.com/bool64/shared v0.1.4 // indirect
 	github.com/cespare/xxhash v1.1.0 // indirect
 	github.com/cespare/xxhash/v2 v2.1.1 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
@@ -79,11 +81,13 @@ require (
 	github.com/googleapis/gax-go/v2 v2.4.0 // indirect
 	github.com/googleapis/go-type-adapters v1.0.0 // indirect
 	github.com/gopherjs/gopherjs v0.0.0-20200209183636-89e6cbcd0b6d // indirect
+	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0 // indirect
 	github.com/hashicorp/errwrap v1.0.0 // indirect
 	github.com/hashicorp/go-immutable-radix v1.2.0 // indirect
 	github.com/hashicorp/go-msgpack v1.1.5 // indirect
 	github.com/hashicorp/go-sockaddr v1.0.2 // indirect
 	github.com/hashicorp/golang-lru v0.5.4 // indirect
+	github.com/iancoleman/orderedmap v0.2.0 // indirect
 	github.com/imroc/req v0.3.0 // indirect
 	github.com/jmespath/go-jmespath v0.3.0 // indirect
 	github.com/klauspost/compress v1.12.3 // indirect
@@ -99,11 +103,17 @@ require (
 	github.com/prometheus/procfs v0.1.3 // indirect
 	github.com/satori/go.uuid v1.2.0 // indirect
 	github.com/sean-/seed v0.0.0-20170313163322-e2103e2c3529 // indirect
+	github.com/sergi/go-diff v1.2.0 // indirect
 	github.com/smartystreets/goconvey v1.6.4 // indirect
-	github.com/stretchr/objx v0.2.0 // indirect
+	github.com/spf13/afero v1.9.2 // indirect
+	github.com/stretchr/objx v0.4.0 // indirect
+	github.com/swaggest/assertjson v1.7.0 // indirect
+	github.com/yudai/gojsondiff v1.0.0 // indirect
+	github.com/yudai/golcs v0.0.0-20170316035057-ecda9a501e82 // indirect
 	github.com/yuin/gopher-lua v0.0.0-20191220021717-ab39c6098bdb // indirect
+	go.nhat.io/matcher/v2 v2.0.0 // indirect
 	go.opencensus.io v0.23.0 // indirect
-	golang.org/x/crypto v0.0.0-20201221181555-eec23a3978ad // indirect
+	golang.org/x/crypto v0.0.0-20211108221036-ceb1ce70b4fa // indirect
 	golang.org/x/net v0.0.0-20220624214902-1bab6f366d9e // indirect
 	golang.org/x/oauth2 v0.0.0-20220622183110-fd043fe589d2 // indirect
 	golang.org/x/sys v0.0.0-20220624220833-87e55d714810 // indirect
@@ -112,6 +122,6 @@ require (
 	golang.org/x/xerrors v0.0.0-20220609144429-65e65417b02f // indirect
 	google.golang.org/appengine v1.6.7 // indirect
 	google.golang.org/genproto v0.0.0-20220628213854-d9e0b6570c03 // indirect
-	gopkg.in/yaml.v3 v3.0.0-20200313102051-9f266ea9e77c // indirect
+	gopkg.in/yaml.v3 v3.0.1 // indirect
 	layeh.com/gopher-luar v1.0.7 // indirect
 )

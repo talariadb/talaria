@@ -32,11 +32,12 @@ func NewDomain(hashKey, sortKey string, filters ...string) (*PrestoThriftTupleDo
 		}
 
 		tokens := ex.Tokens()
-		if len(tokens) != 3 && len(tokens) != 7 {
-			return nil, errInvalidFilter
-		}
 
-		if len(tokens) == 3 {
+		// populate prestoDomains using tokens from the string exprs.
+		switch len(tokens) {
+		case 3:
+			// Constructs equalHash domains from string filter exprs
+			// eg: event == "relay.outcome"
 			// Check if the type of expression is valid
 			columnToken, operatorToken, value := tokens[0], tokens[1], tokens[2]
 			if columnToken.Kind != expr.VARIABLE || operatorToken.Kind != expr.COMPARATOR {
@@ -53,8 +54,9 @@ func NewDomain(hashKey, sortKey string, filters ...string) (*PrestoThriftTupleDo
 			default:
 				return nil, errInvalidColumn
 			}
-
-		} else {
+		case 7:
+			// Constructs boundedRangeDomains using the tokens from the string exprs.
+			// eg: ingested_at >= 1222223421 and < 1222223451
 			// Check if the type of expression is valid
 			columnToken, startOffset, endOffset := tokens[0], tokens[2], tokens[6]
 			if columnToken.Kind != expr.VARIABLE || startOffset.Kind != expr.NUMERIC || endOffset.Kind != expr.NUMERIC {
@@ -69,12 +71,10 @@ func NewDomain(hashKey, sortKey string, filters ...string) (*PrestoThriftTupleDo
 			default:
 				return nil, errInvalidColumn
 			}
+		default:
+			return nil, errInvalidFilter
 
 		}
-
-		/*for _, t := range ex.Tokens() {
-			fmt.Printf("%+v %+v\n", t.Kind.String(), t.Value)
-		}*/
 	}
 
 	return &PrestoThriftTupleDomain{
