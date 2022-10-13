@@ -151,7 +151,7 @@ func newWriter(sinks []config.Sink, monitor monitor.Monitor) (flush.Writer, erro
 
 		// Configure Talaria writer if present
 		if config.Talaria != nil {
-			w, err := talaria.New(config.Talaria.Endpoint, config.Talaria.Filter, config.Talaria.Encoder, monitor, config.Talaria.CircuitTimeout, config.Talaria.MaxConcurrent, config.Talaria.ErrorPercentThreshold)
+			w, err := talaria.New(config.Talaria.Endpoint, config.Talaria.Filter, config.Talaria.Encoder, monitor, config.Talaria.CircuitTimeout, config.Talaria.MaxConcurrent, config.Talaria.ErrorPercentThreshold, config.Talaria.MaxCallSendMsgSize, config.Talaria.MaxCallRecvMsgSize)
 			if err != nil {
 				return nil, err
 			}
