@@ -14,6 +14,8 @@ import (
 	"github.com/grab/async"
 	"github.com/kelindar/talaria/internal/column/computed"
 	"github.com/kelindar/talaria/internal/config"
+	"github.com/kelindar/talaria/internal/encoding/strings"
+	"github.com/kelindar/talaria/internal/ingress/nats"
 	"github.com/kelindar/talaria/internal/ingress/s3sqs"
 	"github.com/kelindar/talaria/internal/monitor"
 	"github.com/kelindar/talaria/internal/monitor/errors"
@@ -47,9 +49,17 @@ type Storage interface {
 
 // New creates a new talaria server.
 func New(conf config.Func, monitor monitor.Monitor, cluster cluster.Membership, tables ...table.Table) *Server {
-	const maxMessageSize = 32 * 1024 * 1024 // 32 MB
+	// Default grpc message size is 32 MB
+	if conf().Writers.GRPC.MaxSendMsgSize == 0 {
+		conf().Writers.GRPC.MaxSendMsgSize = 32 * 1024 * 1024 // 32 MB
+	}
+
+	if conf().Writers.GRPC.MaxRecvMsgSize == 0 {
+		conf().Writers.GRPC.MaxRecvMsgSize = 32 * 1024 * 1024 // 32 MB
+	}
+
 	server := &Server{
-		server:  grpc.NewServer(grpc.MaxRecvMsgSize(maxMessageSize)),
+		server:  grpc.NewServer(grpc.MaxRecvMsgSize(conf().Writers.GRPC.MaxRecvMsgSize), grpc.MaxSendMsgSize(conf().Writers.GRPC.MaxSendMsgSize)),
 		conf:    conf,
 		monitor: monitor,
 		cluster: cluster,
@@ -90,6 +100,7 @@ type Server struct {
 	tables   map[string]table.Table // The list of tables
 	computed []computed.Computed    // The set of computed columns
 	s3sqs    *s3sqs.Ingress         // The S3SQS Ingress (optional)
+	nats     *nats.Ingress
 }
 
 // Listen starts listening on presto RPC & gRPC.
@@ -99,6 +110,11 @@ func (s *Server) Listen(ctx context.Context, prestoPort, grpcPort int32) error {
 
 	// Asynchronously start ingresting from S3/SQS (if configured)
 	if err := s.pollFromSQS(s.conf()); err != nil {
+		return err
+	}
+
+	// Asynchronously start ingresting from nats jetstream (if configured)
+	if err := s.subscribeToJetStream(s.conf()); err != nil {
 		return err
 	}
 
@@ -155,6 +171,32 @@ func (s *Server) Members() []string {
 	return s.cluster.Members()
 }
 
+// Optionally starts an nats stream ingress
+func (s *Server) subscribeToJetStream(conf *config.Config) (err error) {
+	if conf.Writers.NATS == nil {
+		return nil
+	}
+
+	// Create ingestor
+	s.nats, err = nats.New(conf.Writers.NATS, s.monitor)
+	if err != nil {
+		return err
+	}
+
+	// Start ingesting
+	s.monitor.Info("server: starting ingestion from nats")
+	s.nats.SubsribeHandler(func(block []map[string]interface{}) {
+		data := strings.NewEncoder().Encode(block)
+
+		s.Ingest(context.Background(), &talaria.IngestRequest{
+			Data: &talaria.IngestRequest_Batch{
+				Batch: data,
+			},
+		})
+	})
+	return nil
+}
+
 // Close closes the server and related resources.
 func (s *Server) Close(monitor monitor.Monitor) {
 	s.server.GracefulStop()
@@ -165,6 +207,12 @@ func (s *Server) Close(monitor monitor.Monitor) {
 	if s.s3sqs != nil {
 		s.s3sqs.Close()
 		monitor.Info("Close S3SQS done, it will wait all ingestion finished")
+	}
+
+	// Stop nats jetstream ingress
+	if s.nats != nil {
+		s.nats.Close()
+		monitor.Info("Close nats jetstream done")
 	}
 
 	// Close all the open tables
