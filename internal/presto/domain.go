@@ -32,30 +32,49 @@ func NewDomain(hashKey, sortKey string, filters ...string) (*PrestoThriftTupleDo
 		}
 
 		tokens := ex.Tokens()
-		if len(tokens) != 3 {
-			return nil, errInvalidFilter
-		}
 
-		// Check if the type of expression is valid
-		columnToken, operatorToken, value := tokens[0], tokens[1], tokens[2]
-		if columnToken.Kind != expr.VARIABLE || operatorToken.Kind != expr.COMPARATOR {
-			return nil, errInvalidFilter
-		}
+		// populate prestoDomains using tokens from the string exprs.
+		switch len(tokens) {
+		case 3:
+			// Constructs equalHash domains from string filter exprs
+			// eg: event == "relay.outcome"
+			// Check if the type of expression is valid
+			columnToken, operatorToken, value := tokens[0], tokens[1], tokens[2]
+			if columnToken.Kind != expr.VARIABLE || operatorToken.Kind != expr.COMPARATOR {
+				return nil, errInvalidFilter
+			}
 
-		// Convert and compare
-		column, operator := columnToken.Value.(string), operatorToken.Value.(string)
-		switch {
-		case column == hashKey && operator == "==" && value.Kind == expr.STRING:
-			domains[hashKey] = equalsHash(value.Value.(string))
-		case column == sortKey:
-			// TODO:
+			// Convert and compare
+			column, operator := columnToken.Value.(string), operatorToken.Value.(string)
+			switch {
+			case column == hashKey && operator == "==" && value.Kind == expr.STRING:
+				domains[hashKey] = equalsHash(value.Value.(string))
+			case column == sortKey && operator == ">=" && value.Kind == expr.NUMERIC:
+				domains[sortKey] = withinBoundedRangeSort(int64(value.Value.(float64)), int64(math.MaxInt64))
+			default:
+				return nil, errInvalidColumn
+			}
+		case 7:
+			// Constructs boundedRangeDomains using the tokens from the string exprs.
+			// eg: ingested_at >= 1222223421 and < 1222223451
+			// Check if the type of expression is valid
+			columnToken, startOffset, endOffset := tokens[0], tokens[2], tokens[6]
+			if columnToken.Kind != expr.VARIABLE || startOffset.Kind != expr.NUMERIC || endOffset.Kind != expr.NUMERIC {
+				return nil, errInvalidFilter
+			}
+
+			// Convert and compare
+			column, start, end := columnToken.Value.(string), startOffset.Value.(float64), endOffset.Value.(float64)
+			switch {
+			case column == sortKey:
+				domains[sortKey] = withinBoundedRangeSort(int64(start), int64(end))
+			default:
+				return nil, errInvalidColumn
+			}
 		default:
-			return nil, errInvalidColumn
-		}
+			return nil, errInvalidFilter
 
-		/*for _, t := range ex.Tokens() {
-			fmt.Printf("%+v %+v\n", t.Kind.String(), t.Value)
-		}*/
+		}
 	}
 
 	return &PrestoThriftTupleDomain{
@@ -83,6 +102,36 @@ func equalsHash(value string) *PrestoThriftDomain {
 							VarcharData: &PrestoThriftVarchar{
 								Bytes: []byte(value),
 								Sizes: []int32{int32(len(value))},
+							},
+						},
+						Bound: PrestoThriftBoundExactly,
+					},
+				}},
+			},
+		},
+	}
+}
+
+// withinBoundedRangeSort creates a domain for the sortkey bounds(ex: (= [) Lower inclusive and upper exclusive)
+func withinBoundedRangeSort(start, end int64) *PrestoThriftDomain {
+	return &PrestoThriftDomain{
+		ValueSet: &PrestoThriftValueSet{
+			RangeValueSet: &PrestoThriftRangeValueSet{
+				Ranges: []*PrestoThriftRange{{
+					Low: &PrestoThriftMarker{
+						Value: &PrestoThriftBlock{
+							BigintData: &PrestoThriftBigint{
+								Nulls: []bool{false},
+								Longs: []int64{start},
+							},
+						},
+						Bound: PrestoThriftBoundExactly,
+					},
+					High: &PrestoThriftMarker{
+						Value: &PrestoThriftBlock{
+							BigintData: &PrestoThriftBigint{
+								Nulls: []bool{false},
+								Longs: []int64{end},
 							},
 						},
 						Bound: PrestoThriftBoundExactly,

@@ -1,0 +1,74 @@
+plugins {
+    id 'java'
+    id 'java-library'
+    id 'com.google.protobuf' version '0.8.18'
+    id 'idea'
+    id 'maven-publish'
+}
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(11)
+    }
+}
+group 'com.talaria'
+version '1.0-SNAPSHOT'
+
+repositories {
+    mavenLocal()
+    maven { // The google mirror is less flaky than mavenCentral()
+        url "https://maven-central.storage-download.googleapis.com/maven2/" }
+    mavenCentral()
+}
+
+def grpcVersion = '1.47.0' // CURRENT_GRPC_VERSION
+def protobufVersion = '3.21.1'
+def protocVersion = protobufVersion
+
+dependencies {
+    implementation "io.grpc:grpc-protobuf:${grpcVersion}"
+    implementation "io.grpc:grpc-stub:${grpcVersion}"
+    compileOnly "org.apache.tomcat:annotations-api:6.0.53"
+    implementation "com.google.protobuf:protobuf-java-util:${protobufVersion}"
+    runtimeOnly "io.grpc:grpc-netty-shaded:${grpcVersion}"
+    testImplementation "io.grpc:grpc-testing:${grpcVersion}"
+    implementation group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: '2.12.0'
+    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.8.2'
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine'
+    testImplementation("io.grpc:grpc-testing")
+    testImplementation 'org.mockito:mockito-core:4.6.1'
+}
+
+protobuf {
+    protoc {
+        artifact = "com.google.protobuf:protoc:${protocVersion}"
+    }
+    plugins {
+        grpc {
+            artifact = "io.grpc:protoc-gen-grpc-java:${grpcVersion}"
+        }
+    }
+    generateProtoTasks {
+        all()*.plugins {
+            grpc {}
+        }
+    }
+}
+
+test {
+    useJUnitPlatform()
+}
+
+publishing {
+    publications {
+        maven(MavenPublication) {
+            groupId = 'com.talaria.client'
+            artifactId = 'java-client'
+            version = '1.0-SNAPSHOT'
+
+            from components.java
+        }
+    }
+    repositories {
+        mavenLocal()
+    }
+}

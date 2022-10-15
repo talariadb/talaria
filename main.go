@@ -69,8 +69,10 @@ func main() {
 	}
 
 	// Start the new server
-	server := server.New(configure, monitor, tables...)
+
+	server := server.New(configure, monitor, gossip, tables...)
 	waitExit := make(chan struct{}, 1)
+
 	// onSignal will be called when a OS-level signal is received.
 	onSignal(func(s os.Signal) {
 		monitor.Info("received signal %v, start graceful shutdown", s)

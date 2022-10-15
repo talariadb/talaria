@@ -20,6 +20,7 @@ import (
 	"github.com/kelindar/talaria/internal/monitor"
 	"github.com/kelindar/talaria/internal/monitor/errors"
 	"github.com/kelindar/talaria/internal/presto"
+	"github.com/kelindar/talaria/internal/server/cluster"
 	"github.com/kelindar/talaria/internal/server/thriftlog"
 	"github.com/kelindar/talaria/internal/table"
 	talaria "github.com/kelindar/talaria/proto"
@@ -47,7 +48,7 @@ type Storage interface {
 // ------------------------------------------------------------------------------------------------------------
 
 // New creates a new talaria server.
-func New(conf config.Func, monitor monitor.Monitor, tables ...table.Table) *Server {
+func New(conf config.Func, monitor monitor.Monitor, cluster cluster.Membership, tables ...table.Table) *Server {
 	// Default grpc message size is 32 MB
 	if conf().Writers.GRPC.MaxSendMsgSize == 0 {
 		conf().Writers.GRPC.MaxSendMsgSize = 32 * 1024 * 1024 // 32 MB
@@ -61,6 +62,7 @@ func New(conf config.Func, monitor monitor.Monitor, tables ...table.Table) *Serv
 		server:  grpc.NewServer(grpc.MaxRecvMsgSize(conf().Writers.GRPC.MaxRecvMsgSize), grpc.MaxSendMsgSize(conf().Writers.GRPC.MaxSendMsgSize)),
 		conf:    conf,
 		monitor: monitor,
+		cluster: cluster,
 		tables:  make(map[string]table.Table),
 	}
 
@@ -93,6 +95,7 @@ type Server struct {
 	server   *grpc.Server           // The underlying gRPC server
 	conf     config.Func            // The presto configuration
 	monitor  monitor.Monitor        // The monitoring layer
+	cluster  cluster.Membership     // The Gossip Cluster.
 	cancel   context.CancelFunc     // The cancellation function for the server
 	tables   map[string]table.Table // The list of tables
 	computed []computed.Computed    // The set of computed columns
@@ -161,6 +164,11 @@ func (s *Server) pollFromSQS(conf *config.Config) (err error) {
 		return false
 	})
 	return nil
+}
+
+// Members returns the nodes joining the talaria cluster.
+func (s *Server) Members() []string {
+	return s.cluster.Members()
 }
 
 // Optionally starts an nats stream ingress
