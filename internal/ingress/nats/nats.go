@@ -10,6 +10,10 @@ import (
 	"github.com/nats-io/nats.go"
 )
 
+const (
+	ctxTag = "NATS"
+)
+
 type Ingress struct {
 	// jetstream exposed interface.
 	jetstream JetstreamI
@@ -93,6 +97,7 @@ func (i *Ingress) SubsribeHandler(handler func(b []map[string]interface{})) erro
 		if err := json.Unmarshal(msg.Data, &block); err != nil {
 			i.monitor.Error(errors.Internal("nats: unable to unmarshal", err))
 		}
+		i.monitor.Count1(ctxTag, "NATS.subscribe.count")
 		handler(block)
 	})
 	if err != nil {
