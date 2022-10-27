@@ -188,11 +188,13 @@ func (s *Server) subscribeToJetStream(conf *config.Config) (err error) {
 	s.nats.SubsribeHandler(func(block []map[string]interface{}) {
 		data := strings.NewEncoder().Encode(block)
 
-		s.Ingest(context.Background(), &talaria.IngestRequest{
+		if _, err := s.Ingest(context.Background(), &talaria.IngestRequest{
 			Data: &talaria.IngestRequest_Batch{
 				Batch: data,
 			},
-		})
+		}); err != nil {
+			s.monitor.Warning(err)
+		}
 	})
 	return nil
 }
