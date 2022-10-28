@@ -48,7 +48,7 @@ func New(conf *config.NATS, monitor monitor.Monitor) (*Ingress, error) {
 	}), nats.DisconnectErrHandler(func(nc *nats.Conn, err error) {
 		log.Printf("Got disconnected. Reason: %q\n", nc.LastError())
 		monitor.Error(nc.LastError())
-	}))
+	}), nats.ErrorHandler(natsErrHandler))
 	if err != nil {
 		return nil, err
 	}
@@ -66,7 +66,7 @@ func New(conf *config.NATS, monitor monitor.Monitor) (*Ingress, error) {
 }
 
 func natsErrHandler(nc *nats.Conn, sub *nats.Subscription, natsErr error) {
-	fmt.Printf("error: %v\n", natsErr)
+	log.Printf("error: %v\n", natsErr)
 	if natsErr == nats.ErrSlowConsumer {
 		pendingMsgs, _, err := sub.Pending()
 		if err != nil {
@@ -113,14 +113,14 @@ func (s *jetstream) Publish(msg []byte) (nats.PubAckFuture, error) {
 // SubsribeHandler subscribes to specific subject and unmarshal the message into talaria's event type.
 // The event message then will be used as the input of the handler function defined.
 func (i *Ingress) SubsribeHandler(handler func(b []map[string]interface{})) error {
-	var block []map[string]interface{}
-
 	_, err := i.jetstream.Subscribe(func(msg *nats.Msg) {
+		block := make([]map[string]interface{}, 0)
 		if err := json.Unmarshal(msg.Data, &block); err != nil {
 			i.monitor.Error(errors.Internal("nats: unable to unmarshal", err))
 		}
 		i.monitor.Count1(ctxTag, "NATS.subscribe.count")
-		handler(block)
+		// asynchornously execute handler to reduce the message process time to avoid being slow consumer.
+		go handler(block)
 	})
 	if err != nil {
 		return err

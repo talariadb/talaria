@@ -2,6 +2,7 @@ package nats
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"os"
 	"testing"
@@ -77,4 +78,36 @@ func TestSubscribe(t *testing.T) {
 
 	data := <-dataCn
 	assert.NotEmpty(t, data)
+}
+
+func TestSubscribeHandler(t *testing.T) {
+
+	s := RunServerOnPort(int(conf.Port))
+	defer s.Shutdown()
+
+	ingress, err := New(&conf, monitor.NewNoop())
+	assert.Nil(t, err)
+	assert.NotNil(t, ingress)
+
+	//Create stream
+	jsCtx, err := ingress.conn.JetStream()
+	assert.Nil(t, err)
+	jsCtx.AddStream(&nats.StreamConfig{Name: "events", Subjects: []string{"event.>"}})
+
+	dataCn := make(chan []map[string]interface{})
+	ingress.SubsribeHandler(func(block []map[string]interface{}) {
+		dataCn <- block
+	})
+	test := []map[string]interface{}{{
+		"event": "event1",
+		"text":  "hi",
+	}}
+	b, _ := json.Marshal(test)
+
+	p, err := ingress.jetstream.Publish(b)
+	assert.NotNil(t, p)
+	assert.Nil(t, err)
+
+	block := <-dataCn
+	assert.NotEmpty(t, block)
 }
