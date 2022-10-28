@@ -3,6 +3,7 @@ package nats
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 
 	"github.com/kelindar/talaria/internal/config"
 	"github.com/kelindar/talaria/internal/monitor"
@@ -39,7 +40,15 @@ type Event map[string]interface{}
 
 // New create new ingestion from nats jetstream to sinks.
 func New(conf *config.NATS, monitor monitor.Monitor) (*Ingress, error) {
-	nc, err := nats.Connect(fmt.Sprintf("%s:%d", conf.Host, conf.Port))
+	nc, err := nats.Connect(fmt.Sprintf("%s:%d", conf.Host, conf.Port), nats.ReconnectHandler(func(_ *nats.Conn) {
+		log.Println("Successfully renonnect")
+	}), nats.ClosedHandler(func(nc *nats.Conn) {
+		log.Printf("Connection close due to %q", nc.LastError())
+		monitor.Error(nc.LastError())
+	}), nats.DisconnectErrHandler(func(nc *nats.Conn, err error) {
+		log.Printf("Got disconnected. Reason: %q\n", nc.LastError())
+		monitor.Error(nc.LastError())
+	}))
 	if err != nil {
 		return nil, err
 	}
@@ -54,6 +63,19 @@ func New(conf *config.NATS, monitor monitor.Monitor) (*Ingress, error) {
 		monitor:   monitor,
 		conn:      nc,
 	}, nil
+}
+
+func natsErrHandler(nc *nats.Conn, sub *nats.Subscription, natsErr error) {
+	fmt.Printf("error: %v\n", natsErr)
+	if natsErr == nats.ErrSlowConsumer {
+		pendingMsgs, _, err := sub.Pending()
+		if err != nil {
+			log.Printf("couldn't get pending messages: %v", err)
+			return
+		}
+		log.Printf("Falling behind with %d pending messages on subject %q.\n",
+			pendingMsgs, sub.Subject)
+	}
 }
 
 // NewJetStream create Jetstream context
