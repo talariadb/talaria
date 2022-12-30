@@ -21,7 +21,7 @@ require (
 	github.com/Azure/go-autorest/autorest/azure/auth v0.5.7
 	github.com/DataDog/datadog-go v3.7.1+incompatible
 	github.com/Knetic/govaluate v3.0.0+incompatible
-	github.com/aws/aws-sdk-go v1.30.25
+	github.com/aws/aws-sdk-go v1.33.0
 	github.com/crphang/orc v0.0.7
 	github.com/dgraph-io/badger/v3 v3.2103.1
 	github.com/emitter-io/address v1.0.0
