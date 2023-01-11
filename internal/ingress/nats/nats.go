@@ -98,6 +98,10 @@ func (s *jetstream) Subscribe(handler nats.MsgHandler) (*nats.Subscription, erro
 	if err != nil {
 		return nil, err
 	}
+	// set higher pending limits
+	sb.SetPendingLimits(65536, (1<<18)*1024)
+	_, b, _ := sb.PendingLimits()
+	log.Println("nats: maximum pending limits (bytes): ", b)
 	return sb, nil
 }
 
