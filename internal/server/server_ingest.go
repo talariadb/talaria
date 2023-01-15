@@ -6,6 +6,7 @@ package server
 import (
 	"context"
 	"fmt"
+	"log"
 
 	"github.com/kelindar/talaria/internal/encoding/block"
 	"github.com/kelindar/talaria/internal/encoding/typeof"
@@ -60,7 +61,11 @@ func (s *Server) Ingest(ctx context.Context, request *talaria.IngestRequest) (*t
 					return nil, err
 				}
 				for _, row := range rows {
-					s(row)
+					_, err := s(row)
+					if err != nil {
+						log.Println("ingest: ", err.Error())
+						continue
+					}
 				}
 			}
 		}
@@ -125,7 +130,11 @@ func (s *Server) IngestWithTable(ctx context.Context, request *talaria.IngestWit
 					return nil, err
 				}
 				for _, row := range rows {
-					s(row)
+					_, err := s(row)
+					if err != nil {
+						log.Println("ingest: ", err.Error())
+						continue
+					}
 				}
 			}
 		}
