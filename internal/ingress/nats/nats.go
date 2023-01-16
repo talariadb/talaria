@@ -1,6 +1,7 @@
 package nats
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -20,6 +21,8 @@ type Ingress struct {
 	jetstream JetstreamI
 	monitor   monitor.Monitor
 	conn      *nats.Conn
+	queue     chan *nats.Msg
+	cancel    context.CancelFunc
 }
 
 type jetstream struct {
@@ -62,6 +65,7 @@ func New(conf *config.NATS, monitor monitor.Monitor) (*Ingress, error) {
 		jetstream: js,
 		monitor:   monitor,
 		conn:      nc,
+		queue:     make(chan *nats.Msg, 100),
 	}, nil
 }
 
@@ -123,8 +127,7 @@ func (i *Ingress) SubsribeHandler(handler func(b []map[string]interface{})) erro
 			i.monitor.Error(errors.Internal("nats: unable to unmarshal", err))
 		}
 		i.monitor.Count1(ctxTag, "NATS.subscribe.count")
-		// asynchornously execute handler to reduce the message process time to avoid being slow consumer.
-		go handler(block)
+		handler(block)
 	})
 	if err != nil {
 		return err
@@ -132,8 +135,50 @@ func (i *Ingress) SubsribeHandler(handler func(b []map[string]interface{})) erro
 	return nil
 }
 
+// SubscribeHandlerWithPool process the message concurrently using goroutine pool.
+// The message will be asynchornously executed to reduce the message process time to avoid being slow consumer.
+func (i *Ingress) SubsribeHandlerWithPool(ctx context.Context, handler func(b []map[string]interface{})) error {
+	// Initialze pool
+	ctx, cancel := context.WithCancel(ctx)
+	i.cancel = cancel
+
+	i.initializeMemoryPool(ctx, handler)
+	_, err := i.jetstream.Subscribe(func(msg *nats.Msg) {
+		// Send the message to the queue
+		i.queue <- msg
+	})
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+// Initialze memory pool for fixed number of goroutine to process the message
+func (i *Ingress) initializeMemoryPool(ctx context.Context, handler func(b []map[string]interface{})) {
+	for n := 0; n < 100; n++ {
+		go func(n int, ctx context.Context, queue chan *nats.Msg) {
+			for {
+				select {
+				case <-ctx.Done():
+					return
+				case msg := <-queue:
+					// Wait for the message
+					block := make([]map[string]interface{}, 0)
+					if err := json.Unmarshal(msg.Data, &block); err != nil {
+						i.monitor.Error(errors.Internal("nats: unable to unmarshal", err))
+					}
+					i.monitor.Count1(ctxTag, "NATS.subscribe.count")
+					// asynchornously execute handler to reduce the message process time to avoid being slow consumer.
+					handler(block)
+				}
+			}
+		}(n, ctx, i.queue)
+	}
+}
+
 // Close ingress
 func (i *Ingress) Close() {
 	i.conn.Close()
+	i.cancel()
 	return
 }
