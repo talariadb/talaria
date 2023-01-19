@@ -3,6 +3,7 @@ package bigquery
 import (
 	"context"
 	"encoding/json"
+	"log"
 	"runtime"
 	"time"
 
@@ -150,6 +151,7 @@ func (w *Writer) Write(key key.Key, blocks []block.Block) error {
 		result, err = w.managedStream.AppendRows(w.context, [][]byte{b})
 		if err != nil {
 			w.monitor.Count1(ctxTag, "writeerror")
+			log.Println("appending error:", err.Error())
 			return errors.Internal("bigquery: unable to write", err)
 		}
 	}
@@ -157,6 +159,7 @@ func (w *Writer) Write(key key.Key, blocks []block.Block) error {
 	w.monitor.Histogram(ctxTag, "writelatency", float64(time.Since(start)))
 	o, err := result.GetResult(w.context)
 	if err != nil {
+		log.Println("bigquery: unable to get stream result ", err)
 		return err
 	}
 	if o != managedwriter.NoStreamOffset {

@@ -2,6 +2,7 @@ package nats
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"os"
 	"testing"
@@ -58,18 +59,25 @@ func TestSubscribe(t *testing.T) {
 	defer s.Shutdown()
 
 	ingress, err := New(&conf, monitor.NewNoop())
-	assert.Nil(t, err)
+	assert.NoError(t, err)
 	assert.NotNil(t, ingress)
 
 	//Create stream
 	jsCtx, err := ingress.conn.JetStream()
 	assert.Nil(t, err)
-	jsCtx.AddStream(&nats.StreamConfig{Name: "events", Subjects: []string{"event.>"}})
+
+	// Delete stream first in case exists
+	jsCtx.DeleteStream("events")
+
+	info, err := jsCtx.AddStream(&nats.StreamConfig{Name: "events", Subjects: []string{"event.>"}})
+	assert.NoError(t, err)
+	assert.NotNil(t, info)
 
 	dataCn := make(chan string)
-	ingress.jetstream.Subscribe(func(msg *nats.Msg) {
+	_, err = ingress.jetstream.Subscribe(func(msg *nats.Msg) {
 		dataCn <- string(msg.Data)
 	})
+	assert.NoError(t, err)
 
 	p, err := ingress.jetstream.Publish([]byte("test"))
 	assert.NotNil(t, p)
@@ -77,4 +85,82 @@ func TestSubscribe(t *testing.T) {
 
 	data := <-dataCn
 	assert.NotEmpty(t, data)
+}
+
+func TestSubscribeHandler(t *testing.T) {
+
+	s := RunServerOnPort(int(conf.Port))
+	defer s.Shutdown()
+
+	ingress, err := New(&conf, monitor.NewNoop())
+	assert.Nil(t, err)
+	assert.NotNil(t, ingress)
+
+	//Create stream
+	jsCtx, err := ingress.conn.JetStream()
+	assert.Nil(t, err)
+
+	// Delete stream first in case exists
+	jsCtx.DeleteStream("events")
+
+	info, err := jsCtx.AddStream(&nats.StreamConfig{Name: "events", Subjects: []string{"event.>"}})
+	assert.NoError(t, err)
+	assert.NotNil(t, info)
+
+	dataCn := make(chan []map[string]interface{})
+	ingress.SubsribeHandler(func(block []map[string]interface{}) {
+		dataCn <- block
+	})
+	test := []map[string]interface{}{{
+		"event": "event1",
+		"text":  "hi",
+	}}
+	b, _ := json.Marshal(test)
+
+	p, err := ingress.jetstream.Publish(b)
+	assert.NotNil(t, p)
+	assert.Nil(t, err)
+
+	block := <-dataCn
+	assert.NotEmpty(t, block)
+}
+
+func TestSubscribeHandlerWithPool(t *testing.T) {
+
+	s := RunServerOnPort(int(conf.Port))
+	defer s.Shutdown()
+
+	ingress, err := New(&conf, monitor.NewNoop())
+	assert.Nil(t, err)
+	assert.NotNil(t, ingress)
+
+	//Create stream
+	jsCtx, err := ingress.conn.JetStream()
+	assert.Nil(t, err)
+
+	// Delete stream first in case exists
+	jsCtx.DeleteStream("events")
+
+	info, err := jsCtx.AddStream(&nats.StreamConfig{Name: "events", Subjects: []string{"event.>"}})
+	assert.NoError(t, err)
+	assert.NotNil(t, info)
+
+	dataCn := make(chan []map[string]interface{})
+	ctx, cancel := context.WithCancel(context.Background())
+	ingress.SubsribeHandlerWithPool(ctx, func(block []map[string]interface{}) {
+		dataCn <- block
+	})
+	test := []map[string]interface{}{{
+		"event": "event1",
+		"text":  "hi",
+	}}
+	b, _ := json.Marshal(test)
+
+	p, err := ingress.jetstream.Publish(b)
+	assert.NotNil(t, p)
+	assert.Nil(t, err)
+
+	block := <-dataCn
+	assert.NotEmpty(t, block)
+	cancel()
 }
