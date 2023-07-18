@@ -54,39 +54,6 @@ func TestLoadNatsConfig(t *testing.T) {
 	conf = *cfg().Writers.NATS
 }
 
-func TestSubscribe(t *testing.T) {
-	s := RunServerOnPort(int(conf.Port))
-	defer s.Shutdown()
-
-	ingress, err := New(&conf, monitor.NewNoop())
-	assert.NoError(t, err)
-	assert.NotNil(t, ingress)
-
-	//Create stream
-	jsCtx, err := ingress.conn.JetStream()
-	assert.Nil(t, err)
-
-	// Delete stream first in case exists
-	jsCtx.DeleteStream("events")
-
-	info, err := jsCtx.AddStream(&nats.StreamConfig{Name: "events", Subjects: []string{"event.>"}})
-	assert.NoError(t, err)
-	assert.NotNil(t, info)
-
-	dataCn := make(chan string)
-	_, err = ingress.jetstream.Subscribe(func(msg *nats.Msg) {
-		dataCn <- string(msg.Data)
-	})
-	assert.NoError(t, err)
-
-	p, err := ingress.jetstream.Publish([]byte("test"))
-	assert.NotNil(t, p)
-	assert.Nil(t, err)
-
-	data := <-dataCn
-	assert.NotEmpty(t, data)
-}
-
 func TestSubscribeHandler(t *testing.T) {
 
 	s := RunServerOnPort(int(conf.Port))
@@ -96,28 +63,30 @@ func TestSubscribeHandler(t *testing.T) {
 	assert.Nil(t, err)
 	assert.NotNil(t, ingress)
 
-	//Create stream
-	jsCtx, err := ingress.conn.JetStream()
-	assert.Nil(t, err)
-
 	// Delete stream first in case exists
-	jsCtx.DeleteStream("events")
+	ingress.JSClient.Context.DeleteStream("events")
 
-	info, err := jsCtx.AddStream(&nats.StreamConfig{Name: "events", Subjects: []string{"event.>"}})
+	info, err := ingress.JSClient.Context.AddStream(&nats.StreamConfig{Name: "events", Subjects: []string{"event.>"}})
 	assert.NoError(t, err)
 	assert.NotNil(t, info)
 
 	dataCn := make(chan []map[string]interface{})
-	ingress.SubsribeHandler(func(block []map[string]interface{}) {
+	ingress.SubsribeHandler(func(block []map[string]interface{}, table string) {
 		dataCn <- block
+		assert.Equal(t, "value", table)
 	})
 	test := []map[string]interface{}{{
 		"event": "event1",
 		"text":  "hi",
 	}}
-	b, _ := json.Marshal(test)
 
-	p, err := ingress.jetstream.Publish(b)
+	// Publish message
+	msg := nats.NewMsg("event.talaria")
+	b, _ := json.Marshal(test)
+	msg.Data = b
+	msg.Header.Add("table", "value")
+
+	p, err := ingress.JSClient.Context.PublishMsg(msg)
 	assert.NotNil(t, p)
 	assert.Nil(t, err)
 
@@ -134,29 +103,30 @@ func TestSubscribeHandlerWithPool(t *testing.T) {
 	assert.Nil(t, err)
 	assert.NotNil(t, ingress)
 
-	//Create stream
-	jsCtx, err := ingress.conn.JetStream()
-	assert.Nil(t, err)
-
 	// Delete stream first in case exists
-	jsCtx.DeleteStream("events")
+	ingress.JSClient.Context.DeleteStream("events")
 
-	info, err := jsCtx.AddStream(&nats.StreamConfig{Name: "events", Subjects: []string{"event.>"}})
+	info, err := ingress.JSClient.Context.AddStream(&nats.StreamConfig{Name: "events", Subjects: []string{"event.>"}})
 	assert.NoError(t, err)
 	assert.NotNil(t, info)
 
 	dataCn := make(chan []map[string]interface{})
 	ctx, cancel := context.WithCancel(context.Background())
-	ingress.SubsribeHandlerWithPool(ctx, func(block []map[string]interface{}) {
+	ingress.SubsribeHandlerWithPool(ctx, func(block []map[string]interface{}, table string) {
 		dataCn <- block
 	})
 	test := []map[string]interface{}{{
 		"event": "event1",
 		"text":  "hi",
 	}}
-	b, _ := json.Marshal(test)
 
-	p, err := ingress.jetstream.Publish(b)
+	// Publish message
+	msg := nats.NewMsg("event.talaria")
+	b, _ := json.Marshal(test)
+	msg.Data = b
+	msg.Header.Add("table", "value")
+
+	p, err := ingress.JSClient.Context.PublishMsg(msg)
 	assert.NotNil(t, p)
 	assert.Nil(t, err)
 

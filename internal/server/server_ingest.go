@@ -80,7 +80,6 @@ func (s *Server) Ingest(ctx context.Context, request *talaria.IngestRequest) (*t
 			}
 		}
 		s.monitor.Count("server", fmt.Sprintf("%s.ingest.row.count", t.Name()), int64(rowCount))
-		s.monitor.Count("server", fmt.Sprintf("%s.ingest.count", t.Name()), int64(len(blocks)))
 	}
 
 	return nil, nil
