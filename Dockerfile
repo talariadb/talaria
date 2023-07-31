@@ -12,7 +12,7 @@ RUN mkdir -p /go/src/talaria
 COPY . src/talaria
 RUN cd src/talaria && go build . && test -x talaria
 
-FROM debian:latest AS base
+FROM debian:bullseye AS base
 ARG MAINTAINER=roman.atachiants@gmail.com
 LABEL maintainer=${MAINTAINER}
 

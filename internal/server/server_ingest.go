@@ -121,6 +121,7 @@ func (s *Server) IngestWithTable(ctx context.Context, request *talaria.IngestWit
 			return nil, errors.Internal("unable to read the block", err)
 		}
 
+		rowCount := 0
 		// If table supports streaming, then stream
 		if streamer, ok := t.(storage.Streamer); ok {
 			s := stream.Publish(streamer, s.monitor)
@@ -130,6 +131,7 @@ func (s *Server) IngestWithTable(ctx context.Context, request *talaria.IngestWit
 				if err != nil {
 					return nil, err
 				}
+				rowCount += len(rows)
 				for _, row := range rows {
 					_, err := s(row)
 					if err != nil {
@@ -148,7 +150,7 @@ func (s *Server) IngestWithTable(ctx context.Context, request *talaria.IngestWit
 			}
 		}
 
-		s.monitor.Count("server", fmt.Sprintf("%s.ingestWithTable.count", t.Name()), int64(len(blocks)))
+		s.monitor.Count("server", fmt.Sprintf("%s.ingestWithTable.count", t.Name()), int64(rowCount))
 	}
 
 	return nil, nil

@@ -107,11 +107,15 @@ type S3SQS struct {
 
 // NATS represents NATS consumer configuration
 type NATS struct {
-	Subject string `json:"subject" yaml:"subject" env:"SUBJECT"`
-	Host    string `json:"host" yaml:"host" env:"HOST"`
-	Port    int32  `json:"port" yaml:"port" env:"PORT"`
-	Stream  string `json:"stream" yaml:"stream" env:"STREAM"`
-	Queue   string `json:"queue" yaml:"queue" env:"QUEUE"`
+	Host  string        `json:"host" yaml:"host" env:"HOST"`
+	Port  int32         `json:"port" yaml:"port" env:"PORT"`
+	Split []SplitWriter `json:"split" yaml:"split" env:"SPLIT"`
+}
+
+type SplitWriter struct {
+	Subject    string `json:"subject" yaml:"subject" env:"SUBJECT"`
+	Table      string `json:"table" yaml:"table" env:"TABLE"`
+	QueueGroup string `json:"queueGroup" yaml:"queueGroup" env:"QUEUE_GROUP"`
 }
 
 // Presto represents the Presto configuration

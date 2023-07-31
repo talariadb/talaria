@@ -3,15 +3,16 @@ package nats
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"os"
 	"testing"
 	"time"
 
 	"github.com/kelindar/talaria/internal/config"
 	"github.com/kelindar/talaria/internal/config/env"
+	"github.com/kelindar/talaria/internal/config/s3"
 	"github.com/kelindar/talaria/internal/config/static"
 	"github.com/kelindar/talaria/internal/monitor"
+	"github.com/kelindar/talaria/internal/monitor/logging"
 	"github.com/nats-io/nats-server/v2/server"
 	natsserver "github.com/nats-io/nats-server/v2/test"
 	"github.com/nats-io/nats.go"
@@ -37,18 +38,17 @@ func TestLoadNatsConfig(t *testing.T) {
 	const refreshTime = 50 * time.Millisecond
 	const waitTime = 100 * time.Millisecond
 	nats := &config.NATS{
-		Host:    "nats://127.0.0.1",
-		Port:    TEST_PORT,
-		Subject: "event.talaria",
-		Queue:   "talarias",
+		Host: "nats://127.0.0.1",
+		Port: TEST_PORT,
+		Split: []config.SplitWriter{
+			{Subject: "event.talaria", QueueGroup: "talarias", Table: "event"},
+		},
 	}
+	os.Setenv("NATS_URI", "file:///nats_test_config.yaml")
 
-	os.Setenv("TALARIA_WRITERS_NATS_HOST", "nats://127.0.0.1")
-	os.Setenv("TALARIA_WRITERS_NATS_PORT", fmt.Sprint(TEST_PORT))
-	os.Setenv("TALARIA_WRITERS_NATS_SUBJECT", "event.talaria")
-	os.Setenv("TALARIA_WRITERS_NATS_QUEUE", "talarias")
+	s3Configurer := s3.New(logging.NewStandard())
+	cfg := config.Load(context.Background(), refreshTime, static.New(), env.New("NATS"), s3Configurer)
 
-	cfg := config.Load(context.Background(), refreshTime, static.New(), env.New("TALARIA"))
 	assert.Equal(t, nats, cfg().Writers.NATS)
 
 	conf = *cfg().Writers.NATS
@@ -73,7 +73,7 @@ func TestSubscribeHandler(t *testing.T) {
 	dataCn := make(chan []map[string]interface{})
 	ingress.SubsribeHandler(func(block []map[string]interface{}, table string) {
 		dataCn <- block
-		assert.Equal(t, "value", table)
+		assert.Equal(t, conf.Split[0].Table, table)
 	})
 	test := []map[string]interface{}{{
 		"event": "event1",
@@ -84,7 +84,6 @@ func TestSubscribeHandler(t *testing.T) {
 	msg := nats.NewMsg("event.talaria")
 	b, _ := json.Marshal(test)
 	msg.Data = b
-	msg.Header.Add("table", "value")
 
 	p, err := ingress.JSClient.Context.PublishMsg(msg)
 	assert.NotNil(t, p)
@@ -114,6 +113,7 @@ func TestSubscribeHandlerWithPool(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	ingress.SubsribeHandlerWithPool(ctx, func(block []map[string]interface{}, table string) {
 		dataCn <- block
+		assert.Equal(t, conf.Split[0].Table, table)
 	})
 	test := []map[string]interface{}{{
 		"event": "event1",
@@ -124,7 +124,6 @@ func TestSubscribeHandlerWithPool(t *testing.T) {
 	msg := nats.NewMsg("event.talaria")
 	b, _ := json.Marshal(test)
 	msg.Data = b
-	msg.Header.Add("table", "value")
 
 	p, err := ingress.JSClient.Context.PublishMsg(msg)
 	assert.NotNil(t, p)
