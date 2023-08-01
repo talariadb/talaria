@@ -3,15 +3,16 @@ package nats
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"os"
 	"testing"
 	"time"
 
 	"github.com/kelindar/talaria/internal/config"
 	"github.com/kelindar/talaria/internal/config/env"
+	"github.com/kelindar/talaria/internal/config/s3"
 	"github.com/kelindar/talaria/internal/config/static"
 	"github.com/kelindar/talaria/internal/monitor"
+	"github.com/kelindar/talaria/internal/monitor/logging"
 	"github.com/nats-io/nats-server/v2/server"
 	natsserver "github.com/nats-io/nats-server/v2/test"
 	"github.com/nats-io/nats.go"
@@ -37,54 +38,20 @@ func TestLoadNatsConfig(t *testing.T) {
 	const refreshTime = 50 * time.Millisecond
 	const waitTime = 100 * time.Millisecond
 	nats := &config.NATS{
-		Host:    "nats://127.0.0.1",
-		Port:    TEST_PORT,
-		Subject: "event.talaria",
-		Queue:   "talarias",
+		Host: "nats://127.0.0.1",
+		Port: TEST_PORT,
+		Split: []config.SplitWriter{
+			{Subject: "event.talaria", QueueGroup: "talarias", Table: "event"},
+		},
 	}
+	os.Setenv("NATS_URI", "file:///nats_test_config.yaml")
 
-	os.Setenv("TALARIA_WRITERS_NATS_HOST", "nats://127.0.0.1")
-	os.Setenv("TALARIA_WRITERS_NATS_PORT", fmt.Sprint(TEST_PORT))
-	os.Setenv("TALARIA_WRITERS_NATS_SUBJECT", "event.talaria")
-	os.Setenv("TALARIA_WRITERS_NATS_QUEUE", "talarias")
+	s3Configurer := s3.New(logging.NewStandard())
+	cfg := config.Load(context.Background(), refreshTime, static.New(), env.New("NATS"), s3Configurer)
 
-	cfg := config.Load(context.Background(), refreshTime, static.New(), env.New("TALARIA"))
 	assert.Equal(t, nats, cfg().Writers.NATS)
 
 	conf = *cfg().Writers.NATS
-}
-
-func TestSubscribe(t *testing.T) {
-	s := RunServerOnPort(int(conf.Port))
-	defer s.Shutdown()
-
-	ingress, err := New(&conf, monitor.NewNoop())
-	assert.NoError(t, err)
-	assert.NotNil(t, ingress)
-
-	//Create stream
-	jsCtx, err := ingress.conn.JetStream()
-	assert.Nil(t, err)
-
-	// Delete stream first in case exists
-	jsCtx.DeleteStream("events")
-
-	info, err := jsCtx.AddStream(&nats.StreamConfig{Name: "events", Subjects: []string{"event.>"}})
-	assert.NoError(t, err)
-	assert.NotNil(t, info)
-
-	dataCn := make(chan string)
-	_, err = ingress.jetstream.Subscribe(func(msg *nats.Msg) {
-		dataCn <- string(msg.Data)
-	})
-	assert.NoError(t, err)
-
-	p, err := ingress.jetstream.Publish([]byte("test"))
-	assert.NotNil(t, p)
-	assert.Nil(t, err)
-
-	data := <-dataCn
-	assert.NotEmpty(t, data)
 }
 
 func TestSubscribeHandler(t *testing.T) {
@@ -96,28 +63,29 @@ func TestSubscribeHandler(t *testing.T) {
 	assert.Nil(t, err)
 	assert.NotNil(t, ingress)
 
-	//Create stream
-	jsCtx, err := ingress.conn.JetStream()
-	assert.Nil(t, err)
-
 	// Delete stream first in case exists
-	jsCtx.DeleteStream("events")
+	ingress.JSClient.Context.DeleteStream("events")
 
-	info, err := jsCtx.AddStream(&nats.StreamConfig{Name: "events", Subjects: []string{"event.>"}})
+	info, err := ingress.JSClient.Context.AddStream(&nats.StreamConfig{Name: "events", Subjects: []string{"event.>"}})
 	assert.NoError(t, err)
 	assert.NotNil(t, info)
 
 	dataCn := make(chan []map[string]interface{})
-	ingress.SubsribeHandler(func(block []map[string]interface{}) {
+	ingress.SubsribeHandler(func(block []map[string]interface{}, table string) {
 		dataCn <- block
+		assert.Equal(t, conf.Split[0].Table, table)
 	})
 	test := []map[string]interface{}{{
 		"event": "event1",
 		"text":  "hi",
 	}}
-	b, _ := json.Marshal(test)
 
-	p, err := ingress.jetstream.Publish(b)
+	// Publish message
+	msg := nats.NewMsg("event.talaria")
+	b, _ := json.Marshal(test)
+	msg.Data = b
+
+	p, err := ingress.JSClient.Context.PublishMsg(msg)
 	assert.NotNil(t, p)
 	assert.Nil(t, err)
 
@@ -134,29 +102,30 @@ func TestSubscribeHandlerWithPool(t *testing.T) {
 	assert.Nil(t, err)
 	assert.NotNil(t, ingress)
 
-	//Create stream
-	jsCtx, err := ingress.conn.JetStream()
-	assert.Nil(t, err)
-
 	// Delete stream first in case exists
-	jsCtx.DeleteStream("events")
+	ingress.JSClient.Context.DeleteStream("events")
 
-	info, err := jsCtx.AddStream(&nats.StreamConfig{Name: "events", Subjects: []string{"event.>"}})
+	info, err := ingress.JSClient.Context.AddStream(&nats.StreamConfig{Name: "events", Subjects: []string{"event.>"}})
 	assert.NoError(t, err)
 	assert.NotNil(t, info)
 
 	dataCn := make(chan []map[string]interface{})
 	ctx, cancel := context.WithCancel(context.Background())
-	ingress.SubsribeHandlerWithPool(ctx, func(block []map[string]interface{}) {
+	ingress.SubsribeHandlerWithPool(ctx, func(block []map[string]interface{}, table string) {
 		dataCn <- block
+		assert.Equal(t, conf.Split[0].Table, table)
 	})
 	test := []map[string]interface{}{{
 		"event": "event1",
 		"text":  "hi",
 	}}
-	b, _ := json.Marshal(test)
 
-	p, err := ingress.jetstream.Publish(b)
+	// Publish message
+	msg := nats.NewMsg("event.talaria")
+	b, _ := json.Marshal(test)
+	msg.Data = b
+
+	p, err := ingress.JSClient.Context.PublishMsg(msg)
 	assert.NotNil(t, p)
 	assert.Nil(t, err)
 

@@ -185,13 +185,14 @@ func (s *Server) subscribeToJetStream(conf *config.Config) (err error) {
 
 	// Start ingesting
 	s.monitor.Info("server: starting ingestion from nats")
-	s.nats.SubsribeHandlerWithPool(context.Background(), func(block []map[string]interface{}) {
+	s.nats.SubsribeHandlerWithPool(context.Background(), func(block []map[string]interface{}, table string) {
 		data := strings.NewEncoder().Encode(block)
 
-		if _, err := s.Ingest(context.Background(), &talaria.IngestRequest{
-			Data: &talaria.IngestRequest_Batch{
+		if _, err := s.IngestWithTable(context.Background(), &talaria.IngestWithTableRequest{
+			Data: &talaria.IngestWithTableRequest_Batch{
 				Batch: data,
 			},
+			Tables: []string{table},
 		}); err != nil {
 			s.monitor.Warning(err)
 		}
