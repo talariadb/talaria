@@ -1,0 +1,8 @@
+writers:
+  nats:
+    host: nats://127.0.0.1
+    port: 8369
+    split:
+      - subject: event.talaria
+        queueGroup: talarias
+        table: event
