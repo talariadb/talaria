@@ -15,6 +15,10 @@ func TestWriter(t *testing.T) {
 	c, err := New("test", "test", "", "", m)
 
 	// TODO: Impove test
-	assert.Nil(t, err)
-	assert.Error(t, c.Write(key.Key("test"), nil))
+	assert.Nil(t, c)
+	assert.Error(t, err)
+
+	assert.Panics(t, func() {
+		c.Write(key.Key("test"), nil)
+	})
 }
