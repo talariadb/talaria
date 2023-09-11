@@ -79,6 +79,7 @@ func (s *Server) Ingest(ctx context.Context, request *talaria.IngestRequest) (*t
 				return nil, err
 			}
 		}
+		s.monitor.Count("server", fmt.Sprintf("%s.ingest.block.count", t.Name()), int64(len(blocks)))
 		s.monitor.Count("server", fmt.Sprintf("%s.ingest.row.count", t.Name()), int64(rowCount))
 	}
 
@@ -150,6 +151,7 @@ func (s *Server) IngestWithTable(ctx context.Context, request *talaria.IngestWit
 			}
 		}
 
+		s.monitor.Count("server", fmt.Sprintf("%s.ingestWithTable.block.count", t.Name()), int64(len(blocks)))
 		s.monitor.Count("server", fmt.Sprintf("%s.ingestWithTable.count", t.Name()), int64(rowCount))
 	}
 
