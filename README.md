@@ -38,7 +38,7 @@ Below is an example of what a payload for an event describing a table update mig
 | **column1** | hello               | `string`    |
 | **column2** | { "name": "roman" } | `json`      |
 
-Talaria sypports `string`, `int32`, `int64`, `bool`, `float64`, `timestamp` and `json` data types which are used to construct columns that can be exposed to Presto/SQL.
+Talaria supports `string`, `int32`, `int64`, `bool`, `float64`, `timestamp` and `json` data types which are used to construct columns that can be exposed to Presto/SQL.
 
 ## Event Ingestion with Talaria
 
